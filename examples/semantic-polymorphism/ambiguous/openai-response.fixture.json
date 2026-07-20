@@ -1,0 +1,24 @@
+{
+  "id": "resp_fixture_polymorphism_ambiguous",
+  "model": "gpt-5.4-mini",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"Cannot determine which property represents service availability.\",\"Cannot determine which properties represent blocking, deletion, and usable contact semantics.\"]}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 180,
+    "output_tokens": 50,
+    "total_tokens": 230
+  }
+}

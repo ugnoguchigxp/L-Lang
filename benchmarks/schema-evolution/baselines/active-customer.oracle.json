@@ -1,0 +1,1 @@
+{"version":1,"body":{"kind":"all","conditions":[{"kind":"equals","property":["status"],"value":"active"},{"kind":"equals","property":["deletedAt"],"value":null},{"kind":"present","property":["email"]}]}}

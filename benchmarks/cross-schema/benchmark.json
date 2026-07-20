@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "name": "blind-cross-schema-v1",
+  "trials": 3,
+  "conceptFreeze": "concept-freeze.json",
+  "manualTimes": "manual/manual-times.json",
+  "blindness": {
+    "oracleAndCasesSentToModel": false,
+    "conceptsFrozenBeforeFirstModelCall": true,
+    "independentHumanOracleAuthor": false,
+    "note": "This is model-blind but not a double-blind human study. Independent human timing and oracle review remain pending."
+  },
+  "thresholds": {
+    "minimumFirstPassCaseRate": 0.8,
+    "maximumFalseResolutionRate": 0,
+    "minimumStableCaseRate": 0.9,
+    "minimumHiddenTestPassRate": 1,
+    "targetManualTimeReduction": 0.3
+  },
+  "cases": [
+    {
+      "id": "active-customer-record",
+      "source": "bindings/active-customer-record.semantic.ts",
+      "oracle": "oracles/active-customer-record.oracle.json",
+      "tests": "cases/active-customer-record.cases.json",
+      "manual": "manual/active-customer-record.manual.ts"
+    },
+    {
+      "id": "active-service-account",
+      "source": "bindings/active-service-account.semantic.ts",
+      "oracle": "oracles/active-service-account.oracle.json",
+      "tests": "cases/active-service-account.cases.json",
+      "manual": "manual/active-service-account.manual.ts"
+    },
+    {
+      "id": "active-opaque-customer",
+      "source": "bindings/active-opaque-customer.semantic.ts",
+      "oracle": "oracles/active-opaque-customer.oracle.json",
+      "tests": "cases/active-opaque-customer.cases.json"
+    },
+    {
+      "id": "shippable-commerce-order",
+      "source": "bindings/shippable-commerce-order.semantic.ts",
+      "oracle": "oracles/shippable-commerce-order.oracle.json",
+      "tests": "cases/shippable-commerce-order.cases.json",
+      "manual": "manual/shippable-commerce-order.manual.ts"
+    },
+    {
+      "id": "shippable-fulfillment-request",
+      "source": "bindings/shippable-fulfillment-request.semantic.ts",
+      "oracle": "oracles/shippable-fulfillment-request.oracle.json",
+      "tests": "cases/shippable-fulfillment-request.cases.json",
+      "manual": "manual/shippable-fulfillment-request.manual.ts"
+    },
+    {
+      "id": "shippable-opaque-order",
+      "source": "bindings/shippable-opaque-order.semantic.ts",
+      "oracle": "oracles/shippable-opaque-order.oracle.json",
+      "tests": "cases/shippable-opaque-order.cases.json"
+    },
+    {
+      "id": "publishable-editorial-article",
+      "source": "bindings/publishable-editorial-article.semantic.ts",
+      "oracle": "oracles/publishable-editorial-article.oracle.json",
+      "tests": "cases/publishable-editorial-article.cases.json",
+      "manual": "manual/publishable-editorial-article.manual.ts"
+    },
+    {
+      "id": "publishable-content-record",
+      "source": "bindings/publishable-content-record.semantic.ts",
+      "oracle": "oracles/publishable-content-record.oracle.json",
+      "tests": "cases/publishable-content-record.cases.json",
+      "manual": "manual/publishable-content-record.manual.ts"
+    },
+    {
+      "id": "publishable-opaque-document",
+      "source": "bindings/publishable-opaque-document.semantic.ts",
+      "oracle": "oracles/publishable-opaque-document.oracle.json",
+      "tests": "cases/publishable-opaque-document.cases.json"
+    }
+  ]
+}

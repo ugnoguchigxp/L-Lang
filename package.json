@@ -1,0 +1,28 @@
+{
+  "name": "staged-semantic-typescript-mvp",
+  "version": "0.0.0",
+  "description": "An experimental staged semantic TypeScript compiler that elaborates natural-language concepts into deterministic predicate code.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "semantic": "bun run src/semantic-cli.ts",
+    "semantic:test": "bun run semantic test examples/active-customer/semantic.ts",
+    "semantic:test:customer-schema": "bun run semantic test examples/semantic-polymorphism/customer/semantic.ts",
+    "semantic:test:account-schema": "bun run semantic test examples/semantic-polymorphism/account/semantic.ts",
+    "benchmark:cross-schema": "bun run src/cross-schema-benchmark-cli.ts benchmarks/cross-schema/benchmark.json",
+    "benchmark:schema-evolution": "bun run src/schema-evolution-benchmark-cli.ts benchmarks/schema-evolution/benchmark.json",
+    "benchmark:schema-evolution:v2": "bun run src/schema-evolution-v2-cli.ts benchmarks/schema-evolution-v2/benchmark.json",
+    "consensus:replay": "bun run src/schema-evolution-consensus-cli.ts",
+    "generate": "bun run src/cli.ts generate examples/active-customer/predicate.ir.json --out examples/active-customer/is-active-customer.generated.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "verify": "bun run src/cli.ts verify examples/active-customer/predicate.ir.json --out examples/active-customer/is-active-customer.generated.ts",
+    "llm:verify": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json",
+    "llm:verify:fixture": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json --fixture examples/active-customer/openai-response.fixture.json"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "5.9.3"
+  }
+}

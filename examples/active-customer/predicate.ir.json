@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "name": "isActiveCustomer",
+  "description": "停止・削除されておらず、有効な連絡先を持つ顧客を判定する。",
+  "input": {
+    "parameter": "customer",
+    "type": "Customer",
+    "module": "./model"
+  },
+  "returns": "boolean",
+  "body": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "equals",
+        "property": ["status"],
+        "value": "active"
+      },
+      {
+        "kind": "equals",
+        "property": ["deletedAt"],
+        "value": null
+      },
+      {
+        "kind": "present",
+        "property": ["email"]
+      }
+    ]
+  }
+}

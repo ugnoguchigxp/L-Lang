@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "expectedOutcome": "resolved",
+  "body": {
+    "kind": "all",
+    "conditions": [
+      { "kind": "equals", "property": ["paymentStatus"], "value": "paid" },
+      { "kind": "equals", "property": ["cancelledAt"], "value": null },
+      { "kind": "present", "property": ["shippingAddress"] }
+    ]
+  }
+}

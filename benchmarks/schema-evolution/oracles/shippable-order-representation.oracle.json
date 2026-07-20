@@ -1,0 +1,1 @@
+{"version":1,"expectedOutcome":"resolved","expectedClassification":"compatible","body":{"kind":"all","conditions":[{"kind":"equals","property":["paymentCaptured"],"value":true},{"kind":"equals","property":["cancelled"],"value":false},{"kind":"present","property":["shippingAddress"]}]}}

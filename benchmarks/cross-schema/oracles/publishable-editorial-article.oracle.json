@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "expectedOutcome": "resolved",
+  "body": {
+    "kind": "all",
+    "conditions": [
+      { "kind": "equals", "property": ["reviewStatus"], "value": "approved" },
+      { "kind": "equals", "property": ["archivedAt"], "value": null },
+      { "kind": "present", "property": ["title"] },
+      { "kind": "present", "property": ["body"] }
+    ]
+  }
+}

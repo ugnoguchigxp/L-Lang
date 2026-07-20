@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "tests": [
+    { "name": "ready", "input": { "paymentStatus": "paid", "cancelledAt": null, "shippingAddress": "Tokyo" }, "expected": true },
+    { "name": "unpaid", "input": { "paymentStatus": "pending", "cancelledAt": null, "shippingAddress": "Tokyo" }, "expected": false },
+    { "name": "cancelled", "input": { "paymentStatus": "paid", "cancelledAt": "2026-01-01", "shippingAddress": "Tokyo" }, "expected": false },
+    { "name": "no destination", "input": { "paymentStatus": "paid", "cancelledAt": null, "shippingAddress": null }, "expected": false }
+  ]
+}

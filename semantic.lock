@@ -1,0 +1,458 @@
+{
+  "version": 1,
+  "entries": {
+    "a92d7821cbc25b0e74c6dd2f6a26b3202cb22dd9140429df6854d74556604398": {
+      "fingerprint": "a92d7821cbc25b0e74c6dd2f6a26b3202cb22dd9140429df6854d74556604398",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "predicate": "isActiveCustomer",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "e38b866499af9131eb0d12bb1b130ddc420f246f9c3964caf7df8e2a104ac031",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "abf1e29957315be4e02e14f85b07fe85d4a55d03dd250338be446e6838ca1016",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "b8bb73c0f5c4c474a78e0a703a9f39340923cef2b02db51195d8f4d0235dc57e",
+      "response": {
+        "id": "resp_fixture_active_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:18:20.199Z"
+    },
+    "5b37dabf3c2eb5b3158f2d320bd3e73423fd5ca74c0bce01428669b842a1c3d4": {
+      "fingerprint": "5b37dabf3c2eb5b3158f2d320bd3e73423fd5ca74c0bce01428669b842a1c3d4",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "predicate": "isActiveCustomer",
+      "provider": "azure-openai",
+      "model": "gpt-5-4-mini",
+      "sourceHash": "e38b866499af9131eb0d12bb1b130ddc420f246f9c3964caf7df8e2a104ac031",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "abf1e29957315be4e02e14f85b07fe85d4a55d03dd250338be446e6838ca1016",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "b8bb73c0f5c4c474a78e0a703a9f39340923cef2b02db51195d8f4d0235dc57e",
+      "response": {
+        "id": "resp_01748673e3e5f262016a5d93dd33948197b33eaff3433c14d6",
+        "model": "gpt-5-4-mini",
+        "usage": {
+          "inputTokens": 456,
+          "outputTokens": 102,
+          "totalTokens": 558
+        }
+      },
+      "createdAt": "2026-07-20T03:20:00.620Z"
+    },
+    "9bc3e94355490f2361065cd22fe8ef30b2fb40554977574fc597780f07cdaf6a": {
+      "fingerprint": "9bc3e94355490f2361065cd22fe8ef30b2fb40554977574fc597780f07cdaf6a",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "1f654dd2db6309ce2eef011aaa0c7b1f4706150978e4fe4c086eefc98b5f28ef",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "12cefdbf37a95e3a61d56fd1829013dcb20467833122bfd36527edc6e38120e7",
+      "response": {
+        "id": "resp_fixture_polymorphism_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:47:21.250Z"
+    },
+    "70dff79e85e2b2dae882940659f3e879a3ad7e21a6bd832086385c986b7bc339": {
+      "fingerprint": "70dff79e85e2b2dae882940659f3e879a3ad7e21a6bd832086385c986b7bc339",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "f21a0a670c5a8017000e5d4b66c1eede4ef9ba45126560836cbff8205996b48e",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "3120278d442bb01374e238d03e6c81e1fb3f3f1d1eebf41ebed65b5d1d845275",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:47:30.132Z"
+    },
+    "c110b425bff1621247dc4a2304070410c3eb022018f9f253e518edb8f2cb7535": {
+      "fingerprint": "c110b425bff1621247dc4a2304070410c3eb022018f9f253e518edb8f2cb7535",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "conceptId": "local:ActiveCustomer",
+      "conceptSource": "examples/active-customer/semantic.ts",
+      "predicate": "isActiveCustomer",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "95d3fc327cf4abfd77643df0b5aa2fa61d735bd08403c2f48bae2b34d1a6c392",
+      "sourceHash": "e38b866499af9131eb0d12bb1b130ddc420f246f9c3964caf7df8e2a104ac031",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "abf1e29957315be4e02e14f85b07fe85d4a55d03dd250338be446e6838ca1016",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "b8bb73c0f5c4c474a78e0a703a9f39340923cef2b02db51195d8f4d0235dc57e",
+      "response": {
+        "id": "resp_fixture_active_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:49:44.661Z"
+    },
+    "7ac8962c81c3b37a8e450193aa2497e82e8673953f00721f5e3aa8e3aa171315": {
+      "fingerprint": "7ac8962c81c3b37a8e450193aa2497e82e8673953f00721f5e3aa8e3aa171315",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "provider": "azure-openai",
+      "model": "gpt-5-4-mini",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "3d86d1615f9382a5d4a2ee707c627f711bc41aa8c6e65463ebfe16713005cf1e",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "00bac66b644808eb79c4fd74097d052842bd99451560a968afeeabc1e7c73b5f",
+      "response": {
+        "id": "resp_022e1658b088833b016a5d9b0436508195a23fb27795973640",
+        "model": "gpt-5-4-mini",
+        "usage": {
+          "inputTokens": 517,
+          "outputTokens": 205,
+          "totalTokens": 722
+        }
+      },
+      "createdAt": "2026-07-20T03:50:40.496Z"
+    },
+    "70a36410813bebfb7c8b191d5f3c833b9195336d75492e29b1dc7e4d7430258f": {
+      "fingerprint": "70a36410813bebfb7c8b191d5f3c833b9195336d75492e29b1dc7e4d7430258f",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "provider": "azure-openai",
+      "model": "gpt-5-4-mini",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "ab126a40061268aa89fd7a53f315ed815ee8b5ced3f6c2713867a35eb7a798a6",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0ac0c7e98554b9bcfbca92c0efe112de28844ac03ec45481f373db8cb043e087",
+      "response": {
+        "id": "resp_0e676a21a77458f2016a5d9b16a7b48195be7494374e798cd5",
+        "model": "gpt-5-4-mini",
+        "usage": {
+          "inputTokens": 512,
+          "outputTokens": 224,
+          "totalTokens": 736
+        }
+      },
+      "createdAt": "2026-07-20T03:50:58.375Z"
+    },
+    "8863d55a59a57a4cb8bddffc4265b140deb56e7f609430f523423a5f784c9f56": {
+      "fingerprint": "8863d55a59a57a4cb8bddffc4265b140deb56e7f609430f523423a5f784c9f56",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "3d86d1615f9382a5d4a2ee707c627f711bc41aa8c6e65463ebfe16713005cf1e",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "00bac66b644808eb79c4fd74097d052842bd99451560a968afeeabc1e7c73b5f",
+      "response": {
+        "id": "resp_fixture_polymorphism_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:52:09.979Z"
+    },
+    "5e77871f0a75d3d42791d5f27783899b8e5eaaaf41b37d7099f840d9d829b0ad": {
+      "fingerprint": "5e77871f0a75d3d42791d5f27783899b8e5eaaaf41b37d7099f840d9d829b0ad",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "ab126a40061268aa89fd7a53f315ed815ee8b5ced3f6c2713867a35eb7a798a6",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0ac0c7e98554b9bcfbca92c0efe112de28844ac03ec45481f373db8cb043e087",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-20T03:52:29.962Z"
+    }
+  }
+}

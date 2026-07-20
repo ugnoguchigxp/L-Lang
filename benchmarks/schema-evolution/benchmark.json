@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "name": "blind-schema-evolution-v1",
+  "trials": 3,
+  "freeze": "freeze.json",
+  "blindness": {
+    "oracleAndCasesSentToModel": false,
+    "lockUsed": false,
+    "generatedCodeMutationAllowed": false,
+    "note": "Only the frozen Concept, evolved TypeScript type, and target predicate are sent to the model."
+  },
+  "thresholds": {
+    "minimumFirstPassCaseRate": 1,
+    "minimumStableCaseRate": 0.9,
+    "minimumClassificationAccuracy": 1,
+    "minimumHiddenTestPassRate": 1,
+    "maximumFalseResolutionRate": 0,
+    "maximumWorkspaceMutationCount": 0
+  },
+  "concepts": [
+    {
+      "id": "benchmark.customer.active",
+      "definition": "../cross-schema/concepts/active-customer.ts",
+      "baselineSource": "../cross-schema/bindings/active-customer-record.semantic.ts",
+      "baselineOracle": "baselines/active-customer.oracle.json"
+    },
+    {
+      "id": "benchmark.order.shippable",
+      "definition": "../cross-schema/concepts/shippable-order.ts",
+      "baselineSource": "../cross-schema/bindings/shippable-commerce-order.semantic.ts",
+      "baselineOracle": "baselines/shippable-order.oracle.json"
+    },
+    {
+      "id": "benchmark.article.publishable",
+      "definition": "../cross-schema/concepts/publishable-article.ts",
+      "baselineSource": "../cross-schema/bindings/publishable-editorial-article.semantic.ts",
+      "baselineOracle": "baselines/publishable-article.oracle.json"
+    }
+  ],
+  "cases": [
+    {"id":"active-customer-add-property","conceptId":"benchmark.customer.active","changeType":"add-property","source":"changes/active-customer/add-property.semantic.ts","oracle":"oracles/active-customer-add-property.oracle.json","tests":"cases/active-customer-add-property.cases.json"},
+    {"id":"active-customer-rename","conceptId":"benchmark.customer.active","changeType":"rename","source":"changes/active-customer/rename.semantic.ts","oracle":"oracles/active-customer-rename.oracle.json","tests":"cases/active-customer-rename.cases.json"},
+    {"id":"active-customer-representation","conceptId":"benchmark.customer.active","changeType":"representation","source":"changes/active-customer/representation.semantic.ts","oracle":"oracles/active-customer-representation.oracle.json","tests":"cases/active-customer-representation.cases.json"},
+    {"id":"active-customer-optionality","conceptId":"benchmark.customer.active","changeType":"optionality","source":"changes/active-customer/optionality.semantic.ts","oracle":"oracles/active-customer-optionality.oracle.json","tests":"cases/active-customer-optionality.cases.json"},
+    {"id":"active-customer-remove-role","conceptId":"benchmark.customer.active","changeType":"remove-role","source":"changes/active-customer/remove-role.semantic.ts","oracle":"oracles/active-customer-remove-role.oracle.json","tests":"cases/active-customer-remove-role.cases.json"},
+    {"id":"active-customer-ambiguity","conceptId":"benchmark.customer.active","changeType":"ambiguity","source":"changes/active-customer/ambiguity.semantic.ts","oracle":"oracles/active-customer-ambiguity.oracle.json","tests":"cases/active-customer-ambiguity.cases.json"},
+    {"id":"shippable-order-add-property","conceptId":"benchmark.order.shippable","changeType":"add-property","source":"changes/shippable-order/add-property.semantic.ts","oracle":"oracles/shippable-order-add-property.oracle.json","tests":"cases/shippable-order-add-property.cases.json"},
+    {"id":"shippable-order-rename","conceptId":"benchmark.order.shippable","changeType":"rename","source":"changes/shippable-order/rename.semantic.ts","oracle":"oracles/shippable-order-rename.oracle.json","tests":"cases/shippable-order-rename.cases.json"},
+    {"id":"shippable-order-representation","conceptId":"benchmark.order.shippable","changeType":"representation","source":"changes/shippable-order/representation.semantic.ts","oracle":"oracles/shippable-order-representation.oracle.json","tests":"cases/shippable-order-representation.cases.json"},
+    {"id":"shippable-order-optionality","conceptId":"benchmark.order.shippable","changeType":"optionality","source":"changes/shippable-order/optionality.semantic.ts","oracle":"oracles/shippable-order-optionality.oracle.json","tests":"cases/shippable-order-optionality.cases.json"},
+    {"id":"shippable-order-remove-role","conceptId":"benchmark.order.shippable","changeType":"remove-role","source":"changes/shippable-order/remove-role.semantic.ts","oracle":"oracles/shippable-order-remove-role.oracle.json","tests":"cases/shippable-order-remove-role.cases.json"},
+    {"id":"shippable-order-ambiguity","conceptId":"benchmark.order.shippable","changeType":"ambiguity","source":"changes/shippable-order/ambiguity.semantic.ts","oracle":"oracles/shippable-order-ambiguity.oracle.json","tests":"cases/shippable-order-ambiguity.cases.json"},
+    {"id":"publishable-article-add-property","conceptId":"benchmark.article.publishable","changeType":"add-property","source":"changes/publishable-article/add-property.semantic.ts","oracle":"oracles/publishable-article-add-property.oracle.json","tests":"cases/publishable-article-add-property.cases.json"},
+    {"id":"publishable-article-rename","conceptId":"benchmark.article.publishable","changeType":"rename","source":"changes/publishable-article/rename.semantic.ts","oracle":"oracles/publishable-article-rename.oracle.json","tests":"cases/publishable-article-rename.cases.json"},
+    {"id":"publishable-article-representation","conceptId":"benchmark.article.publishable","changeType":"representation","source":"changes/publishable-article/representation.semantic.ts","oracle":"oracles/publishable-article-representation.oracle.json","tests":"cases/publishable-article-representation.cases.json"},
+    {"id":"publishable-article-optionality","conceptId":"benchmark.article.publishable","changeType":"optionality","source":"changes/publishable-article/optionality.semantic.ts","oracle":"oracles/publishable-article-optionality.oracle.json","tests":"cases/publishable-article-optionality.cases.json"},
+    {"id":"publishable-article-remove-role","conceptId":"benchmark.article.publishable","changeType":"remove-role","source":"changes/publishable-article/remove-role.semantic.ts","oracle":"oracles/publishable-article-remove-role.oracle.json","tests":"cases/publishable-article-remove-role.cases.json"},
+    {"id":"publishable-article-ambiguity","conceptId":"benchmark.article.publishable","changeType":"ambiguity","source":"changes/publishable-article/ambiguity.semantic.ts","oracle":"oracles/publishable-article-ambiguity.oracle.json","tests":"cases/publishable-article-ambiguity.cases.json"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "tests": [
+    { "name": "ready", "input": { "paymentCaptured": true, "voidedAt": null, "destinationCode": "JP-TYO" }, "expected": true },
+    { "name": "payment not captured", "input": { "paymentCaptured": false, "voidedAt": null, "destinationCode": "JP-TYO" }, "expected": false },
+    { "name": "voided", "input": { "paymentCaptured": true, "voidedAt": "2026-01-01", "destinationCode": "JP-TYO" }, "expected": false },
+    { "name": "no destination", "input": { "paymentCaptured": true, "voidedAt": null, "destinationCode": null }, "expected": false }
+  ]
+}

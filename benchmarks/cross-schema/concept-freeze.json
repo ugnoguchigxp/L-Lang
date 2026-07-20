@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "frozenAt": "2026-07-20T03:56:00+09:00",
+  "rule": "Concept text and hashes must not change after model execution begins for this benchmark run.",
+  "concepts": {
+    "benchmark.customer.active": "8af90be525fab328f84554c8637403cdd8622efac84ce357120684a714b8450a",
+    "benchmark.order.shippable": "181c79310f43328d5bb79779861b2420b9ef1ecb5d6cf50cfb7aff8ee2294fb6",
+    "benchmark.article.publishable": "afd2c06f1adaf8b21a722363ef1fcf16075af768868e82540325c2f12a49e7be"
+  }
+}

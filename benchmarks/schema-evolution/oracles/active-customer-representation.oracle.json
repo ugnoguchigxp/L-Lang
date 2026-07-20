@@ -1,0 +1,1 @@
+{"version":1,"expectedOutcome":"resolved","expectedClassification":"compatible","body":{"kind":"all","conditions":[{"kind":"equals","property":["enabled"],"value":true},{"kind":"equals","property":["deleted"],"value":false},{"kind":"present","property":["email"]}]}}

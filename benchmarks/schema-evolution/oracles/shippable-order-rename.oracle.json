@@ -1,0 +1,1 @@
+{"version":1,"expectedOutcome":"resolved","expectedClassification":"compatible","body":{"kind":"all","conditions":[{"kind":"equals","property":["settlementState"],"value":"paid"},{"kind":"equals","property":["voidedAt"],"value":null},{"kind":"present","property":["destination"]}]}}

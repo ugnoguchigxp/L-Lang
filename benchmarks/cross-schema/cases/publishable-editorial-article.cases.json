@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "tests": [
+    { "name": "ready", "input": { "reviewStatus": "approved", "archivedAt": null, "title": "Title", "body": "Body" }, "expected": true },
+    { "name": "not approved", "input": { "reviewStatus": "draft", "archivedAt": null, "title": "Title", "body": "Body" }, "expected": false },
+    { "name": "archived", "input": { "reviewStatus": "approved", "archivedAt": "2026-01-01", "title": "Title", "body": "Body" }, "expected": false },
+    { "name": "no title", "input": { "reviewStatus": "approved", "archivedAt": null, "title": null, "body": "Body" }, "expected": false },
+    { "name": "no body", "input": { "reviewStatus": "approved", "archivedAt": null, "title": "Title", "body": null }, "expected": false }
+  ]
+}

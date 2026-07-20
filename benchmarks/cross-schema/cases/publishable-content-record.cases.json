@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "tests": [
+    { "name": "ready", "input": { "publicationApproved": true, "retiredAt": null, "headline": "Title", "content": "Body" }, "expected": true },
+    { "name": "not approved", "input": { "publicationApproved": false, "retiredAt": null, "headline": "Title", "content": "Body" }, "expected": false },
+    { "name": "retired", "input": { "publicationApproved": true, "retiredAt": "2026-01-01", "headline": "Title", "content": "Body" }, "expected": false },
+    { "name": "no headline", "input": { "publicationApproved": true, "retiredAt": null, "headline": null, "content": "Body" }, "expected": false },
+    { "name": "no content", "input": { "publicationApproved": true, "retiredAt": null, "headline": "Title", "content": null }, "expected": false }
+  ]
+}

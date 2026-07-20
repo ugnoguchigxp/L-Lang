@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "status": "draft",
+  "humanReviewed": false,
+  "reviewer": null,
+  "reviewedAt": null,
+  "instructions": "Review benchmark.json without model outputs. Approve only by changing review metadata in this file; benchmark.json is immutable after approval.",
+  "files": {
+    "benchmark.json": "1062aec2076994b6a74df1d5b8acb294d82d85be7cf7cf74be5be767071a3aa0"
+  }
+}

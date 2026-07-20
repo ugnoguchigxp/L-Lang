@@ -1,0 +1,197 @@
+{
+  "version": 2,
+  "name": "blind-schema-evolution-v2",
+  "trials": 3,
+  "thresholds": {
+    "minimumConsensusCaseRate": 0.95,
+    "minimumConsensusQuorumRate": 0.9,
+    "maximumFalseResolutionRate": 0,
+    "maximumWorkspaceMutationCount": 0
+  },
+  "concepts": [
+    {
+      "id": "benchmark.v2.ticket.actionable",
+      "exportName": "V2ActionableTicket",
+      "displayName": "Actionable Ticket",
+      "specification": "A support ticket that can be acted on now. The supplied schema's authoritative workflow indicator is positive, no blocking state or timestamp represented by that schema is active, and an assigned owner is present. Use only semantic roles unambiguously represented by the supplied type. If workflow, blocking, or ownership roles require guessing, leave the concept unresolved.",
+      "baseline": {
+        "typeName": "V2ActionableTicketBaseline",
+        "expectedOutcome": "resolved",
+        "fields": [
+          {"path":["state"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["blockedAt"],"type":"string | null","positive":null,"negative":"2026-01-01","condition":{"kind":"equals","value":null}},
+          {"path":["assigneeId"],"type":"string | null","positive":"agent-1","negative":null,"condition":{"kind":"present"}}
+        ]
+      },
+      "cases": {
+        "add-property": {"typeName":"V2ActionableTicketAddProperty","expectedOutcome":"resolved","fields":[
+          {"path":["state"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["blockedAt"],"type":"string | null","positive":null,"negative":"2026-01-01","condition":{"kind":"equals","value":null}},
+          {"path":["assigneeId"],"type":"string | null","positive":"agent-1","negative":null,"condition":{"kind":"present"}},
+          {"path":["priority"],"type":"\"low\" | \"high\"","positive":"high"}
+        ]},
+        "rename": {"typeName":"V2ActionableTicketRename","expectedOutcome":"resolved","fields":[
+          {"path":["workflowState"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["holdPlacedAt"],"type":"string | null","positive":null,"negative":"2026-01-01","condition":{"kind":"equals","value":null}},
+          {"path":["ownership","primaryAgentId"],"type":"string | null","positive":"agent-1","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "representation": {"typeName":"V2ActionableTicketRepresentation","expectedOutcome":"resolved","fields":[
+          {"path":["actionable"],"type":"boolean","positive":true,"negative":false,"condition":{"kind":"equals","value":true}},
+          {"path":["blocked"],"type":"boolean","positive":false,"negative":true,"condition":{"kind":"equals","value":false}},
+          {"path":["assigneeIds"],"type":"string[] | null","positive":["agent-1"],"negative":null,"condition":{"kind":"present"}}
+        ]},
+        "optionality": {"typeName":"V2ActionableTicketOptionality","expectedOutcome":"resolved","fields":[
+          {"path":["state"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["blockedAt"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":null,"negative":"2026-01-01","condition":{"kind":"equals","value":null}},
+          {"path":["assigneeId"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":"agent-1","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "remove-role": {"typeName":"V2ActionableTicketRemoveRole","expectedOutcome":"unresolved","fields":[
+          {"path":["state"],"type":"\"open\" | \"closed\"","positive":"open"},
+          {"path":["blockedAt"],"type":"string | null","positive":null},
+          {"path":["priority"],"type":"number","positive":1}
+        ]},
+        "ambiguity": {"typeName":"V2ActionableTicketAmbiguity","expectedOutcome":"unresolved","fields":[
+          {"path":["state"],"type":"\"open\" | \"closed\"","positive":"open"},
+          {"path":["blockedAt"],"type":"string | null","positive":null},
+          {"path":["primaryAssigneeId"],"type":"string | null","positive":"agent-1"},
+          {"path":["backupAssigneeId"],"type":"string | null","positive":"agent-2"}
+        ]}
+      }
+    },
+    {
+      "id": "benchmark.v2.invoice.payable",
+      "exportName": "V2PayableInvoice",
+      "displayName": "Payable Invoice",
+      "specification": "An invoice that is authorized for payment now. The supplied schema's authoritative authorization indicator is positive, no void or cancellation marker represented by that schema is active, and a usable payment reference is present. Use only unambiguous semantic roles; if authorization, cancellation, or payment-reference roles require guessing, leave the concept unresolved.",
+      "baseline": {"typeName":"V2PayableInvoiceBaseline","expectedOutcome":"resolved","fields":[
+        {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved","negative":"draft","condition":{"kind":"equals","value":"approved"}},
+        {"path":["voidedAt"],"type":"string | null","positive":null,"negative":"2026-02-01","condition":{"kind":"equals","value":null}},
+        {"path":["paymentReference"],"type":"string | null","positive":"pay-1","negative":null,"condition":{"kind":"present"}}
+      ]},
+      "cases": {
+        "add-property": {"typeName":"V2PayableInvoiceAddProperty","expectedOutcome":"resolved","fields":[
+          {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved","negative":"draft","condition":{"kind":"equals","value":"approved"}},
+          {"path":["voidedAt"],"type":"string | null","positive":null,"negative":"2026-02-01","condition":{"kind":"equals","value":null}},
+          {"path":["paymentReference"],"type":"string | null","positive":"pay-1","negative":null,"condition":{"kind":"present"}},
+          {"path":["memo"],"type":"string | null","positive":null}
+        ]},
+        "rename": {"typeName":"V2PayableInvoiceRename","expectedOutcome":"resolved","fields":[
+          {"path":["authorizationStatus"],"type":"\"approved\" | \"draft\"","positive":"approved","negative":"draft","condition":{"kind":"equals","value":"approved"}},
+          {"path":["cancellation","recordedAt"],"type":"string | null","positive":null,"negative":"2026-02-01","condition":{"kind":"equals","value":null}},
+          {"path":["settlement","reference"],"type":"string | null","positive":"pay-1","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "representation": {"typeName":"V2PayableInvoiceRepresentation","expectedOutcome":"resolved","fields":[
+          {"path":["authorized"],"type":"boolean","positive":true,"negative":false,"condition":{"kind":"equals","value":true}},
+          {"path":["voided"],"type":"boolean","positive":false,"negative":true,"condition":{"kind":"equals","value":false}},
+          {"path":["paymentTokens"],"type":"string[] | null","positive":["pay-1"],"negative":null,"condition":{"kind":"present"}}
+        ]},
+        "optionality": {"typeName":"V2PayableInvoiceOptionality","expectedOutcome":"resolved","fields":[
+          {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved","negative":"draft","condition":{"kind":"equals","value":"approved"}},
+          {"path":["voidedAt"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":null,"negative":"2026-02-01","condition":{"kind":"equals","value":null}},
+          {"path":["paymentReference"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":"pay-1","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "remove-role": {"typeName":"V2PayableInvoiceRemoveRole","expectedOutcome":"unresolved","fields":[
+          {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved"},
+          {"path":["voidedAt"],"type":"string | null","positive":null},
+          {"path":["memo"],"type":"string","positive":"ok"}
+        ]},
+        "ambiguity": {"typeName":"V2PayableInvoiceAmbiguity","expectedOutcome":"unresolved","fields":[
+          {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved"},
+          {"path":["voidedAt"],"type":"string | null","positive":null},
+          {"path":["bankReference"],"type":"string | null","positive":"bank-1"},
+          {"path":["cardReference"],"type":"string | null","positive":"card-1"}
+        ]}
+      }
+    },
+    {
+      "id": "benchmark.v2.release.deployable",
+      "exportName": "V2DeployableRelease",
+      "displayName": "Deployable Release",
+      "specification": "A software release that can be deployed now. The supplied schema's authoritative readiness indicator is positive, no withdrawal or revocation marker represented by that schema is active, and a usable build artifact locator is present. Use only unambiguous semantic roles; if readiness, withdrawal, or artifact roles require guessing, leave the concept unresolved.",
+      "baseline": {"typeName":"V2DeployableReleaseBaseline","expectedOutcome":"resolved","fields":[
+        {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready","negative":"blocked","condition":{"kind":"equals","value":"ready"}},
+        {"path":["withdrawnAt"],"type":"string | null","positive":null,"negative":"2026-03-01","condition":{"kind":"equals","value":null}},
+        {"path":["artifactUrl"],"type":"string | null","positive":"https://example.test/build","negative":null,"condition":{"kind":"present"}}
+      ]},
+      "cases": {
+        "add-property": {"typeName":"V2DeployableReleaseAddProperty","expectedOutcome":"resolved","fields":[
+          {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready","negative":"blocked","condition":{"kind":"equals","value":"ready"}},
+          {"path":["withdrawnAt"],"type":"string | null","positive":null,"negative":"2026-03-01","condition":{"kind":"equals","value":null}},
+          {"path":["artifactUrl"],"type":"string | null","positive":"https://example.test/build","negative":null,"condition":{"kind":"present"}},
+          {"path":["releaseNotes"],"type":"string[]","positive":["note"]}
+        ]},
+        "rename": {"typeName":"V2DeployableReleaseRename","expectedOutcome":"resolved","fields":[
+          {"path":["releaseState"],"type":"\"ready\" | \"blocked\"","positive":"ready","negative":"blocked","condition":{"kind":"equals","value":"ready"}},
+          {"path":["revokedAt"],"type":"string | null","positive":null,"negative":"2026-03-01","condition":{"kind":"equals","value":null}},
+          {"path":["artifact","location"],"type":"string | null","positive":"https://example.test/build","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "representation": {"typeName":"V2DeployableReleaseRepresentation","expectedOutcome":"resolved","fields":[
+          {"path":["deployable"],"type":"boolean","positive":true,"negative":false,"condition":{"kind":"equals","value":true}},
+          {"path":["withdrawn"],"type":"boolean","positive":false,"negative":true,"condition":{"kind":"equals","value":false}},
+          {"path":["artifacts"],"type":"string[] | null","positive":["build.tgz"],"negative":null,"condition":{"kind":"present"}}
+        ]},
+        "optionality": {"typeName":"V2DeployableReleaseOptionality","expectedOutcome":"resolved","fields":[
+          {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready","negative":"blocked","condition":{"kind":"equals","value":"ready"}},
+          {"path":["withdrawnAt"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":null,"negative":"2026-03-01","condition":{"kind":"equals","value":null}},
+          {"path":["artifactUrl"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":"https://example.test/build","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "remove-role": {"typeName":"V2DeployableReleaseRemoveRole","expectedOutcome":"unresolved","fields":[
+          {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready"},
+          {"path":["withdrawnAt"],"type":"string | null","positive":null},
+          {"path":["version"],"type":"string","positive":"1.0.0"}
+        ]},
+        "ambiguity": {"typeName":"V2DeployableReleaseAmbiguity","expectedOutcome":"unresolved","fields":[
+          {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready"},
+          {"path":["withdrawnAt"],"type":"string | null","positive":null},
+          {"path":["serverArtifactUrl"],"type":"string | null","positive":"server.tgz"},
+          {"path":["clientArtifactUrl"],"type":"string | null","positive":"client.tgz"}
+        ]}
+      }
+    },
+    {
+      "id": "benchmark.v2.course.enrollable",
+      "exportName": "V2EnrollableCourse",
+      "displayName": "Enrollable Course",
+      "specification": "A course that currently accepts enrollment. The supplied schema's authoritative admissions indicator is positive, no retirement or sunset marker represented by that schema is active, and a usable registration channel is present. Use only unambiguous semantic roles; if admissions, retirement, or registration roles require guessing, leave the concept unresolved.",
+      "baseline": {"typeName":"V2EnrollableCourseBaseline","expectedOutcome":"resolved","fields":[
+        {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+        {"path":["retiredAt"],"type":"string | null","positive":null,"negative":"2026-04-01","condition":{"kind":"equals","value":null}},
+        {"path":["registrationUrl"],"type":"string | null","positive":"https://example.test/enroll","negative":null,"condition":{"kind":"present"}}
+      ]},
+      "cases": {
+        "add-property": {"typeName":"V2EnrollableCourseAddProperty","expectedOutcome":"resolved","fields":[
+          {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["retiredAt"],"type":"string | null","positive":null,"negative":"2026-04-01","condition":{"kind":"equals","value":null}},
+          {"path":["registrationUrl"],"type":"string | null","positive":"https://example.test/enroll","negative":null,"condition":{"kind":"present"}},
+          {"path":["tags"],"type":"string[]","positive":["typescript"]}
+        ]},
+        "rename": {"typeName":"V2EnrollableCourseRename","expectedOutcome":"resolved","fields":[
+          {"path":["admissions","status"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["sunsetAt"],"type":"string | null","positive":null,"negative":"2026-04-01","condition":{"kind":"equals","value":null}},
+          {"path":["enrollment","link"],"type":"string | null","positive":"https://example.test/enroll","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "representation": {"typeName":"V2EnrollableCourseRepresentation","expectedOutcome":"resolved","fields":[
+          {"path":["acceptsEnrollment"],"type":"boolean","positive":true,"negative":false,"condition":{"kind":"equals","value":true}},
+          {"path":["retired"],"type":"boolean","positive":false,"negative":true,"condition":{"kind":"equals","value":false}},
+          {"path":["enrollmentChannels"],"type":"string[] | null","positive":["web"],"negative":null,"condition":{"kind":"present"}}
+        ]},
+        "optionality": {"typeName":"V2EnrollableCourseOptionality","expectedOutcome":"resolved","fields":[
+          {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
+          {"path":["retiredAt"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":null,"negative":"2026-04-01","condition":{"kind":"equals","value":null}},
+          {"path":["registrationUrl"],"type":"string | null","optional":true,"omitWhenNegative":true,"positive":"https://example.test/enroll","negative":null,"condition":{"kind":"present"}}
+        ]},
+        "remove-role": {"typeName":"V2EnrollableCourseRemoveRole","expectedOutcome":"unresolved","fields":[
+          {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open"},
+          {"path":["retiredAt"],"type":"string | null","positive":null},
+          {"path":["title"],"type":"string","positive":"Type Systems"}
+        ]},
+        "ambiguity": {"typeName":"V2EnrollableCourseAmbiguity","expectedOutcome":"unresolved","fields":[
+          {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open"},
+          {"path":["retiredAt"],"type":"string | null","positive":null},
+          {"path":["studentRegistrationUrl"],"type":"string | null","positive":"student"},
+          {"path":["auditorRegistrationUrl"],"type":"string | null","positive":"auditor"}
+        ]}
+      }
+    }
+  ]
+}

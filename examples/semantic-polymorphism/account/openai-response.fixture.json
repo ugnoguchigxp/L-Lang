@@ -1,0 +1,24 @@
+{
+  "id": "resp_fixture_polymorphism_account",
+  "model": "gpt-5.4-mini",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"enabled\"],\"value\":true},{\"kind\":\"equals\",\"property\":[\"blockedAt\"],\"value\":null},{\"kind\":\"present\",\"property\":[\"contactAddress\"]}]},\"diagnostics\":[]}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 200,
+    "output_tokens": 80,
+    "total_tokens": 280
+  }
+}

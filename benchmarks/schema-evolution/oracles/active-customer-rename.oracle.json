@@ -1,0 +1,1 @@
+{"version":1,"expectedOutcome":"resolved","expectedClassification":"compatible","body":{"kind":"all","conditions":[{"kind":"equals","property":["lifecycle"],"value":"active"},{"kind":"equals","property":["removedAt"],"value":null},{"kind":"present","property":["contactAddress"]}]}}

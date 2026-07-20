@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "instructions": "A human participant should perform both the manual predicate task and the semantic-source task from the frozen concept and schema without viewing oracle files, then record elapsed milliseconds. Null means not measured and must not be estimated.",
+  "entries": {
+    "active-customer-record": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null },
+    "active-service-account": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null },
+    "shippable-commerce-order": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null },
+    "shippable-fulfillment-request": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null },
+    "publishable-editorial-article": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null },
+    "publishable-content-record": { "manualAuthoringMs": null, "manualReviewMs": null, "semanticAuthoringMs": null, "semanticReviewMs": null }
+  }
+}
