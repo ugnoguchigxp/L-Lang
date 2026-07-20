@@ -11,6 +11,13 @@ export function renderInterpretedJudgement(input: {
   ].join("\n");
 }
 
+export function renderInterpretedExpression(input: {
+  parameterName: string;
+  expression: PredicateExpression;
+}): string {
+  return renderExpression(input.expression, input.parameterName, 0).join("\n");
+}
+
 export function renderSemanticTestModule(input: {
   candidateModuleName: string;
   predicateName: string;

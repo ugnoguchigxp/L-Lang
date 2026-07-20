@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import {
   mkdir,
   readFile,
@@ -6,9 +6,17 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { dirname, relative, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 import type { SemanticCommandRunner } from "./semantic-compiler";
+import {
+  fingerprintFor,
+  generatedOutputPath,
+  sha256,
+  staticJudgmentRequestShape,
+  staticJudgmentSemanticHashes,
+  workspaceRelativePath,
+} from "./semantic-fingerprint";
 import {
   findStaticJudgmentReplayEntry,
   readSemanticLock,
@@ -63,42 +71,24 @@ export type StaticJudgmentCompileResult = {
   generatedCodeHash: string;
 };
 
-type JudgmentHashes = {
-  conceptHash: string;
-  valueHash: string;
-  promptHash: string;
-};
-
 export async function compileStaticJudgmentSource(
   options: StaticJudgmentCompileOptions,
 ): Promise<StaticJudgmentCompileResult> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanStaticJudgmentSource(options.sourcePath);
-  const sourceRelative = normalizePath(relative(workspaceRoot, source.absolutePath));
-  if (sourceRelative.startsWith("../")) {
-    throw new Error("Static Judgment source must be inside the workspace root");
-  }
-  const conceptSource = normalizePath(
-    relative(workspaceRoot, source.concept.definitionPath),
+  const sourceRelative = workspaceRelativePath(
+    workspaceRoot,
+    source.absolutePath,
+    "Static Judgment source",
   );
-  if (conceptSource.startsWith("../")) {
-    throw new Error("Static Judgment Concept must be inside the workspace root");
-  }
+  const conceptSource = workspaceRelativePath(
+    workspaceRoot,
+    source.concept.definitionPath,
+    "Static Judgment Concept",
+  );
 
-  const requestShape = {
-    conceptId: source.concept.id,
-    conceptSpecification: source.concept.specification,
-    staticValue: source.value.text,
-    judgmentName: source.judgment.name,
-  };
-  const hashes: JudgmentHashes = {
-    conceptHash: source.concept.hash,
-    valueHash: sha256(source.value.text),
-    promptHash: sha256(stableJson({
-      version: STATIC_JUDGMENT_PROMPT_VERSION,
-      ...requestShape,
-    })),
-  };
+  const requestShape = staticJudgmentRequestShape(source);
+  const hashes = staticJudgmentSemanticHashes(source);
 
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
   const lock = await readSemanticLock(lockPath);
@@ -189,8 +179,8 @@ export async function compileStaticJudgmentSource(
   await writeJson(resolve(auditDirectory, "judgment.json"), resolution.judgment);
 
   const sourceDirectory = dirname(source.absolutePath);
-  const outputStem = kebabCase(source.judgment.name);
-  const finalPath = resolve(sourceDirectory, `${outputStem}.generated.ts`);
+  const finalPath = generatedOutputPath(source.absolutePath, source.judgment.name);
+  const outputStem = basename(finalPath, ".generated.ts");
   const candidatePath = resolve(
     sourceDirectory,
     `.${outputStem}.${runId}.candidate.ts`,
@@ -297,7 +287,7 @@ export async function compileStaticJudgmentSource(
       status: "passed",
       stage: "complete",
       source: sourceRelative,
-      output: normalizePath(relative(workspaceRoot, finalPath)),
+      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
       judgment: source.judgment.name,
       resolvedValue: resolution.judgment.value,
       provider,
@@ -315,8 +305,8 @@ export async function compileStaticJudgmentSource(
     return {
       status: "passed",
       source: sourceRelative,
-      output: normalizePath(relative(workspaceRoot, finalPath)),
-      report: normalizePath(relative(workspaceRoot, reportPath)),
+      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
       fingerprint,
       provider,
       model,
@@ -411,37 +401,6 @@ async function restoreFinal(
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function fingerprintFor(input: object): string {
-  return sha256(stableJson(input));
-}
-
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (typeof value === "object" && value !== null) {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
-function sha256(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function kebabCase(value: string): string {
-  return value
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replaceAll("_", "-")
-    .toLowerCase();
-}
-
-function normalizePath(value: string): string {
-  return value.replaceAll("\\", "/");
 }
 
 function responseMetadata(response: OpenAIResult | null): object | null {

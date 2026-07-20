@@ -2,7 +2,7 @@
 
 作成日: 2026-07-20
 
-状態: **実装着手可能**
+状態: **実装完了**
 
 ## 目的
 
@@ -456,3 +456,16 @@ Closureへ進む前に、explainが次の状態を安定して区別できるこ
 - generated integrity error
 
 このstatusモデルをClosure nodeの基礎として再利用するが、graph実装自体は今回の範囲へ含めない。
+
+## 実装結果
+
+2026-07-20にPhase 0からPhase 4まで完了した。
+
+- `bun run typecheck`: 成功
+- `bun test`: `72 pass / 0 fail`
+- Predicate replay: API calls 0、cache hit、生成hash `b8bb73c0f5c4c474a78e0a703a9f39340923cef2b02db51195d8f4d0235dc57e`
+- Static Judgment replay: API calls 0、cache hit、生成hash `0bfeae824fa34edcea530ac01533f5773133302bf9819452e573217a18a98bab`
+- Predicate / Static Judgmentのtext・JSON explain: ともに`current`、generated integrity `verified`
+- explain実行前後で`semantic.lock`、両生成物、`.semantic/` file set/hash、v2 `benchmark.json` / `freeze.json`が不変
+
+2026-07-21のコードレビューで、生成物integrityをUTF-8文字列ではなく実バイト列のSHA-256へ修正し、`.semantic/`未作成環境の統合テスト、未知CLI optionの拒否、Static Judgmentの`result:`表示を追加した。

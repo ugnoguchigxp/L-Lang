@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  findLatestPredicateEntry,
+  findLatestStaticJudgmentEntry,
   findReplayEntry,
   findStaticJudgmentReplayEntry,
   type SemanticLockEntry,
@@ -90,5 +92,41 @@ describe("semantic lock", () => {
       }),
     ).toBeUndefined();
     expect(lock.entries[entry.fingerprint]).toEqual(entry);
+  });
+
+  test("finds the latest historical entry within each namespace", () => {
+    const olderEntry = { ...entry, fingerprint: "older", createdAt: "2026-07-19T00:00:00.000Z" };
+    const newerEntry = { ...entry, fingerprint: "newer", createdAt: "2026-07-21T00:00:00.000Z" };
+    const olderJudgment = {
+      ...judgment,
+      fingerprint: "older-judgment",
+      createdAt: "2026-07-19T00:00:00.000Z",
+    };
+    const newerJudgment = {
+      ...judgment,
+      fingerprint: "newer-judgment",
+      createdAt: "2026-07-21T00:00:00.000Z",
+    };
+    const lock = {
+      version: 1 as const,
+      entries: { older: olderEntry, newer: newerEntry },
+      judgments: {
+        older: olderJudgment,
+        newer: newerJudgment,
+      },
+    };
+
+    expect(
+      findLatestPredicateEntry(lock, {
+        source: entry.source,
+        predicate: entry.predicate,
+      }),
+    ).toEqual(newerEntry);
+    expect(
+      findLatestStaticJudgmentEntry(lock, {
+        source: judgment.source,
+        judgment: judgment.judgment,
+      }),
+    ).toEqual(newerJudgment);
   });
 });

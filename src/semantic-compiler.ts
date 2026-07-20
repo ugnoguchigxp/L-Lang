@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import {
   mkdir,
   readFile,
@@ -10,7 +10,6 @@ import {
   basename,
   dirname,
   extname,
-  relative,
   resolve,
 } from "node:path";
 
@@ -27,10 +26,17 @@ import {
 } from "./ir";
 import {
   buildOpenAIRequest,
-  PREDICATE_PROMPT_VERSION,
   type ElaborationResult,
   type OpenAIResult,
 } from "./openai";
+import {
+  fingerprintFor,
+  generatedOutputPath,
+  predicateRequestShape,
+  predicateSemanticHashes,
+  sha256,
+  workspaceRelativePath,
+} from "./semantic-fingerprint";
 import {
   findReplayEntry,
   readSemanticLock,
@@ -84,59 +90,25 @@ export type SemanticCompileResult = {
   generatedCodeHash: string;
 };
 
-type Hashes = {
-  conceptHash: string;
-  sourceHash: string;
-  typeHash: string;
-  testHash: string;
-  promptHash: string;
-};
-
 export async function compileSemanticSource(
   options: SemanticCompileOptions,
 ): Promise<SemanticCompileResult> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanSemanticSource(options.sourcePath);
-  const sourceRelative = normalizePath(relative(workspaceRoot, source.absolutePath));
-  if (sourceRelative.startsWith("../")) {
-    throw new Error("semantic source must be inside the workspace root");
-  }
+  const sourceRelative = workspaceRelativePath(
+    workspaceRoot,
+    source.absolutePath,
+    "semantic source",
+  );
 
   const importModule = `./${basename(source.absolutePath, extname(source.absolutePath))}`;
-  const conceptSource = normalizePath(
-    relative(workspaceRoot, source.concept.definitionPath),
+  const conceptSource = workspaceRelativePath(
+    workspaceRoot,
+    source.concept.definitionPath,
+    "concept definition",
   );
-  if (conceptSource.startsWith("../")) {
-    throw new Error("concept definition must be inside the workspace root");
-  }
-  const requestShape = {
-    specification: source.concept.specification,
-    typeScriptSource: source.concept.typeDeclaration,
-    target: {
-      functionName: source.predicate.name,
-      parameterName: source.predicate.parameterName,
-      typeName: source.concept.typeName,
-    },
-  };
-  const hashes: Hashes = {
-    conceptHash: source.concept.hash,
-    sourceHash: sha256(source.sourceText),
-    typeHash: sha256(
-      stableJson({
-        declaration: source.concept.typeDeclaration,
-        schema: source.concept.typeSchema,
-      }),
-    ),
-    testHash: sha256(
-      stableJson({
-        accept: source.tests.acceptSource,
-        reject: source.tests.rejectSource,
-      }),
-    ),
-    promptHash: sha256(
-      stableJson({ version: PREDICATE_PROMPT_VERSION, ...requestShape }),
-    ),
-  };
+  const requestShape = predicateRequestShape(source);
+  const hashes = predicateSemanticHashes(source);
 
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
   const lock = await readSemanticLock(lockPath);
@@ -230,8 +202,11 @@ export async function compileSemanticSource(
   await writeJson(resolve(auditDirectory, "response.output.json"), resolution.rawOutput);
 
   const sourceDirectory = dirname(source.absolutePath);
-  const outputStem = kebabCase(source.predicate.name);
-  const finalPath = resolve(sourceDirectory, `${outputStem}.generated.ts`);
+  const outputStem = basename(
+    generatedOutputPath(source.absolutePath, source.predicate.name),
+    ".generated.ts",
+  );
+  const finalPath = generatedOutputPath(source.absolutePath, source.predicate.name);
   const candidatePath = resolve(sourceDirectory, `.${outputStem}.${runId}.candidate.ts`);
   const candidateTestPath = resolve(
     sourceDirectory,
@@ -370,7 +345,7 @@ export async function compileSemanticSource(
       status: "passed",
       stage: "complete",
       source: sourceRelative,
-      output: normalizePath(relative(workspaceRoot, finalPath)),
+      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
       provider,
       model,
       response: responseMetadata(resolution.response),
@@ -386,8 +361,8 @@ export async function compileSemanticSource(
     return {
       status: "passed",
       source: sourceRelative,
-      output: normalizePath(relative(workspaceRoot, finalPath)),
-      report: normalizePath(relative(workspaceRoot, reportPath)),
+      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
       fingerprint,
       provider,
       model,
@@ -473,37 +448,6 @@ async function restoreFinal(path: string, previous: string | undefined): Promise
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function fingerprintFor(input: object): string {
-  return sha256(stableJson(input));
-}
-
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (typeof value === "object" && value !== null) {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
-function sha256(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function kebabCase(value: string): string {
-  return value
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replaceAll("_", "-")
-    .toLowerCase();
-}
-
-function normalizePath(value: string): string {
-  return value.replaceAll("\\", "/");
 }
 
 function responseMetadata(response: OpenAIResult | null): object | null {

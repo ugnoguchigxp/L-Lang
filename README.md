@@ -31,7 +31,7 @@ L-Lang:
 
 - Bun 1.3以降
 - live実行時のみOpenAI APIまたはAzure OpenAI API key
-- fixtureテストとlock replayにはAPI key不要
+- fixtureテスト、lock replay、`semantic explain`にはAPI key不要
 
 ## クイックスタート
 
@@ -62,6 +62,16 @@ Static JudgmentをAPIなしのfixtureで定数化し、lockから再現する場
 ```bash
 bun run semantic:judgment:fixture
 bun run semantic:judgment:replay
+```
+
+lock済みのPredicateまたはStatic JudgmentをAPIなし・読み取り専用で説明する場合:
+
+```bash
+bun run semantic explain examples/active-customer/semantic.ts
+bun run semantic explain examples/static-judgment/semantic.ts
+
+# 機械可読なpretty JSON
+bun run semantic explain examples/active-customer/semantic.ts --json
 ```
 
 解釈された判定と、各ケースの入力・期待値・実際の判定を表示する場合:
@@ -120,6 +130,23 @@ Static JudgmentのMVPは、1 sourceにつき1つの`staticValue`と`judgeStatic`
 
 判断結果は`semantic.lock`の`judgments`へ保存されます。Concept、Static値、Prompt versionが一致する場合、`semantic replay`はAPIやresolverを使わず同じ生成コードhashを再現します。監査ログは`.semantic/judgments/`へ保存されます。
 
+## Semantic Explain
+
+`semantic explain`は現在のSemantic source、`semantic.lock`、生成済みTypeScriptだけを読み、PredicateとStatic Judgmentを同じコマンドで説明します。新しい意味判断、API呼び出し、resolver実行、build/replay、lock更新、audit作成は行いません。
+
+出力には、Concept ID・hash・source、判断対象の型またはStatic value hash、lockに保存されたPredicate IRまたはboolean、provider/model・response metadata・作成日時、lock fingerprint、生成物の期待hash・実hashを含みます。filesystem pathはworkspace相対です。Static value本文、Concept specification全文、raw model response、人間承認の推測は含めません。
+
+statusは次の4種類です。
+
+| status | 意味 |
+| --- | --- |
+| `current` | 現在の入力と一致するlock entryがあり、生成物hashも一致する |
+| `stale` | 同じsource / symbolの履歴はあるが、Concept・Source・Type・Test・Static value・Promptのいずれかのhashが異なる |
+| `unlocked` | 同じsource / symbolのlock entryがない |
+| `integrity-error` | currentなlock entryはあるが、生成物が欠損またはhash不一致 |
+
+`stale`と`unlocked`は観測結果として正常に出力します。`integrity-error`も説明データを返し、text出力では生成物整合性を`ERROR`として明示します。現在はCI用の`--strict`やstatus別exit codeは提供しません。`--fixture`は受理しません。
+
 ## コンパイル手順
 
 1. 1 concept / 1 predicate / 1 semanticTestの閉包を検証
@@ -133,7 +160,7 @@ Static JudgmentのMVPは、1 sourceにつき1つの`staticValue`と`judgeStatic`
 
 ## 現在の制限
 
-Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度、Consensus、diff/approveは未実装です。複数concept、任意関数、LSP、自動修復、実行時LLM呼び出しは対象外です。
+Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度、Consensus、diff/approveは未実装です。`semantic explain`は1 source / 1 symbolの説明に限定し、複数nodeのClosure graphや自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
 
 ## 接続設定
 

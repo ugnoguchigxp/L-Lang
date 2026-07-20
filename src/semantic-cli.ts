@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 
 import { compileSemanticSource, type SemanticResolution } from "./semantic-compiler";
+import { explainSemanticSource } from "./semantic-explain";
+import { renderSemanticExplanation } from "./semantic-explain-renderer";
 import { detectSemanticSourceKind } from "./semantic-source-kind";
 import { renderSemanticDiff } from "./semantic-diff";
 import {
@@ -28,7 +30,7 @@ import {
 async function main(): Promise<void> {
   const [command, target, ...options] = Bun.argv.slice(2);
   if (
-    !["build", "replay", "test", "check", "diff", "approve"].includes(
+    !["build", "replay", "test", "check", "diff", "approve", "explain"].includes(
       command ?? "",
     ) ||
     target === undefined
@@ -38,15 +40,33 @@ async function main(): Promise<void> {
         "Usage:",
         "  bun run semantic <build|replay|test> <semantic-source.ts> [--fixture <response.json>]",
         "  bun run semantic check <semantic-source.ts> [--fixture <response.json>] [--samples 3 --quorum 2]",
+        "  bun run semantic explain <semantic-source.ts> [--json]",
         "  bun run semantic diff <candidate-id>",
         "  bun run semantic approve <candidate-id>",
       ].join("\n"),
     );
   }
 
+  if (command === "explain") {
+    validateExplainOptions(options);
+    const jsonOutput = options.includes("--json");
+    const explanation = await explainSemanticSource({
+      sourcePath: resolve(target),
+    });
+    console.log(
+      jsonOutput
+        ? JSON.stringify(explanation, null, 2)
+        : renderSemanticExplanation(explanation),
+    );
+    return;
+  }
+
   const fixturePath = readOption(options, "--fixture");
   if (command !== "build" && command !== "check" && fixturePath !== undefined) {
     throw new Error(`${command} does not accept --fixture and never calls an API`);
+  }
+  if (options.includes("--json")) {
+    throw new Error(`${command} does not accept --json`);
   }
 
   if (command === "diff") {
@@ -273,6 +293,15 @@ function readOption(options: string[], name: string): string | undefined {
   const value = options[index + 1];
   if (value === undefined) throw new Error(`${name} requires a value`);
   return value;
+}
+
+function validateExplainOptions(options: string[]): void {
+  const unsupported = options.find((option) => option !== "--json");
+  if (unsupported === undefined) return;
+  if (unsupported === "--fixture") {
+    throw new Error("explain does not accept --fixture and never calls an API");
+  }
+  throw new Error(`explain does not accept ${unsupported}`);
 }
 
 function readIntegerOption(options: string[], name: string, fallback: number): number {

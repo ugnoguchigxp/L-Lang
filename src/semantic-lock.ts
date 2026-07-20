@@ -119,6 +119,36 @@ export function findStaticJudgmentReplayEntry(
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
 
+export function findLatestPredicateEntry(
+  lock: SemanticLock,
+  match: Pick<SemanticLockEntry, "source" | "predicate">,
+): SemanticLockEntry | undefined {
+  return newestEntry(
+    Object.values(lock.entries).filter(
+      (entry) =>
+        entry.source === match.source && entry.predicate === match.predicate,
+    ),
+  );
+}
+
+export function findLatestStaticJudgmentEntry(
+  lock: SemanticLock,
+  match: Pick<StaticJudgmentLockEntry, "source" | "judgment">,
+): StaticJudgmentLockEntry | undefined {
+  return newestEntry(
+    Object.values(lock.judgments ?? {}).filter(
+      (entry) =>
+        entry.source === match.source && entry.judgment === match.judgment,
+    ),
+  );
+}
+
+function newestEntry<T extends { createdAt: string }>(entries: T[]): T | undefined {
+  return entries.sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  )[0];
+}
+
 function parseSemanticLock(input: unknown): SemanticLock {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error("semantic.lock must be an object");

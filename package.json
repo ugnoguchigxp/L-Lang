@@ -12,6 +12,8 @@
     "semantic:test:account-schema": "bun run semantic test examples/semantic-polymorphism/account/semantic.ts",
     "semantic:judgment:fixture": "bun run semantic build examples/static-judgment/semantic.ts --fixture examples/static-judgment/openai-response.true.fixture.json",
     "semantic:judgment:replay": "bun run semantic replay examples/static-judgment/semantic.ts",
+    "semantic:explain": "bun run semantic explain examples/active-customer/semantic.ts",
+    "semantic:judgment:explain": "bun run semantic explain examples/static-judgment/semantic.ts",
     "benchmark:cross-schema": "bun run src/cross-schema-benchmark-cli.ts benchmarks/cross-schema/benchmark.json",
     "benchmark:schema-evolution": "bun run src/schema-evolution-benchmark-cli.ts benchmarks/schema-evolution/benchmark.json",
     "benchmark:schema-evolution:v2": "bun run src/schema-evolution-v2-cli.ts benchmarks/schema-evolution-v2/benchmark.json",
