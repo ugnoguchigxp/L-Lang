@@ -1,7 +1,7 @@
 {
   "name": "staged-semantic-typescript-mvp",
   "version": "0.0.0",
-  "description": "An experimental staged semantic TypeScript compiler that elaborates natural-language concepts into deterministic predicate code.",
+  "description": "Write meaning once and compile it into context-specific, deterministic TypeScript with LLM flexibility at build time.",
   "license": "MIT",
   "private": true,
   "type": "module",

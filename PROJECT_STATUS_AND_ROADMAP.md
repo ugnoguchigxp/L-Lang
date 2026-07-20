@@ -141,16 +141,19 @@ v2はv1の結果を見てConceptを書き換える評価ではなく、新規入
 
 ### 現在の停止位置
 
-実装とfixture検証は完了している。入力はdraftとして凍結され、API実行前ガードが有効である。
+実装とfixture検証は完了している。入力はdraftとして凍結され、API実行前ガードが有効である。ただし、モデル出力取得前の事前確認でConcept、Oracle、fixture境界の対応に局所Blockerが見つかったため、v2の人間承認とlive実行は保留している。
 
+- Blocker記録: [`benchmarks/schema-evolution-v2/BLOCKER.md`](./benchmarks/schema-evolution-v2/BLOCKER.md)
 - Review手順: [`benchmarks/schema-evolution-v2/REVIEW.md`](./benchmarks/schema-evolution-v2/REVIEW.md)
 - 凍結入力: [`benchmarks/schema-evolution-v2/benchmark.json`](./benchmarks/schema-evolution-v2/benchmark.json)
 - Review metadata: [`benchmarks/schema-evolution-v2/freeze.json`](./benchmarks/schema-evolution-v2/freeze.json)
 - 凍結SHA-256: `1062aec2076994b6a74df1d5b8acb294d82d85be7cf7cf74be5be767071a3aa0`
 
-独立レビュー前にAPIを実行してはならない。レビュー結果を見て`benchmark.json`、期待条件、positive/negative値を変更してはならない。
+Blocker解消と独立レビューの前にAPIを実行してはならない。既存v2の`benchmark.json`、期待条件、positive/negative値を変更して、同じv2を新規held-out evidenceとして再利用してはならない。
 
-## 次のセッションで行うこと
+このBlockerは、v2 live評価、Consensusの信頼性主張、Predicateの実プロジェクトPilotを停止する。Static Judgment、Semantic Test拡張、`semantic explain`、Semantic Closureの検証は停止しない。
+
+## v2対応を後日再開するときに行うこと
 
 ### 1. 人間によるv2入力レビュー
 
@@ -209,9 +212,9 @@ bun run benchmark:schema-evolution:v2
 
 ## 推奨ロードマップ
 
-### Gate 0: v2の独立レビューとlive実行 — 現在地
+### Gate 0: v2の独立レビューとlive実行 — Predicateトラックで保留中
 
-目的は、型付きConsensusが未知入力でも再現するか確認すること。ここを終えるまでは、新しいIRや生成対象を追加しない。
+目的は、型付きConsensusが未知入力でも再現するか確認すること。現在は[`BLOCKER.md`](./benchmarks/schema-evolution-v2/BLOCKER.md)に記録した評価設計上の問題により保留している。このGateはPredicateのlive評価、信頼性主張、Pilot移行を停止するが、原案の独立した未検証領域であるStatic Judgment、Semantic Test拡張、`semantic explain`、Semantic Closureの検証は停止しない。
 
 完了条件:
 

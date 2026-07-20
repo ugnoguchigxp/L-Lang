@@ -2,11 +2,30 @@
 
 [English](./README.en.md) | [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) | [Contributing](./CONTRIBUTING.md) | [MIT License](./LICENSE)
 
-TypeScript内の意味記述を、OpenAI APIで制限Predicate IRへ解決し、通常のTypeScript関数へ安全に昇格する検証用コンパイラです。実行時の生成コードはLLMやDSLに依存しません。
+> **意味を一度書く。環境ごとのStaticなロジックへコンパイルする。**<br>
+> LLMの柔軟さをコンパイル時に、TypeScriptの確実さを実行時に。
+
+L-Langは、LLMを実行時のエージェントではなく、**コンパイル時の柔軟な意味判定器**として使うTypeScript DSLです。人間は「何を満たすべきか」というConcept、Goal、Constraintを抽象的に記述し、LLMが対象の型・環境・要件に合わせて制限IRへ具体化します。コンパイラはそのIRを型検査とテストで検証し、通常のStaticなTypeScriptとして固定します。
+
+従来のプログラムが、個別環境に合わせたロジックそのものを実装資産としてきたのに対し、L-Langは**意味と意図を再利用可能な実装資産にする**ことを目指します。同じ抽象的な定義から、プロジェクトごとに異なる型、命名、表現へ適応した決定的ロジックを生成します。実行時の生成コードはLLMやDSLに依存しません。
 
 > Status: 研究・検証段階のMVPです。現在の生成対象はpureなBoolean Predicateに限定されています。生成候補を無条件に本番コードとして扱わないでください。
 
 現在地、原案との対応状況、未実装領域、次の評価手順は[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)にまとめています。
+
+## L-Langが目指すもの
+
+```text
+従来:
+  環境ごとのStaticなロジックを人間が直接実装し、コードを再利用する
+
+L-Lang:
+  意味・目的・制約を人間が定義し、
+  LLMがコンパイル時に環境へ適応させ、
+  検証済みのStaticなTypeScriptとして固定する
+```
+
+これは自然言語をそのまま実行する仕組みではありません。LLMの判断はbuild/check時にだけ使用され、制限IR、型検査、Semantic Test、人間承認を通過した決定的コードだけがruntimeへ進みます。
 
 ## 必要環境
 
@@ -211,7 +230,7 @@ v2はv1で使用したConceptと型を再利用しないheld-out評価です。A
 
 入力、期待条件、hidden case用のpositive/negative値は`benchmarks/schema-evolution-v2/benchmark.json`へ集約し、そのSHA-256を`freeze.json`で固定します。実行時に一時TypeScriptソースへ展開しますが、モデルにはConceptと対象型だけを送り、conditionやfixture値は送りません。
 
-現在のv2は意図的にdraftです。`benchmarks/schema-evolution-v2/REVIEW.md`に従って独立レビューし、`freeze.json`のレビュー情報だけを更新した後に実行します。
+現在のv2はdraftであり、評価設計上の局所Blockerにより人間承認とlive実行を保留しています。`benchmarks/schema-evolution-v2/BLOCKER.md`に問題、影響範囲、禁止事項、再開条件を記録しています。Blockerが解消するまで`freeze.json`を承認状態へ変更せず、live benchmarkを実行しないでください。
 
 ```bash
 bun run benchmark:schema-evolution:v2

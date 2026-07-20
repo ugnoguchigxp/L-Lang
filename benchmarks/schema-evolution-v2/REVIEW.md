@@ -1,5 +1,10 @@
 # Blind Schema Evolution v2 review
 
+> **Status: blocked before human approval.** Do not change `freeze.json` to
+> `human-reviewed` and do not run the live benchmark. See
+> [`BLOCKER.md`](./BLOCKER.md) for the recorded evaluation-design issues and
+> resume conditions.
+
 This held-out benchmark is independent from v1. Do not use model output while reviewing or alter `benchmark.json` after approval.
 
 ## What is frozen

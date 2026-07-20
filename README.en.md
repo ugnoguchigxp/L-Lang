@@ -2,9 +2,28 @@
 
 [日本語](./README.md) | [Project status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md) | [Contributing](./CONTRIBUTING.md) | [MIT License](./LICENSE)
 
-L-Lang is an experimental compiler that elaborates natural-language concepts embedded in TypeScript into a restricted Predicate IR and then generates deterministic TypeScript. The LLM is used at build time only; generated runtime code has no LLM or DSL dependency.
+> **Write the meaning once. Compile it into static logic for every context.**<br>
+> LLM flexibility at compile time. TypeScript certainty at runtime.
+
+L-Lang is a TypeScript DSL that treats an LLM not as a runtime agent, but as a **flexible compile-time semantic judge**. Developers describe what must hold as abstract Concepts, Goals, and Constraints. The LLM elaborates that intent against the target types, environment, and requirements into a restricted IR. The compiler validates the IR with type checking and semantic tests, then freezes it as ordinary static TypeScript.
+
+Traditional software treats environment-specific logic as the primary implementation asset. L-Lang aims to make **meaning and intent the reusable implementation asset**: one abstract definition can be adapted into different deterministic logic for different schemas, names, and representations. Generated runtime code has no LLM or DSL dependency.
 
 > Status: research MVP. The current implementation generates pure Boolean predicates only. Do not treat generated candidates as trusted production code without review.
+
+## What L-Lang is trying to change
+
+```text
+Traditional:
+  Humans implement static logic for each environment and reuse the code.
+
+L-Lang:
+  Humans define meaning, goals, and constraints.
+  An LLM adapts them to the environment at compile time.
+  The compiler freezes the result as validated static TypeScript.
+```
+
+L-Lang does not execute natural language directly. LLM judgement exists only during build/check; only restricted IR that passes validation, type checking, semantic tests, and human approval reaches runtime.
 
 ## Core idea
 
