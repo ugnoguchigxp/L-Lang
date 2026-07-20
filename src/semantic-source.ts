@@ -259,7 +259,7 @@ export async function scanSemanticSource(
   };
 }
 
-function resolveConceptDefinition(
+export function resolveConceptDefinition(
   reference: ts.Identifier,
   checker: ts.TypeChecker,
   bindingSourceFile: ts.SourceFile,
@@ -471,12 +471,12 @@ export function hashConcept(id: string, specification: string): string {
     .digest("hex");
 }
 
-function sourceError(sourceFile: ts.SourceFile, node: ts.Node, message: string): SemanticSourceError {
+export function sourceError(sourceFile: ts.SourceFile, node: ts.Node, message: string): SemanticSourceError {
   const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
   return new SemanticSourceError(`${basename(sourceFile.fileName)}:${position.line + 1}:${position.character + 1}: ${message}`);
 }
 
-function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]): string {
+export function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]): string {
   return ts.formatDiagnosticsWithColorAndContext(diagnostics, {
     getCanonicalFileName: (fileName) => fileName,
     getCurrentDirectory: ts.sys.getCurrentDirectory,

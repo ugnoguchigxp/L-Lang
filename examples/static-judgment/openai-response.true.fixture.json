@@ -1,0 +1,24 @@
+{
+  "id": "resp_fixture_static_judgment_true",
+  "model": "gpt-5.4-mini",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"outcome\":\"resolved\",\"value\":true,\"diagnostics\":[]}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 120,
+    "output_tokens": 20,
+    "total_tokens": 140
+  }
+}

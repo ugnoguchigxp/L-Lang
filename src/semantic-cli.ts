@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 
 import { compileSemanticSource, type SemanticResolution } from "./semantic-compiler";
+import { detectSemanticSourceKind } from "./semantic-source-kind";
 import { renderSemanticDiff } from "./semantic-diff";
 import {
   approveSemanticEvolution,
@@ -15,6 +16,14 @@ import {
   parseOpenAIResponse,
   resolveOpenAIConnection,
 } from "./openai";
+import {
+  compileStaticJudgmentSource,
+  type StaticJudgmentCompilerResolution,
+} from "./static-judgment-compiler";
+import {
+  callStaticJudgmentOpenAI,
+  parseStaticJudgmentResolution,
+} from "./static-judgment";
 
 async function main(): Promise<void> {
   const [command, target, ...options] = Bun.argv.slice(2);
@@ -59,6 +68,86 @@ async function main(): Promise<void> {
         `classification: ${result.candidate.diff.classification}`,
         `output: ${result.output}`,
         `fingerprint: ${result.candidate.proposedFingerprint}`,
+      ].join("\n"),
+    );
+    return;
+  }
+
+  const resolvedTarget = resolve(target);
+  const sourceKind = await detectSemanticSourceKind(resolvedTarget);
+  if (sourceKind === "static-judgment") {
+    if (command !== "build" && command !== "replay") {
+      throw new Error(
+        `semantic ${command} does not support Static Judgment sources; use build or replay`,
+      );
+    }
+
+    let provider: string | undefined;
+    let model: string | undefined;
+    let countsAsApiCall: boolean | undefined;
+    let resolver: Parameters<typeof compileStaticJudgmentSource>[0]["resolve"];
+
+    if (command === "build" && fixturePath !== undefined) {
+      const absoluteFixture = resolve(fixturePath);
+      const fixturePayload = JSON.parse(
+        await readFile(absoluteFixture, "utf8"),
+      ) as unknown;
+      const fixtureResponse = parseOpenAIResponse(fixturePayload);
+      provider = `fixture:${basename(absoluteFixture)}`;
+      model = fixtureResponse.model;
+      countsAsApiCall = false;
+      resolver = async (): Promise<StaticJudgmentCompilerResolution> => ({
+        judgment: parseStaticJudgmentResolution(
+          JSON.parse(fixtureResponse.outputText) as unknown,
+        ),
+        response: fixtureResponse,
+        rawOutput: fixturePayload,
+      });
+    } else if (command === "build") {
+      model = process.env.OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL;
+      const connection = resolveOpenAIConnection({
+        apiKey: process.env.OPENAI_API_KEY ?? "",
+        baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
+      });
+      provider = connection.provider;
+      resolver = async (input): Promise<StaticJudgmentCompilerResolution> => {
+        if (connection.apiKey.length === 0) {
+          throw new Error(
+            "OPENAI_API_KEY is required on a Static Judgment lock miss",
+          );
+        }
+        const response = await callStaticJudgmentOpenAI(
+          { model: model!, ...input },
+          connection,
+        );
+        return {
+          judgment: parseStaticJudgmentResolution(
+            JSON.parse(response.outputText) as unknown,
+          ),
+          response,
+          rawOutput: JSON.parse(response.outputText) as unknown,
+        };
+      };
+    }
+
+    const result = await compileStaticJudgmentSource({
+      sourcePath: resolvedTarget,
+      mode: command,
+      ...(provider === undefined ? {} : { provider }),
+      ...(model === undefined ? {} : { model }),
+      ...(countsAsApiCall === undefined ? {} : { countsAsApiCall }),
+      ...(resolver === undefined ? {} : { resolve: resolver }),
+    });
+    console.log(
+      [
+        `Static Judgment ${command} passed`,
+        `judgment: ${result.resolvedValue}`,
+        `output: ${result.output}`,
+        `provider/model: ${result.provider}/${result.model}`,
+        `api calls: ${result.apiCalls}`,
+        `cache hit: ${result.cacheHit}`,
+        `sha256: ${result.generatedCodeHash}`,
+        `report: ${result.report}`,
       ].join("\n"),
     );
     return;
@@ -157,7 +246,7 @@ async function main(): Promise<void> {
   }
 
   const result = await compileSemanticSource({
-    sourcePath: resolve(target),
+    sourcePath: resolvedTarget,
     mode: command === "build" ? "build" : "replay",
     ...(provider === undefined ? {} : { provider }),
     ...(model === undefined ? {} : { model }),

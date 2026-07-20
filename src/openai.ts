@@ -194,10 +194,17 @@ export async function callOpenAI(
   requestInput: OpenAIRequestInput,
   connection: OpenAIConnection,
 ): Promise<OpenAIResult> {
+  return callResponsesApi(buildOpenAIRequest(requestInput), connection);
+}
+
+export async function callResponsesApi(
+  request: object,
+  connection: OpenAIConnection,
+): Promise<OpenAIResult> {
   const response = await fetch(`${connection.baseUrl}/responses`, {
     method: "POST",
     headers: buildAuthenticationHeaders(connection),
-    body: JSON.stringify(buildOpenAIRequest(requestInput)),
+    body: JSON.stringify(request),
     signal: AbortSignal.timeout(120_000),
   });
 

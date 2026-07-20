@@ -454,5 +454,30 @@
       },
       "createdAt": "2026-07-20T03:52:29.962Z"
     }
+  },
+  "judgments": {
+    "f87f36422a1f305662b344957f088bda49ac98605559c0ae15722001a8a6ff82": {
+      "fingerprint": "f87f36422a1f305662b344957f088bda49ac98605559c0ae15722001a8a6ff82",
+      "source": "examples/static-judgment/semantic.ts",
+      "judgment": "mikeIsCat",
+      "conceptId": "animal.cat",
+      "conceptHash": "a3eea5326ee057140772139a5d1cc41a4c3271b81f0c840ed4e3f62c30ff6405",
+      "valueHash": "3da60d12ec57478f33a58a2ec8628c5e29c43e90c1033d09ec4307917c043e48",
+      "promptHash": "6cb7df03060158ab3cf63794f7826964190e3d37e3b375d1aad0216a1ce49796",
+      "provider": "fixture:openai-response.true.fixture.json",
+      "model": "gpt-5.4-mini",
+      "resolvedValue": true,
+      "generatedCodeHash": "0bfeae824fa34edcea530ac01533f5773133302bf9819452e573217a18a98bab",
+      "response": {
+        "id": "resp_fixture_static_judgment_true",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 120,
+          "outputTokens": 20,
+          "totalTokens": 140
+        }
+      },
+      "createdAt": "2026-07-20T14:26:46.422Z"
+    }
   }
 }

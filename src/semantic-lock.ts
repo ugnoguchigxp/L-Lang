@@ -28,9 +28,30 @@ export type SemanticLockEntry = {
   createdAt: string;
 };
 
+export type StaticJudgmentLockEntry = {
+  fingerprint: string;
+  source: string;
+  judgment: string;
+  conceptId: string;
+  conceptHash: string;
+  valueHash: string;
+  promptHash: string;
+  provider: string;
+  model: string;
+  resolvedValue: boolean;
+  generatedCodeHash: string;
+  response: {
+    id: string;
+    model: string;
+    usage: OpenAIResult["usage"];
+  } | null;
+  createdAt: string;
+};
+
 export type SemanticLock = {
   version: 1;
   entries: Record<string, SemanticLockEntry>;
+  judgments?: Record<string, StaticJudgmentLockEntry>;
 };
 
 export async function readSemanticLock(path: string): Promise<SemanticLock> {
@@ -73,6 +94,31 @@ export function findReplayEntry(
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
 
+export function findStaticJudgmentReplayEntry(
+  lock: SemanticLock,
+  match: Pick<
+    StaticJudgmentLockEntry,
+    | "source"
+    | "judgment"
+    | "conceptId"
+    | "conceptHash"
+    | "valueHash"
+    | "promptHash"
+  >,
+): StaticJudgmentLockEntry | undefined {
+  return Object.values(lock.judgments ?? {})
+    .filter(
+      (entry) =>
+        entry.source === match.source &&
+        entry.judgment === match.judgment &&
+        entry.conceptId === match.conceptId &&
+        entry.conceptHash === match.conceptHash &&
+        entry.valueHash === match.valueHash &&
+        entry.promptHash === match.promptHash,
+    )
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+}
+
 function parseSemanticLock(input: unknown): SemanticLock {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error("semantic.lock must be an object");
@@ -80,6 +126,12 @@ function parseSemanticLock(input: unknown): SemanticLock {
   const value = input as Record<string, unknown>;
   if (value.version !== 1 || typeof value.entries !== "object" || value.entries === null) {
     throw new Error("semantic.lock must have version 1 and entries");
+  }
+  if (
+    value.judgments !== undefined &&
+    (typeof value.judgments !== "object" || value.judgments === null || Array.isArray(value.judgments))
+  ) {
+    throw new Error("semantic.lock judgments must be an object when present");
   }
   return input as SemanticLock;
 }

@@ -1,5 +1,6 @@
 declare const conceptInput: unique symbol;
 declare const conceptDefinitionBrand: unique symbol;
+declare const staticValueBrand: unique symbol;
 
 export type ConceptDefinition = {
   readonly [conceptDefinitionBrand]: true;
@@ -10,6 +11,10 @@ export type Concept<T> = {
 };
 
 export type Predicate<T> = (value: T) => boolean;
+
+export type StaticValue = {
+  readonly [staticValueBrand]: true;
+};
 
 function compileTimeOnly(name: string): never {
   throw new Error(`${name} is a semantic compiler form and cannot run directly`);
@@ -48,4 +53,15 @@ export function semanticTest<T>(
   },
 ): void {
   compileTimeOnly("semanticTest");
+}
+
+export function staticValue(_value: string): StaticValue {
+  return compileTimeOnly("staticValue");
+}
+
+export function judgeStatic(
+  _value: StaticValue,
+  _concept: ConceptDefinition,
+): boolean {
+  return compileTimeOnly("judgeStatic");
 }
