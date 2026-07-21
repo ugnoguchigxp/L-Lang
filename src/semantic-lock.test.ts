@@ -1,13 +1,26 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve } from "node:path";
 
 import {
   findLatestPredicateEntry,
   findLatestStaticJudgmentEntry,
   findReplayEntry,
   findStaticJudgmentReplayEntry,
+  readSemanticLock,
+  type SemanticLock,
   type SemanticLockEntry,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
+
+const temporaryRoots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(
+    temporaryRoots.splice(0).map((path) => rm(path, { recursive: true })),
+  );
+});
 
 const entry: SemanticLockEntry = {
   fingerprint: "fingerprint",
@@ -129,4 +142,114 @@ describe("semantic lock", () => {
       }),
     ).toEqual(newerJudgment);
   });
+
+  test("strictly parses valid Predicate and Static Judgment entries", async () => {
+    const lock = validLock();
+    const path = await writeTemporaryLock(lock);
+
+    expect(await readSemanticLock(path)).toEqual(lock);
+  });
+
+  test("rejects malformed entries instead of trusting the TypeScript cast", async () => {
+    const cases: Array<{ label: string; mutate: (lock: Record<string, any>) => void }> = [
+      {
+        label: "map key",
+        mutate: (lock) => {
+          firstEntry(lock.entries).fingerprint = "0".repeat(64);
+        },
+      },
+      {
+        label: "Predicate IR",
+        mutate: (lock) => {
+          firstEntry(lock.entries).resolvedIr = { kind: "execute" };
+        },
+      },
+      {
+        label: "Static Judgment boolean",
+        mutate: (lock) => {
+          firstEntry(lock.judgments).resolvedValue = "true";
+        },
+      },
+      {
+        label: "hash",
+        mutate: (lock) => {
+          firstEntry(lock.judgments).valueHash = "not-a-hash";
+        },
+      },
+      {
+        label: "timestamp",
+        mutate: (lock) => {
+          firstEntry(lock.entries).createdAt = "yesterday";
+        },
+      },
+      {
+        label: "invalid calendar timestamp",
+        mutate: (lock) => {
+          firstEntry(lock.entries).createdAt = "2026-02-30T00:00:00.000Z";
+        },
+      },
+      {
+        label: "response usage",
+        mutate: (lock) => {
+          firstEntry(lock.entries).response = {
+            id: "response",
+            model: "model",
+            usage: { inputTokens: -1, outputTokens: 0, totalTokens: 0 },
+          };
+        },
+      },
+    ];
+
+    for (const testCase of cases) {
+      const lock = structuredClone(validLock()) as unknown as Record<string, any>;
+      testCase.mutate(lock);
+      const path = await writeTemporaryLock(lock);
+      await expect(readSemanticLock(path)).rejects.toThrow();
+    }
+  });
 });
+
+function validLock(): SemanticLock {
+  const predicateEntry: SemanticLockEntry = {
+    ...entry,
+    fingerprint: "1".repeat(64),
+    conceptHash: "2".repeat(64),
+    sourceHash: "3".repeat(64),
+    typeHash: "4".repeat(64),
+    testHash: "5".repeat(64),
+    promptHash: "6".repeat(64),
+    generatedCodeHash: "7".repeat(64),
+  };
+  const judgmentEntry: StaticJudgmentLockEntry = {
+    ...judgment,
+    fingerprint: "8".repeat(64),
+    conceptHash: "9".repeat(64),
+    valueHash: "a".repeat(64),
+    promptHash: "b".repeat(64),
+    generatedCodeHash: "c".repeat(64),
+  };
+  return {
+    version: 1,
+    entries: { [predicateEntry.fingerprint]: predicateEntry },
+    judgments: { [judgmentEntry.fingerprint]: judgmentEntry },
+  };
+}
+
+async function writeTemporaryLock(lock: unknown): Promise<string> {
+  const root = await mkdtemp(resolve(tmpdir(), "semantic-lock-test-"));
+  temporaryRoots.push(root);
+  const path = resolve(root, "semantic.lock");
+  await writeFile(path, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+  return path;
+}
+
+function firstEntry(input: unknown): Record<string, any> {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error("expected entry record");
+  }
+  const entry = Object.values(input)[0];
+  if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+    throw new Error("expected first entry");
+  }
+  return entry as Record<string, any>;
+}

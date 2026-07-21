@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 
 import { compileSemanticSource, type SemanticResolution } from "./semantic-compiler";
+import { checkSemanticClosure } from "./semantic-closure";
+import { renderSemanticClosure } from "./semantic-closure-renderer";
 import { explainSemanticSource } from "./semantic-explain";
 import { renderSemanticExplanation } from "./semantic-explain-renderer";
 import { detectSemanticSourceKind } from "./semantic-source-kind";
@@ -30,9 +32,16 @@ import {
 async function main(): Promise<void> {
   const [command, target, ...options] = Bun.argv.slice(2);
   if (
-    !["build", "replay", "test", "check", "diff", "approve", "explain"].includes(
-      command ?? "",
-    ) ||
+    ![
+      "build",
+      "replay",
+      "test",
+      "check",
+      "diff",
+      "approve",
+      "explain",
+      "closure",
+    ].includes(command ?? "") ||
     target === undefined
   ) {
     throw new Error(
@@ -41,14 +50,29 @@ async function main(): Promise<void> {
         "  bun run semantic <build|replay|test> <semantic-source.ts> [--fixture <response.json>]",
         "  bun run semantic check <semantic-source.ts> [--fixture <response.json>] [--samples 3 --quorum 2]",
         "  bun run semantic explain <semantic-source.ts> [--json]",
+        "  bun run semantic closure <manifest.json> [--json]",
         "  bun run semantic diff <candidate-id>",
         "  bun run semantic approve <candidate-id>",
       ].join("\n"),
     );
   }
 
+  if (command === "closure") {
+    validateReadOnlyOptions(command, options);
+    const report = await checkSemanticClosure({
+      manifestPath: resolve(target),
+    });
+    console.log(
+      options.includes("--json")
+        ? JSON.stringify(report, null, 2)
+        : renderSemanticClosure(report),
+    );
+    if (report.status === "open") process.exitCode = 2;
+    return;
+  }
+
   if (command === "explain") {
-    validateExplainOptions(options);
+    validateReadOnlyOptions(command, options);
     const jsonOutput = options.includes("--json");
     const explanation = await explainSemanticSource({
       sourcePath: resolve(target),
@@ -295,13 +319,13 @@ function readOption(options: string[], name: string): string | undefined {
   return value;
 }
 
-function validateExplainOptions(options: string[]): void {
+function validateReadOnlyOptions(command: string, options: string[]): void {
   const unsupported = options.find((option) => option !== "--json");
   if (unsupported === undefined) return;
   if (unsupported === "--fixture") {
-    throw new Error("explain does not accept --fixture and never calls an API");
+    throw new Error(`${command} does not accept --fixture and never calls an API`);
   }
-  throw new Error(`explain does not accept ${unsupported}`);
+  throw new Error(`${command} does not accept ${unsupported}`);
 }
 
 function readIntegerOption(options: string[], name: string, fallback: number): number {

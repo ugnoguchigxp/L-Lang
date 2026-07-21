@@ -67,8 +67,8 @@ describe("semantic explain", () => {
     const fixture = await createPredicateFixture();
     const lock = JSON.parse(await readFile(fixture.lockPath, "utf8")) as SemanticLock;
     const entry = Object.values(lock.entries)[0]!;
-    entry.conceptHash = "older-concept";
-    entry.promptHash = "older-prompt";
+    entry.conceptHash = sha256("older-concept");
+    entry.promptHash = sha256("older-prompt");
     entry.provider = "different-provider";
     entry.model = "different-model";
     await writeLock(fixture.lockPath, lock);
@@ -155,17 +155,17 @@ describe("semantic explain", () => {
     const source = await scanSemanticSource(fixture.sourcePath);
     const hashes = predicateSemanticHashes(source);
     const judgment: StaticJudgmentLockEntry = {
-      fingerprint: "same-symbol-judgment",
+      fingerprint: sha256("same-symbol-judgment"),
       source: workspaceRelativePath(fixture.workspaceRoot, fixture.sourcePath, "source"),
       judgment: source.predicate.name,
       conceptId: source.concept.id,
       conceptHash: hashes.conceptHash,
-      valueHash: "value",
+      valueHash: sha256("value"),
       promptHash: hashes.promptHash,
       provider: "fixture",
       model: "model",
       resolvedValue: true,
-      generatedCodeHash: "generated",
+      generatedCodeHash: sha256("generated"),
       response: null,
       createdAt: "2026-07-20T00:00:00.000Z",
     };
@@ -200,7 +200,7 @@ async function createPredicateFixture(options: {
   const generatedPath = generatedOutputPath(sourcePath, source.predicate.name);
   const generated = options.generated;
   const entry: SemanticLockEntry = {
-    fingerprint: "predicate-lock",
+    fingerprint: sha256("predicate-lock"),
     source: "predicate/semantic.ts",
     concept: source.concept.name,
     conceptId: source.concept.id,
@@ -235,7 +235,7 @@ async function createStaticJudgmentFixture(options: {
   const generatedPath = generatedOutputPath(sourcePath, source.judgment.name);
   const generated = options.generated;
   const entry: StaticJudgmentLockEntry = {
-    fingerprint: "judgment-lock",
+    fingerprint: sha256("judgment-lock"),
     source: "judgment/semantic.ts",
     judgment: source.judgment.name,
     conceptId: source.concept.id,

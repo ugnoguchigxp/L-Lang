@@ -47,12 +47,12 @@ Predicateトラックでは、次の問いに答えるための信頼性検証�
 | Static Judgment | 最小縦切りを実装 | literalな`staticValue`、`judgeStatic`、boolean定数化、段階検査、audit、lock/replay、rollbackをfixtureで検証。live精度は未評価 |
 | Semantic Generation | Predicate限定で対応済み | `generatePredicate`からBoolean Predicate IRとTypeScriptを生成 |
 | Static / Generated / Runtimeの段階分離 | 一部対応 | LLMはbuild/check時だけ使用し、生成物にLLM呼び出しを残さない。Static Judgmentではliteral以外をresolver前に拒否。一般的なデータフロー段階解析は未実装 |
-| Semantic Closure | 単一Predicate単位で対応 | unresolved時の停止、IR検証、型検査、テスト、人間承認を実装。依存グラフ全体のClosure判定は未実装 |
+| Semantic Closure | artifact-level graphを実装 | 明示manifestの複数Predicate / Static Judgment、依存辺、cycle、stale / unlocked / integrity-errorをAPIなしで一括検査。人間承認provenanceと自動依存探索は未実装 |
 | Semantic IR | Boolean Predicate IRを実装 | `all`、`any`、`not`、`equals`、`present`に限定。自由なTypeScript生成は禁止 |
 | Semantic / Boundary / Exact Zone | 一部対応 | 生成候補、承認境界、手書きコードを分離。Port/Capability生成は未実装 |
 | Semantic Polymorphism | 実装・検証済み | 同一Conceptを異なるTypeScriptスキーマへ具体化できる |
 | Semantic Test | 基本形を実装 | `accept`と`reject`を実装。unknown、boundary、counterfactual、invariance、mutationは未実装 |
-| Semantic Lockfile | 実装済み | Predicate IRとStatic Judgment booleanを別namespaceで固定し、APIなしのreplayに対応 |
+| Semantic Lockfile | 実装済み | Predicate IRとStatic Judgment booleanを別namespaceで固定し、APIなしのreplayに対応。entry、hash、IR、boolean、response、日時を実行時に厳格検証 |
 | Explainability | Predicate / Static Judgmentで対応済み | 読み取り専用の`semantic explain`、text / JSON、current / stale / unlocked / integrity-error、lock provenanceと生成物hash検証を実装 |
 | Schema Evolution | 実装・評価中 | check/diff/approveトランザクション、型付き同値判定、ライブコンセンサスを実装 |
 | OpenAI Adapter | 実装済み | OpenAI Responses APIとAzure OpenAIに対応。既定モデルは`gpt-5.4-mini` |
@@ -87,11 +87,12 @@ Predicateトラックでは、次の問いに答えるための信頼性検証�
 ### 再現性と監査
 
 - `semantic.lock`
-- build / replay / test / check / diff / approve / explain
+- build / replay / test / check / diff / approve / explain / closure
 - 入力、モデル応答、IR、生成候補、diff、テスト結果のpretty JSON保存
 - Source、Concept、Type、Test、Prompt、生成コードのSHA-256検証
 - 生成コードとlockを変更しない読み取り専用Benchmark
 - source、lock、生成物だけから説明し、API・resolver・compiler transactionを呼ばない`semantic explain`
+- 明示manifestの複数node、依存辺、artifact statusを読み取り専用で一括検査する`semantic closure`
 
 ### LLM信頼性
 
@@ -110,7 +111,7 @@ Predicateトラックでは、次の問いに答えるための信頼性検証�
 | Blind Cross-schema v1 | 27/27試行成功、false resolution 0 | 異なるスキーマへのSemantic Polymorphismを支持 |
 | Blind Schema Evolution v1単発 | 50/54試行成功、stable 15/18ケース、false resolution 0 | 精度は高いが、単発応答の揺れが製品経路には残る |
 | v1保存応答の型付きConsensus replay | 18/18ケース成功、quorum 18/18、false resolution 0 | 2/3方式の有望性を支持。ただし同じ54応答を使った事後評価 |
-| 全ローカル回帰 | 72 tests pass、0 fail | Predicate、Static Judgment、read-only Explainのfixture・統合経路を含めて回帰なし |
+| 全ローカル回帰 | 78 tests pass、0 fail | Predicate、Static Judgment、read-only Explain / Closureのfixture・統合経路を含めて回帰なし |
 
 重要な留保として、Consensus replayの18/18はheld-out結果ではない。保存済みv1応答へ後から方式を適用した結果であり、一般化性能の証明には使用しない。
 
@@ -258,14 +259,15 @@ bun run benchmark:schema-evolution:v2
 
 ### Gate 2: 原案MVPの未実装部分を完成
 
-Static Judgmentの最小縦切りと`semantic explain`は完了した。残る優先順位は次のとおり。
+Static Judgmentの最小縦切り、`semantic explain`、artifact-levelのSemantic Closure graphは完了した。残る優先順位は次のとおり。
 
-1. Semantic Closure graph
-   - 複数Semantic nodeの依存関係
-   - unresolved node、未承認node、stale nodeの一括検出
-2. Semantic Testの拡張
+1. Semantic Testの拡張
    - unknown / boundary / counterfactual / invariance
    - mutation testとmodel migration test
+2. Semantic Closureの保証範囲拡張
+   - 人間承認provenanceの保存と検証
+   - unresolved履歴と未実行unlockedの区別
+   - import graphに基づく依存関係の自動発見
 
 Gate 2でも任意TypeScript生成や副作用生成は行わない。
 
@@ -346,6 +348,10 @@ Predicateで得た安全境界を維持しながら、対象ごとに独立し�
 | Semantic fingerprint | [`src/semantic-fingerprint.ts`](./src/semantic-fingerprint.ts) |
 | Semantic Explain model | [`src/semantic-explain.ts`](./src/semantic-explain.ts) |
 | Semantic Explain renderer | [`src/semantic-explain-renderer.ts`](./src/semantic-explain-renderer.ts) |
+| Semantic Closure実装計画 | [`SEMANTIC_CLOSURE_IMPLEMENTATION_PLAN.md`](./SEMANTIC_CLOSURE_IMPLEMENTATION_PLAN.md) |
+| Semantic Closure manifest | [`semantic-closure.json`](./semantic-closure.json) |
+| Semantic Closure model | [`src/semantic-closure.ts`](./src/semantic-closure.ts) |
+| Semantic Closure renderer | [`src/semantic-closure-renderer.ts`](./src/semantic-closure-renderer.ts) |
 
 ## 再開時の確認コマンド
 
@@ -362,6 +368,10 @@ bun run semantic:judgment:replay
 bun run semantic:explain
 bun run semantic:judgment:explain
 
+# 複数Semantic nodeのartifact-level Closure検査
+bun run semantic:closure
+bun run semantic closure semantic-closure.json --json
+
 # v2 review状態の確認
 sed -n '1,80p' benchmarks/schema-evolution-v2/freeze.json
 
@@ -369,7 +379,7 @@ sed -n '1,80p' benchmarks/schema-evolution-v2/freeze.json
 bun run benchmark:schema-evolution:v2
 ```
 
-型検査と全テストは、2026-07-21時点で`72 pass / 0 fail`である。PredicateとStatic JudgmentのAPIなしreplayは同一生成hashで成功し、`semantic explain`のtext / JSON実行前後でlock、生成物、audit、v2 freezeが不変であることを確認した。最後のv2コマンドは現在、局所Blockerと独立レビュー未完了のためAPIを呼ぶ前に停止する。
+型検査と全テストは、2026-07-21時点で`78 pass / 0 fail`である。PredicateとStatic JudgmentのAPIなしreplayは同一生成hashで成功した。`semantic explain`と`semantic closure`のtext / JSON実行前後でlock、生成物、audit、v2 benchmark / freezeが不変であり、root Closure manifestは4/4 node `current`、artifact-level `closed`である。最後のv2コマンドは現在、局所Blockerと独立レビュー未完了のためAPIを呼ぶ前に停止する。
 
 ## 次回この文書を更新するタイミング
 

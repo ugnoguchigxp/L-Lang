@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "active-customer",
+      "source": "examples/active-customer/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "active-customer-account-schema",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "active-customer-record-schema",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "mike-is-cat",
+      "source": "examples/static-judgment/semantic.ts",
+      "dependsOn": []
+    }
+  ]
+}

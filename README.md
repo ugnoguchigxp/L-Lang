@@ -31,7 +31,7 @@ L-Lang:
 
 - Bun 1.3以降
 - live実行時のみOpenAI APIまたはAzure OpenAI API key
-- fixtureテスト、lock replay、`semantic explain`にはAPI key不要
+- fixtureテスト、lock replay、`semantic explain`、`semantic closure`にはAPI key不要
 
 ## クイックスタート
 
@@ -72,6 +72,15 @@ bun run semantic explain examples/static-judgment/semantic.ts
 
 # 機械可読なpretty JSON
 bun run semantic explain examples/active-customer/semantic.ts --json
+```
+
+複数のSemantic nodeをAPIなし・読み取り専用で一括検査する場合:
+
+```bash
+bun run semantic:closure
+
+# 機械可読なpretty JSON
+bun run semantic closure semantic-closure.json --json
 ```
 
 解釈された判定と、各ケースの入力・期待値・実際の判定を表示する場合:
@@ -147,6 +156,34 @@ statusは次の4種類です。
 
 `stale`と`unlocked`は観測結果として正常に出力します。`integrity-error`も説明データを返し、text出力では生成物整合性を`ERROR`として明示します。現在はCI用の`--strict`やstatus別exit codeは提供しません。`--fixture`は受理しません。
 
+## Semantic Closure
+
+`semantic closure`はmanifestへ明示した複数のPredicate / Static Judgmentを読み、各nodeへ`semantic explain`と同じ検査を適用してartifact-levelのClosure graphを構築します。API、resolver、build/replay、lock更新、生成物更新、audit作成は行いません。
+
+```json
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "active-customer",
+      "source": "examples/active-customer/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "mike-is-cat",
+      "source": "examples/static-judgment/semantic.ts",
+      "dependsOn": ["active-customer"]
+    }
+  ]
+}
+```
+
+manifestはworkspace相対path、重複しないnode ID、manifest内nodeだけを参照するdependencyを使用します。unknown dependency、self dependency、cycle、workspace外参照、壊れた`semantic.lock`はerrorとして拒否します。node順とdependency順は決定的に正規化されます。
+
+全nodeが`current`なら`closed`でexit code 0、1件でも`stale`、`unlocked`、`integrity-error`なら`open`でexit code 2です。manifest、source、lock、graphが不正ならexit code 1です。
+
+現在のscopeは`artifact`です。リポジトリ全体の自動探索やimport依存解析は行わず、manifestへ宣言されたnodeとedgeだけを検査します。また、現行lockは人間承認provenanceを保存しないため、承認状態は`unknown`と表示し、承認済みとは推測しません。
+
 ## コンパイル手順
 
 1. 1 concept / 1 predicate / 1 semanticTestの閉包を検証
@@ -160,7 +197,7 @@ statusは次の4種類です。
 
 ## 現在の制限
 
-Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度、Consensus、diff/approveは未実装です。`semantic explain`は1 source / 1 symbolの説明に限定し、複数nodeのClosure graphや自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
+Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度、Consensus、diff/approveは未実装です。`semantic explain`は1 source / 1 symbolに限定します。`semantic closure`は明示manifestによるartifact検査に限定し、自動探索、import graph解析、人間承認検証、自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
 
 ## 接続設定
 

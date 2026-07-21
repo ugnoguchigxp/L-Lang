@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "ambiguous-account",
+      "source": "examples/semantic-polymorphism/ambiguous/semantic.ts",
+      "dependsOn": []
+    }
+  ]
+}
