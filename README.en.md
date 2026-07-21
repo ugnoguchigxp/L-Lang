@@ -92,8 +92,22 @@ The Azure model value is the deployment name. Bun loads `.env` without an additi
 
 ```ts
 const ActiveCustomer = concept<Customer>`
-  An active customer has status "active", has not been deleted,
-  and has a present email address.
+Definition:
+An active customer is permitted to use the service.
+
+Requirements:
+- status is "active".
+- deletedAt is null.
+- email is present.
+
+Exclusions:
+- Suspended or deleted customers.
+
+Out of scope:
+- Email deliverability.
+
+Leave unresolved when:
+- Status, deletion, or email roles cannot be mapped unambiguously.
 `;
 
 export const isActiveCustomer = generatePredicate(ActiveCustomer);
@@ -106,11 +120,16 @@ semanticTest(isActiveCustomer, {
 
 Only the Concept, target TypeScript type, and predicate target are sent to the model. Semantic test values are kept out of the prompt and are used after elaboration for validation.
 
+Every Concept must use the fixed `Definition`, `Requirements`, `Exclusions`, `Out of scope`, and `Leave unresolved when` sections inside its TypeScript tagged template. Missing, duplicate, reordered, empty, unknown, TOML, and unsectioned inputs fail compilation before any resolver or LLM call. List entries use one-line `- item` syntax. Types and semantic tests remain TypeScript, preserving exact `null` and `undefined` cases. See the [order fulfillment Concept](./concepts/fulfillable-order.ts) for an executable example.
+
 ## Main commands
 
 ```bash
 # Build or use a matching lock entry
 bun run semantic build <semantic-source.ts>
+
+# Stop before promotion and save a validated optional-review candidate
+bun run semantic build <semantic-source.ts> --review
 
 # Replay without an API call
 bun run semantic replay <semantic-source.ts>
@@ -123,7 +142,7 @@ bun run semantic check <semantic-source.ts>
 
 # Inspect and explicitly approve a candidate
 bun run semantic diff <candidate-id>
-bun run semantic approve <candidate-id>
+bun run semantic approve <candidate-id> --reviewer <id>
 
 # Use the legacy single-sample mode
 bun run semantic check <semantic-source.ts> --samples 1 --quorum 1
@@ -135,10 +154,15 @@ bun run semantic check <semantic-source.ts> --samples 1 --quorum 1
 - Property paths and literals are validated against the TypeScript type.
 - Code generation is deterministic.
 - Candidate-specific typechecking and semantic tests run before promotion.
+- Optional review candidates do not update generated output or the lock until approval.
 - A full-test failure rolls the generated file back.
-- `semantic.lock` records hashes, model metadata, IR, and generated-code integrity.
+- `semantic.lock` records hashes, model metadata, IR, generated-code integrity, and promotion provenance for new entries.
 - Schema evolution requires explicit human approval.
 - Ambiguous inputs and failed consensus remain unresolved.
+
+The executable [order fulfillment example](./examples/order-fulfillment/README.md)
+applies one shared Concept to storefront, warehouse, and nested marketplace
+schemas and compares the three generated static predicates.
 
 See [SECURITY.md](./SECURITY.md) for the trust boundary and data-handling notes.
 

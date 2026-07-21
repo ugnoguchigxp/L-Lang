@@ -57,6 +57,17 @@ bun run semantic build examples/active-customer/semantic.ts
 bun run semantic replay examples/active-customer/semantic.ts
 ```
 
+通常の`semantic build`は、すべての機械検証とfull testが成功すると生成物と`semantic.lock`を自動適用します。適用前に人間Reviewを挟む場合だけ`--review`を明示します。
+
+```bash
+bun run semantic build examples/active-customer/semantic.ts --review \
+  --fixture examples/active-customer/openai-response.fixture.json
+bun run semantic diff <review-id>
+bun run semantic approve <review-id> --reviewer <id>
+```
+
+`build --review`はPredicateとStatic Judgmentの両方に対応します。検証済みcandidateを`.semantic/reviews/`へ保存しますが、この時点ではtracked生成物とlockを変更しません。`approve`時にsource、baseline、hash、candidateを再検証し、同じpromotion transactionを通過した後だけ適用します。
+
 Static JudgmentをAPIなしのfixtureで定数化し、lockから再現する場合:
 
 ```bash
@@ -99,8 +110,22 @@ bun run semantic test examples/active-customer/semantic.ts
 
 ```ts
 const ActiveCustomer = concept<Customer>`
-  An active customer has status "active", has not been deleted,
-  and has a present email address.
+Definition:
+An active customer is permitted to use the service.
+
+Requirements:
+- status is "active".
+- deletedAt is null.
+- email is present.
+
+Exclusions:
+- Suspended or deleted customers.
+
+Out of scope:
+- Email deliverability.
+
+Leave unresolved when:
+- Status, deletion, or email roles cannot be mapped unambiguously.
 `;
 
 export const isActiveCustomer = generatePredicate(ActiveCustomer);
@@ -112,6 +137,31 @@ semanticTest(isActiveCustomer, {
 ```
 
 Compiler APIとTypeCheckerがこのソースから型宣言と閉じた意味グラフを抽出します。LLMへ渡すのは概念と対象型だけで、`semanticTest`の値は渡しません。
+
+すべてのConcept本文は、次の固定5セクションで記述します。
+
+```ts
+export const FulfillableOrder = defineConcept("order.fulfillable")`
+Definition:
+An order eligible for fulfillment intake.
+
+Requirements:
+- Payment is confirmed.
+- A destination is present.
+
+Exclusions:
+- Cancelled orders.
+- Held orders.
+
+Out of scope:
+- Inventory availability.
+
+Leave unresolved when:
+- A required semantic role cannot be mapped uniquely.
+`;
+```
+
+5セクションは省略・重複・並べ替えできません。各リストは`- item`形式の1行項目を1つ以上必要とし、未知のセクション、空項目、セクション間の同一項目、旧TOML、未分割の自由文は、resolverやLLMを呼ぶ前にコンパイルエラーになります。型と`semanticTest`はTypeScript側に残るため、`null`と`undefined`も区別できます。
 
 ## Static Judgment
 
@@ -182,7 +232,7 @@ manifestはworkspace相対path、重複しないnode ID、manifest内nodeだけ�
 
 全nodeが`current`なら`closed`でexit code 0、1件でも`stale`、`unlocked`、`integrity-error`なら`open`でexit code 2です。manifest、source、lock、graphが不正ならexit code 1です。
 
-現在のscopeは`artifact`です。リポジトリ全体の自動探索やimport依存解析は行わず、manifestへ宣言されたnodeとedgeだけを検査します。また、現行lockは人間承認provenanceを保存しないため、承認状態は`unknown`と表示し、承認済みとは推測しません。
+現在のscopeは`artifact`です。リポジトリ全体の自動探索やimport依存解析は行わず、manifestへ宣言されたnodeとedgeだけを検査します。lockはpromotion provenanceを保存しますが、現行Closure reportはまだreview policyを評価せず、承認状態を`unknown`と表示します。
 
 ## コンパイル手順
 
@@ -197,7 +247,7 @@ manifestはworkspace相対path、重複しないnode ID、manifest内nodeだけ�
 
 ## 現在の制限
 
-Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度、Consensus、diff/approveは未実装です。`semantic explain`は1 source / 1 symbolに限定します。`semantic closure`は明示manifestによるartifact検査に限定し、自動探索、import graph解析、人間承認検証、自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
+Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度とSchema Evolution Consensusは未実装です。任意Reviewのdiff/approveはPredicateとStatic Judgmentの両方に対応します。`semantic explain`は1 source / 1 symbolに限定します。`semantic closure`は明示manifestによるartifact検査に限定し、自動探索、import graph解析、review policy検証、自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
 
 ## 接続設定
 
@@ -252,6 +302,21 @@ bun run semantic:test:account-schema
 
 `examples/semantic-polymorphism/ambiguous`は、型のプロパティを意味的役割へ一意に対応付けられない負例です。この入力は推測でコードを生成せず`unresolved`になります。
 
+### Order Fulfillmentの3シナリオ
+
+[`examples/order-fulfillment`](./examples/order-fulfillment/README.md)では、共通の`FulfillableOrder` Conceptを次の3スキーマへ適用しています。
+
+- ECストア: enumの支払状態、キャンセル日時、配送先
+- 倉庫管理: booleanの支払確認、保留理由、optionalな配送先コード
+- マーケットプレイス: nested object内の承認状態、void flag、配送先
+
+各scenarioはfixture、Semantic Test、生成済みStatic Predicate、lock entryを持ちます。同じ意味が異なるプロパティ名、literal、boolean、nullable、optional、nested pathへ変換される様子を比較できます。
+
+```bash
+bun run semantic:fulfillment:test
+bun run semantic:fulfillment:closure
+```
+
 ## Blind Cross-schema Benchmark
 
 3つの固定Conceptを9つの現実的な型（解決可能6、意図的に曖昧3）へ適用し、各入力をlockなしで3回ずつ、合計27回評価します。
@@ -282,7 +347,7 @@ bun run semantic check examples/customer/semantic.ts --samples 1 --quorum 1
 
 ```bash
 bun run semantic diff <candidate-id>
-bun run semantic approve <candidate-id>
+bun run semantic approve <candidate-id> --reviewer <id>
 ```
 
 差分分類は次の3種類です。
@@ -293,7 +358,7 @@ bun run semantic approve <candidate-id>
 
 分類はレビュー支援情報であり、自動承認には使いません。`compatible`を含むすべての候補が明示的な`approve`を必要とします。`unresolved`と検証失敗候補は承認できません。
 
-承認時にはsource hash、型、テスト、Concept、基準lock、候補コードhashを再検証し、候補型検査と意味テストを再実行します。その後に生成コードを一時昇格し、全テストが成功した場合だけ新しいlock entryを原子的に保存します。失敗時は生成コードを直前の状態へ戻します。
+承認時にはreviewer IDを必須とし、source hash、型、テスト、Concept、基準lock、候補コードhashを再検証し、候補型検査、意味テスト、project型検査を再実行します。その後に生成コードを一時昇格し、全テストが成功した場合だけ新しいlock entryを原子的に保存します。失敗時は生成コードを直前の状態へ戻します。新規lock entryには`auto`または`reviewed`のpromotion provenanceと検証結果が記録され、既存entryはExplain上で`legacy-auto`と表示されます。
 
 ## Blind Schema Evolution Benchmark
 

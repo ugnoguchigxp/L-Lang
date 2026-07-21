@@ -7,8 +7,23 @@ export type Customer = {
 };
 
 const ActiveCustomer = concept<Customer>`
-  An active customer has status "active", has not been deleted
-  (deletedAt is null), and has a present email address.
+Definition:
+A customer that is currently active and contactable.
+
+Requirements:
+- status is "active".
+- deletedAt is null.
+- email is present.
+
+Exclusions:
+- Customers whose status is "suspended".
+- Customers whose deletedAt is not null.
+
+Out of scope:
+- Email address syntax and deliverability.
+
+Leave unresolved when:
+- The schema does not expose status, deletion, or email roles unambiguously.
 `;
 
 export const isActiveCustomer = generatePredicate(ActiveCustomer);

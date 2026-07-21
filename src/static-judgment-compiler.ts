@@ -1,8 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
   mkdir,
-  readFile,
-  rename,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -18,11 +16,14 @@ import {
   workspaceRelativePath,
 } from "./semantic-fingerprint";
 import {
+  findLatestStaticJudgmentEntry,
   findStaticJudgmentReplayEntry,
   readSemanticLock,
   writeSemanticLock,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
+import { promoteSemanticArtifact } from "./semantic-promotion";
+import { createStaticJudgmentSemanticReview } from "./semantic-review";
 import { generateStaticJudgmentConstant } from "./static-judgment-generator";
 import { scanStaticJudgmentSource } from "./static-judgment-source";
 import {
@@ -46,6 +47,8 @@ export type StaticJudgmentCompileOptions = {
   countsAsApiCall?: boolean;
   lockPath?: string;
   auditRoot?: string;
+  promotion?: "auto" | "review";
+  reviewRoot?: string;
   commandRunner?: SemanticCommandRunner;
   writeLock?: typeof writeSemanticLock;
   resolve?: (input: {
@@ -56,8 +59,7 @@ export type StaticJudgmentCompileOptions = {
   }) => Promise<StaticJudgmentCompilerResolution>;
 };
 
-export type StaticJudgmentCompileResult = {
-  status: "passed";
+type StaticJudgmentCompileResultBase = {
   source: string;
   output: string;
   report: string;
@@ -71,9 +73,25 @@ export type StaticJudgmentCompileResult = {
   generatedCodeHash: string;
 };
 
+export type StaticJudgmentCompileResult =
+  | (StaticJudgmentCompileResultBase & {
+      status: "passed";
+      promotionMode: "auto" | "replay";
+    })
+  | (StaticJudgmentCompileResultBase & {
+      status: "review-required";
+      promotionMode: "review";
+      candidateId: string;
+      candidateDirectory: string;
+    });
+
 export async function compileStaticJudgmentSource(
   options: StaticJudgmentCompileOptions,
 ): Promise<StaticJudgmentCompileResult> {
+  const promotion = options.promotion ?? "auto";
+  if (options.mode === "replay" && promotion === "review") {
+    throw new Error("Static Judgment replay does not support review promotion");
+  }
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanStaticJudgmentSource(options.sourcePath);
   const sourceRelative = workspaceRelativePath(
@@ -166,6 +184,7 @@ export async function compileStaticJudgmentSource(
     conceptId: source.concept.id,
     conceptHash: hashes.conceptHash,
     conceptSource,
+    conceptStructure: source.concept.structure,
     valueHash: hashes.valueHash,
     promptHash: hashes.promptHash,
     promptVersion: STATIC_JUDGMENT_PROMPT_VERSION,
@@ -191,8 +210,6 @@ export async function compileStaticJudgmentSource(
   const startedAt = Date.now();
   let stage = "judgment";
   let code = "";
-  let previousFinal: string | undefined;
-  let promoted = false;
 
   try {
     if (resolution.judgment.outcome === "unresolved") {
@@ -240,22 +257,78 @@ export async function compileStaticJudgmentSource(
     await executeCommand(["bun", "run", "typecheck"], workspaceRoot, stage);
     await unlinkIfExists(candidatePath);
 
-    stage = "promotion";
-    previousFinal = await readOptional(finalPath);
-    await atomicWrite(finalPath, code);
-    promoted = true;
-    try {
-      stage = "full-test";
-      await executeCommand(["bun", "test"], workspaceRoot, stage);
-    } catch (error) {
-      stage = "rollback";
-      await restoreFinal(finalPath, previousFinal);
-      promoted = false;
-      throw error;
-    }
-
     const generatedCodeHash = sha256(code);
+    const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
+    if (promotion === "review") {
+      const review = await createStaticJudgmentSemanticReview({
+        workspaceRoot,
+        ...(options.reviewRoot === undefined ? {} : { reviewRoot: options.reviewRoot }),
+        source: sourceRelative,
+        output,
+        symbol: source.judgment.name,
+        conceptId: source.concept.id,
+        provider,
+        model,
+        fingerprint,
+        hashes,
+        resolvedValue: resolution.judgment.value,
+        baseline: findLatestStaticJudgmentEntry(lock, {
+          source: sourceRelative,
+          judgment: source.judgment.name,
+        }),
+        response: lockResponse(resolution.response),
+        generatedCode: code,
+      });
+      stage = "report";
+      await writeJson(reportPath, {
+        version: 1,
+        status: "review-required",
+        stage: "complete",
+        source: sourceRelative,
+        output,
+        candidateId: review.candidate.id,
+        candidateDirectory: workspaceRelativePath(
+          workspaceRoot,
+          review.candidateDirectory,
+          "review candidate directory",
+        ),
+        judgment: source.judgment.name,
+        resolvedValue: resolution.judgment.value,
+        provider,
+        model,
+        response: responseMetadata(resolution.response),
+        fingerprint,
+        apiCalls,
+        cacheHit,
+        replayed: false,
+        hashes: { ...hashes, generatedCodeHash },
+        durationMs: Date.now() - startedAt,
+        completedAt: new Date().toISOString(),
+      });
+      return {
+        status: "review-required",
+        promotionMode: "review",
+        source: sourceRelative,
+        output,
+        report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
+        fingerprint,
+        provider,
+        model,
+        apiCalls,
+        cacheHit,
+        replayed: false,
+        resolvedValue: resolution.judgment.value,
+        generatedCodeHash,
+        candidateId: review.candidate.id,
+        candidateDirectory: workspaceRelativePath(
+          workspaceRoot,
+          review.candidateDirectory,
+          "review candidate directory",
+        ),
+      };
+    }
     if (!cacheHit) {
+      const promotedAt = new Date().toISOString();
       entry = {
         fingerprint,
         source: sourceRelative,
@@ -273,13 +346,36 @@ export async function compileStaticJudgmentSource(
               usage: resolution.response.usage,
             }
           : null,
-        createdAt: new Date().toISOString(),
+        createdAt: promotedAt,
+        promotion: {
+          mode: "auto",
+          promotedAt,
+          validation: {
+            candidateTypecheck: "passed",
+            projectTypecheck: "passed",
+            semanticTest: "not-applicable",
+            fullTest: "passed",
+          },
+        },
       } satisfies StaticJudgmentLockEntry;
       lock.judgments ??= {};
       lock.judgments[fingerprint] = entry;
-      stage = "lock";
-      await persistLock(lockPath, lock);
     }
+    stage = "promotion";
+    await promoteSemanticArtifact({
+      outputPath: finalPath,
+      generatedCode: code,
+      lockPath,
+      nextLock: lock,
+      runFullTest: async () => {
+        stage = "full-test";
+        await executeCommand(["bun", "test"], workspaceRoot, stage);
+      },
+      writeLock: async (path, nextLock) => {
+        stage = "lock";
+        if (!cacheHit) await persistLock(path, nextLock);
+      },
+    });
 
     stage = "report";
     await writeJson(reportPath, {
@@ -304,6 +400,7 @@ export async function compileStaticJudgmentSource(
 
     return {
       status: "passed",
+      promotionMode: options.mode === "replay" ? "replay" : "auto",
       source: sourceRelative,
       output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
       report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
@@ -317,11 +414,6 @@ export async function compileStaticJudgmentSource(
       generatedCodeHash,
     };
   } catch (error) {
-    if (promoted && stage === "lock") {
-      await restoreFinal(finalPath, previousFinal);
-      promoted = false;
-      stage = "rollback";
-    }
     await writeJson(reportPath, {
       version: 1,
       status: "failed",
@@ -364,37 +456,11 @@ async function runCommand(
   if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
 }
 
-async function atomicWrite(path: string, value: string): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.promote.tmp`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
-}
-
-async function readOptional(path: string): Promise<string | undefined> {
-  try {
-    return await readFile(path, "utf8");
-  } catch (error) {
-    if (isNotFound(error)) return undefined;
-    throw error;
-  }
-}
-
 async function unlinkIfExists(path: string): Promise<void> {
   try {
     await unlink(path);
   } catch (error) {
     if (!isNotFound(error)) throw error;
-  }
-}
-
-async function restoreFinal(
-  path: string,
-  previous: string | undefined,
-): Promise<void> {
-  if (previous === undefined) {
-    await unlinkIfExists(path);
-  } else {
-    await atomicWrite(path, previous);
   }
 }
 
@@ -404,6 +470,18 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 }
 
 function responseMetadata(response: OpenAIResult | null): object | null {
+  return response === null
+    ? null
+    : {
+        id: response.responseId,
+        model: response.model,
+        usage: response.usage,
+      };
+}
+
+function lockResponse(
+  response: OpenAIResult | null,
+): StaticJudgmentLockEntry["response"] {
   return response === null
     ? null
     : {

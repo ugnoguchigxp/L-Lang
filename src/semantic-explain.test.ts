@@ -37,6 +37,13 @@ describe("semantic explain", () => {
     expect(explanation.status).toBe("current");
     expect(explanation.kind).toBe("predicate");
     expect(explanation.generated?.state).toBe("verified");
+    expect(explanation.lock?.promotion).toEqual({
+      mode: "legacy-auto",
+      promotedAt: "2026-07-20T00:00:00.000Z",
+    });
+    expect(renderSemanticExplanation(explanation)).toContain(
+      "promotion: legacy-auto",
+    );
     expect(explanation.resolution).toEqual({
       ir: { kind: "equals", property: ["state"], value: "ready" },
       interpreted: 'customer.state EQUALS "ready"',
@@ -178,6 +185,52 @@ describe("semantic explain", () => {
     const explanation = await explainSemanticSource(fixture);
     expect(explanation.status).toBe("unlocked");
   });
+
+  test("distinguishes auto and reviewed promotion provenance", async () => {
+    const automatic = await createPredicateFixture();
+    const automaticLock = JSON.parse(
+      await readFile(automatic.lockPath, "utf8"),
+    ) as SemanticLock;
+    Object.values(automaticLock.entries)[0]!.promotion = {
+      mode: "auto",
+      promotedAt: "2026-07-20T01:00:00.000Z",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "passed",
+        fullTest: "passed",
+      },
+    };
+    await writeLock(automatic.lockPath, automaticLock);
+    const automaticExplanation = await explainSemanticSource(automatic);
+    expect(automaticExplanation.lock?.promotion.mode).toBe("auto");
+    expect(renderSemanticExplanation(automaticExplanation)).toContain(
+      "promotion: auto",
+    );
+
+    const reviewed = await createStaticJudgmentFixture();
+    const reviewedLock = JSON.parse(
+      await readFile(reviewed.lockPath, "utf8"),
+    ) as SemanticLock;
+    Object.values(reviewedLock.judgments!)[0]!.promotion = {
+      mode: "reviewed",
+      promotedAt: "2026-07-20T02:00:00.000Z",
+      candidateId: "20260720020000-12345678",
+      reviewer: "alice",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "not-applicable",
+        fullTest: "passed",
+      },
+    };
+    await writeLock(reviewed.lockPath, reviewedLock);
+    const reviewedExplanation = await explainSemanticSource(reviewed);
+    expect(reviewedExplanation.lock?.promotion.mode).toBe("reviewed");
+    expect(renderSemanticExplanation(reviewedExplanation)).toContain(
+      "reviewer: alice",
+    );
+  });
 });
 
 type Fixture = {
@@ -287,7 +340,7 @@ declare function generatePredicate<T>(concept: unknown): (value: T) => boolean;
 declare function semanticTest<T>(predicate: (value: T) => boolean, cases: { accept: T[]; reject: T[] }): void;
 
 type Customer = { state: "ready" | "waiting" };
-const ReadyCustomer = concept<Customer>\`A ready customer has state ready.\`;
+const ReadyCustomer = concept<Customer>\`Definition:\nA ready customer has state ready.\n\nRequirements:\n- state is ready.\n\nExclusions:\n- state is waiting.\n\nOut of scope:\n- Other customer attributes.\n\nLeave unresolved when:\n- The state role is not represented unambiguously.\`;
 export const isReady = generatePredicate<Customer>(ReadyCustomer);
 semanticTest(isReady, { accept: [{ state: "ready" }], reject: [{ state: "waiting" }] });
 `.trimStart();
@@ -299,7 +352,7 @@ declare function defineConcept(id: string): (strings: TemplateStringsArray) => u
 declare function staticValue(value: string): unknown;
 declare function judgeStatic(value: unknown, concept: unknown): boolean;
 
-const Cat = defineConcept("animal.cat")\`A domesticated biological cat.\`;
+const Cat = defineConcept("animal.cat")\`Definition:\nA domesticated biological cat.\n\nRequirements:\n- The entity is a living cat.\n\nExclusions:\n- Cat-shaped objects.\n\nOut of scope:\n- Breed and color.\n\nLeave unresolved when:\n- The species cannot be determined.\`;
 const mike = staticValue(\`A calico animal that meows.\`);
 export const mikeIsCat = judgeStatic(mike, Cat);
 `.trimStart();

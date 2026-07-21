@@ -102,11 +102,11 @@
       "source": "examples/semantic-polymorphism/customer/semantic.ts",
       "concept": "ActiveCustomerRecord",
       "conceptId": "customer.active",
+      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveCustomerRecord",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
       "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
       "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
       "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
@@ -153,11 +153,11 @@
       "source": "examples/semantic-polymorphism/account/semantic.ts",
       "concept": "ActiveServiceAccount",
       "conceptId": "customer.active",
+      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveServiceAccount",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "880a06c90e82580c61992e93e24e35778c2c85f515bf8cd3f9268833deef8ae7",
       "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
       "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
       "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
@@ -204,11 +204,11 @@
       "source": "examples/active-customer/semantic.ts",
       "concept": "ActiveCustomer",
       "conceptId": "local:ActiveCustomer",
+      "conceptHash": "95d3fc327cf4abfd77643df0b5aa2fa61d735bd08403c2f48bae2b34d1a6c392",
       "conceptSource": "examples/active-customer/semantic.ts",
       "predicate": "isActiveCustomer",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "95d3fc327cf4abfd77643df0b5aa2fa61d735bd08403c2f48bae2b34d1a6c392",
       "sourceHash": "e38b866499af9131eb0d12bb1b130ddc420f246f9c3964caf7df8e2a104ac031",
       "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
       "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
@@ -255,11 +255,11 @@
       "source": "examples/semantic-polymorphism/customer/semantic.ts",
       "concept": "ActiveCustomerRecord",
       "conceptId": "customer.active",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveCustomerRecord",
       "provider": "azure-openai",
       "model": "gpt-5-4-mini",
-      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
       "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
       "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
@@ -306,11 +306,11 @@
       "source": "examples/semantic-polymorphism/account/semantic.ts",
       "concept": "ActiveServiceAccount",
       "conceptId": "customer.active",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveServiceAccount",
       "provider": "azure-openai",
       "model": "gpt-5-4-mini",
-      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
       "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
       "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
@@ -357,11 +357,11 @@
       "source": "examples/semantic-polymorphism/customer/semantic.ts",
       "concept": "ActiveCustomerRecord",
       "conceptId": "customer.active",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveCustomerRecord",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
       "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
       "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
@@ -408,11 +408,11 @@
       "source": "examples/semantic-polymorphism/account/semantic.ts",
       "concept": "ActiveServiceAccount",
       "conceptId": "customer.active",
+      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveServiceAccount",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "b1fac1aa0b47e7da82899799fe33cc85dbd66046df1975d7d279cfb28b95b5b4",
       "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
       "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
       "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
@@ -453,6 +453,747 @@
         }
       },
       "createdAt": "2026-07-20T03:52:29.962Z"
+    },
+    "2a788c3fe587bd408107ccf1bbdd1156e5c8ac4265266f3e6124ee586dfe0d0f": {
+      "fingerprint": "2a788c3fe587bd408107ccf1bbdd1156e5c8ac4265266f3e6124ee586dfe0d0f",
+      "source": "examples/order-fulfillment/storefront/semantic.ts",
+      "concept": "FulfillableStorefrontOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "f11f454c1fa06c300f092929d5b6802e4c17b1aa96dd4ee93fba22780c2ce2e9",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableStorefrontOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c4cfbde3afbd690ce7261a45c7f1ef544f5239ee04437ec4c1a69c1b2e61c727",
+      "typeHash": "d87803f631294bf1c9f05650edf88e9f1a6358618a4e7f348f024c2550916f54",
+      "testHash": "7c1d958f5f2dfba47fec1d820f421d7438bd6fee1f9e7992749327715a1a3141",
+      "promptHash": "a1919d09876290ac765180b210b350e1eb75582cfa23193d0f16ed70a41b053f",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentStatus"
+            ],
+            "value": "paid"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "cancelledAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "shippingAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "4c4bd601294b8c72852a76b84be70fcc80723ebe76e3d0c5dddb6b11b609c91b",
+      "response": {
+        "id": "resp_fixture_fulfillable_storefront_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 210,
+          "outputTokens": 75,
+          "totalTokens": 285
+        }
+      },
+      "createdAt": "2026-07-21T13:21:17.229Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T13:21:17.229Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "262ae73646e6a7248005008254892a48fefab442744f0edcf678078c4e3c8fc1": {
+      "fingerprint": "262ae73646e6a7248005008254892a48fefab442744f0edcf678078c4e3c8fc1",
+      "source": "examples/order-fulfillment/warehouse/semantic.ts",
+      "concept": "FulfillableWarehouseRequest",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "f11f454c1fa06c300f092929d5b6802e4c17b1aa96dd4ee93fba22780c2ce2e9",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableWarehouseRequest",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c165dd51d397748023e739471ec8c21da97b56705a413953d5714821e0a87405",
+      "typeHash": "59cc5b8cfb42769d59c60560ecc7615b9605afbb448d1ef2629b7f23d72ee839",
+      "testHash": "78a57690820f8207f98d4290ea6b6735ae377108362407f82c2ee2fc7857ce24",
+      "promptHash": "33becf50c34131470687faefbd497eac8798e15fef3c6cdc5667310cc3ab58d0",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentConfirmed"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "holdReason"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "destinationCode"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "f9440430660f5803808536f75e42fd8e616ee92190f60460cf16c0757d56a959",
+      "response": {
+        "id": "resp_fixture_fulfillable_warehouse_request",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 205,
+          "outputTokens": 75,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T13:23:19.256Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T13:23:19.256Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "04e31d74936d2087139c6449f69ff02c3bdc37442fb59b2c0019bf73ab023297": {
+      "fingerprint": "04e31d74936d2087139c6449f69ff02c3bdc37442fb59b2c0019bf73ab023297",
+      "source": "examples/order-fulfillment/marketplace/semantic.ts",
+      "concept": "FulfillableMarketplaceOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "f11f454c1fa06c300f092929d5b6802e4c17b1aa96dd4ee93fba22780c2ce2e9",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableMarketplaceOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "e3dad157b589a770a46d6c628a294416d6bbd6ee0479ae69fc73bb87f4a6d608",
+      "typeHash": "60db6dd7b995c9459c29c51d5c9a52512df2ddc46783f0f89cdf556f42695d5e",
+      "testHash": "71591dc59ef78e6098336d8fac6ad8f549380e64f536ec2762cfa04c472eb4b0",
+      "promptHash": "9e54ded06dde4d22ce1f003452e8dc7267b1c0ff53042df0b726579ea3ceca96",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "authorization"
+            ],
+            "value": "approved"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "voided"
+            ],
+            "value": false
+          },
+          {
+            "kind": "present",
+            "property": [
+              "fulfillment",
+              "deliveryLocation"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "60473f17caf93342c360f666f7e413fb28ef439f4d928bd5b0f7892d4f54cf48",
+      "response": {
+        "id": "resp_fixture_fulfillable_marketplace_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 220,
+          "outputTokens": 85,
+          "totalTokens": 305
+        }
+      },
+      "createdAt": "2026-07-21T13:27:11.609Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T13:27:11.609Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "0a01f4ed12ce0ae766b7cfdccb35cfd83f0ec76e51db625740317f3f58129239": {
+      "fingerprint": "0a01f4ed12ce0ae766b7cfdccb35cfd83f0ec76e51db625740317f3f58129239",
+      "source": "examples/order-fulfillment/storefront/semantic.ts",
+      "concept": "FulfillableStorefrontOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "2e1a6afb10be67c75e3b4950403b86381e688c764640f45c71c22a62e60b2b83",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableStorefrontOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c4cfbde3afbd690ce7261a45c7f1ef544f5239ee04437ec4c1a69c1b2e61c727",
+      "typeHash": "d87803f631294bf1c9f05650edf88e9f1a6358618a4e7f348f024c2550916f54",
+      "testHash": "7c1d958f5f2dfba47fec1d820f421d7438bd6fee1f9e7992749327715a1a3141",
+      "promptHash": "3cc4f65bc2103ebb0583451a3c7da99c06869f2ff77a60ab56526aa948a51cc5",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentStatus"
+            ],
+            "value": "paid"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "cancelledAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "shippingAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "f855ffcd6713d606958921e2b7bfa860dd3259373e0f50336858182b3cd23c3b",
+      "response": {
+        "id": "resp_fixture_fulfillable_storefront_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 210,
+          "outputTokens": 75,
+          "totalTokens": 285
+        }
+      },
+      "createdAt": "2026-07-21T15:00:02.431Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:00:02.431Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "a166eb05bf9fd8c69a5f60fb1d08dca4ae20de8dd883588ae11492994653ab59": {
+      "fingerprint": "a166eb05bf9fd8c69a5f60fb1d08dca4ae20de8dd883588ae11492994653ab59",
+      "source": "examples/order-fulfillment/warehouse/semantic.ts",
+      "concept": "FulfillableWarehouseRequest",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "2e1a6afb10be67c75e3b4950403b86381e688c764640f45c71c22a62e60b2b83",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableWarehouseRequest",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c165dd51d397748023e739471ec8c21da97b56705a413953d5714821e0a87405",
+      "typeHash": "59cc5b8cfb42769d59c60560ecc7615b9605afbb448d1ef2629b7f23d72ee839",
+      "testHash": "78a57690820f8207f98d4290ea6b6735ae377108362407f82c2ee2fc7857ce24",
+      "promptHash": "7ed59f6fed03c1b27de8e47be5acf719cb81c442531d01fcfa6de00b363dbbb6",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentConfirmed"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "holdReason"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "destinationCode"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "8331896a6a3dc023343b4bbf3b79e57779a0111bced46399ce09f11ff8a266e1",
+      "response": {
+        "id": "resp_fixture_fulfillable_warehouse_request",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 205,
+          "outputTokens": 75,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T15:01:56.328Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:01:56.328Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "5833884055ebf2c426edff466c6cd97d48d9c30d8306ddf7e5260441de95ebda": {
+      "fingerprint": "5833884055ebf2c426edff466c6cd97d48d9c30d8306ddf7e5260441de95ebda",
+      "source": "examples/order-fulfillment/marketplace/semantic.ts",
+      "concept": "FulfillableMarketplaceOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "2e1a6afb10be67c75e3b4950403b86381e688c764640f45c71c22a62e60b2b83",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableMarketplaceOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "e3dad157b589a770a46d6c628a294416d6bbd6ee0479ae69fc73bb87f4a6d608",
+      "typeHash": "60db6dd7b995c9459c29c51d5c9a52512df2ddc46783f0f89cdf556f42695d5e",
+      "testHash": "71591dc59ef78e6098336d8fac6ad8f549380e64f536ec2762cfa04c472eb4b0",
+      "promptHash": "41f7dd0a65ffe9e77e8725e4eecd1b562bbccb5950e813378ef5d12718354bc4",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "authorization"
+            ],
+            "value": "approved"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "voided"
+            ],
+            "value": false
+          },
+          {
+            "kind": "present",
+            "property": [
+              "fulfillment",
+              "deliveryLocation"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "56af876bd77fa5260253dae39642fba77f6875e6cdb047ce994ae02f4c3154fe",
+      "response": {
+        "id": "resp_fixture_fulfillable_marketplace_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 220,
+          "outputTokens": 85,
+          "totalTokens": 305
+        }
+      },
+      "createdAt": "2026-07-21T15:04:01.421Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:04:01.421Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "1bbd9e82606c03d0837ae4be8049600084031b87cb8f9839bd0bff19735614f6": {
+      "fingerprint": "1bbd9e82606c03d0837ae4be8049600084031b87cb8f9839bd0bff19735614f6",
+      "source": "examples/order-fulfillment/storefront/semantic.ts",
+      "concept": "FulfillableStorefrontOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "ce977cf491b4e6352d5cad4f1a704afe3983a55fe8c0678d7e96b65e31f7d89c",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableStorefrontOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c4cfbde3afbd690ce7261a45c7f1ef544f5239ee04437ec4c1a69c1b2e61c727",
+      "typeHash": "d87803f631294bf1c9f05650edf88e9f1a6358618a4e7f348f024c2550916f54",
+      "testHash": "7c1d958f5f2dfba47fec1d820f421d7438bd6fee1f9e7992749327715a1a3141",
+      "promptHash": "33111966af7b83eca42655b1714113cbca8a7de02e36b118127a0173bcde9366",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentStatus"
+            ],
+            "value": "paid"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "cancelledAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "shippingAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "db68c0c77f9368b8b25ca3d0e2d9ad2ea5902ad8e6fa2c8765ab7e8911ea3091",
+      "response": {
+        "id": "resp_fixture_fulfillable_storefront_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 210,
+          "outputTokens": 75,
+          "totalTokens": 285
+        }
+      },
+      "createdAt": "2026-07-21T15:40:17.049Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:40:17.049Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "0bb97a3713074fddddf2aa7d1c2d2350193989fcf8888294cc1419f14534b846": {
+      "fingerprint": "0bb97a3713074fddddf2aa7d1c2d2350193989fcf8888294cc1419f14534b846",
+      "source": "examples/order-fulfillment/warehouse/semantic.ts",
+      "concept": "FulfillableWarehouseRequest",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "ce977cf491b4e6352d5cad4f1a704afe3983a55fe8c0678d7e96b65e31f7d89c",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableWarehouseRequest",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "c165dd51d397748023e739471ec8c21da97b56705a413953d5714821e0a87405",
+      "typeHash": "59cc5b8cfb42769d59c60560ecc7615b9605afbb448d1ef2629b7f23d72ee839",
+      "testHash": "78a57690820f8207f98d4290ea6b6735ae377108362407f82c2ee2fc7857ce24",
+      "promptHash": "460c5fccb88c0cd078acc3b19f324ec5af6bf91c82d730ab4d5dc0fd59781bdf",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "paymentConfirmed"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "holdReason"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "destinationCode"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "8b03d5e569ece795d054249003f5fc36a7f9eba44d065714589c7e6736254697",
+      "response": {
+        "id": "resp_fixture_fulfillable_warehouse_request",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 205,
+          "outputTokens": 75,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T15:42:04.508Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:42:04.508Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "0c39b65a8ab03b86aa7bce159a2ee4e0ce9ac2a54eee4b8a58793e24ebd8855d": {
+      "fingerprint": "0c39b65a8ab03b86aa7bce159a2ee4e0ce9ac2a54eee4b8a58793e24ebd8855d",
+      "source": "examples/order-fulfillment/marketplace/semantic.ts",
+      "concept": "FulfillableMarketplaceOrder",
+      "conceptId": "order.fulfillable",
+      "conceptHash": "ce977cf491b4e6352d5cad4f1a704afe3983a55fe8c0678d7e96b65e31f7d89c",
+      "conceptSource": "concepts/fulfillable-order.ts",
+      "predicate": "isFulfillableMarketplaceOrder",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "e3dad157b589a770a46d6c628a294416d6bbd6ee0479ae69fc73bb87f4a6d608",
+      "typeHash": "60db6dd7b995c9459c29c51d5c9a52512df2ddc46783f0f89cdf556f42695d5e",
+      "testHash": "71591dc59ef78e6098336d8fac6ad8f549380e64f536ec2762cfa04c472eb4b0",
+      "promptHash": "01ac7dc58d4773371a692f8a3d7f4552f387b3e77dbba262b5db1c381daf1360",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "authorization"
+            ],
+            "value": "approved"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "fulfillment",
+              "voided"
+            ],
+            "value": false
+          },
+          {
+            "kind": "present",
+            "property": [
+              "fulfillment",
+              "deliveryLocation"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "7995683c5521e22a32b1d355699a2f59af53d79b6a46203092ae71b7d832b18d",
+      "response": {
+        "id": "resp_fixture_fulfillable_marketplace_order",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 220,
+          "outputTokens": 85,
+          "totalTokens": 305
+        }
+      },
+      "createdAt": "2026-07-21T15:43:51.238Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T15:43:51.238Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "ad3051010aae2dd7ae17a87cb1347e77891ce6b4ab2b0ce56534cde9edd63359": {
+      "fingerprint": "ad3051010aae2dd7ae17a87cb1347e77891ce6b4ab2b0ce56534cde9edd63359",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "conceptId": "local:ActiveCustomer",
+      "conceptHash": "f37a8bb48560ef60dff868a7ceda3cdbdee4b5de370f625af021b9b1128821bf",
+      "conceptSource": "examples/active-customer/semantic.ts",
+      "predicate": "isActiveCustomer",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "cce3e4996f4c934b7b3e7ae24a4fdb09591ced2ea73415b5876d47209e380a50",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "cce0bcf759af5f2b723e41e99b865c02e5c30c441a812c8cf6f53dbe31971ed0",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0f30b3efc6742e4af24ddbbb765c567a962f29592a0c4229d031d66aa4de2713",
+      "response": {
+        "id": "resp_fixture_active_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T16:09:19.623Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T16:09:19.623Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "df62d012dc8fa9811eee9802486bc4f87a2a522cc68357b23eec3bc56dcdb21c": {
+      "fingerprint": "df62d012dc8fa9811eee9802486bc4f87a2a522cc68357b23eec3bc56dcdb21c",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "e86d1f8e9a00818dfa32a83d465c90c366e17f9e0b71f0cb43be79232013ff6b",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "9d5eddcd15ff55882927f1cccb450f948314d05c1baf86141f4c851e696b9561",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T16:10:37.286Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T16:10:37.286Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "837bd90aaf5fbf3640f90934a3cd268e954777bff0e440c063462c1ffe145473": {
+      "fingerprint": "837bd90aaf5fbf3640f90934a3cd268e954777bff0e440c063462c1ffe145473",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "ed4672e95da02ecde2913e1bdd468598de8a7e061ab59de3fc814fb0a16a1500",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0779a0cc44c2b0544f81a741e8cf12698324fd71361962199b97021e34097412",
+      "response": {
+        "id": "resp_fixture_polymorphism_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-21T16:10:37.596Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T16:10:37.596Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
     }
   },
   "judgments": {
@@ -478,6 +1219,39 @@
         }
       },
       "createdAt": "2026-07-20T14:26:46.422Z"
+    },
+    "cc3d387fa887bdfea813a168e64c6a7f832faa5a6503181168c23dcee1eead94": {
+      "fingerprint": "cc3d387fa887bdfea813a168e64c6a7f832faa5a6503181168c23dcee1eead94",
+      "source": "examples/static-judgment/semantic.ts",
+      "judgment": "mikeIsCat",
+      "conceptId": "animal.cat",
+      "conceptHash": "521d6202119acba1db62dab0121e1c9bec1db626e5132ac76137c1a0db408012",
+      "valueHash": "3da60d12ec57478f33a58a2ec8628c5e29c43e90c1033d09ec4307917c043e48",
+      "promptHash": "a828d8fb34ab433442cebd1f6cdb5ef8943c5fe9274cbc7cdff0cccedff839bc",
+      "provider": "fixture:openai-response.true.fixture.json",
+      "model": "gpt-5.4-mini",
+      "resolvedValue": true,
+      "generatedCodeHash": "0bfeae824fa34edcea530ac01533f5773133302bf9819452e573217a18a98bab",
+      "response": {
+        "id": "resp_fixture_static_judgment_true",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 120,
+          "outputTokens": 20,
+          "totalTokens": 140
+        }
+      },
+      "createdAt": "2026-07-21T16:09:20.795Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-21T16:09:20.795Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "not-applicable",
+          "fullTest": "passed"
+        }
+      }
     }
   }
 }

@@ -2,7 +2,6 @@ import { createHash, randomUUID } from "node:crypto";
 import {
   mkdir,
   readFile,
-  rename,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -32,6 +31,7 @@ import {
   writeSemanticLock,
   type SemanticLockEntry,
 } from "./semantic-lock";
+import { promoteSemanticArtifact } from "./semantic-promotion";
 import { scanSemanticSource, type SemanticSource } from "./semantic-source";
 
 export type EvolutionHashes = {
@@ -274,12 +274,16 @@ export async function readSemanticEvolutionCandidate(
 export async function approveSemanticEvolution(
   candidateId: string,
   options: {
+    reviewer: string;
     workspaceRoot?: string;
     lockPath?: string;
     evolutionRoot?: string;
     commandRunner?: SemanticCommandRunner;
-  } = {},
+  },
 ): Promise<{ candidate: SemanticEvolutionCandidate; output: string }> {
+  if (options.reviewer.trim() !== options.reviewer || options.reviewer.length === 0) {
+    throw new Error("reviewer must be a non-empty trimmed string");
+  }
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const { candidate, candidateDirectory } = await readSemanticEvolutionCandidate(
     candidateId,
@@ -342,31 +346,42 @@ export async function approveSemanticEvolution(
   });
 
   const finalPath = resolve(workspaceRoot, candidate.output);
-  const previousFinal = await readOptional(finalPath);
-  await atomicWrite(finalPath, generatedCode);
-  try {
-    await executeCommand(["bun", "test"], workspaceRoot, "full-test");
-    const entry: SemanticLockEntry = {
-      fingerprint: candidate.proposedFingerprint,
-      source: candidate.source,
-      concept: candidate.concept,
-      conceptId: candidate.conceptId,
-      conceptSource: candidate.conceptSource,
-      predicate: candidate.predicate,
-      provider: candidate.provider,
-      model: candidate.model,
-      ...candidate.hashes,
-      resolvedIr: candidate.candidateIr,
-      generatedCodeHash: candidate.generatedCodeHash,
-      response: candidate.response,
-      createdAt: new Date().toISOString(),
-    };
-    lock.entries[candidate.proposedFingerprint] = entry;
-    await writeSemanticLock(lockPath, lock);
-  } catch (error) {
-    await restoreFinal(finalPath, previousFinal);
-    throw error;
-  }
+  const promotedAt = new Date().toISOString();
+  const entry: SemanticLockEntry = {
+    fingerprint: candidate.proposedFingerprint,
+    source: candidate.source,
+    concept: candidate.concept,
+    conceptId: candidate.conceptId,
+    conceptSource: candidate.conceptSource,
+    predicate: candidate.predicate,
+    provider: candidate.provider,
+    model: candidate.model,
+    ...candidate.hashes,
+    resolvedIr: candidate.candidateIr,
+    generatedCodeHash: candidate.generatedCodeHash,
+    response: candidate.response,
+    createdAt: promotedAt,
+    promotion: {
+      mode: "reviewed",
+      promotedAt,
+      candidateId: candidate.id,
+      reviewer: options.reviewer,
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "passed",
+        fullTest: "passed",
+      },
+    },
+  };
+  lock.entries[candidate.proposedFingerprint] = entry;
+  await promoteSemanticArtifact({
+    outputPath: finalPath,
+    generatedCode,
+    lockPath,
+    nextLock: lock,
+    runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
+  });
 
   const approved: SemanticEvolutionCandidate = {
     ...candidate,
@@ -526,6 +541,11 @@ async function validateCandidate(input: {
       input.workspaceRoot,
       "semantic-test",
     );
+    await input.commandRunner(
+      ["bun", "run", "typecheck"],
+      input.workspaceRoot,
+      "project-typecheck",
+    );
   } finally {
     await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(testPath)]);
   }
@@ -555,26 +575,6 @@ async function runCommand(command: string[], cwd: string, stage: string): Promis
   });
   const exitCode = await child.exited;
   if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
-}
-
-async function atomicWrite(path: string, value: string): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.promote.tmp`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
-}
-
-async function restoreFinal(path: string, previous: string | undefined): Promise<void> {
-  if (previous === undefined) await unlinkIfExists(path);
-  else await atomicWrite(path, previous);
-}
-
-async function readOptional(path: string): Promise<string | undefined> {
-  try {
-    return await readFile(path, "utf8");
-  } catch (error) {
-    if (isNotFound(error)) return undefined;
-    throw error;
-  }
 }
 
 async function unlinkIfExists(path: string): Promise<void> {

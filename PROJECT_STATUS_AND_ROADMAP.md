@@ -44,16 +44,16 @@ Predicateトラックでは、次の問いに答えるための信頼性検証�
 | --- | --- | --- |
 | Exact Code | 対応済み | 通常のTypeScriptを維持し、生成対象と手書きコードを分離している |
 | Ontology Definition | Predicate用途で対応済み | `defineConcept`、共有Concept、型への`bindConcept`を実装 |
-| Static Judgment | 最小縦切りを実装 | literalな`staticValue`、`judgeStatic`、boolean定数化、段階検査、audit、lock/replay、rollbackをfixtureで検証。live精度は未評価 |
+| Static Judgment | 最小縦切りを実装 | literalな`staticValue`、`judgeStatic`、boolean定数化、段階検査、audit、lock/replay、任意Review、rollbackをfixtureで検証。live精度は未評価 |
 | Semantic Generation | Predicate限定で対応済み | `generatePredicate`からBoolean Predicate IRとTypeScriptを生成 |
 | Static / Generated / Runtimeの段階分離 | 一部対応 | LLMはbuild/check時だけ使用し、生成物にLLM呼び出しを残さない。Static Judgmentではliteral以外をresolver前に拒否。一般的なデータフロー段階解析は未実装 |
-| Semantic Closure | artifact-level graphを実装 | 明示manifestの複数Predicate / Static Judgment、依存辺、cycle、stale / unlocked / integrity-errorをAPIなしで一括検査。人間承認provenanceと自動依存探索は未実装 |
+| Semantic Closure | artifact-level graphを実装 | 明示manifestの複数Predicate / Static Judgment、依存辺、cycle、stale / unlocked / integrity-errorをAPIなしで一括検査。promotion provenanceはlockへ実装済みだが、review policy評価と自動依存探索は未実装 |
 | Semantic IR | Boolean Predicate IRを実装 | `all`、`any`、`not`、`equals`、`present`に限定。自由なTypeScript生成は禁止 |
 | Semantic / Boundary / Exact Zone | 一部対応 | 生成候補、承認境界、手書きコードを分離。Port/Capability生成は未実装 |
 | Semantic Polymorphism | 実装・検証済み | 同一Conceptを異なるTypeScriptスキーマへ具体化できる |
 | Semantic Test | 基本形を実装 | `accept`と`reject`を実装。unknown、boundary、counterfactual、invariance、mutationは未実装 |
-| Semantic Lockfile | 実装済み | Predicate IRとStatic Judgment booleanを別namespaceで固定し、APIなしのreplayに対応。entry、hash、IR、boolean、response、日時を実行時に厳格検証 |
-| Explainability | Predicate / Static Judgmentで対応済み | 読み取り専用の`semantic explain`、text / JSON、current / stale / unlocked / integrity-error、lock provenanceと生成物hash検証を実装 |
+| Semantic Lockfile | 実装済み | Predicate IRとStatic Judgment booleanを別namespaceで固定し、APIなしのreplayに対応。version 1互換を保ったauto / reviewed promotion provenanceを実装し、entryを実行時に厳格検証 |
+| Explainability | Predicate / Static Judgmentで対応済み | 読み取り専用の`semantic explain`、text / JSON、current / stale / unlocked / integrity-error、auto / reviewed / legacy-auto provenanceと生成物hash検証を実装 |
 | Schema Evolution | 実装・評価中 | check/diff/approveトランザクション、型付き同値判定、ライブコンセンサスを実装 |
 | OpenAI Adapter | 実装済み | OpenAI Responses APIとAzure OpenAIに対応。既定モデルは`gpt-5.4-mini` |
 
@@ -261,13 +261,12 @@ bun run benchmark:schema-evolution:v2
 
 Static Judgmentの最小縦切り、`semantic explain`、artifact-levelのSemantic Closure graphは完了した。残る優先順位は次のとおり。
 
-1. Semantic Testの拡張
-   - unknown / boundary / counterfactual / invariance
-   - mutation testとmodel migration test
-2. Semantic Closureの保証範囲拡張
-   - 人間承認provenanceの保存と検証
-   - unresolved履歴と未実行unlockedの区別
-   - import graphに基づく依存関係の自動発見
+1. Semantic Closureのreview policy対応
+   - manifest nodeの`auto` / `manual` policy
+   - reviewed provenance検証とdependency-open伝播
+2. Semantic Testの拡張
+   - boundary / counterfactual / invariance
+   - 独立したread-only `semantic test` runner
 
 Gate 2でも任意TypeScript生成や副作用生成は行わない。
 
@@ -364,6 +363,11 @@ bun test
 bun run semantic:judgment:fixture
 bun run semantic:judgment:replay
 
+# 必要な場合だけ適用前Reviewを挟む
+bun run semantic build <semantic-source.ts> --review --fixture <response.json>
+bun run semantic diff <review-id>
+bun run semantic approve <review-id> --reviewer <id>
+
 # Predicate / Static Judgmentの読み取り専用説明
 bun run semantic:explain
 bun run semantic:judgment:explain
@@ -379,7 +383,7 @@ sed -n '1,80p' benchmarks/schema-evolution-v2/freeze.json
 bun run benchmark:schema-evolution:v2
 ```
 
-型検査と全テストは、2026-07-21時点で`78 pass / 0 fail`である。PredicateとStatic JudgmentのAPIなしreplayは同一生成hashで成功した。`semantic explain`と`semantic closure`のtext / JSON実行前後でlock、生成物、audit、v2 benchmark / freezeが不変であり、root Closure manifestは4/4 node `current`、artifact-level `closed`である。最後のv2コマンドは現在、局所Blockerと独立レビュー未完了のためAPIを呼ぶ前に停止する。
+ConceptはTypeScript tagged template内の固定5セクションを必須とし、Definition、Requirements、Exclusions、Out of scope、Leave unresolved whenを構造化してauditへ保持する。未分割の自由文はresolver呼び出し前に拒否する。PredicateとStatic Judgmentのbuild・review・replay、`FulfillableOrder`の3 schema example、explain、closureは引き続きテスト対象とする。
 
 ## 次回この文書を更新するタイミング
 

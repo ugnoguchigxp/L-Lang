@@ -13,7 +13,7 @@
       "id": "benchmark.v2.ticket.actionable",
       "exportName": "V2ActionableTicket",
       "displayName": "Actionable Ticket",
-      "specification": "A support ticket that can be acted on now. The supplied schema's authoritative workflow indicator is positive, no blocking state or timestamp represented by that schema is active, and an assigned owner is present. Use only semantic roles unambiguously represented by the supplied type. If workflow, blocking, or ownership roles require guessing, leave the concept unresolved.",
+      "specification": "Definition:\nA support ticket that can be acted on now.\n\nRequirements:\n- The authoritative workflow indicator is positive.\n- An assigned owner is present.\n\nExclusions:\n- Any active blocking state or timestamp.\n\nOut of scope:\n- Priority and response timing.\n\nLeave unresolved when:\n- Workflow, blocking, or ownership roles require guessing.",
       "baseline": {
         "typeName": "V2ActionableTicketBaseline",
         "expectedOutcome": "resolved",
@@ -62,7 +62,7 @@
       "id": "benchmark.v2.invoice.payable",
       "exportName": "V2PayableInvoice",
       "displayName": "Payable Invoice",
-      "specification": "An invoice that is authorized for payment now. The supplied schema's authoritative authorization indicator is positive, no void or cancellation marker represented by that schema is active, and a usable payment reference is present. Use only unambiguous semantic roles; if authorization, cancellation, or payment-reference roles require guessing, leave the concept unresolved.",
+      "specification": "Definition:\nAn invoice that is authorized for payment now.\n\nRequirements:\n- The authoritative authorization indicator is positive.\n- A usable payment reference is present.\n\nExclusions:\n- Any active void or cancellation marker.\n\nOut of scope:\n- Settlement timing and payment amount.\n\nLeave unresolved when:\n- Authorization, cancellation, or payment-reference roles require guessing.",
       "baseline": {"typeName":"V2PayableInvoiceBaseline","expectedOutcome":"resolved","fields":[
         {"path":["approvalStage"],"type":"\"approved\" | \"draft\"","positive":"approved","negative":"draft","condition":{"kind":"equals","value":"approved"}},
         {"path":["voidedAt"],"type":"string | null","positive":null,"negative":"2026-02-01","condition":{"kind":"equals","value":null}},
@@ -107,7 +107,7 @@
       "id": "benchmark.v2.release.deployable",
       "exportName": "V2DeployableRelease",
       "displayName": "Deployable Release",
-      "specification": "A software release that can be deployed now. The supplied schema's authoritative readiness indicator is positive, no withdrawal or revocation marker represented by that schema is active, and a usable build artifact locator is present. Use only unambiguous semantic roles; if readiness, withdrawal, or artifact roles require guessing, leave the concept unresolved.",
+      "specification": "Definition:\nA software release that can be deployed now.\n\nRequirements:\n- The authoritative readiness indicator is positive.\n- A usable build artifact locator is present.\n\nExclusions:\n- Any active withdrawal or revocation marker.\n\nOut of scope:\n- Deployment target and rollout strategy.\n\nLeave unresolved when:\n- Readiness, withdrawal, or artifact roles require guessing.",
       "baseline": {"typeName":"V2DeployableReleaseBaseline","expectedOutcome":"resolved","fields":[
         {"path":["lifecycle"],"type":"\"ready\" | \"blocked\"","positive":"ready","negative":"blocked","condition":{"kind":"equals","value":"ready"}},
         {"path":["withdrawnAt"],"type":"string | null","positive":null,"negative":"2026-03-01","condition":{"kind":"equals","value":null}},
@@ -152,7 +152,7 @@
       "id": "benchmark.v2.course.enrollable",
       "exportName": "V2EnrollableCourse",
       "displayName": "Enrollable Course",
-      "specification": "A course that currently accepts enrollment. The supplied schema's authoritative admissions indicator is positive, no retirement or sunset marker represented by that schema is active, and a usable registration channel is present. Use only unambiguous semantic roles; if admissions, retirement, or registration roles require guessing, leave the concept unresolved.",
+      "specification": "Definition:\nA course that currently accepts enrollment.\n\nRequirements:\n- The authoritative admissions indicator is positive.\n- A usable registration channel is present.\n\nExclusions:\n- Any active retirement or sunset marker.\n\nOut of scope:\n- Capacity and enrollment deadlines.\n\nLeave unresolved when:\n- Admissions, retirement, or registration roles require guessing.",
       "baseline": {"typeName":"V2EnrollableCourseBaseline","expectedOutcome":"resolved","fields":[
         {"path":["enrollmentState"],"type":"\"open\" | \"closed\"","positive":"open","negative":"closed","condition":{"kind":"equals","value":"open"}},
         {"path":["retiredAt"],"type":"string | null","positive":null,"negative":"2026-04-01","condition":{"kind":"equals","value":null}},

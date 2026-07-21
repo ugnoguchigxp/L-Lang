@@ -6,6 +6,10 @@ import { checkSemanticClosure } from "./semantic-closure";
 import { renderSemanticClosure } from "./semantic-closure-renderer";
 import { explainSemanticSource } from "./semantic-explain";
 import { renderSemanticExplanation } from "./semantic-explain-renderer";
+import {
+  approveSemanticReview,
+  readSemanticReviewCandidate,
+} from "./semantic-review";
 import { detectSemanticSourceKind } from "./semantic-source-kind";
 import { renderSemanticDiff } from "./semantic-diff";
 import {
@@ -47,12 +51,13 @@ async function main(): Promise<void> {
     throw new Error(
       [
         "Usage:",
-        "  bun run semantic <build|replay|test> <semantic-source.ts> [--fixture <response.json>]",
+        "  bun run semantic build <semantic-source.ts> [--review] [--fixture <response.json>]",
+        "  bun run semantic <replay|test> <semantic-source.ts>",
         "  bun run semantic check <semantic-source.ts> [--fixture <response.json>] [--samples 3 --quorum 2]",
         "  bun run semantic explain <semantic-source.ts> [--json]",
         "  bun run semantic closure <manifest.json> [--json]",
         "  bun run semantic diff <candidate-id>",
-        "  bun run semantic approve <candidate-id>",
+        "  bun run semantic approve <candidate-id> --reviewer <id>",
       ].join("\n"),
     );
   }
@@ -92,8 +97,26 @@ async function main(): Promise<void> {
   if (options.includes("--json")) {
     throw new Error(`${command} does not accept --json`);
   }
+  const reviewRequested = options.includes("--review");
+  if (reviewRequested && command !== "build") {
+    throw new Error(`${command} does not accept --review`);
+  }
+  if (options.includes("--reviewer") && command !== "approve") {
+    throw new Error(`${command} does not accept --reviewer`);
+  }
 
   if (command === "diff") {
+    if (options.length > 0) throw new Error("diff does not accept options");
+    if (target.startsWith("review-")) {
+      const { candidate, candidateDirectory, diff } =
+        await readSemanticReviewCandidate(target);
+      console.log(diff.trimEnd());
+      console.log(`candidate: ${candidate.id}`);
+      console.log(`kind: ${candidate.kind}`);
+      console.log(`status: ${candidate.status}`);
+      console.log(`audit: ${candidateDirectory}`);
+      return;
+    }
     const { candidate, candidateDirectory } =
       await readSemanticEvolutionCandidate(target);
     console.log(renderSemanticDiff(candidate.diff));
@@ -104,7 +127,28 @@ async function main(): Promise<void> {
   }
 
   if (command === "approve") {
-    const result = await approveSemanticEvolution(target);
+    const reviewer = readOption(options, "--reviewer");
+    if (reviewer === undefined) {
+      throw new Error("semantic approve requires --reviewer <id>");
+    }
+    if (target.startsWith("review-")) {
+      const result = await approveSemanticReview(target, { reviewer });
+      console.log(
+        [
+          result.status === "already-approved"
+            ? "semantic review already approved"
+            : "semantic review approved",
+          `candidate: ${result.candidate.id}`,
+          `kind: ${result.candidate.kind}`,
+          `reviewer: ${result.candidate.reviewer}`,
+          `output: ${result.output}`,
+          `fingerprint: ${result.candidate.fingerprint}`,
+          ...(result.warning === null ? [] : [`warning: ${result.warning}`]),
+        ].join("\n"),
+      );
+      return;
+    }
+    const result = await approveSemanticEvolution(target, { reviewer });
     console.log(
       [
         "semantic evolution approved",
@@ -177,11 +221,29 @@ async function main(): Promise<void> {
     const result = await compileStaticJudgmentSource({
       sourcePath: resolvedTarget,
       mode: command,
+      ...(reviewRequested ? { promotion: "review" as const } : {}),
       ...(provider === undefined ? {} : { provider }),
       ...(model === undefined ? {} : { model }),
       ...(countsAsApiCall === undefined ? {} : { countsAsApiCall }),
       ...(resolver === undefined ? {} : { resolve: resolver }),
     });
+    if (result.status === "review-required") {
+      console.log(
+        [
+          "Static Judgment review required",
+          `candidate: ${result.candidateId}`,
+          `judgment: ${result.resolvedValue}`,
+          `output: ${result.output}`,
+          `provider/model: ${result.provider}/${result.model}`,
+          `api calls: ${result.apiCalls}`,
+          `cache hit: ${result.cacheHit}`,
+          `sha256: ${result.generatedCodeHash}`,
+          `audit: ${result.candidateDirectory}`,
+          `report: ${result.report}`,
+        ].join("\n"),
+      );
+      return;
+    }
     console.log(
       [
         `Static Judgment ${command} passed`,
@@ -282,7 +344,7 @@ async function main(): Promise<void> {
           : `${result.candidate.consensus.supportingSamples.length}/${result.candidate.consensus.samples} (${result.candidate.consensus.reached ? "reached" : "unresolved"})`}`,
         `audit: ${result.candidateDirectory}`,
         result.candidate.status === "ready"
-          ? `approve: bun run semantic approve ${result.candidate.id}`
+          ? `approve: bun run semantic approve ${result.candidate.id} --reviewer <id>`
           : "approve: unavailable",
       ].join("\n"),
     );
@@ -292,12 +354,29 @@ async function main(): Promise<void> {
   const result = await compileSemanticSource({
     sourcePath: resolvedTarget,
     mode: command === "build" ? "build" : "replay",
+    ...(reviewRequested ? { promotion: "review" as const } : {}),
     ...(provider === undefined ? {} : { provider }),
     ...(model === undefined ? {} : { model }),
     ...(countsAsApiCall === undefined ? {} : { countsAsApiCall }),
     ...(resolver === undefined ? {} : { resolve: resolver }),
   });
 
+  if (result.status === "review-required") {
+    console.log(
+      [
+        "semantic review required",
+        `candidate: ${result.candidateId}`,
+        `output: ${result.output}`,
+        `provider/model: ${result.provider}/${result.model}`,
+        `api calls: ${result.apiCalls}`,
+        `cache hit: ${result.cacheHit}`,
+        `sha256: ${result.generatedCodeHash}`,
+        `audit: ${result.candidateDirectory}`,
+        `report: ${result.report}`,
+      ].join("\n"),
+    );
+    return;
+  }
   console.log(
     [
       `semantic ${command} passed`,

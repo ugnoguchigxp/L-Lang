@@ -301,7 +301,7 @@ declare function generatePredicate<T>(concept: unknown): (value: T) => boolean;
 declare function semanticTest<T>(predicate: (value: T) => boolean, cases: { accept: T[]; reject: T[] }): void;
 
 type Customer = { state: "ready" | "waiting" };
-const ReadyCustomer = concept<Customer>\`A ready customer has state ready.\`;
+const ReadyCustomer = concept<Customer>\`Definition:\nA ready customer has state ready.\n\nRequirements:\n- state is ready.\n\nExclusions:\n- state is waiting.\n\nOut of scope:\n- Other customer attributes.\n\nLeave unresolved when:\n- The state role is not represented unambiguously.\`;
 export const isReady = generatePredicate<Customer>(ReadyCustomer);
 semanticTest(isReady, { accept: [{ state: "ready" }], reject: [{ state: "waiting" }] });
 `.trimStart();
@@ -313,7 +313,7 @@ declare function defineConcept(id: string): (strings: TemplateStringsArray) => u
 declare function staticValue(value: string): unknown;
 declare function judgeStatic(value: unknown, concept: unknown): boolean;
 
-const Cat = defineConcept("animal.cat")\`A domesticated biological cat.\`;
+const Cat = defineConcept("animal.cat")\`Definition:\nA domesticated biological cat.\n\nRequirements:\n- The entity is a living cat.\n\nExclusions:\n- Cat-shaped objects.\n\nOut of scope:\n- Breed and color.\n\nLeave unresolved when:\n- The species cannot be determined.\`;
 const mike = staticValue(\`A calico animal that meows.\`);
 export const mikeIsCat = judgeStatic(mike, Cat);
 `.trimStart();

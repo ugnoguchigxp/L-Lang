@@ -3,6 +3,8 @@ import { basename, dirname, resolve } from "node:path";
 
 import ts from "typescript";
 
+import type { StructuredConceptSpecification } from "./concept-specification";
+
 import {
   formatDiagnostics,
   hashConcept,
@@ -24,6 +26,7 @@ export type StaticJudgmentSource = {
     definitionName: string;
     definitionPath: string;
     specification: string;
+    structure: StructuredConceptSpecification;
   };
   value: {
     name: string;
@@ -176,6 +179,7 @@ export async function scanStaticJudgmentSource(
     definitionName: definition.name,
     definitionPath: definition.sourceFile.fileName,
     specification: definition.specification,
+    structure: definition.structure,
   };
 
   return {

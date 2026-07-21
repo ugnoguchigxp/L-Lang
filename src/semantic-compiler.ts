@@ -1,8 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
   mkdir,
-  readFile,
-  rename,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -38,11 +36,14 @@ import {
   workspaceRelativePath,
 } from "./semantic-fingerprint";
 import {
+  findLatestPredicateEntry,
   findReplayEntry,
   readSemanticLock,
   writeSemanticLock,
   type SemanticLockEntry,
 } from "./semantic-lock";
+import { promoteSemanticArtifact } from "./semantic-promotion";
+import { createPredicateSemanticReview } from "./semantic-review";
 import { scanSemanticSource } from "./semantic-source";
 
 export type SemanticResolution = {
@@ -60,7 +61,10 @@ export type SemanticCompileOptions = {
   countsAsApiCall?: boolean;
   lockPath?: string;
   auditRoot?: string;
+  promotion?: "auto" | "review";
+  reviewRoot?: string;
   commandRunner?: SemanticCommandRunner;
+  writeLock?: typeof writeSemanticLock;
   resolve?: (input: {
     specification: string;
     typeScriptSource: string;
@@ -76,8 +80,7 @@ export type SemanticCommandRunner = (
   stage: string,
 ) => Promise<void>;
 
-export type SemanticCompileResult = {
-  status: "passed";
+type SemanticCompileResultBase = {
   source: string;
   output: string;
   report: string;
@@ -90,9 +93,25 @@ export type SemanticCompileResult = {
   generatedCodeHash: string;
 };
 
+export type SemanticCompileResult =
+  | (SemanticCompileResultBase & {
+      status: "passed";
+      promotionMode: "auto" | "replay";
+    })
+  | (SemanticCompileResultBase & {
+      status: "review-required";
+      promotionMode: "review";
+      candidateId: string;
+      candidateDirectory: string;
+    });
+
 export async function compileSemanticSource(
   options: SemanticCompileOptions,
 ): Promise<SemanticCompileResult> {
+  const promotion = options.promotion ?? "auto";
+  if (options.mode === "replay" && promotion === "review") {
+    throw new Error("replay does not support review promotion");
+  }
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanSemanticSource(options.sourcePath);
   const sourceRelative = workspaceRelativePath(
@@ -192,6 +211,7 @@ export async function compileSemanticSource(
     bindingKind: source.concept.shared ? "shared" : "local",
     predicate: source.predicate.name,
     specification: source.concept.specification,
+    conceptStructure: source.concept.structure,
     typeDeclaration: source.concept.typeDeclaration,
     typeSchema: source.concept.typeSchema,
     testCasesSentToModel: false,
@@ -216,10 +236,9 @@ export async function compileSemanticSource(
   let stage = "elaboration";
   let code = "";
   let definition: PredicateDefinition | null = null;
-  let previousFinal: string | undefined;
-  let promoted = false;
   const startedAt = Date.now();
   const executeCommand = options.commandRunner ?? runCommand;
+  const persistLock = options.writeLock ?? writeSemanticLock;
 
   try {
     if (resolution.elaboration.outcome === "unresolved") {
@@ -269,8 +288,6 @@ export async function compileSemanticSource(
     await writeFile(candidatePath, code, "utf8");
     await writeFile(candidateTestPath, candidateTest, "utf8");
 
-    stage = "project-typecheck";
-    await executeCommand(["bun", "run", "typecheck"], workspaceRoot, stage);
     stage = "candidate-typecheck";
     await executeCommand(
       [
@@ -296,24 +313,80 @@ export async function compileSemanticSource(
     );
     stage = "semantic-test";
     await executeCommand(["bun", "test", candidateTestPath], workspaceRoot, stage);
+    stage = "project-typecheck";
+    await executeCommand(["bun", "run", "typecheck"], workspaceRoot, stage);
     await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(candidateTestPath)]);
 
-    stage = "promotion";
-    previousFinal = await readOptional(finalPath);
-    await atomicWrite(finalPath, code);
-    promoted = true;
-    try {
-      stage = "full-test";
-      await executeCommand(["bun", "test"], workspaceRoot, stage);
-    } catch (error) {
-      stage = "rollback";
-      await restoreFinal(finalPath, previousFinal);
-      promoted = false;
-      throw error;
-    }
-
     const generatedCodeHash = sha256(code);
+    const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
+    if (promotion === "review") {
+      const review = await createPredicateSemanticReview({
+        workspaceRoot,
+        ...(options.reviewRoot === undefined ? {} : { reviewRoot: options.reviewRoot }),
+        source: sourceRelative,
+        output,
+        symbol: source.predicate.name,
+        conceptId: source.concept.id,
+        provider,
+        model,
+        fingerprint,
+        hashes,
+        resolvedIr: definition.body,
+        baseline: findLatestPredicateEntry(lock, {
+          source: sourceRelative,
+          predicate: source.predicate.name,
+        }),
+        response: lockResponse(resolution.response),
+        generatedCode: code,
+        typeSchema: source.concept.typeSchema,
+      });
+      stage = "report";
+      await writeJson(reportPath, {
+        version: 1,
+        status: "review-required",
+        stage: "complete",
+        source: sourceRelative,
+        output,
+        candidateId: review.candidate.id,
+        candidateDirectory: workspaceRelativePath(
+          workspaceRoot,
+          review.candidateDirectory,
+          "review candidate directory",
+        ),
+        provider,
+        model,
+        response: responseMetadata(resolution.response),
+        fingerprint,
+        apiCalls,
+        cacheHit,
+        replayed: false,
+        hashes: { ...hashes, generatedCodeHash },
+        durationMs: Date.now() - startedAt,
+        completedAt: new Date().toISOString(),
+      });
+      return {
+        status: "review-required",
+        promotionMode: "review",
+        source: sourceRelative,
+        output,
+        report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
+        fingerprint,
+        provider,
+        model,
+        apiCalls,
+        cacheHit,
+        replayed: false,
+        generatedCodeHash,
+        candidateId: review.candidate.id,
+        candidateDirectory: workspaceRelativePath(
+          workspaceRoot,
+          review.candidateDirectory,
+          "review candidate directory",
+        ),
+      };
+    }
     if (!cacheHit) {
+      const promotedAt = new Date().toISOString();
       entry = {
         fingerprint,
         source: sourceRelative,
@@ -333,16 +406,40 @@ export async function compileSemanticSource(
               usage: resolution.response.usage,
             }
           : null,
-        createdAt: new Date().toISOString(),
+        createdAt: promotedAt,
+        promotion: {
+          mode: "auto",
+          promotedAt,
+          validation: {
+            candidateTypecheck: "passed",
+            projectTypecheck: "passed",
+            semanticTest: "passed",
+            fullTest: "passed",
+          },
+        },
       };
       lock.entries[fingerprint] = entry;
-      stage = "lock";
-      await writeSemanticLock(lockPath, lock);
     }
+    stage = "promotion";
+    await promoteSemanticArtifact({
+      outputPath: finalPath,
+      generatedCode: code,
+      lockPath,
+      nextLock: lock,
+      runFullTest: async () => {
+        stage = "full-test";
+        await executeCommand(["bun", "test"], workspaceRoot, stage);
+      },
+      writeLock: async (path, nextLock) => {
+        stage = "lock";
+        if (!cacheHit) await persistLock(path, nextLock);
+      },
+    });
     stage = "report";
     await writeJson(reportPath, {
       version: 1,
       status: "passed",
+      promotionMode: options.mode === "replay" ? "replay" : "auto",
       stage: "complete",
       source: sourceRelative,
       output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
@@ -360,6 +457,7 @@ export async function compileSemanticSource(
 
     return {
       status: "passed",
+      promotionMode: options.mode === "replay" ? "replay" : "auto",
       source: sourceRelative,
       output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
       report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
@@ -372,11 +470,6 @@ export async function compileSemanticSource(
       generatedCodeHash,
     };
   } catch (error) {
-    if (promoted && stage === "lock") {
-      await restoreFinal(finalPath, previousFinal);
-      promoted = false;
-      stage = "rollback";
-    }
     await writeJson(reportPath, {
       version: 1,
       status: "failed",
@@ -414,34 +507,11 @@ async function runCommand(command: string[], cwd: string, stage: string): Promis
   if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
 }
 
-async function atomicWrite(path: string, value: string): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.promote.tmp`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
-}
-
-async function readOptional(path: string): Promise<string | undefined> {
-  try {
-    return await readFile(path, "utf8");
-  } catch (error) {
-    if (isNotFound(error)) return undefined;
-    throw error;
-  }
-}
-
 async function unlinkIfExists(path: string): Promise<void> {
   try {
     await unlink(path);
   } catch (error) {
     if (!isNotFound(error)) throw error;
-  }
-}
-
-async function restoreFinal(path: string, previous: string | undefined): Promise<void> {
-  if (previous === undefined) {
-    await unlinkIfExists(path);
-  } else {
-    await atomicWrite(path, previous);
   }
 }
 
@@ -451,6 +521,18 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 }
 
 function responseMetadata(response: OpenAIResult | null): object | null {
+  return response === null
+    ? null
+    : {
+        id: response.responseId,
+        model: response.model,
+        usage: response.usage,
+      };
+}
+
+function lockResponse(
+  response: OpenAIResult | null,
+): SemanticLockEntry["response"] {
   return response === null
     ? null
     : {

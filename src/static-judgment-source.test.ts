@@ -23,7 +23,7 @@ describe("static judgment source scanner", () => {
   test("rejects dynamic Static values before resolution", async () => {
     const fixture = await writeFixture([
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
-      'const Cat = defineConcept("animal.cat")`A biological cat.`;',
+      validConceptDeclaration(),
       'const runtimeDescription = "a cat";',
       "const value = staticValue(runtimeDescription);",
       "export const result = judgeStatic(value, Cat);",
@@ -41,7 +41,7 @@ describe("static judgment source scanner", () => {
   test("rejects template substitutions and unknown Static value references", async () => {
     const substituted = await writeFixture([
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
-      'const Cat = defineConcept("animal.cat")`A biological cat.`;',
+      validConceptDeclaration(),
       'const detail = "cat";',
       "const value = staticValue(`a ${detail}`);",
       "export const result = judgeStatic(value, Cat);",
@@ -57,7 +57,7 @@ describe("static judgment source scanner", () => {
 
     const unknown = await writeFixture([
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
-      'const Cat = defineConcept("animal.cat")`A biological cat.`;',
+      validConceptDeclaration(),
       'const first = staticValue("a cat");',
       'const second = first;',
       "export const result = judgeStatic(second, Cat);",
@@ -75,7 +75,7 @@ describe("static judgment source scanner", () => {
   test("rejects multiple Judgments and mixed semantic source forms", async () => {
     const multiple = await writeFixture([
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
-      'const Cat = defineConcept("animal.cat")`A biological cat.`;',
+      validConceptDeclaration(),
       'const value = staticValue("a cat");',
       "export const first = judgeStatic(value, Cat);",
       "export const second = judgeStatic(value, Cat);",
@@ -91,7 +91,7 @@ describe("static judgment source scanner", () => {
 
     const mixed = await writeFixture([
       'import { defineConcept, generatePredicate, judgeStatic, staticValue } from "__DSL__";',
-      'const Cat = defineConcept("animal.cat")`A biological cat.`;',
+      validConceptDeclaration(),
       'const value = staticValue("a cat");',
       "export const result = judgeStatic(value, Cat);",
       "const generated = generatePredicate(Cat);",
@@ -106,6 +106,10 @@ describe("static judgment source scanner", () => {
     }
   });
 });
+
+function validConceptDeclaration(): string {
+  return 'const Cat = defineConcept("animal.cat")`Definition:\nA biological cat.\n\nRequirements:\n- The entity is a living cat.\n\nExclusions:\n- Cat-shaped objects.\n\nOut of scope:\n- Breed and color.\n\nLeave unresolved when:\n- The species cannot be determined.`;';
+}
 
 async function writeFixture(lines: string[]): Promise<string> {
   const parent = resolve(workspaceRoot, ".semantic/test-workspaces");

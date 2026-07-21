@@ -4,6 +4,11 @@ import { basename, dirname, resolve } from "node:path";
 
 import ts from "typescript";
 
+import {
+  parseConceptSpecification,
+  type StructuredConceptSpecification,
+} from "./concept-specification";
+
 export type TypeSchema =
   | { kind: "string" | "number" | "boolean" | "null" | "undefined" }
   | { kind: "literal"; value: string | number | boolean }
@@ -28,6 +33,7 @@ export type SemanticSource = {
     definitionName: string;
     definitionPath: string;
     specification: string;
+    structure: StructuredConceptSpecification;
     inputType: ts.Type;
     typeName: string;
     typeDeclaration: string;
@@ -121,7 +127,12 @@ export async function scanSemanticSource(
           const inputType = checker.getTypeFromTypeNode(typeNode);
           const typeName = typeNode.typeName.text;
           const conceptId = `local:${declaration.name.text}`;
-          const specification = initializer.template.text.trim();
+          const parsedSpecification = parseConceptSpecificationAt(
+            initializer.template.text,
+            sourceFile,
+            initializer.template,
+          );
+          const specification = parsedSpecification.specification;
           concepts.push({
             name: declaration.name.text,
             id: conceptId,
@@ -130,6 +141,7 @@ export async function scanSemanticSource(
             definitionName: declaration.name.text,
             definitionPath: sourceFile.fileName,
             specification,
+            structure: parsedSpecification.structure,
             inputType,
             typeName,
             typeDeclaration: findTypeDeclaration(inputType, sourceFile),
@@ -171,6 +183,7 @@ export async function scanSemanticSource(
             definitionName: definition.name,
             definitionPath: definition.sourceFile.fileName,
             specification: definition.specification,
+            structure: definition.structure,
             inputType,
             typeName,
             typeDeclaration: findTypeDeclaration(inputType, sourceFile),
@@ -267,6 +280,7 @@ export function resolveConceptDefinition(
   id: string;
   name: string;
   specification: string;
+  structure: StructuredConceptSpecification;
   sourceFile: ts.SourceFile;
 } {
   const referenceSymbol = checker.getSymbolAtLocation(reference);
@@ -321,12 +335,31 @@ export function resolveConceptDefinition(
     );
   }
 
+  const parsedSpecification = parseConceptSpecificationAt(
+    tagged.template.text,
+    tagged.getSourceFile(),
+    tagged.template,
+  );
   return {
     id,
     name: declaration.name.text,
-    specification: tagged.template.text.trim(),
+    specification: parsedSpecification.specification,
+    structure: parsedSpecification.structure,
     sourceFile: declaration.getSourceFile(),
   };
+}
+
+function parseConceptSpecificationAt(
+  specification: string,
+  sourceFile: ts.SourceFile,
+  node: ts.Node,
+) {
+  try {
+    return parseConceptSpecification(specification);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw sourceError(sourceFile, node, message);
+  }
 }
 
 function findTypeDeclaration(type: ts.Type, sourceFile: ts.SourceFile): string {

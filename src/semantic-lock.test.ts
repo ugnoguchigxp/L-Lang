@@ -150,6 +150,15 @@ describe("semantic lock", () => {
     expect(await readSemanticLock(path)).toEqual(lock);
   });
 
+  test("keeps legacy version 1 entries readable without promotion provenance", async () => {
+    const lock = validLock();
+    delete Object.values(lock.entries)[0]!.promotion;
+    delete Object.values(lock.judgments!)[0]!.promotion;
+    const path = await writeTemporaryLock(lock);
+
+    expect(await readSemanticLock(path)).toEqual(lock);
+  });
+
   test("rejects malformed entries instead of trusting the TypeScript cast", async () => {
     const cases: Array<{ label: string; mutate: (lock: Record<string, any>) => void }> = [
       {
@@ -198,6 +207,48 @@ describe("semantic lock", () => {
           };
         },
       },
+      {
+        label: "promotion mode",
+        mutate: (lock) => {
+          firstEntry(lock.entries).promotion.mode = "automatic";
+        },
+      },
+      {
+        label: "auto candidate metadata",
+        mutate: (lock) => {
+          firstEntry(lock.entries).promotion.candidateId = "candidate";
+        },
+      },
+      {
+        label: "reviewed reviewer",
+        mutate: (lock) => {
+          firstEntry(lock.judgments).promotion.reviewer = " ";
+        },
+      },
+      {
+        label: "promotion timestamp",
+        mutate: (lock) => {
+          firstEntry(lock.entries).promotion.promotedAt = "2026-02-30T00:00:00.000Z";
+        },
+      },
+      {
+        label: "non-canonical promotion timestamp",
+        mutate: (lock) => {
+          firstEntry(lock.entries).promotion.promotedAt = "2026-07-20T00:00:00Z";
+        },
+      },
+      {
+        label: "promotion validation",
+        mutate: (lock) => {
+          firstEntry(lock.entries).promotion.validation.fullTest = "skipped";
+        },
+      },
+      {
+        label: "Static Judgment Semantic Test",
+        mutate: (lock) => {
+          firstEntry(lock.judgments).promotion.validation.semanticTest = "passed";
+        },
+      },
     ];
 
     for (const testCase of cases) {
@@ -219,6 +270,16 @@ function validLock(): SemanticLock {
     testHash: "5".repeat(64),
     promptHash: "6".repeat(64),
     generatedCodeHash: "7".repeat(64),
+    promotion: {
+      mode: "auto",
+      promotedAt: "2026-07-20T00:00:00.000Z",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "passed",
+        fullTest: "passed",
+      },
+    },
   };
   const judgmentEntry: StaticJudgmentLockEntry = {
     ...judgment,
@@ -227,6 +288,18 @@ function validLock(): SemanticLock {
     valueHash: "a".repeat(64),
     promptHash: "b".repeat(64),
     generatedCodeHash: "c".repeat(64),
+    promotion: {
+      mode: "reviewed",
+      promotedAt: "2026-07-20T01:00:00.000Z",
+      candidateId: "20260720010000-12345678",
+      reviewer: "test-reviewer",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "not-applicable",
+        fullTest: "passed",
+      },
+    },
   };
   return {
     version: 1,

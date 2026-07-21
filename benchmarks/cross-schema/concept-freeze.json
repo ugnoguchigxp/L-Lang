@@ -3,8 +3,8 @@
   "frozenAt": "2026-07-20T03:56:00+09:00",
   "rule": "Concept text and hashes must not change after model execution begins for this benchmark run.",
   "concepts": {
-    "benchmark.customer.active": "8af90be525fab328f84554c8637403cdd8622efac84ce357120684a714b8450a",
-    "benchmark.order.shippable": "181c79310f43328d5bb79779861b2420b9ef1ecb5d6cf50cfb7aff8ee2294fb6",
-    "benchmark.article.publishable": "afd2c06f1adaf8b21a722363ef1fcf16075af768868e82540325c2f12a49e7be"
+    "benchmark.customer.active": "4585b648781a5d191ffa33405e9bcf9979cc9d20afcec65c9e93681d4fe58d2a",
+    "benchmark.order.shippable": "33f59d4f72e7320e0a8020f2e3755f5dc8cff97a168c8a86bb01702246428f40",
+    "benchmark.article.publishable": "4ffea63ea4bd31b2900830d96a5aae9d0b01f1af6517bcff571ba62a0f643876"
   }
 }

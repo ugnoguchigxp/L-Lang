@@ -46,8 +46,16 @@ export function renderSemanticExplanation(
       `lock: ${explanation.lock.fingerprint}`,
       `provider/model: ${explanation.lock.provider}/${explanation.lock.model}`,
       `created at: ${explanation.lock.createdAt}`,
+      `promotion: ${explanation.lock.promotion.mode}`,
+      `promoted at: ${explanation.lock.promotion.promotedAt}`,
       `response: ${explanation.lock.response === null ? "not recorded" : explanation.lock.response.id}`,
     );
+    if (explanation.lock.promotion.mode === "reviewed") {
+      lines.push(
+        `candidate: ${explanation.lock.promotion.candidateId}`,
+        `reviewer: ${explanation.lock.promotion.reviewer}`,
+      );
+    }
   }
 
   if (explanation.generated === null) {

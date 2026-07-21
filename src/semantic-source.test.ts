@@ -15,6 +15,10 @@ const polymorphicAccount = new URL(
   "../examples/semantic-polymorphism/account/semantic.ts",
   import.meta.url,
 ).pathname;
+const structuredFulfillment = new URL(
+  "../examples/order-fulfillment/storefront/semantic.ts",
+  import.meta.url,
+).pathname;
 
 describe("semantic source scanner", () => {
   test("extracts a closed concept, predicate, type, and tests", async () => {
@@ -72,5 +76,24 @@ describe("semantic source scanner", () => {
     expect(customer.concept.typeName).toBe("CustomerRecord");
     expect(account.concept.typeDeclaration).toContain("enabled: boolean");
     expect(customer.concept.typeDeclaration).toContain('status: "active" | "suspended"');
+  });
+
+  test("parses a shared fixed-section Concept into a canonical specification", async () => {
+    const source = await scanSemanticSource(structuredFulfillment);
+
+    expect(source.concept.structure).toMatchObject({
+      requirements: [
+        expect.stringContaining("payment or authorization"),
+        expect.stringContaining("delivery destination"),
+      ],
+      exclusions: [
+        expect.stringContaining("cancellation"),
+        expect.stringContaining("hold"),
+        expect.stringContaining("void"),
+      ],
+    });
+    expect(source.concept.specification).toContain("Requirements:\n-");
+    expect(source.concept.specification).toContain("Out of scope:\n-");
+    expect(source.concept.specification).toContain("Leave unresolved when:\n-");
   });
 });

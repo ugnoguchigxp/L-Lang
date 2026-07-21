@@ -110,6 +110,14 @@ describe("Static Judgment compiler transaction", () => {
         };
         expect(Object.keys(parsedLock.entries)).toHaveLength(0);
         expect(Object.keys(parsedLock.judgments)).toHaveLength(2);
+        expect(
+          Object.values(parsedLock.judgments)[0],
+        ).toMatchObject({
+          promotion: {
+            mode: "auto",
+            validation: { semanticTest: "not-applicable" },
+          },
+        });
 
         await writeSource(sourcePath, testRoot, "An animal is visible in the distance.");
         await expect(compileStaticJudgmentSource({
@@ -134,6 +142,21 @@ describe("Static Judgment compiler transaction", () => {
           commandRunner: runner,
           resolve: async () => unresolved(),
         })).rejects.toThrow("was unresolved");
+        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+
+        await expect(compileStaticJudgmentSource({
+          sourcePath,
+          workspaceRoot,
+          mode: "build",
+          provider: "fixture:project-typecheck-failure",
+          model: "gpt-5.4-mini",
+          countsAsApiCall: false,
+          lockPath,
+          auditRoot,
+          commandRunner: createStubFailureRunner("project-typecheck"),
+          resolve: async () => resolved(true),
+        })).rejects.toThrow("simulated project-typecheck failure");
         expect(await readFile(finalPath, "utf8")).toBe(falseCode);
         expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
@@ -216,6 +239,14 @@ function createRunner(
     const exitCode = await child.exited;
     if (exitCode !== 0) {
       throw new Error(`${stage} failed: ${await new Response(child.stderr).text()}`);
+    }
+  };
+}
+
+function createStubFailureRunner(failureStage: string): SemanticCommandRunner {
+  return async (_command, _cwd, stage) => {
+    if (stage === failureStage) {
+      throw new Error(`simulated ${stage} failure`);
     }
   };
 }

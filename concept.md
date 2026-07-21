@@ -773,6 +773,28 @@ MVPでは、新しい汎用言語を完成させない。
 
 有効なTypeScript内に、Tagged Templateと関数呼び出しによってSemantic構文を埋め込む。
 
+すべてのConceptは、tagged template内を固定5セクションで構造化する。TypeScriptを型・Binding・Semantic Testの外枠として維持し、Concept本文ではDefinition、Requirements、Exclusions、Out of scope、Leave unresolved whenを機械的に分離する。未分割の自由文やTOMLは受理せず、LLM呼び出し前にコンパイルエラーとする。
+
+```typescript
+const FulfillableOrder = defineConcept("order.fulfillable")`
+Definition:
+An order eligible for fulfillment intake.
+
+Requirements:
+- Payment is confirmed.
+- A destination is present.
+
+Exclusions:
+- Cancelled orders.
+
+Out of scope:
+- Inventory availability.
+
+Leave unresolved when:
+- A required semantic role cannot be mapped uniquely.
+`;
+```
+
 ### MVP対象
 
 * `concept`

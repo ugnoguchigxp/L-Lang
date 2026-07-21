@@ -84,6 +84,7 @@ describe("schema evolution transaction", () => {
         ).toContain("Semantic change: COMPATIBLE");
 
         const approved = await approveSemanticEvolution(checked.candidate.id, {
+          reviewer: "integration-reviewer",
           workspaceRoot,
           lockPath,
           evolutionRoot,
@@ -94,7 +95,20 @@ describe("schema evolution transaction", () => {
           "evolvingCustomer.enabled === true",
         );
         const lockAfterApprove = await readFile(lockPath, "utf8");
-        expect(Object.keys(JSON.parse(lockAfterApprove).entries)).toHaveLength(2);
+        const approvedEntries = Object.values(
+          (JSON.parse(lockAfterApprove) as { entries: Record<string, any> }).entries,
+        );
+        expect(approvedEntries).toHaveLength(2);
+        expect(
+          approvedEntries.find(
+            (entry) => entry.fingerprint === checked.candidate.proposedFingerprint,
+          )?.promotion,
+        ).toMatchObject({
+          mode: "reviewed",
+          candidateId: checked.candidate.id,
+          reviewer: "integration-reviewer",
+          validation: { semanticTest: "passed" },
+        });
         const replayed = await compileSemanticSource({
           sourcePath,
           workspaceRoot,
@@ -128,6 +142,7 @@ describe("schema evolution transaction", () => {
         );
         await expect(
           approveSemanticEvolution(staleCheck.candidate.id, {
+            reviewer: "integration-reviewer",
             workspaceRoot,
             lockPath,
             evolutionRoot,
@@ -154,6 +169,7 @@ describe("schema evolution transaction", () => {
         expect(unresolvedCheck.candidate.diff.classification).toBe("unresolved");
         await expect(
           approveSemanticEvolution(unresolvedCheck.candidate.id, {
+            reviewer: "integration-reviewer",
             workspaceRoot,
             lockPath,
             evolutionRoot,
@@ -178,6 +194,7 @@ describe("schema evolution transaction", () => {
         const approvedCode = await readFile(finalPath, "utf8");
         await expect(
           approveSemanticEvolution(rollbackCheck.candidate.id, {
+            reviewer: "integration-reviewer",
             workspaceRoot,
             lockPath,
             evolutionRoot,

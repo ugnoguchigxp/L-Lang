@@ -10,6 +10,8 @@
     "semantic:test": "bun run semantic test examples/active-customer/semantic.ts",
     "semantic:test:customer-schema": "bun run semantic test examples/semantic-polymorphism/customer/semantic.ts",
     "semantic:test:account-schema": "bun run semantic test examples/semantic-polymorphism/account/semantic.ts",
+    "semantic:fulfillment:test": "bun test examples/order-fulfillment/order-fulfillment.test.ts",
+    "semantic:fulfillment:closure": "bun run semantic closure examples/order-fulfillment/semantic-closure.json",
     "semantic:judgment:fixture": "bun run semantic build examples/static-judgment/semantic.ts --fixture examples/static-judgment/openai-response.true.fixture.json",
     "semantic:judgment:replay": "bun run semantic replay examples/static-judgment/semantic.ts",
     "semantic:explain": "bun run semantic explain examples/active-customer/semantic.ts",

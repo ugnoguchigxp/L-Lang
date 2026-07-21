@@ -4,6 +4,27 @@ import { readFile, rename, writeFile } from "node:fs/promises";
 import { parsePredicateExpression, type PredicateExpression } from "./ir";
 import type { OpenAIResult } from "./openai";
 
+export type PromotionValidation = {
+  candidateTypecheck: "passed";
+  projectTypecheck: "passed";
+  semanticTest: "passed" | "not-applicable";
+  fullTest: "passed";
+};
+
+export type PromotionProvenance =
+  | {
+      mode: "auto";
+      promotedAt: string;
+      validation: PromotionValidation;
+    }
+  | {
+      mode: "reviewed";
+      promotedAt: string;
+      candidateId: string;
+      reviewer: string;
+      validation: PromotionValidation;
+    };
+
 export type SemanticLockEntry = {
   fingerprint: string;
   source: string;
@@ -26,6 +47,7 @@ export type SemanticLockEntry = {
     usage: OpenAIResult["usage"];
   } | null;
   createdAt: string;
+  promotion?: PromotionProvenance;
 };
 
 export type StaticJudgmentLockEntry = {
@@ -46,6 +68,7 @@ export type StaticJudgmentLockEntry = {
     usage: OpenAIResult["usage"];
   } | null;
   createdAt: string;
+  promotion?: PromotionProvenance;
 };
 
 export type SemanticLock = {
@@ -228,6 +251,9 @@ function parsePredicateEntry(input: unknown, path: string): SemanticLockEntry {
     ),
     response: responseValue(value.response, `${path}.response`),
     createdAt: dateValue(value.createdAt, `${path}.createdAt`),
+    ...(value.promotion === undefined
+      ? {}
+      : { promotion: promotionValue(value.promotion, `${path}.promotion`, "predicate") }),
   };
 }
 
@@ -256,7 +282,79 @@ function parseStaticJudgmentEntry(
     ),
     response: responseValue(value.response, `${path}.response`),
     createdAt: dateValue(value.createdAt, `${path}.createdAt`),
+    ...(value.promotion === undefined
+      ? {}
+      : {
+          promotion: promotionValue(
+            value.promotion,
+            `${path}.promotion`,
+            "static-judgment",
+          ),
+        }),
   };
+}
+
+function promotionValue(
+  input: unknown,
+  path: string,
+  kind: "predicate" | "static-judgment",
+): PromotionProvenance {
+  const value = objectValue(input, path);
+  if (value.mode !== "auto" && value.mode !== "reviewed") {
+    throw new Error(`${path}.mode must be auto or reviewed`);
+  }
+  const validation = promotionValidationValue(
+    value.validation,
+    `${path}.validation`,
+    kind,
+  );
+  const promotedAt = canonicalDateValue(value.promotedAt, `${path}.promotedAt`);
+
+  if (value.mode === "auto") {
+    if (value.candidateId !== undefined || value.reviewer !== undefined) {
+      throw new Error(`${path} auto promotion must not include candidateId or reviewer`);
+    }
+    return { mode: "auto", promotedAt, validation };
+  }
+
+  return {
+    mode: "reviewed",
+    promotedAt,
+    candidateId: trimmedStringValue(value.candidateId, `${path}.candidateId`),
+    reviewer: trimmedStringValue(value.reviewer, `${path}.reviewer`),
+    validation,
+  };
+}
+
+function promotionValidationValue(
+  input: unknown,
+  path: string,
+  kind: "predicate" | "static-judgment",
+): PromotionValidation {
+  const value = objectValue(input, path);
+  if (value.candidateTypecheck !== "passed") {
+    throw new Error(`${path}.candidateTypecheck must be passed`);
+  }
+  if (value.projectTypecheck !== "passed") {
+    throw new Error(`${path}.projectTypecheck must be passed`);
+  }
+  if (value.fullTest !== "passed") {
+    throw new Error(`${path}.fullTest must be passed`);
+  }
+  if (kind === "predicate" && value.semanticTest !== "passed") {
+    throw new Error(`${path}.semanticTest must be passed for Predicate entries`);
+  }
+  if (kind === "static-judgment" && value.semanticTest !== "not-applicable") {
+    throw new Error(
+      `${path}.semanticTest must be not-applicable for Static Judgment entries`,
+    );
+  }
+  return {
+    candidateTypecheck: "passed",
+    projectTypecheck: "passed",
+    semanticTest: value.semanticTest,
+    fullTest: "passed",
+  } as PromotionValidation;
 }
 
 function responseValue(
@@ -301,6 +399,14 @@ function stringValue(input: unknown, path: string): string {
   return input;
 }
 
+function trimmedStringValue(input: unknown, path: string): string {
+  const value = stringValue(input, path);
+  if (value.trim() !== value || value.trim().length === 0) {
+    throw new Error(`${path} must be a non-empty trimmed string`);
+  }
+  return value;
+}
+
 function hashValue(input: unknown, path: string): string {
   const value = stringValue(input, path);
   if (!/^[0-9a-f]{64}$/.test(value)) {
@@ -318,6 +424,14 @@ function dateValue(input: unknown, path: string): string {
   const canonical = value.includes(".") ? value : value.replace("Z", ".000Z");
   if (Number.isNaN(timestamp) || new Date(timestamp).toISOString() !== canonical) {
     throw new Error(`${path} must be a valid timestamp`);
+  }
+  return value;
+}
+
+function canonicalDateValue(input: unknown, path: string): string {
+  const value = dateValue(input, path);
+  if (new Date(value).toISOString() !== value) {
+    throw new Error(`${path} must be a canonical ISO-8601 UTC timestamp`);
   }
   return value;
 }

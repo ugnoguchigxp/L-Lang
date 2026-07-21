@@ -19,6 +19,7 @@ import {
   findReplayEntry,
   findStaticJudgmentReplayEntry,
   readSemanticLock,
+  type PromotionValidation,
   type SemanticLockEntry,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
@@ -58,6 +59,13 @@ export type LockProvenance = {
   model: string;
   response: SemanticLockEntry["response"];
   createdAt: string;
+  promotion: {
+    mode: "auto" | "reviewed" | "legacy-auto";
+    promotedAt: string;
+    candidateId?: string;
+    reviewer?: string;
+    validation?: PromotionValidation;
+  };
 };
 
 export type GeneratedIntegrity = {
@@ -291,6 +299,12 @@ function lockProvenance(
     model: entry.model,
     response: entry.response,
     createdAt: entry.createdAt,
+    promotion: entry.promotion === undefined
+      ? {
+          mode: "legacy-auto",
+          promotedAt: entry.createdAt,
+        }
+      : entry.promotion,
   };
 }
 

@@ -1,0 +1,24 @@
+{
+  "id": "resp_fixture_fulfillable_storefront_order",
+  "model": "gpt-5.4-mini",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"paymentStatus\"],\"value\":\"paid\"},{\"kind\":\"equals\",\"property\":[\"cancelledAt\"],\"value\":null},{\"kind\":\"present\",\"property\":[\"shippingAddress\"]}]},\"diagnostics\":[]}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 210,
+    "output_tokens": 75,
+    "total_tokens": 285
+  }
+}

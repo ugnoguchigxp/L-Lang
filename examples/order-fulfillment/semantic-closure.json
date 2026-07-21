@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "fulfillable-storefront-order",
+      "source": "examples/order-fulfillment/storefront/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "fulfillable-warehouse-request",
+      "source": "examples/order-fulfillment/warehouse/semantic.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "fulfillable-marketplace-order",
+      "source": "examples/order-fulfillment/marketplace/semantic.ts",
+      "dependsOn": []
+    }
+  ]
+}
