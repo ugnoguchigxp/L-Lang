@@ -313,7 +313,7 @@ declare function defineConcept(id: string): (strings: TemplateStringsArray) => u
 declare function staticValue(value: string): unknown;
 declare function judgeStatic(value: unknown, concept: unknown): boolean;
 
-const Cat = defineConcept("animal.cat")\`Definition:\nA domesticated biological cat.\n\nRequirements:\n- The entity is a living cat.\n\nExclusions:\n- Cat-shaped objects.\n\nOut of scope:\n- Breed and color.\n\nLeave unresolved when:\n- The species cannot be determined.\`;
+const Cat = defineConcept("animal.cat")\`Definition:\nA domesticated biological cat.\`;
 const mike = staticValue(\`A calico animal that meows.\`);
 export const mikeIsCat = judgeStatic(mike, Cat);
 `.trimStart();

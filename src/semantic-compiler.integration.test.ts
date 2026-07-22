@@ -41,6 +41,35 @@ describe("semantic compiler transaction", () => {
     }
   });
 
+  test("rejects a Definition-only Predicate Concept before calling the resolver", async () => {
+    const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+    await mkdir(parent, { recursive: true });
+    const testRoot = await mkdtemp(resolve(parent, "definition-only-"));
+    const sourcePath = resolve(testRoot, "semantic.ts");
+    let resolverCalled = false;
+
+    try {
+      await writeFile(sourcePath, renderDefinitionOnlySource(testRoot), "utf8");
+      const compilation = compileSemanticSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "build",
+        resolve: async () => {
+          resolverCalled = true;
+          return resolvedCustomer();
+        },
+      });
+
+      await expect(compilation).rejects.toBeInstanceOf(SemanticSourceError);
+      await expect(compilation).rejects.toThrow(
+        "must include Requirements: or Exclusions:",
+      );
+      expect(resolverCalled).toBe(false);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
   test(
     "builds, replays without resolution, rolls back, and records unresolved input",
     async () => {
@@ -261,6 +290,20 @@ function renderUnsectionedSource(testRoot: string): string {
     `import { concept, generatePredicate, semanticTest } from ${JSON.stringify(dslModule)};`,
     "type Customer = { status: string };",
     "const CustomerConcept = concept<Customer>`A customer described only by prose.`;",
+    "export const isCustomer = generatePredicate(CustomerConcept);",
+    'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [] });',
+    "",
+  ].join("\n");
+}
+
+function renderDefinitionOnlySource(testRoot: string): string {
+  const dslModule = modulePath(
+    relative(testRoot, resolve(workspaceRoot, "src", "dsl")),
+  );
+  return [
+    `import { concept, generatePredicate, semanticTest } from ${JSON.stringify(dslModule)};`,
+    "type Customer = { status: string };",
+    "const CustomerConcept = concept<Customer>`Definition:\nA customer.`;",
     "export const isCustomer = generatePredicate(CustomerConcept);",
     'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [] });',
     "",

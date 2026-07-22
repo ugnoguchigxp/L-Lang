@@ -20,6 +20,24 @@ describe("static judgment source scanner", () => {
     expect(await detectSemanticSourceKind(example)).toBe("static-judgment");
   });
 
+  test("accepts a Definition-only Concept for Static Judgment", async () => {
+    const fixture = await writeFixture([
+      'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
+      validConceptDeclaration(),
+      'const value = staticValue("a biological cat");',
+      "export const result = judgeStatic(value, Cat);",
+      "",
+    ]);
+    try {
+      const source = await scanStaticJudgmentSource(fixture);
+      expect(source.concept.structure).toEqual({
+        definition: "A biological cat.",
+      });
+    } finally {
+      await rmFixture(fixture);
+    }
+  });
+
   test("rejects dynamic Static values before resolution", async () => {
     const fixture = await writeFixture([
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
@@ -108,7 +126,7 @@ describe("static judgment source scanner", () => {
 });
 
 function validConceptDeclaration(): string {
-  return 'const Cat = defineConcept("animal.cat")`Definition:\nA biological cat.\n\nRequirements:\n- The entity is a living cat.\n\nExclusions:\n- Cat-shaped objects.\n\nOut of scope:\n- Breed and color.\n\nLeave unresolved when:\n- The species cannot be determined.`;';
+  return 'const Cat = defineConcept("animal.cat")`Definition:\nA biological cat.`;';
 }
 
 async function writeFixture(lines: string[]): Promise<string> {

@@ -383,7 +383,7 @@ sed -n '1,80p' benchmarks/schema-evolution-v2/freeze.json
 bun run benchmark:schema-evolution:v2
 ```
 
-ConceptはTypeScript tagged template内の固定5セクションを必須とし、Definition、Requirements、Exclusions、Out of scope、Leave unresolved whenを構造化してauditへ保持する。未分割の自由文はresolver呼び出し前に拒否する。PredicateとStatic Judgmentのbuild・review・replay、`FulfillableOrder`の3 schema example、explain、closureは引き続きテスト対象とする。
+ConceptはTypeScript tagged template内の名前付きセクションを必須とし、Definitionを必須、Requirements、Exclusions、Out of scope、Leave unresolved whenを任意として構造化しauditへ保持する。PredicateはRequirementsまたはExclusionsを要求し、Static JudgmentはDefinitionだけでも許可する。未分割の自由文はresolver呼び出し前に拒否する。PredicateとStatic Judgmentのbuild・review・replay、`FulfillableOrder`の3 schema example、explain、closureは引き続きテスト対象とする。
 
 ## 次回この文書を更新するタイミング
 

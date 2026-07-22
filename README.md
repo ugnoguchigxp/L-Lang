@@ -138,7 +138,7 @@ semanticTest(isActiveCustomer, {
 
 Compiler APIとTypeCheckerがこのソースから型宣言と閉じた意味グラフを抽出します。LLMへ渡すのは概念と対象型だけで、`semanticTest`の値は渡しません。
 
-すべてのConcept本文は、次の固定5セクションで記述します。
+Concept本文は名前付きセクションで記述します。`Definition`だけが常に必須で、残り4セクションは意味上必要な場合だけ記述します。
 
 ```ts
 export const FulfillableOrder = defineConcept("order.fulfillable")`
@@ -161,7 +161,7 @@ Leave unresolved when:
 `;
 ```
 
-5セクションは省略・重複・並べ替えできません。各リストは`- item`形式の1行項目を1つ以上必要とし、未知のセクション、空項目、セクション間の同一項目、旧TOML、未分割の自由文は、resolverやLLMを呼ぶ前にコンパイルエラーになります。型と`semanticTest`はTypeScript側に残るため、`null`と`undefined`も区別できます。
+`Requirements`、`Exclusions`、`Out of scope`、`Leave unresolved when`は任意です。ただし、存在するセクションは上記の順序を守り、`- item`形式の1行項目を1つ以上必要とします。`generatePredicate`では操作可能な判定条件として`Requirements`または`Exclusions`の少なくとも一方が必須です。`judgeStatic`ではDefinitionだけの単純なConceptも使用できます。未知・重複・空のセクション、旧TOML、未分割の自由文は、resolverやLLMを呼ぶ前にコンパイルエラーになります。型と`semanticTest`はTypeScript側に残るため、`null`と`undefined`も区別できます。
 
 ## Static Judgment
 

@@ -120,7 +120,7 @@ semanticTest(isActiveCustomer, {
 
 Only the Concept, target TypeScript type, and predicate target are sent to the model. Semantic test values are kept out of the prompt and are used after elaboration for validation.
 
-Every Concept must use the fixed `Definition`, `Requirements`, `Exclusions`, `Out of scope`, and `Leave unresolved when` sections inside its TypeScript tagged template. Missing, duplicate, reordered, empty, unknown, TOML, and unsectioned inputs fail compilation before any resolver or LLM call. List entries use one-line `- item` syntax. Types and semantic tests remain TypeScript, preserving exact `null` and `undefined` cases. See the [order fulfillment Concept](./concepts/fulfillable-order.ts) for an executable example.
+Every Concept must use named sections inside its TypeScript tagged template. `Definition` is always required; `Requirements`, `Exclusions`, `Out of scope`, and `Leave unresolved when` are optional but strictly ordered and validated when present. Predicate generation requires at least one `Requirements` or `Exclusions` item, while Static Judgment accepts a Definition-only Concept. Duplicate, reordered, empty, unknown, TOML, and unsectioned inputs fail compilation before any resolver or LLM call. List entries use one-line `- item` syntax. Types and semantic tests remain TypeScript, preserving exact `null` and `undefined` cases. See the [order fulfillment Concept](./concepts/fulfillable-order.ts) for a full example.
 
 ## Main commands
 

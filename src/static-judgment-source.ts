@@ -171,7 +171,12 @@ export async function scanStaticJudgmentSource(
       "judgeStatic Concept must be an identifier",
     );
   }
-  const definition = resolveConceptDefinition(conceptReference, checker, sourceFile);
+  const definition = resolveConceptDefinition(
+    conceptReference,
+    checker,
+    sourceFile,
+    "static-judgment",
+  );
   const concept = {
     name: judgment.conceptName,
     id: definition.id,

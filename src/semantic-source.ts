@@ -6,6 +6,8 @@ import ts from "typescript";
 
 import {
   parseConceptSpecification,
+  validateConceptSpecificationForUse,
+  type ConceptSpecificationUse,
   type StructuredConceptSpecification,
 } from "./concept-specification";
 
@@ -131,6 +133,7 @@ export async function scanSemanticSource(
             initializer.template.text,
             sourceFile,
             initializer.template,
+            "predicate",
           );
           const specification = parsedSpecification.specification;
           concepts.push({
@@ -172,6 +175,7 @@ export async function scanSemanticSource(
             initializer.arguments[0]!,
             checker,
             sourceFile,
+            "predicate",
           );
           const inputType = checker.getTypeFromTypeNode(typeNode);
           const typeName = typeNode.typeName.text;
@@ -276,6 +280,7 @@ export function resolveConceptDefinition(
   reference: ts.Identifier,
   checker: ts.TypeChecker,
   bindingSourceFile: ts.SourceFile,
+  use: ConceptSpecificationUse,
 ): {
   id: string;
   name: string;
@@ -339,6 +344,7 @@ export function resolveConceptDefinition(
     tagged.template.text,
     tagged.getSourceFile(),
     tagged.template,
+    use,
   );
   return {
     id,
@@ -353,9 +359,12 @@ function parseConceptSpecificationAt(
   specification: string,
   sourceFile: ts.SourceFile,
   node: ts.Node,
-) {
+  use: ConceptSpecificationUse,
+): ReturnType<typeof parseConceptSpecification> {
   try {
-    return parseConceptSpecification(specification);
+    const parsed = parseConceptSpecification(specification);
+    validateConceptSpecificationForUse(parsed.structure, use);
+    return parsed;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw sourceError(sourceFile, node, message);

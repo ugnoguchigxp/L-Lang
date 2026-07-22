@@ -773,7 +773,7 @@ MVPでは、新しい汎用言語を完成させない。
 
 有効なTypeScript内に、Tagged Templateと関数呼び出しによってSemantic構文を埋め込む。
 
-すべてのConceptは、tagged template内を固定5セクションで構造化する。TypeScriptを型・Binding・Semantic Testの外枠として維持し、Concept本文ではDefinition、Requirements、Exclusions、Out of scope、Leave unresolved whenを機械的に分離する。未分割の自由文やTOMLは受理せず、LLM呼び出し前にコンパイルエラーとする。
+すべてのConceptは、tagged template内を名前付きセクションで構造化する。Definitionは常に必須とし、Requirements、Exclusions、Out of scope、Leave unresolved whenは必要な場合だけ記述する。Predicate生成ではRequirementsまたはExclusionsの少なくとも一方を要求し、Static JudgmentではDefinitionだけのConceptも許可する。TypeScriptを型・Binding・Semantic Testの外枠として維持し、未分割の自由文やTOMLは受理せず、LLM呼び出し前にコンパイルエラーとする。
 
 ```typescript
 const FulfillableOrder = defineConcept("order.fulfillable")`

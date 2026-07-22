@@ -1139,11 +1139,11 @@
       "source": "examples/semantic-polymorphism/customer/semantic.ts",
       "concept": "ActiveCustomerRecord",
       "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
       "conceptSource": "concepts/active-customer.ts",
       "predicate": "isActiveCustomerRecord",
       "provider": "fixture:openai-response.fixture.json",
       "model": "gpt-5.4-mini",
-      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
       "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
       "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
       "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
@@ -1245,6 +1245,39 @@
       "promotion": {
         "mode": "auto",
         "promotedAt": "2026-07-21T16:09:20.795Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "not-applicable",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "75f5c33a0bb8bb8a9c9754a355f0d7b877f9b148289b9e5c5f77c9a217769b17": {
+      "fingerprint": "75f5c33a0bb8bb8a9c9754a355f0d7b877f9b148289b9e5c5f77c9a217769b17",
+      "source": "examples/static-judgment/semantic.ts",
+      "judgment": "mikeIsCat",
+      "conceptId": "animal.cat",
+      "conceptHash": "ffc5d7954cd26d4c0a5a9454cdc79ccb3683688ae3f8506c5e291c68bac386ae",
+      "valueHash": "3da60d12ec57478f33a58a2ec8628c5e29c43e90c1033d09ec4307917c043e48",
+      "promptHash": "0f828dbbbcb3e457b2e2f7dc845cfeddf5fcad19ca62e2d0dba5d7433c361c6b",
+      "provider": "fixture:openai-response.true.fixture.json",
+      "model": "gpt-5.4-mini",
+      "resolvedValue": true,
+      "generatedCodeHash": "0bfeae824fa34edcea530ac01533f5773133302bf9819452e573217a18a98bab",
+      "response": {
+        "id": "resp_fixture_static_judgment_true",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 120,
+          "outputTokens": 20,
+          "totalTokens": 140
+        }
+      },
+      "createdAt": "2026-07-22T00:05:00.903Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-22T00:05:00.903Z",
         "validation": {
           "candidateTypecheck": "passed",
           "projectTypecheck": "passed",

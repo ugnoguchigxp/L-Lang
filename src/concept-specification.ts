@@ -12,11 +12,13 @@ const SECTIONS = [
 
 export type StructuredConceptSpecification = {
   definition: string;
-  requirements: string[];
-  exclusions: string[];
-  outOfScope: string[];
-  unresolvedWhen: string[];
+  requirements?: string[];
+  exclusions?: string[];
+  outOfScope?: string[];
+  unresolvedWhen?: string[];
 };
+
+export type ConceptSpecificationUse = "predicate" | "static-judgment";
 
 export type ParsedConceptSpecification = {
   syntax: "sections";
@@ -25,7 +27,8 @@ export type ParsedConceptSpecification = {
 };
 
 /**
- * Parses the mandatory, fixed-section Concept syntax. This function is called
+ * Parses the named-section Concept syntax. Definition is mandatory and the
+ * remaining sections are optional. This function is called
  * while scanning the TypeScript source, before any resolver or LLM can run.
  */
 export function parseConceptSpecification(
@@ -37,41 +40,52 @@ export function parseConceptSpecification(
   }
 
   rejectUnknownHeadings(lines);
-  const positions = SECTIONS.map(({ heading }) => {
+  const positions = new Map<string, number>();
+  for (const { heading } of SECTIONS) {
     const matches = lines.flatMap((line, index) =>
       line === heading ? [index] : [],
     );
-    if (matches.length === 0) {
+    if (heading === "Definition:" && matches.length === 0) {
       throw new Error(`Concept specification is missing required section ${heading}`);
     }
     if (matches.length > 1) {
       throw new Error(`Concept specification contains duplicate section ${heading}`);
     }
-    return matches[0]!;
-  });
+    if (matches[0] !== undefined) positions.set(heading, matches[0]);
+  }
 
-  if (positions[0] !== 0) {
+  if (positions.get("Definition:") !== 0) {
     throw new Error("Concept specification must start with Definition:");
   }
-  for (let index = 1; index < positions.length; index += 1) {
-    if (positions[index]! < positions[index - 1]!) {
+  const present = SECTIONS.flatMap((section) => {
+    const position = positions.get(section.heading);
+    return position === undefined ? [] : [{ section, position }];
+  });
+  for (let index = 1; index < present.length; index += 1) {
+    if (present[index]!.position < present[index - 1]!.position) {
       throw new Error(
         `Concept sections must appear in this order: ${SECTIONS.map(({ heading }) => heading).join(" ")}`,
       );
     }
   }
 
-  const structure = {} as StructuredConceptSpecification;
-  for (let index = 0; index < SECTIONS.length; index += 1) {
-    const section = SECTIONS[index]!;
+  let definition = "";
+  const structure: StructuredConceptSpecification = { definition };
+  for (let index = 0; index < present.length; index += 1) {
+    const { section, position } = present[index]!;
     const body = lines.slice(
-      positions[index]! + 1,
-      positions[index + 1] ?? lines.length,
+      position + 1,
+      present[index + 1]?.position ?? lines.length,
     );
     if (section.kind === "text") {
-      structure[section.key] = parseTextSection(body, section.heading);
+      definition = parseTextSection(body, section.heading);
+      structure.definition = definition;
     } else {
-      structure[section.key] = parseListSection(body, section.heading);
+      const items = parseListSection(body, section.heading);
+      if (section.key === "requirements") structure.requirements = items;
+      if (section.key === "exclusions") structure.exclusions = items;
+      if (section.key === "outOfScope") structure.outOfScope = items;
+      if (section.key === "unresolvedWhen") structure.unresolvedWhen = items;
     }
   }
   assertNoDuplicateItems(structure);
@@ -83,25 +97,39 @@ export function parseConceptSpecification(
   };
 }
 
+export function validateConceptSpecificationForUse(
+  concept: StructuredConceptSpecification,
+  use: ConceptSpecificationUse,
+): void {
+  if (
+    use === "predicate" &&
+    concept.requirements === undefined &&
+    concept.exclusions === undefined
+  ) {
+    throw new Error(
+      "Predicate Concept must include Requirements: or Exclusions: with at least one operational criterion",
+    );
+  }
+}
+
 export function renderStructuredConceptSpecification(
   concept: StructuredConceptSpecification,
 ): string {
-  return [
-    "Definition:",
-    concept.definition,
-    "",
-    "Requirements:",
-    ...concept.requirements.map((item) => `- ${item}`),
-    "",
-    "Exclusions:",
-    ...concept.exclusions.map((item) => `- ${item}`),
-    "",
-    "Out of scope:",
-    ...concept.outOfScope.map((item) => `- ${item}`),
-    "",
-    "Leave unresolved when:",
-    ...concept.unresolvedWhen.map((item) => `- ${item}`),
-  ].join("\n");
+  const lines = ["Definition:", concept.definition];
+  appendListSection(lines, "Requirements:", concept.requirements);
+  appendListSection(lines, "Exclusions:", concept.exclusions);
+  appendListSection(lines, "Out of scope:", concept.outOfScope);
+  appendListSection(lines, "Leave unresolved when:", concept.unresolvedWhen);
+  return lines.join("\n");
+}
+
+function appendListSection(
+  lines: string[],
+  heading: string,
+  items: string[] | undefined,
+): void {
+  if (items === undefined) return;
+  lines.push("", heading, ...items.map((item) => `- ${item}`));
 }
 
 function dedent(input: string): string[] {
@@ -162,10 +190,10 @@ function assertNoDuplicateItems(
   concept: StructuredConceptSpecification,
 ): void {
   const sections = [
-    ["Requirements", concept.requirements],
-    ["Exclusions", concept.exclusions],
-    ["Out of scope", concept.outOfScope],
-    ["Leave unresolved when", concept.unresolvedWhen],
+    ["Requirements", concept.requirements ?? []],
+    ["Exclusions", concept.exclusions ?? []],
+    ["Out of scope", concept.outOfScope ?? []],
+    ["Leave unresolved when", concept.unresolvedWhen ?? []],
   ] as const;
   const seen = new Map<string, string>();
   for (const [section, items] of sections) {

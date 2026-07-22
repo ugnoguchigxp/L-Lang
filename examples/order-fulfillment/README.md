@@ -4,7 +4,7 @@
 TypeScript schemaへ適用します。同じ業務上の意味から、semantic compilerが
 schema固有の決定的なTypeScriptを生成する様子を比較できます。
 
-共通Conceptは[`concepts/fulfillable-order.ts`](../../concepts/fulfillable-order.ts)にあり、TypeScriptの`defineConcept` tagged template内を固定5セクションで分けています。型と`semanticTest`は各`semantic.ts`に置くため、構造化された意味定義とTypeScriptの型安全性を同時に確認できます。未分割の自由文やセクション欠落はLLM呼び出し前にコンパイルエラーになります。
+共通Conceptは[`concepts/fulfillable-order.ts`](../../concepts/fulfillable-order.ts)にあり、この業務Conceptで意味のある5セクションすべてを使用しています。型と`semanticTest`は各`semantic.ts`に置くため、構造化された意味定義とTypeScriptの型安全性を同時に確認できます。Definition欠落、未分割の自由文、不正なセクションはLLM呼び出し前にコンパイルエラーになります。
 
 このexampleでは、次の条件をすべて満たす注文を「フルフィルメント可能」とします。
 

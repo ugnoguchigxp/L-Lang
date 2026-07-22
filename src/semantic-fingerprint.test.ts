@@ -58,9 +58,9 @@ describe("semantic fingerprint", () => {
     const hashes = staticJudgmentSemanticHashes(source);
 
     expect(hashes).toEqual({
-      conceptHash: "521d6202119acba1db62dab0121e1c9bec1db626e5132ac76137c1a0db408012",
+      conceptHash: "ffc5d7954cd26d4c0a5a9454cdc79ccb3683688ae3f8506c5e291c68bac386ae",
       valueHash: "3da60d12ec57478f33a58a2ec8628c5e29c43e90c1033d09ec4307917c043e48",
-      promptHash: "a828d8fb34ab433442cebd1f6cdb5ef8943c5fe9274cbc7cdff0cccedff839bc",
+      promptHash: "0f828dbbbcb3e457b2e2f7dc845cfeddf5fcad19ca62e2d0dba5d7433c361c6b",
     });
     expect(
       fingerprintFor({
@@ -71,6 +71,6 @@ describe("semantic fingerprint", () => {
         model: "gpt-5.4-mini",
         ...hashes,
       }),
-    ).toBe("cc3d387fa887bdfea813a168e64c6a7f832faa5a6503181168c23dcee1eead94");
+    ).toBe("75f5c33a0bb8bb8a9c9754a355f0d7b877f9b148289b9e5c5f77c9a217769b17");
   });
 });

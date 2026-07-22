@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseConceptSpecification } from "./concept-specification";
+import {
+  parseConceptSpecification,
+  validateConceptSpecificationForUse,
+} from "./concept-specification";
 
 describe("fixed-section Concept specification", () => {
   test("parses the five sections into a canonical compiler specification", () => {
@@ -24,9 +27,48 @@ describe("fixed-section Concept specification", () => {
     );
   });
 
-  test("rejects TOML, missing, unknown, empty, duplicate, and reordered sections", () => {
+  test("allows Definition-only and partial Concepts without rendering omitted sections", () => {
+    const definitionOnly = parseConceptSpecification(`
+      Definition:
+      A domesticated biological cat.
+    `);
+    expect(definitionOnly.structure).toEqual({
+      definition: "A domesticated biological cat.",
+    });
+    expect(definitionOnly.specification).toBe(
+      "Definition:\nA domesticated biological cat.",
+    );
+
+    const withExclusion = parseConceptSpecification(`
+      Definition:
+      A domesticated biological cat.
+
+      Exclusions:
+      - Mechanical cat-shaped objects.
+    `);
+    expect(withExclusion.structure).toEqual({
+      definition: "A domesticated biological cat.",
+      exclusions: ["Mechanical cat-shaped objects."],
+    });
+  });
+
+  test("applies usage-specific requirements before resolution", () => {
+    const definitionOnly = parseConceptSpecification(`
+      Definition:
+      A domesticated biological cat.
+    `).structure;
+    expect(() =>
+      validateConceptSpecificationForUse(definitionOnly, "static-judgment"),
+    ).not.toThrow();
+    expect(() =>
+      validateConceptSpecificationForUse(definitionOnly, "predicate"),
+    ).toThrow("must include Requirements: or Exclusions:");
+  });
+
+  test("rejects TOML, missing Definition, unknown, empty, duplicate, and reordered sections", () => {
     const cases = [
       'format = "l-lang-concept-v1"\n\n[definition]\ntext = "Legacy TOML"',
+      validConcept().replace("Definition:", "Description:"),
       validConcept().replace("Leave unresolved when:", "Unknown:") ,
       validConcept().replace("- Cancelled orders.", ""),
       validConcept().replace(
