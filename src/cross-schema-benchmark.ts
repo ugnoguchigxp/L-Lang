@@ -1,19 +1,33 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, relative, resolve } from "node:path";
+import { basename, dirname, relative, resolve } from "node:path";
 
+import { resolveContainedFile } from "./contained-path";
 import { validatePredicateContext } from "./context-validator";
 import {
-  parsePredicateExpression,
-  type PredicateExpression,
-} from "./ir";
+  type BenchmarkManifest,
+  type CrossSchemaConceptFreeze,
+  type CrossSchemaHiddenCase,
+  type CrossSchemaManualTimes,
+  type CrossSchemaOracle,
+  parseCrossSchemaConceptFreeze,
+  parseCrossSchemaHiddenCases,
+  parseCrossSchemaManifest,
+  parseCrossSchemaManualTimes,
+  parseCrossSchemaOracle,
+  readCrossSchemaJson,
+  requiredCrossSchemaFreezeFiles,
+  validateCrossSchemaProtocolInputs,
+  verifyCrossSchemaFileFreeze,
+} from "./cross-schema-benchmark-protocol";
+import type { PredicateExpression } from "./ir";
 import {
-  parseElaborationResult,
   type OpenAIRequestInput,
   type OpenAIResult,
+  parseElaborationResult,
 } from "./openai";
 import {
-  scanBenchmarkSource,
   type BenchmarkSemanticSource,
+  scanBenchmarkSource,
 } from "./semantic-source";
 
 export type BenchmarkResolver = (
@@ -29,47 +43,9 @@ export type CrossSchemaBenchmarkOptions = {
   onProgress?: (message: string) => void;
 };
 
-type BenchmarkManifest = {
-  version: 1;
-  name: string;
-  trials: number;
-  conceptFreeze: string;
-  manualTimes: string;
-  blindness: {
-    oracleAndCasesSentToModel: false;
-    conceptsFrozenBeforeFirstModelCall: boolean;
-    independentHumanOracleAuthor: boolean;
-    note: string;
-  };
-  thresholds: {
-    minimumFirstPassCaseRate: number;
-    maximumFalseResolutionRate: number;
-    minimumStableCaseRate: number;
-    minimumHiddenTestPassRate: number;
-    targetManualTimeReduction: number;
-  };
-  cases: Array<{
-    id: string;
-    source: string;
-    oracle: string;
-    tests: string;
-    manual?: string;
-  }>;
-};
-
-type Oracle =
-  | { expectedOutcome: "resolved"; body: PredicateExpression }
-  | { expectedOutcome: "unresolved"; body: null };
-
-type HiddenCase = {
-  name: string;
-  input: Record<string, unknown>;
-  expected: boolean;
-};
-
 type TrialResult = {
   trial: number;
-  expectedOutcome: Oracle["expectedOutcome"];
+  expectedOutcome: CrossSchemaOracle["expectedOutcome"];
   actualOutcome: "resolved" | "unresolved" | "error";
   passed: boolean;
   falseResolution: boolean;
@@ -99,8 +75,8 @@ type PreparedCase = {
   id: string;
   sourcePath: string;
   source: BenchmarkSemanticSource;
-  oracle: Oracle;
-  hiddenCases: HiddenCase[];
+  oracle: CrossSchemaOracle;
+  hiddenCases: CrossSchemaHiddenCase[];
   manualPath: string | null;
   sourceLines: number;
   manualLines: number | null;
@@ -109,17 +85,49 @@ type PreparedCase = {
 export async function runCrossSchemaBenchmark(
   options: CrossSchemaBenchmarkOptions,
 ) {
-  const manifestPath = resolve(options.manifestPath);
-  const manifestDirectory = dirname(manifestPath);
-  const manifest = parseManifest(await readJson(manifestPath));
-  const freeze = parseConceptFreeze(
-    await readJson(resolve(manifestDirectory, manifest.conceptFreeze)),
+  const requestedManifestPath = resolve(options.manifestPath);
+  const manifestPath = await resolveContainedFile(
+    dirname(requestedManifestPath),
+    basename(requestedManifestPath),
+    "cross-schema benchmark manifest",
+    {
+      containmentLabel: "benchmark directory",
+      rejectSymbolicLinks: true,
+    },
   );
-  const manualTimes = parseManualTimes(
-    await readJson(resolve(manifestDirectory, manifest.manualTimes)),
+  const manifestDirectory = dirname(manifestPath);
+  const resolveProtocolFile = (path: string, label: string) =>
+    resolveContainedFile(manifestDirectory, path, label, {
+      containmentLabel: "benchmark directory",
+      rejectSymbolicLinks: true,
+    });
+  const manifest = parseCrossSchemaManifest(
+    await readCrossSchemaJson(manifestPath, "cross-schema benchmark manifest"),
+  );
+  const freezePath = await resolveProtocolFile(
+    manifest.conceptFreeze,
+    "cross-schema concept freeze",
+  );
+  const freeze = parseCrossSchemaConceptFreeze(
+    await readCrossSchemaJson(freezePath, "cross-schema concept freeze"),
+  );
+  const manualTimesPath = await resolveProtocolFile(
+    manifest.manualTimes,
+    "cross-schema manual times",
+  );
+  const manualTimes = parseCrossSchemaManualTimes(
+    await readCrossSchemaJson(manualTimesPath, "cross-schema manual times"),
+  );
+  validateCrossSchemaProtocolInputs(manifest, manualTimes);
+  await verifyCrossSchemaFileFreeze(
+    freeze,
+    requiredCrossSchemaFreezeFiles(manifestPath, manifest),
+    resolveProtocolFile,
   );
   const prepared = await Promise.all(
-    manifest.cases.map((entry) => prepareCase(entry, manifestDirectory)),
+    manifest.cases.map((entry) =>
+      prepareCase(entry, resolveProtocolFile),
+    ),
   );
   validateProtocol(manifest, freeze, prepared);
 
@@ -131,7 +139,7 @@ export async function runCrossSchemaBenchmark(
     id: string;
     conceptId: string;
     conceptHash: string;
-    expectedOutcome: Oracle["expectedOutcome"];
+    expectedOutcome: CrossSchemaOracle["expectedOutcome"];
     stable: boolean;
     firstPass: boolean;
     sourceLines: number;
@@ -222,6 +230,7 @@ export async function runCrossSchemaBenchmark(
     model: options.model,
     lockUsed: false,
     oracleAndCasesSentToModel: false,
+    evidenceEligible: freeze.evidenceEligible,
     blindness: manifest.blindness,
     protocol: {
       concepts: new Set(prepared.map((entry) => entry.source.concept.id)).size,
@@ -234,7 +243,8 @@ export async function runCrossSchemaBenchmark(
       ).length,
       trialsPerCase: manifest.trials,
       totalTrials: allTrials.length,
-      frozenConcepts: freeze,
+      inputFreezeVersion: freeze.version,
+      frozenConcepts: freeze.concepts,
     },
     summary: {
       modelGatePassed,
@@ -284,16 +294,36 @@ export async function runCrossSchemaBenchmark(
 
 async function prepareCase(
   entry: BenchmarkManifest["cases"][number],
-  directory: string,
+  resolveProtocolFile: (path: string, label: string) => Promise<string>,
 ): Promise<PreparedCase> {
-  const sourcePath = resolve(directory, entry.source);
-  const source = await scanBenchmarkSource(sourcePath);
-  const oracleValue = await readJson(resolve(directory, entry.oracle));
-  const oracle = parseOracle(oracleValue);
-  const hiddenCases = parseHiddenCases(
-    await readJson(resolve(directory, entry.tests)),
+  const sourcePath = await resolveProtocolFile(
+    entry.source,
+    `cross-schema source ${entry.id}`,
   );
-  const manualPath = entry.manual ? resolve(directory, entry.manual) : null;
+  const source = await scanBenchmarkSource(sourcePath);
+  const oraclePath = await resolveProtocolFile(
+    entry.oracle,
+    `cross-schema oracle ${entry.id}`,
+  );
+  const oracle = parseCrossSchemaOracle(
+    await readCrossSchemaJson(oraclePath, `cross-schema oracle ${entry.id}`),
+  );
+  const testsPath = await resolveProtocolFile(
+    entry.tests,
+    `cross-schema hidden cases ${entry.id}`,
+  );
+  const hiddenCases = parseCrossSchemaHiddenCases(
+    await readCrossSchemaJson(
+      testsPath,
+      `cross-schema hidden cases ${entry.id}`,
+    ),
+  );
+  const manualPath = entry.manual
+    ? await resolveProtocolFile(
+        entry.manual,
+        `cross-schema manual implementation ${entry.id}`,
+      )
+    : null;
   return {
     id: entry.id,
     sourcePath,
@@ -491,7 +521,7 @@ function readProperty(input: Record<string, unknown>, path: string[]): unknown {
 
 function validateProtocol(
   manifest: BenchmarkManifest,
-  freeze: Record<string, string>,
+  freeze: CrossSchemaConceptFreeze,
   cases: PreparedCase[],
 ): void {
   if (manifest.trials !== 3 || cases.length !== 9) {
@@ -508,7 +538,9 @@ function validateProtocol(
     throw new Error("benchmark protocol requires exactly 3 concepts");
   }
   for (const entry of cases) {
-    if (freeze[entry.source.concept.id] !== entry.source.concept.hash) {
+    if (
+      freeze.concepts[entry.source.concept.id] !== entry.source.concept.hash
+    ) {
       throw new Error(`frozen concept hash mismatch: ${entry.source.concept.id}`);
     }
     if (
@@ -520,78 +552,8 @@ function validateProtocol(
   }
 }
 
-function parseManifest(input: unknown): BenchmarkManifest {
-  const value = record(input, "benchmark");
-  if (
-    value.version !== 1 ||
-    typeof value.name !== "string" ||
-    typeof value.trials !== "number" ||
-    !Array.isArray(value.cases)
-  ) {
-    throw new Error("benchmark manifest is invalid");
-  }
-  return input as BenchmarkManifest;
-}
-
-function parseOracle(input: unknown): Oracle {
-  const value = record(input, "oracle");
-  if (value.version !== 1) throw new Error("oracle.version must be 1");
-  if (value.expectedOutcome === "unresolved" && value.body === null) {
-    return { expectedOutcome: "unresolved", body: null };
-  }
-  if (value.expectedOutcome === "resolved") {
-    return {
-      expectedOutcome: "resolved",
-      body: parsePredicateExpression(value.body, "oracle.body"),
-    };
-  }
-  throw new Error("oracle outcome/body is invalid");
-}
-
-function parseHiddenCases(input: unknown): HiddenCase[] {
-  const value = record(input, "hidden cases");
-  if (value.version !== 1 || !Array.isArray(value.tests)) {
-    throw new Error("hidden cases file is invalid");
-  }
-  return value.tests.map((item, index) => {
-    const test = record(item, `hidden cases[${index}]`);
-    if (
-      typeof test.name !== "string" ||
-      typeof test.expected !== "boolean"
-    ) {
-      throw new Error(`hidden cases[${index}] is invalid`);
-    }
-    return {
-      name: test.name,
-      input: record(test.input, `hidden cases[${index}].input`),
-      expected: test.expected,
-    };
-  });
-}
-
-function parseConceptFreeze(input: unknown): Record<string, string> {
-  const value = record(input, "concept freeze");
-  if (value.version !== 1) throw new Error("concept freeze version must be 1");
-  const concepts = record(value.concepts, "concept freeze concepts");
-  for (const [id, hash] of Object.entries(concepts)) {
-    if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) {
-      throw new Error(`invalid frozen concept hash for ${id}`);
-    }
-  }
-  return concepts as Record<string, string>;
-}
-
-function parseManualTimes(input: unknown): Record<string, Record<string, number | null>> {
-  const value = record(input, "manual times");
-  if (value.version !== 1) throw new Error("manual times version must be 1");
-  return record(value.entries, "manual time entries") as Record<
-    string,
-    Record<string, number | null>
-  >;
-}
-
 function compareHumanTimes(
-  entries: Record<string, Record<string, number | null>>,
+  entries: CrossSchemaManualTimes,
   thresholds: BenchmarkManifest["thresholds"],
 ) {
   const values = Object.values(entries);
@@ -710,17 +672,6 @@ function renderMarkdownReport(report: {
       : "Measured; see report.json for totals and reduction.",
     "",
   ].join("\n");
-}
-
-function record(value: unknown, path: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${path} must be an object`);
-  }
-  return value as Record<string, unknown>;
-}
-
-async function readJson(path: string): Promise<unknown> {
-  return JSON.parse(await readFile(path, "utf8")) as unknown;
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {

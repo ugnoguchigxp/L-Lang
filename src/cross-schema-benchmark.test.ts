@@ -1,5 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -136,6 +143,7 @@ describe("cross-schema benchmark", () => {
       expect(JSON.stringify(seenInputs)).not.toContain("customer@example.com");
       expect(report.lockUsed).toBe(false);
       expect(report.oracleAndCasesSentToModel).toBe(false);
+      expect(report.evidenceEligible).toBe(false);
       expect(report.protocol).toMatchObject({
         concepts: 3,
         cases: 9,
@@ -143,6 +151,7 @@ describe("cross-schema benchmark", () => {
         ambiguousCases: 3,
         trialsPerCase: 3,
         totalTrials: 27,
+        inputFreezeVersion: 1,
       });
       expect(report.summary).toMatchObject({
         modelGatePassed: true,
@@ -170,9 +179,89 @@ describe("cross-schema benchmark", () => {
     },
     30_000,
   );
+
+  test(
+    "rejects malformed and escaping protocol inputs before resolver calls",
+    async () => {
+      const protocolRoot = await mkdtemp(
+        resolve("benchmarks", ".cross-schema-boundary-"),
+      );
+      const outsideRoot = await mkdtemp(join(tmpdir(), "cross-schema-outside-"));
+      await cp(resolve("benchmarks/cross-schema"), protocolRoot, {
+        recursive: true,
+      });
+      const manifestPath = resolve(protocolRoot, "benchmark.json");
+      const originalManifest = JSON.parse(
+        await readFile(manifestPath, "utf8"),
+      ) as Record<string, unknown>;
+      let resolverCalls = 0;
+      const run = () =>
+        runCrossSchemaBenchmark({
+          manifestPath,
+          outputRoot,
+          model: "never-called",
+          provider: "fixture",
+          resolve: async () => {
+            resolverCalls += 1;
+            throw new Error("resolver must not be called");
+          },
+        });
+
+      try {
+        const missingThresholds = structuredClone(originalManifest);
+        delete missingThresholds.thresholds;
+        await writeJsonFixture(manifestPath, missingThresholds);
+        await expect(run()).rejects.toThrow("is missing thresholds");
+        expect(resolverCalls).toBe(0);
+
+        await writeJsonFixture(manifestPath, originalManifest);
+        const oraclePath = resolve(
+          protocolRoot,
+          "oracles/active-customer-record.oracle.json",
+        );
+        const originalOracle = JSON.parse(
+          await readFile(oraclePath, "utf8"),
+        ) as Record<string, unknown>;
+        await writeJsonFixture(oraclePath, {
+          ...originalOracle,
+          unexpected: true,
+        });
+        await expect(run()).rejects.toThrow("contains unknown field unexpected");
+        expect(resolverCalls).toBe(0);
+        await writeJsonFixture(oraclePath, originalOracle);
+
+        const outsideSource = resolve(outsideRoot, "outside.semantic.ts");
+        await writeFile(outsideSource, "export {};\n", "utf8");
+        await symlink(outsideSource, resolve(protocolRoot, "escape.semantic.ts"));
+        const escapingManifest = structuredClone(originalManifest);
+        const cases = escapingManifest.cases as Array<Record<string, unknown>>;
+        const firstCase = cases[0];
+        if (firstCase === undefined) throw new Error("fixture case is missing");
+        firstCase.source = "escape.semantic.ts";
+        await writeJsonFixture(manifestPath, escapingManifest);
+        await expect(run()).rejects.toThrow(
+          "must resolve inside the benchmark directory",
+        );
+        expect(resolverCalls).toBe(0);
+      } finally {
+        await Promise.all([
+          rm(protocolRoot, { recursive: true, force: true }),
+          rm(outsideRoot, { recursive: true, force: true }),
+        ]);
+      }
+    },
+    30_000,
+  );
 });
 
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error("required test fixture is missing");
   return value;
+}
+
+async function writeJsonFixture(
+  path: string,
+  value: Record<string, unknown>,
+): Promise<void> {
+  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
