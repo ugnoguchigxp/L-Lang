@@ -18,6 +18,6 @@ L-Langは研究・検証段階のソフトウェアです。生成候補を無�
 
 LLM出力は信頼済みコードではありません。通常の`semantic build`は、制限IRのparse、型文脈検証、決定的生成、候補専用の型検査とSemantic Test、全体typecheck、全体testを通過すると自動昇格します。`--review`、`diff`、`approve`は互換用のcandidate stagingであり、セキュリティ上の信頼水準を引き上げるものではありません。自動昇格済みのartifactも、安全性や業務上の正しさが保証されるわけではありません。`compatible`なSemantic Diffも同様です。
 
-外部JSON、IR、diagnostics、lockにはresource budgetとknown-key検査があります。promotionはworkspace lock、previous/next snapshot、transaction journalを使用します。未知hashを検出した回復処理は`manual-recovery-required`として停止し、推測でartifactを上書きしません。L-Lang以外のprocessから見た複数fileの同時可視性は保証されないため、promotion中の生成物を直接監視しないでください。
+compiler、lock、Pilot、Benchmark、互換utilityが信頼境界から読むJSONにはbyte上限と用途別のstrict parserがあり、未知field、path escape、freeze不一致をfail-closedで拒否します。新しい外部入力経路にも同じbounded parseとknown-key検査を追加してください。promotionはworkspace lock、previous/next snapshot、transaction journalを使用します。未知hashを検出した回復処理は`manual-recovery-required`として停止し、推測でartifactを上書きしません。L-Lang以外のprocessから見た複数fileの同時可視性は保証されないため、promotion中の生成物を直接監視しないでください。
 
 認可、暗号、金額、DB transaction、network副作用、secretアクセスをSemantic Generationへ委譲しないでください。

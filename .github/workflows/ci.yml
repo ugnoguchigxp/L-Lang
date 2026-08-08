@@ -46,6 +46,9 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Verify documentation links
+        run: bun run ci:docs
+
       - name: Typecheck
         run: bun run typecheck
 

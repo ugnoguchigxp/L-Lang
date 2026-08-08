@@ -1,6 +1,6 @@
 # L-Lang — Staged Semantic TypeScript
 
-[日本語](./README.md) · [Project status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md) · [Post-MVP implementation plan](./POST_MVP_IMPLEMENTATION_PLAN.md) · [Security](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
+[日本語](./README.md) · [Project status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md) · [Quality gates](./QUALITY_GATES.md) · [Post-MVP implementation plan](./POST_MVP_IMPLEMENTATION_PLAN.md) · [Security](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
 
 > **Turn abstract intent into deterministic TypeScript that fits the project’s types, tests, and history.**
 >
@@ -92,7 +92,7 @@ See [PROJECT_STATUS_AND_ROADMAP.md](./PROJECT_STATUS_AND_ROADMAP.md) for detaile
 
 ## 4. Requirements
 
-- [Bun](https://bun.sh/) 1.3 or newer
+- [Bun](https://bun.sh/) 1.3.14
 - TypeScript 5.9, installed by `bun install`
 - An OpenAI or Azure OpenAI API key only for live resolution
 
@@ -596,7 +596,8 @@ src/
   generator.ts                   Deterministic Predicate generator
   semantic-compiler.ts           Predicate compiler transaction
   static-judgment-compiler.ts    Static Judgment compiler transaction
-  static-judgment-benchmark.ts   Blind benchmark freeze, Oracle separation, and fixture evaluation
+  static-judgment-benchmark.ts   Blind benchmark read-only execution and reporting
+  static-judgment-benchmark-parser.ts  Strict manifest, freeze, and Oracle parser
   semantic-pipeline.ts           Shared compiler run, audit, and command infrastructure
   semantic-transaction.ts        Workspace lock, journal, and recovery
   semantic-limits.ts             IR and external-input resource budgets
@@ -620,12 +621,13 @@ semantic.lock                   Reproducible resolutions
 bun install
 bun run check
 bun run coverage
+bun run ci:docs
 bun run ci:smoke
 bun run ci:protected
 git diff --check
 ```
 
-As of 2026-07-25 in the same worktree, all 238 tests pass (1,220 expectations across 60 files), with 93.40% function coverage and 93.07% line coverage. `semantic verify` passes the root manifest with Closure 4/4, deterministic regeneration 4/4, Predicate tests 3/3, and typecheck.
+[`QUALITY_GATES.md`](./QUALITY_GATES.md) is the source of truth for pinned tool versions, coverage thresholds, the CI OS matrix, and how current results are recorded. Test counts and measured coverage are produced by each CI run instead of being copied into this README.
 
 Preserve these principles when making changes:
 

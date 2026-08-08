@@ -1,6 +1,6 @@
 # L-Lang — Staged Semantic TypeScript
 
-[English](./README.en.md) · [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) · [Post-MVP実装計画](./POST_MVP_IMPLEMENTATION_PLAN.md) · [セキュリティ](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
+[English](./README.en.md) · [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) · [品質Gate](./QUALITY_GATES.md) · [Post-MVP実装計画](./POST_MVP_IMPLEMENTATION_PLAN.md) · [セキュリティ](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
 
 > **抽象的な意図を、Projectの型・テスト・履歴にフィットする決定的なTypeScriptへ変換する。**
 >
@@ -92,7 +92,7 @@ Projectが与える文脈
 
 ## 4. 必要環境
 
-- [Bun](https://bun.sh/) 1.3以降
+- [Bun](https://bun.sh/) 1.3.14
 - TypeScript 5.9（`bun install`で導入）
 - live解決時のみOpenAI APIまたはAzure OpenAI API key
 
@@ -592,7 +592,8 @@ src/
   generator.ts                   決定的Predicate generator
   semantic-compiler.ts           Predicate compiler transaction
   static-judgment-compiler.ts    Static Judgment compiler transaction
-  static-judgment-benchmark.ts   blind benchmarkのfreeze / Oracle分離 / fixture評価
+  static-judgment-benchmark.ts   blind benchmarkのread-only実行と集計
+  static-judgment-benchmark-parser.ts  manifest / freeze / Oracleのstrict parser
   semantic-pipeline.ts           compiler共通run / audit / command基盤
   semantic-transaction.ts        workspace lock / journal / recovery
   semantic-limits.ts             IR / 外部入力のresource budget
@@ -616,12 +617,13 @@ semantic.lock                   再現可能な解決結果
 bun install
 bun run check
 bun run coverage
+bun run ci:docs
 bun run ci:smoke
 bun run ci:protected
 git diff --check
 ```
 
-2026-07-25時点の同一worktreeでは、全238テスト（1,220 expectations / 60 files）が成功し、coverageはfunctions 93.40% / lines 93.07%です。root manifestの`semantic verify`はClosure 4/4、決定的再生成4/4、Predicate test 3/3、typecheckを通過します。
+固定ツールバージョン、coverage閾値、CI OS matrix、最新値の記録方法は[`QUALITY_GATES.md`](./QUALITY_GATES.md)を正とします。テスト件数とcoverage実測値は各CI runで生成し、READMEへ変動値を複製しません。
 
 変更時は次の原則を維持してください。
 

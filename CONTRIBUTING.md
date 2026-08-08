@@ -4,7 +4,7 @@ Issue、提案、文書修正、実装、検証データの提供を歓迎しま
 
 ## 開発環境
 
-- Bun 1.3以降
+- Bun 1.3.14
 - TypeScript 5.9
 - OpenAI APIまたはAzure OpenAIはlive検証時のみ必要
 
@@ -12,6 +12,7 @@ Issue、提案、文書修正、実装、検証データの提供を歓迎しま
 bun install
 bun run typecheck
 bun test
+bun run ci:docs
 ```
 
 APIを使わないfixture経路で基本動作を確認できます。
@@ -56,6 +57,8 @@ bun run typecheck
 bun test
 git diff --check
 ```
+
+全品質Gateとcoverage閾値は[`QUALITY_GATES.md`](./QUALITY_GATES.md)を参照してください。
 
 ## Secretsと生成物
 

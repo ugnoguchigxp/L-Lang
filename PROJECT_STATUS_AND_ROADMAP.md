@@ -1,6 +1,6 @@
 # L-Lang: 現在の実装状況とロードマップ
 
-最終更新: 2026-07-25
+最終更新: 2026-08-08
 
 ## 結論
 
@@ -47,14 +47,14 @@ Project Fitのlive A/BとERP CRUDの技術Pilotは合格した。ただし、実
 
 ### Repository品質
 
-2026-07-25の同一worktreeで確認した。
+品質Gateの定義と実測値の記録方法は[`QUALITY_GATES.md`](./QUALITY_GATES.md)を正とする。変動するテスト件数とcoverage値は各CI runで生成し、この文書へ複製しない。
 
 | 検証 | 結果 |
 | --- | --- |
 | `bun run typecheck` | 成功 |
-| `bun test` | 238 pass / 0 fail、1,220 expectations、60 files |
-| `bun run ci:protected` | 成功。凍結benchmark入力のhash一致 |
-| `bun run coverage` | functions 93.40%、lines 93.07%。設定閾値を通過 |
+| `bun test` | 全test成功を要求 |
+| `bun run ci:protected` | Schema Evolution freeze manifestと記録済みhashの一致を要求 |
+| `bun run coverage` | repository 90% / transaction 95%のfunctions・lines閾値を要求 |
 
 ### Semantic Polymorphism
 
@@ -153,6 +153,8 @@ raw source全体、secret、hidden oracle、任意のclass実装を無制限に�
 Predicateの価値Gateを通過した後だけ、Validation IR、Mapping IR、状態遷移IRの順で小さな縦断を追加する。自由なTypeScript生成や副作用生成には進まない。
 
 ## 推奨する着手順
+
+live API費用、人間参加者、独立datasetを必要とする評価は、[`RESEARCH_EVALUATION_PREREQUISITES.md`](./RESEARCH_EVALUATION_PREREQUISITES.md)の事前条件と別途の明示承認を満たしてから開始する。
 
 1. 実開発者によるmeasured A/Bを実行し、追加指示と失敗原因を採取
 2. Static Judgmentの48 case独立datasetを設計・freezeしてlive評価
