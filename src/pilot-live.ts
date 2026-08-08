@@ -10,6 +10,15 @@ import {
   parseElaborationResult,
 } from "./openai";
 import {
+  assertPilotLiveWallClockBudget,
+  type CompletedPilotLiveEntry,
+  loadOrCreatePilotLiveCheckpoint,
+  type PilotLiveCheckpoint,
+  type PilotLiveCheckpointEntry,
+  pilotLiveCheckpointCost,
+  validatePilotLiveScheduledEntries,
+} from "./pilot-live-checkpoint";
+import {
   assertPilotFrozen,
   assertPilotReviewApproved,
   type PilotCase,
@@ -25,11 +34,7 @@ import {
 } from "./pilot-report";
 import { type PilotHiddenCase, parsePilotHiddenCaseSet } from "./pilot-runner";
 import { predicateRequestShape, sha256 } from "./semantic-fingerprint";
-import {
-  assertKnownKeys,
-  parseBoundedJsonText,
-  SEMANTIC_LIMITS,
-} from "./semantic-limits";
+import { parseBoundedJsonText, SEMANTIC_LIMITS } from "./semantic-limits";
 import { scanSemanticSource } from "./semantic-source";
 
 export type RunPilotLiveOptions = {
@@ -48,36 +53,6 @@ export type RunPilotLiveOptions = {
   wait?: (milliseconds: number) => Promise<void>;
   onProgress?: (message: string) => void;
   onCheckpoint?: (completedResponses: number) => void | Promise<void>;
-};
-
-type CompletedEntry = {
-  caseId: string;
-  status: "completed";
-  response: OpenAIResult;
-  latencyMs: number;
-};
-
-type CheckpointEntry =
-  | {
-      caseId: string;
-      status: "pending";
-    }
-  | CompletedEntry;
-
-type PilotLiveCheckpoint = {
-  version: 1;
-  manifestHash: string;
-  reviewHash: string;
-  model: string;
-  provider: string;
-  startedAt: string;
-  apiAttempts: number;
-  cooldownCompletions: number;
-  costPerMillionTokens: {
-    input: number;
-    output: number;
-  };
-  entries: CheckpointEntry[];
 };
 
 export async function runPilotLive(
@@ -109,12 +84,12 @@ export async function runPilotLive(
     throw new Error("Pilot live run is already complete");
   }
   const checkpointPath = resolve(reportDirectory, "checkpoint.json");
-  const checkpoint = await loadOrCreateCheckpoint(
+  const checkpoint = await loadOrCreatePilotLiveCheckpoint(
     checkpointPath,
     protocol,
     options,
   );
-  validateScheduledEntries(checkpoint, protocol);
+  validatePilotLiveScheduledEntries(checkpoint, protocol);
   if (checkpoint.entries.some((entry) => entry.status === "pending")) {
     throw new Error(
       "Pilot checkpoint contains an uncertain pending API call; use a new runId instead of risking a duplicate call",
@@ -124,7 +99,7 @@ export async function runPilotLive(
   const before = await snapshotFrozenInputs(protocol);
   const results: PilotCaseResult[] = [];
   for (const pilotCase of protocol.manifest.cases) {
-    assertWallClockBudget(checkpoint, protocol);
+    assertPilotLiveWallClockBudget(checkpoint, protocol);
     const source = await scanSemanticSource(
       resolve(protocol.directory, pilotCase.source),
     );
@@ -152,14 +127,14 @@ export async function runPilotLive(
     );
   }
 
-  assertWallClockBudget(checkpoint, protocol);
+  assertPilotLiveWallClockBudget(checkpoint, protocol);
   await readPilotProtocol(options.manifestPath);
   const after = await snapshotFrozenInputs(protocol);
   const workspaceMutations = Object.keys(before).filter(
     (file) => before[file] !== after[file],
   ).length;
   const summary = summarizePilotCases(results);
-  const estimatedCost = checkpointCost(checkpoint);
+  const estimatedCost = pilotLiveCheckpointCost(checkpoint);
   const checks = {
     exactCaseCount: summary.total === 8,
     firstPassProjectFit:
@@ -217,7 +192,7 @@ export async function runPilotLive(
     checks,
   };
   const responses = checkpoint.entries.filter(
-    (entry): entry is CompletedEntry => entry.status === "completed",
+    (entry): entry is CompletedPilotLiveEntry => entry.status === "completed",
   );
   await Promise.all([
     atomicWriteJson(resolve(reportDirectory, "report.json"), report),
@@ -238,7 +213,7 @@ async function resolveCase(input: {
   reportDirectory: string;
   request: ReturnType<typeof predicateRequestShape>;
   options: RunPilotLiveOptions;
-}): Promise<CompletedEntry> {
+}): Promise<CompletedPilotLiveEntry> {
   const existing = input.checkpoint.entries.find(
     (entry) => entry.caseId === input.pilotCase.id,
   );
@@ -251,7 +226,7 @@ async function resolveCase(input: {
       `Pilot checkpoint entry ${input.pilotCase.id} is pending; refusing a duplicate API call`,
     );
   }
-  const pending: CheckpointEntry = {
+  const pending: PilotLiveCheckpointEntry = {
     caseId: input.pilotCase.id,
     status: "pending",
   };
@@ -284,7 +259,7 @@ async function resolveCase(input: {
     });
     throw error;
   }
-  const completed: CompletedEntry = {
+  const completed: CompletedPilotLiveEntry = {
     caseId: input.pilotCase.id,
     status: "completed",
     response,
@@ -294,7 +269,7 @@ async function resolveCase(input: {
     completed;
   await atomicWriteJson(input.checkpointPath, input.checkpoint);
   if (
-    checkpointCost(input.checkpoint) >
+    pilotLiveCheckpointCost(input.checkpoint) >
     input.protocol.manifest.budget.maxEstimatedCost
   ) {
     throw new Error("Pilot completed responses exceeded estimated cost budget");
@@ -309,7 +284,7 @@ async function resolveWithRetry(
   let retries = 0;
   let latencyMs = 0;
   while (true) {
-    assertWallClockBudget(input.checkpoint, input.protocol);
+    assertPilotLiveWallClockBudget(input.checkpoint, input.protocol);
     if (
       input.checkpoint.apiAttempts >= input.protocol.manifest.budget.maxApiCalls
     ) {
@@ -356,7 +331,7 @@ function scoreResponse(
   pilotCase: PilotCase,
   source: Awaited<ReturnType<typeof scanSemanticSource>>,
   hiddenCases: PilotHiddenCase[],
-  completed: CompletedEntry,
+  completed: CompletedPilotLiveEntry,
 ): PilotCaseResult {
   try {
     const elaboration = parseElaborationResult(
@@ -403,7 +378,7 @@ function scoreResponse(
 
 function resultBase(
   pilotCase: PilotCase,
-  completed: CompletedEntry,
+  completed: CompletedPilotLiveEntry,
   hiddenCases: number,
   result: Pick<
     PilotCaseResult,
@@ -470,220 +445,6 @@ function validateRates(rates: RunPilotLiveOptions["costPerMillionTokens"]) {
   }
 }
 
-function checkpointCost(checkpoint: PilotLiveCheckpoint): number {
-  return checkpoint.entries
-    .filter((entry): entry is CompletedEntry => entry.status === "completed")
-    .reduce((total, entry) => {
-      const usage = entry.response.usage;
-      if (usage === null) return total;
-      return (
-        total +
-        (usage.inputTokens * checkpoint.costPerMillionTokens.input +
-          usage.outputTokens * checkpoint.costPerMillionTokens.output) /
-          1_000_000
-      );
-    }, 0);
-}
-
-function assertWallClockBudget(
-  checkpoint: PilotLiveCheckpoint,
-  protocol: PilotProtocol,
-): void {
-  if (
-    Date.now() - Date.parse(checkpoint.startedAt) >
-    protocol.manifest.budget.maxWallClockMs
-  ) {
-    throw new Error("Pilot wall-clock budget is exhausted");
-  }
-}
-
-async function loadOrCreateCheckpoint(
-  path: string,
-  protocol: PilotProtocol,
-  options: RunPilotLiveOptions,
-): Promise<PilotLiveCheckpoint> {
-  const existing = await readTextIfExists(path);
-  if (existing === undefined) {
-    const checkpoint: PilotLiveCheckpoint = {
-      version: 1,
-      manifestHash: protocol.manifestHash,
-      reviewHash: protocol.reviewHash,
-      model: options.model,
-      provider: options.provider,
-      startedAt: new Date().toISOString(),
-      apiAttempts: 0,
-      cooldownCompletions: 0,
-      costPerMillionTokens: options.costPerMillionTokens,
-      entries: [],
-    };
-    await atomicWriteJson(path, checkpoint);
-    return checkpoint;
-  }
-  const checkpoint = parseCheckpoint(
-    parseBoundedJsonText(existing, "Pilot live checkpoint"),
-  );
-  if (
-    checkpoint.manifestHash !== protocol.manifestHash ||
-    checkpoint.reviewHash !== protocol.reviewHash ||
-    checkpoint.model !== options.model ||
-    checkpoint.provider !== options.provider ||
-    checkpoint.costPerMillionTokens.input !==
-      options.costPerMillionTokens.input ||
-    checkpoint.costPerMillionTokens.output !==
-      options.costPerMillionTokens.output
-  ) {
-    throw new Error(
-      "Pilot checkpoint metadata does not match the requested run",
-    );
-  }
-  return checkpoint;
-}
-
-function parseCheckpoint(input: unknown): PilotLiveCheckpoint {
-  const value = recordValue(input, "Pilot live checkpoint");
-  assertExactKeys(
-    value,
-    [
-      "version",
-      "manifestHash",
-      "reviewHash",
-      "model",
-      "provider",
-      "startedAt",
-      "apiAttempts",
-      "cooldownCompletions",
-      "costPerMillionTokens",
-      "entries",
-    ],
-    "Pilot live checkpoint",
-  );
-  if (value.version !== 1) {
-    throw new Error("Pilot live checkpoint.version must be 1");
-  }
-  const rates = recordValue(
-    value.costPerMillionTokens,
-    "Pilot live checkpoint.costPerMillionTokens",
-  );
-  assertExactKeys(
-    rates,
-    ["input", "output"],
-    "Pilot live checkpoint.costPerMillionTokens",
-  );
-  const parsedRates = {
-    input: nonNegativeNumber(
-      rates.input,
-      "Pilot live checkpoint.costPerMillionTokens.input",
-    ),
-    output: nonNegativeNumber(
-      rates.output,
-      "Pilot live checkpoint.costPerMillionTokens.output",
-    ),
-  };
-  if (!Array.isArray(value.entries)) {
-    throw new Error("Pilot live checkpoint.entries must be an array");
-  }
-  const entries = value.entries.map(parseCheckpointEntry);
-  if (new Set(entries.map((entry) => entry.caseId)).size !== entries.length) {
-    throw new Error("Pilot live checkpoint contains duplicate cases");
-  }
-  return {
-    version: 1,
-    manifestHash: hashString(
-      value.manifestHash,
-      "Pilot live checkpoint.manifestHash",
-    ),
-    reviewHash: hashString(
-      value.reviewHash,
-      "Pilot live checkpoint.reviewHash",
-    ),
-    model: trimmedString(value.model, "Pilot live checkpoint.model"),
-    provider: trimmedString(value.provider, "Pilot live checkpoint.provider"),
-    startedAt: timestampString(
-      value.startedAt,
-      "Pilot live checkpoint.startedAt",
-    ),
-    apiAttempts: nonNegativeInteger(
-      value.apiAttempts,
-      "Pilot live checkpoint.apiAttempts",
-    ),
-    cooldownCompletions: nonNegativeInteger(
-      value.cooldownCompletions,
-      "Pilot live checkpoint.cooldownCompletions",
-    ),
-    costPerMillionTokens: parsedRates,
-    entries,
-  };
-}
-
-function parseCheckpointEntry(input: unknown, index: number): CheckpointEntry {
-  const path = `Pilot live checkpoint.entries[${index}]`;
-  const value = recordValue(input, path);
-  if (value.status === "pending") {
-    assertExactKeys(value, ["caseId", "status"], path);
-    return {
-      caseId: trimmedString(value.caseId, `${path}.caseId`),
-      status: "pending",
-    };
-  }
-  if (value.status !== "completed") {
-    throw new Error(`${path}.status must be pending or completed`);
-  }
-  assertExactKeys(value, ["caseId", "status", "response", "latencyMs"], path);
-  return {
-    caseId: trimmedString(value.caseId, `${path}.caseId`),
-    status: "completed",
-    response: parseCheckpointResponse(value.response, `${path}.response`),
-    latencyMs: nonNegativeNumber(value.latencyMs, `${path}.latencyMs`),
-  };
-}
-
-function parseCheckpointResponse(input: unknown, path: string): OpenAIResult {
-  const value = recordValue(input, path);
-  assertExactKeys(value, ["responseId", "model", "outputText", "usage"], path);
-  const usage = recordValue(value.usage, `${path}.usage`);
-  assertExactKeys(
-    usage,
-    ["inputTokens", "outputTokens", "totalTokens"],
-    `${path}.usage`,
-  );
-  return {
-    responseId: trimmedString(value.responseId, `${path}.responseId`),
-    model: trimmedString(value.model, `${path}.model`),
-    outputText: trimmedString(value.outputText, `${path}.outputText`),
-    usage: {
-      inputTokens: nonNegativeInteger(
-        usage.inputTokens,
-        `${path}.usage.inputTokens`,
-      ),
-      outputTokens: nonNegativeInteger(
-        usage.outputTokens,
-        `${path}.usage.outputTokens`,
-      ),
-      totalTokens: nonNegativeInteger(
-        usage.totalTokens,
-        `${path}.usage.totalTokens`,
-      ),
-    },
-  };
-}
-
-function validateScheduledEntries(
-  checkpoint: PilotLiveCheckpoint,
-  protocol: PilotProtocol,
-): void {
-  const caseIds = new Set(protocol.manifest.cases.map((entry) => entry.id));
-  for (const entry of checkpoint.entries) {
-    if (!caseIds.has(entry.caseId)) {
-      throw new Error(
-        `Pilot checkpoint entry ${entry.caseId} is not scheduled by the manifest`,
-      );
-    }
-  }
-  if (checkpoint.cooldownCompletions > checkpoint.apiAttempts) {
-    throw new Error("Pilot checkpoint has more cooldowns than API attempts");
-  }
-}
-
 async function snapshotFrozenInputs(
   protocol: PilotProtocol,
 ): Promise<Record<string, string>> {
@@ -744,66 +505,6 @@ function liveRunId(input: string | undefined): string {
 
 function safeName(value: string): string {
   return value.replace(/[^A-Za-z0-9._-]/gu, "-");
-}
-
-function recordValue(input: unknown, path: string): Record<string, unknown> {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error(`${path} must be an object`);
-  }
-  return input as Record<string, unknown>;
-}
-
-function assertExactKeys(
-  value: Record<string, unknown>,
-  keys: readonly string[],
-  path: string,
-): void {
-  assertKnownKeys(value, keys, path);
-  const missing = keys.find((key) => !(key in value));
-  if (missing !== undefined) {
-    throw new Error(`${path} is missing ${missing}`);
-  }
-}
-
-function trimmedString(input: unknown, path: string): string {
-  if (
-    typeof input !== "string" ||
-    input.length === 0 ||
-    input.trim() !== input
-  ) {
-    throw new Error(`${path} must be a non-empty trimmed string`);
-  }
-  return input;
-}
-
-function timestampString(input: unknown, path: string): string {
-  const value = trimmedString(input, path);
-  if (!Number.isFinite(Date.parse(value))) {
-    throw new Error(`${path} must be a valid timestamp`);
-  }
-  return value;
-}
-
-function hashString(input: unknown, path: string): string {
-  const value = trimmedString(input, path);
-  if (!/^[a-f0-9]{64}$/u.test(value)) {
-    throw new Error(`${path} must be a SHA-256 hash`);
-  }
-  return value;
-}
-
-function nonNegativeInteger(input: unknown, path: string): number {
-  if (!Number.isSafeInteger(input) || Number(input) < 0) {
-    throw new Error(`${path} must be a non-negative safe integer`);
-  }
-  return Number(input);
-}
-
-function nonNegativeNumber(input: unknown, path: string): number {
-  if (typeof input !== "number" || !Number.isFinite(input) || input < 0) {
-    throw new Error(`${path} must be a non-negative finite number`);
-  }
-  return input;
 }
 
 function rate(value: number, total: number): number {
