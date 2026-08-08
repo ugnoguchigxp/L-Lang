@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { basename, dirname, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import ts from "typescript";
 
@@ -10,16 +10,32 @@ import {
   type ConceptSpecificationUse,
   type StructuredConceptSpecification,
 } from "./concept-specification";
+import {
+  assertCounterfactualCases,
+  assertInvarianceCases,
+  assertNamedSemanticCases,
+  assertNonEmptyStaticArray,
+  assertObjectPropertyKeys,
+  findArrayProperty,
+  findOptionalArrayProperty,
+} from "./semantic-source-cases";
+import {
+  formatDiagnostics,
+  SemanticSourceError,
+  sourceError,
+} from "./semantic-source-diagnostics";
+import {
+  buildTypeSchema,
+  findTypeDeclaration,
+  type TypeSchema,
+} from "./semantic-source-type-schema";
 
-export type TypeSchema =
-  | { kind: "string" | "number" | "boolean" | "null" | "undefined" }
-  | { kind: "literal"; value: string | number | boolean }
-  | { kind: "union"; types: TypeSchema[] }
-  | { kind: "array"; elementType: TypeSchema }
-  | {
-      kind: "object";
-      properties: Array<{ name: string; optional: boolean; type: TypeSchema }>;
-    };
+export {
+  formatDiagnostics,
+  SemanticSourceError,
+  sourceError,
+} from "./semantic-source-diagnostics";
+export type { TypeSchema } from "./semantic-source-type-schema";
 
 export type SemanticSourceBase = {
   absolutePath: string;
@@ -67,10 +83,6 @@ export type BenchmarkSemanticSource = SemanticSourceBase & {
     predicateName: string;
   };
 };
-
-export class SemanticSourceError extends Error {
-  override name = "SemanticSourceError";
-}
 
 export async function scanSemanticSource(
   sourcePath: string,
@@ -520,384 +532,6 @@ function parseConceptSpecificationAt(
   }
 }
 
-function findTypeDeclaration(type: ts.Type, sourceFile: ts.SourceFile): string {
-  const symbol = type.aliasSymbol ?? type.getSymbol();
-  const declaration = symbol?.declarations?.find(
-    (candidate) =>
-      ts.isTypeAliasDeclaration(candidate) || ts.isInterfaceDeclaration(candidate),
-  );
-  if (declaration === undefined) {
-    throw new SemanticSourceError("concept input type must have a type alias or interface declaration");
-  }
-  if (declaration.getSourceFile() !== sourceFile) {
-    throw new SemanticSourceError("concept input type must be declared in the semantic source file");
-  }
-  return declaration.getText(sourceFile);
-}
-
-function buildTypeSchema(
-  type: ts.Type,
-  checker: ts.TypeChecker,
-  location: ts.Node,
-  depth: number,
-): TypeSchema {
-  if (depth > 3) {
-    throw new SemanticSourceError("concept input type nesting exceeds the MVP limit");
-  }
-  if (type.isUnion()) {
-    return { kind: "union", types: type.types.map((part) => buildTypeSchema(part, checker, location, depth + 1)) };
-  }
-  if (type.flags & ts.TypeFlags.StringLiteral) {
-    return { kind: "literal", value: (type as ts.StringLiteralType).value };
-  }
-  if (type.flags & ts.TypeFlags.NumberLiteral) {
-    return { kind: "literal", value: (type as ts.NumberLiteralType).value };
-  }
-  if (type.flags & ts.TypeFlags.BooleanLiteral) {
-    return { kind: "literal", value: checker.typeToString(type) === "true" };
-  }
-  if (type.flags & ts.TypeFlags.StringLike) return { kind: "string" };
-  if (type.flags & ts.TypeFlags.NumberLike) return { kind: "number" };
-  if (type.flags & ts.TypeFlags.BooleanLike) return { kind: "boolean" };
-  if (type.flags & ts.TypeFlags.Null) return { kind: "null" };
-  if (type.flags & ts.TypeFlags.Undefined) return { kind: "undefined" };
-  if (type.flags & ts.TypeFlags.Object) {
-    if (checker.isArrayType(type)) {
-      const typeArguments = checker.getTypeArguments(type as ts.TypeReference);
-      const elementType = typeArguments[0];
-      if (elementType === undefined) {
-        throw new SemanticSourceError("array element type could not be determined");
-      }
-      return {
-        kind: "array",
-        elementType: buildTypeSchema(elementType, checker, location, depth + 1),
-      };
-    }
-    return {
-      kind: "object",
-      properties: checker.getPropertiesOfType(type).map((property) => ({
-        name: property.getName(),
-        optional: Boolean(property.flags & ts.SymbolFlags.Optional),
-        type: buildTypeSchema(
-          checker.getTypeOfSymbolAtLocation(property, location),
-          checker,
-          location,
-          depth + 1,
-        ),
-      })),
-    };
-  }
-  throw new SemanticSourceError(`unsupported concept input type: ${checker.typeToString(type)}`);
-}
-
-function findArrayProperty(
-  object: ts.ObjectLiteralExpression,
-  name: string,
-  sourceFile: ts.SourceFile,
-): ts.ArrayLiteralExpression {
-  const property = object.properties.find(
-    (candidate): candidate is ts.PropertyAssignment =>
-      ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === name,
-  );
-  if (property === undefined || !ts.isArrayLiteralExpression(property.initializer)) {
-    throw sourceError(sourceFile, object, `semanticTest.${name} must be an array literal`);
-  }
-  return property.initializer;
-}
-
-function findOptionalArrayProperty(
-  object: ts.ObjectLiteralExpression,
-  name: "boundary" | "counterfactual" | "invariance",
-  sourceFile: ts.SourceFile,
-): ts.ArrayLiteralExpression | null {
-  const properties = object.properties.filter(
-    (candidate): candidate is ts.PropertyAssignment =>
-      ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === name,
-  );
-  if (properties.length === 0) return null;
-  const [property] = properties;
-  if (property === undefined) return null;
-  if (!ts.isArrayLiteralExpression(property.initializer)) {
-    throw sourceError(
-      sourceFile,
-      property.initializer,
-      `semanticTest.${name} must be an array literal`,
-    );
-  }
-  return property.initializer;
-}
-
-function assertObjectPropertyKeys(
-  object: ts.ObjectLiteralExpression,
-  allowed: string[],
-  path: string,
-  sourceFile: ts.SourceFile,
-): void {
-  const seen = new Set<string>();
-  for (const property of object.properties) {
-    if (!ts.isPropertyAssignment(property)) {
-      throw sourceError(
-        sourceFile,
-        property,
-        `${path} only supports explicit property assignments`,
-      );
-    }
-    const name = propertyName(property.name);
-    if (name === undefined || !allowed.includes(name)) {
-      throw sourceError(
-        sourceFile,
-        property.name,
-        `${path} contains unknown field ${name ?? property.name.getText(sourceFile)}`,
-      );
-    }
-    if (seen.has(name)) {
-      throw sourceError(sourceFile, property.name, `${path}.${name} is duplicated`);
-    }
-    seen.add(name);
-  }
-}
-
-function assertNamedSemanticCases(
-  array: ts.ArrayLiteralExpression,
-  sectionPath: string,
-  sourceFile: ts.SourceFile,
-): void {
-  const names = new Set<string>();
-  array.elements.forEach((element, index) => {
-    if (!ts.isObjectLiteralExpression(element)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `${sectionPath}[${index}] must be an object literal`,
-      );
-    }
-    const path = `${sectionPath}[${index}]`;
-    assertObjectPropertyKeys(
-      element,
-      ["name", "input", "expected"],
-      path,
-      sourceFile,
-    );
-    const name = stringLiteralProperty(element, "name", path, sourceFile);
-    if (name.trim().length === 0) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `${path}.name must be a non-empty string literal`,
-      );
-    }
-    if (names.has(name)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `${sectionPath} contains duplicate name ${name}`,
-      );
-    }
-    names.add(name);
-    const input = requiredProperty(element, "input", path, sourceFile);
-    assertStaticExpression(input, sourceFile);
-    assertSemanticExpected(element, path, sourceFile);
-  });
-}
-
-function assertCounterfactualCases(
-  array: ts.ArrayLiteralExpression,
-  sourceFile: ts.SourceFile,
-): void {
-  const names = new Set<string>();
-  array.elements.forEach((element, index) => {
-    if (!ts.isObjectLiteralExpression(element)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `semanticTest.counterfactual[${index}] must be an object literal`,
-      );
-    }
-    const path = `semanticTest.counterfactual[${index}]`;
-    assertObjectPropertyKeys(
-      element,
-      ["name", "base", "variants"],
-      path,
-      sourceFile,
-    );
-    const name = stringLiteralProperty(element, "name", path, sourceFile);
-    if (name.trim().length === 0) {
-      throw sourceError(sourceFile, element, `${path}.name must be non-empty`);
-    }
-    if (names.has(name)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `semanticTest.counterfactual contains duplicate name ${name}`,
-      );
-    }
-    names.add(name);
-    const base = requiredProperty(element, "base", path, sourceFile);
-    if (!ts.isObjectLiteralExpression(base)) {
-      throw sourceError(sourceFile, base, `${path}.base must be an object literal`);
-    }
-    assertObjectPropertyKeys(base, ["input", "expected"], `${path}.base`, sourceFile);
-    assertStaticExpression(
-      requiredProperty(base, "input", `${path}.base`, sourceFile),
-      sourceFile,
-    );
-    assertSemanticExpected(base, `${path}.base`, sourceFile);
-    const variants = requiredProperty(element, "variants", path, sourceFile);
-    if (!ts.isArrayLiteralExpression(variants) || variants.elements.length === 0) {
-      throw sourceError(
-        sourceFile,
-        variants,
-        `${path}.variants must be a non-empty array literal`,
-      );
-    }
-    assertNamedSemanticCases(variants, `${path}.variants`, sourceFile);
-  });
-}
-
-function assertInvarianceCases(
-  array: ts.ArrayLiteralExpression,
-  sourceFile: ts.SourceFile,
-): void {
-  const names = new Set<string>();
-  array.elements.forEach((element, index) => {
-    if (!ts.isObjectLiteralExpression(element)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `semanticTest.invariance[${index}] must be an object literal`,
-      );
-    }
-    const path = `semanticTest.invariance[${index}]`;
-    assertObjectPropertyKeys(
-      element,
-      ["name", "expected", "inputs"],
-      path,
-      sourceFile,
-    );
-    const name = stringLiteralProperty(element, "name", path, sourceFile);
-    if (name.trim().length === 0) {
-      throw sourceError(sourceFile, element, `${path}.name must be non-empty`);
-    }
-    if (names.has(name)) {
-      throw sourceError(
-        sourceFile,
-        element,
-        `semanticTest.invariance contains duplicate name ${name}`,
-      );
-    }
-    names.add(name);
-    assertSemanticExpected(element, path, sourceFile);
-    const inputs = requiredProperty(element, "inputs", path, sourceFile);
-    if (!ts.isArrayLiteralExpression(inputs) || inputs.elements.length === 0) {
-      throw sourceError(
-        sourceFile,
-        inputs,
-        `${path}.inputs must be a non-empty array literal`,
-      );
-    }
-    for (const input of inputs.elements) assertStaticExpression(input, sourceFile);
-  });
-}
-
-function requiredProperty(
-  object: ts.ObjectLiteralExpression,
-  name: string,
-  path: string,
-  sourceFile: ts.SourceFile,
-): ts.Expression {
-  const property = object.properties.find(
-    (candidate): candidate is ts.PropertyAssignment =>
-      ts.isPropertyAssignment(candidate) && propertyName(candidate.name) === name,
-  );
-  if (property === undefined) {
-    throw sourceError(sourceFile, object, `${path}.${name} is required`);
-  }
-  return property.initializer;
-}
-
-function stringLiteralProperty(
-  object: ts.ObjectLiteralExpression,
-  name: string,
-  path: string,
-  sourceFile: ts.SourceFile,
-): string {
-  const value = requiredProperty(object, name, path, sourceFile);
-  if (!ts.isStringLiteral(value)) {
-    throw sourceError(
-      sourceFile,
-      value,
-      `${path}.${name} must be a string literal`,
-    );
-  }
-  return value.text;
-}
-
-function assertSemanticExpected(
-  object: ts.ObjectLiteralExpression,
-  path: string,
-  sourceFile: ts.SourceFile,
-): void {
-  const expected = stringLiteralProperty(object, "expected", path, sourceFile);
-  if (expected !== "accepted" && expected !== "rejected") {
-    throw sourceError(
-      sourceFile,
-      object,
-      `${path}.expected must be accepted or rejected`,
-    );
-  }
-}
-
-function assertNonEmptyStaticArray(
-  array: ts.ArrayLiteralExpression,
-  name: "accept" | "reject",
-  sourceFile: ts.SourceFile,
-): void {
-  if (array.elements.length === 0) {
-    throw sourceError(
-      sourceFile,
-      array,
-      `semanticTest.${name} must contain at least one case`,
-    );
-  }
-  for (const element of array.elements) {
-    assertStaticExpression(element, sourceFile);
-  }
-}
-
-function assertStaticExpression(node: ts.Expression, sourceFile: ts.SourceFile): void {
-  if (
-    ts.isStringLiteral(node) ||
-    ts.isNumericLiteral(node) ||
-    node.kind === ts.SyntaxKind.TrueKeyword ||
-    node.kind === ts.SyntaxKind.FalseKeyword ||
-    node.kind === ts.SyntaxKind.NullKeyword ||
-    (ts.isIdentifier(node) && node.text === "undefined")
-  ) {
-    return;
-  }
-  if (ts.isPrefixUnaryExpression(node) && ts.isNumericLiteral(node.operand)) return;
-  if (ts.isArrayLiteralExpression(node)) {
-    for (const element of node.elements) assertStaticExpression(element, sourceFile);
-    return;
-  }
-  if (ts.isObjectLiteralExpression(node)) {
-    for (const property of node.properties) {
-      if (!ts.isPropertyAssignment(property) || propertyName(property.name) === undefined) {
-        throw sourceError(sourceFile, property, "semantic cases only support static object properties");
-      }
-      assertStaticExpression(property.initializer, sourceFile);
-    }
-    return;
-  }
-  throw sourceError(sourceFile, node, "semantic cases must contain only static literals");
-}
-
-function propertyName(name: ts.PropertyName): string | undefined {
-  return ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)
-    ? name.text
-    : undefined;
-}
-
 function typeNameFromConceptReference(
   conceptName: string,
   concepts: SemanticSource["concept"][],
@@ -914,17 +548,4 @@ export function hashConcept(id: string, specification: string): string {
   return createHash("sha256")
     .update(JSON.stringify({ id, specification }))
     .digest("hex");
-}
-
-export function sourceError(sourceFile: ts.SourceFile, node: ts.Node, message: string): SemanticSourceError {
-  const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-  return new SemanticSourceError(`${basename(sourceFile.fileName)}:${position.line + 1}:${position.character + 1}: ${message}`);
-}
-
-export function formatDiagnostics(diagnostics: readonly ts.Diagnostic[]): string {
-  return ts.formatDiagnosticsWithColorAndContext(diagnostics, {
-    getCanonicalFileName: (fileName) => fileName,
-    getCurrentDirectory: ts.sys.getCurrentDirectory,
-    getNewLine: () => ts.sys.newLine,
-  });
 }

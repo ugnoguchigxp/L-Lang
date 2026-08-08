@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import { evaluateExpression, expressionSignature } from "./cross-schema-benchmark";
-import { parsePredicateExpression, type PredicateExpression } from "./ir";
+import type { PredicateExpression } from "./ir";
 import {
   parseElaborationResult,
   type OpenAIRequestInput,
@@ -22,9 +22,22 @@ import {
 } from "./predicate-equivalence";
 import { selectConsensusVotes, type ConsensusSelection } from "./schema-evolution-consensus";
 import {
-  scanBenchmarkSource,
-  type BenchmarkSemanticSource,
-} from "./semantic-source";
+  assertFrozenInputs,
+  prepareSchemaEvolutionCases,
+  readSchemaEvolutionProtocol,
+  type PreparedSchemaEvolutionCase,
+  type SchemaEvolutionChangeType,
+  type SchemaEvolutionOracle,
+  validateSchemaEvolutionProtocol,
+  verifySchemaEvolutionFreeze,
+} from "./schema-evolution-protocol";
+
+export {
+  assertFrozenInputs,
+  verifyFrozenFileHashes,
+  verifySchemaEvolutionFreeze,
+} from "./schema-evolution-protocol";
+export { relativeSchemaEvolutionReportPath } from "./schema-evolution-protocol";
 
 export type SchemaEvolutionBenchmarkResolver = (
   input: OpenAIRequestInput,
@@ -42,102 +55,9 @@ export type MaterializedSchemaEvolutionOptions = {
   onProgress?: (message: string) => void;
 };
 
-type ChangeType =
-  | "add-property"
-  | "rename"
-  | "representation"
-  | "optionality"
-  | "remove-role"
-  | "ambiguity";
-
-type BenchmarkManifest = {
-  version: 1;
-  name: string;
-  trials: number;
-  freeze: string;
-  blindness: {
-    oracleAndCasesSentToModel: false;
-    lockUsed: false;
-    generatedCodeMutationAllowed: false;
-    note: string;
-  };
-  thresholds: {
-    minimumFirstPassCaseRate: number;
-    minimumStableCaseRate: number;
-    minimumClassificationAccuracy: number;
-    minimumHiddenTestPassRate: number;
-    maximumFalseResolutionRate: number;
-    maximumWorkspaceMutationCount: number;
-    minimumConsensusCaseRate?: number;
-    minimumConsensusQuorumRate?: number;
-  };
-  evaluation?: {
-    primary: "trials" | "consensus";
-    samples: 3;
-    quorum: 2;
-    parallel: boolean;
-  };
-  protocol?: {
-    concepts: number;
-    cases: number;
-    resolvedCases: number;
-    unresolvedCases: number;
-    casesPerChangeType: number;
-  };
-  concepts: Array<{
-    id: string;
-    definition: string;
-    baselineSource: string;
-    baselineOracle: string;
-  }>;
-  cases: Array<{
-    id: string;
-    conceptId: string;
-    changeType: ChangeType;
-    source: string;
-    oracle: string;
-    tests: string;
-  }>;
-};
-
-type FreezeManifest = {
-  version: 1;
-  status: "draft" | "frozen";
-  instructions: string;
-  files: Record<string, string>;
-};
-
-type Oracle =
-  | {
-      expectedOutcome: "resolved";
-      expectedClassification: "compatible";
-      body: PredicateExpression;
-    }
-  | {
-      expectedOutcome: "unresolved";
-      expectedClassification: "unresolved";
-      body: null;
-    };
-
-type HiddenCase = {
-  name: string;
-  input: Record<string, unknown>;
-  expected: boolean;
-};
-
-type PreparedCase = {
-  id: string;
-  conceptId: string;
-  changeType: ChangeType;
-  source: BenchmarkSemanticSource;
-  baselineIr: PredicateExpression;
-  oracle: Oracle;
-  hiddenCases: HiddenCase[];
-};
-
 type TrialResult = {
   trial: number;
-  expectedOutcome: Oracle["expectedOutcome"];
+  expectedOutcome: SchemaEvolutionOracle["expectedOutcome"];
   actualOutcome: "resolved" | "unresolved" | "error";
   expectedClassification: SemanticChangeClassification;
   actualClassification: SemanticChangeClassification | "error";
@@ -185,15 +105,13 @@ export async function evaluateMaterializedSchemaEvolution(
   options: MaterializedSchemaEvolutionOptions,
 ) {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const manifestPath = resolve(options.manifestPath);
-  const directory = dirname(manifestPath);
-  const manifest = parseManifest(await readJson(manifestPath));
-  const freeze = parseFreeze(await readJson(resolve(directory, manifest.freeze)));
+  const { directory, manifest, freeze } =
+    await readSchemaEvolutionProtocol(options.manifestPath);
   await verifySchemaEvolutionFreeze(directory, manifest, freeze);
   if (options.requireFrozenInputs ?? true) assertFrozenInputs(freeze);
 
-  const prepared = await prepareCases(manifest, directory);
-  validateProtocol(manifest, prepared);
+  const prepared = await prepareSchemaEvolutionCases(manifest, directory);
+  validateSchemaEvolutionProtocol(manifest, prepared);
   const beforeArtifacts = await snapshotWorkspaceArtifacts(workspaceRoot);
   const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}`;
   const runDirectory = resolve(options.outputRoot, `${runId}-${manifest.name}`);
@@ -202,8 +120,8 @@ export async function evaluateMaterializedSchemaEvolution(
   const caseReports: Array<{
     id: string;
     conceptId: string;
-    changeType: ChangeType;
-    expectedOutcome: Oracle["expectedOutcome"];
+    changeType: SchemaEvolutionChangeType;
+    expectedOutcome: SchemaEvolutionOracle["expectedOutcome"];
     expectedClassification: SemanticChangeClassification;
     firstPass: boolean;
     stable: boolean;
@@ -355,18 +273,8 @@ export async function evaluateMaterializedSchemaEvolution(
   return { report, runDirectory };
 }
 
-export function assertFrozenInputs(freeze: {
-  status: "draft" | "frozen";
-}): void {
-  if (freeze.status !== "frozen") {
-    throw new Error(
-      "benchmark inputs must be frozen before live execution",
-    );
-  }
-}
-
 async function runTrial(
-  benchmarkCase: PreparedCase,
+  benchmarkCase: PreparedSchemaEvolutionCase,
   trial: number,
   model: string,
   resolver: SchemaEvolutionBenchmarkResolver,
@@ -518,7 +426,7 @@ async function runTrial(
 }
 
 function evaluateCaseConsensus(
-  benchmarkCase: PreparedCase,
+  benchmarkCase: PreparedSchemaEvolutionCase,
   trials: TrialResult[],
   quorum: number,
 ): ConsensusCaseResult {
@@ -610,119 +518,6 @@ async function runSequentially<T>(
   return results;
 }
 
-async function prepareCases(
-  manifest: BenchmarkManifest,
-  directory: string,
-): Promise<PreparedCase[]> {
-  const baselines = new Map<string, {
-    source: BenchmarkSemanticSource;
-    body: PredicateExpression;
-  }>();
-  for (const concept of manifest.concepts) {
-    const source = await scanBenchmarkSource(resolve(directory, concept.baselineSource));
-    const body = parseBaseline(await readJson(resolve(directory, concept.baselineOracle)));
-    validatePredicateContext(body, source);
-    baselines.set(concept.id, { source, body });
-  }
-  return Promise.all(manifest.cases.map(async (entry) => {
-    const baseline = baselines.get(entry.conceptId);
-    if (baseline === undefined) throw new Error(`${entry.id}: baseline is missing`);
-    const source = await scanBenchmarkSource(resolve(directory, entry.source));
-    if (source.concept.id !== entry.conceptId) {
-      throw new Error(`${entry.id}: source Concept does not match manifest`);
-    }
-    return {
-      id: entry.id,
-      conceptId: entry.conceptId,
-      changeType: entry.changeType,
-      source,
-      baselineIr: baseline.body,
-      oracle: parseOracle(await readJson(resolve(directory, entry.oracle))),
-      hiddenCases: parseHiddenCases(await readJson(resolve(directory, entry.tests))),
-    };
-  }));
-}
-
-function validateProtocol(manifest: BenchmarkManifest, cases: PreparedCase[]): void {
-  const protocol = manifest.protocol ?? {
-    concepts: 3,
-    cases: 18,
-    resolvedCases: 12,
-    unresolvedCases: 6,
-    casesPerChangeType: 3,
-  };
-  if (
-    manifest.trials !== 3 ||
-    manifest.concepts.length !== protocol.concepts ||
-    cases.length !== protocol.cases
-  ) {
-    throw new Error(
-      `protocol requires exactly ${protocol.concepts} Concepts, ${protocol.cases} cases, and 3 trials`,
-    );
-  }
-  const changeTypes: ChangeType[] = [
-    "add-property", "rename", "representation", "optionality", "remove-role", "ambiguity",
-  ];
-  for (const changeType of changeTypes) {
-    if (
-      cases.filter((entry) => entry.changeType === changeType).length !==
-        protocol.casesPerChangeType
-    ) {
-      throw new Error(
-        `protocol requires ${protocol.casesPerChangeType} cases for ${changeType}`,
-      );
-    }
-  }
-  const resolved = cases.filter((entry) => entry.oracle.expectedOutcome === "resolved");
-  if (
-    resolved.length !== protocol.resolvedCases ||
-    cases.length - resolved.length !== protocol.unresolvedCases
-  ) {
-    throw new Error(
-      `protocol requires exactly ${protocol.resolvedCases} resolved and ${protocol.unresolvedCases} unresolved cases`,
-    );
-  }
-  for (const entry of cases) {
-    if (entry.oracle.expectedOutcome === "resolved") {
-      validatePredicateContext(entry.oracle.body, entry.source);
-      if (entry.hiddenCases.length === 0) throw new Error(`${entry.id}: hidden cases required`);
-    } else if (entry.hiddenCases.length !== 0) {
-      throw new Error(`${entry.id}: unresolved case must not contain behavioral oracle cases`);
-    }
-  }
-}
-
-export async function verifySchemaEvolutionFreeze(
-  directory: string,
-  manifest: BenchmarkManifest,
-  freeze: FreezeManifest,
-): Promise<void> {
-  const required = new Set([
-    "benchmark.json",
-    ...manifest.concepts.flatMap((entry) => [
-      entry.definition,
-      entry.baselineSource,
-      entry.baselineOracle,
-    ]),
-    ...manifest.cases.flatMap((entry) => [entry.source, entry.oracle, entry.tests]),
-  ]);
-  const frozen = new Set(Object.keys(freeze.files));
-  if (stableJson([...required].sort()) !== stableJson([...frozen].sort())) {
-    throw new Error("freeze file set does not exactly match benchmark inputs");
-  }
-  await verifyFrozenFileHashes(directory, freeze.files);
-}
-
-export async function verifyFrozenFileHashes(
-  directory: string,
-  files: Record<string, string>,
-): Promise<void> {
-  for (const [path, expected] of Object.entries(files)) {
-    const actual = sha256(await readFile(resolve(directory, path)));
-    if (actual !== expected) throw new Error(`frozen input hash mismatch: ${path}`);
-  }
-}
-
 async function snapshotWorkspaceArtifacts(workspaceRoot: string) {
   const snapshot: Record<string, string | null> = {};
   const lockPath = resolve(workspaceRoot, "semantic.lock");
@@ -750,82 +545,6 @@ async function hashOptional(path: string): Promise<string | null> {
     if (isNotFound(error)) return null;
     throw error;
   }
-}
-
-function parseManifest(input: unknown): BenchmarkManifest {
-  const value = record(input, "benchmark");
-  if (
-    value.version !== 1 ||
-    typeof value.name !== "string" ||
-    value.trials !== 3 ||
-    !Array.isArray(value.concepts) ||
-    !Array.isArray(value.cases)
-  ) {
-    throw new Error("schema evolution benchmark manifest is invalid");
-  }
-  return input as BenchmarkManifest;
-}
-
-function parseFreeze(input: unknown): FreezeManifest {
-  const value = record(input, "freeze");
-  if (
-    value.version !== 1 ||
-    (value.status !== "draft" && value.status !== "frozen") ||
-    typeof value.instructions !== "string"
-  ) {
-    throw new Error("freeze manifest is invalid");
-  }
-  const files = record(value.files, "freeze.files");
-  for (const [path, hash] of Object.entries(files)) {
-    if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) {
-      throw new Error(`invalid frozen hash: ${path}`);
-    }
-  }
-  return input as FreezeManifest;
-}
-
-function parseBaseline(input: unknown): PredicateExpression {
-  const value = record(input, "baseline oracle");
-  if (value.version !== 1) throw new Error("baseline oracle version must be 1");
-  return parsePredicateExpression(value.body, "baseline oracle.body");
-}
-
-function parseOracle(input: unknown): Oracle {
-  const value = record(input, "oracle");
-  if (value.version !== 1) throw new Error("oracle version must be 1");
-  if (
-    value.expectedOutcome === "unresolved" &&
-    value.expectedClassification === "unresolved" &&
-    value.body === null
-  ) {
-    return { expectedOutcome: "unresolved", expectedClassification: "unresolved", body: null };
-  }
-  if (value.expectedOutcome === "resolved" && value.expectedClassification === "compatible") {
-    return {
-      expectedOutcome: "resolved",
-      expectedClassification: "compatible",
-      body: parsePredicateExpression(value.body, "oracle.body"),
-    };
-  }
-  throw new Error("oracle outcome, classification, or body is invalid");
-}
-
-function parseHiddenCases(input: unknown): HiddenCase[] {
-  const value = record(input, "hidden cases");
-  if (value.version !== 1 || !Array.isArray(value.tests)) {
-    throw new Error("hidden cases file is invalid");
-  }
-  return value.tests.map((item, index) => {
-    const test = record(item, `hidden cases[${index}]`);
-    if (typeof test.name !== "string" || typeof test.expected !== "boolean") {
-      throw new Error(`hidden cases[${index}] is invalid`);
-    }
-    return {
-      name: test.name,
-      input: record(test.input, `hidden cases[${index}].input`),
-      expected: test.expected,
-    };
-  });
 }
 
 function renderReport(report: {
@@ -856,7 +575,7 @@ function renderReport(report: {
   };
   cases: Array<{
     id: string;
-    changeType: ChangeType;
+    changeType: SchemaEvolutionChangeType;
     expectedOutcome: string;
     firstPass: boolean;
     stable: boolean;
@@ -912,17 +631,6 @@ function sumUsage(trials: TrialResult[]) {
   };
 }
 
-function record(value: unknown, path: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${path} must be an object`);
-  }
-  return value as Record<string, unknown>;
-}
-
-async function readJson(path: string): Promise<unknown> {
-  return JSON.parse(await readFile(path, "utf8")) as unknown;
-}
-
 async function writeJson(path: string, value: unknown): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -952,11 +660,4 @@ function percent(value: number): string {
 function isNotFound(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error &&
     (error as { code?: string }).code === "ENOENT";
-}
-
-export function relativeSchemaEvolutionReportPath(
-  workspaceRoot: string,
-  path: string,
-): string {
-  return relative(workspaceRoot, path).replaceAll("\\", "/");
 }

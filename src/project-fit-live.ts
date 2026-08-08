@@ -1,9 +1,4 @@
-import {
-  mkdir,
-  readFile,
-  rename,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { evaluateExpression } from "./cross-schema-benchmark";
@@ -13,6 +8,20 @@ import {
   parseElaborationResult,
 } from "./openai";
 import { parseProjectContext } from "./project-context";
+import {
+  atomicWriteJson,
+  atomicWriteText,
+  completedProjectFitResponseCount,
+  loadOrCreateProjectFitCheckpoint,
+  projectFitFileExists,
+  projectFitTrialKey,
+  type ProjectFitCheckpointEntry,
+  type ProjectFitLiveCheckpoint,
+  validateProjectFitCheckpointEntries,
+  validateProjectFitCompletedResponseBudget,
+  validateProjectFitResponseUsage,
+  validateProjectFitTokenRates,
+} from "./project-fit-live-checkpoint";
 import {
   assertProjectFitFrozen,
   type ProjectFitArm,
@@ -34,11 +43,6 @@ import {
   renderProjectFitReport,
   summarizeProjectFitStage,
 } from "./project-fit-report";
-import {
-  assertKnownKeys,
-  parseBoundedJsonText,
-  SEMANTIC_LIMITS,
-} from "./semantic-limits";
 
 export type RunProjectFitLiveOptions = {
   manifestPath: string;
@@ -58,38 +62,6 @@ export type RunProjectFitLiveOptions = {
   wait?: (milliseconds: number) => Promise<void>;
 };
 
-type CheckpointEntry =
-  | {
-      key: string;
-      stage: ProjectFitStage;
-      caseId: string;
-      arm: ProjectFitArm;
-      trial: number;
-      status: "pending";
-    }
-  | {
-      key: string;
-      stage: ProjectFitStage;
-      caseId: string;
-      arm: ProjectFitArm;
-      trial: number;
-      status: "completed";
-      response: OpenAIResult;
-      latencyMs: number;
-    };
-
-type LiveCheckpoint = {
-  version: 2;
-  manifestHash: string;
-  model: string;
-  provider: string;
-  costPerMillionTokens: {
-    input: number;
-    output: number;
-  };
-  entries: CheckpointEntry[];
-};
-
 type StageExecution = {
   summary: ProjectFitStageSummary;
   firstPassCases: Record<ProjectFitArm, number>;
@@ -101,7 +73,9 @@ export async function runProjectFitLive(
   const protocol = await readProjectFitProtocol(options.manifestPath);
   assertProjectFitFrozen(protocol.freeze);
   validateExecutionControls(options);
-  const tokenRates = validateTokenRates(options.costPerMillionTokens);
+  const tokenRates = validateProjectFitTokenRates(
+    options.costPerMillionTokens,
+  );
   const totalOutputTokenBudget = projectFitTotalOutputTokenBudget(
     protocol.manifest,
   );
@@ -125,17 +99,17 @@ export async function runProjectFitLive(
     `${safeName(protocol.manifest.name)}-live-${protocol.manifestHash.slice(0, 12)}-${liveRunId(options.runId)}`,
   );
   await mkdir(reportDirectory, { recursive: true });
-  if (await fileExists(resolve(reportDirectory, "report.json"))) {
+  if (await projectFitFileExists(resolve(reportDirectory, "report.json"))) {
     throw new Error("Project Fit run is already complete");
   }
   const checkpointPath = resolve(reportDirectory, "checkpoint.json");
-  const checkpoint = await loadOrCreateCheckpoint(
+  const checkpoint = await loadOrCreateProjectFitCheckpoint(
     checkpointPath,
     protocol,
     options,
     tokenRates,
   );
-  validateCheckpointEntries(
+  validateProjectFitCheckpointEntries(
     checkpoint,
     protocol,
     perCallOutputTokenLimit,
@@ -240,7 +214,12 @@ export async function runProjectFitLive(
     },
   };
   const completed = checkpoint.entries.filter(
-    (entry): entry is Extract<CheckpointEntry, { status: "completed" }> =>
+    (
+      entry,
+    ): entry is Extract<
+      ProjectFitCheckpointEntry,
+      { status: "completed" }
+    > =>
       entry.status === "completed",
   );
   await Promise.all([
@@ -259,7 +238,7 @@ async function executeStage(input: {
   protocol: ProjectFitProtocol;
   reportDirectory: string;
   checkpointPath: string;
-  checkpoint: LiveCheckpoint;
+  checkpoint: ProjectFitLiveCheckpoint;
   perCallOutputTokenLimit: number;
   options: RunProjectFitLiveOptions;
 }): Promise<StageExecution> {
@@ -393,16 +372,24 @@ async function resolveWithCheckpoint(input: {
   projectContext: ReturnType<typeof parseProjectContext>;
   reportDirectory: string;
   checkpointPath: string;
-  checkpoint: LiveCheckpoint;
+  checkpoint: ProjectFitLiveCheckpoint;
   perCallOutputTokenLimit: number;
   totalInputTokenBudget: number;
   totalOutputTokenBudget: number;
   options: RunProjectFitLiveOptions;
 }): Promise<{ response: OpenAIResult; latencyMs: number }> {
-  const key = trialKey(input.stage, input.caseId, input.arm, input.trial);
+  const key = projectFitTrialKey(
+    input.stage,
+    input.caseId,
+    input.arm,
+    input.trial,
+  );
   const existing = input.checkpoint.entries.find((entry) => entry.key === key);
   if (existing?.status === "completed") {
-    validateResponseUsage(existing.response, input.perCallOutputTokenLimit);
+    validateProjectFitResponseUsage(
+      existing.response,
+      input.perCallOutputTokenLimit,
+    );
     return { response: existing.response, latencyMs: existing.latencyMs };
   }
   if (existing?.status === "pending") {
@@ -414,7 +401,7 @@ async function resolveWithCheckpoint(input: {
   input.options.onProgress?.(
     `${input.stage} ${input.caseId} ${input.arm} trial ${input.trial}`,
   );
-  const pending: CheckpointEntry = {
+  const pending: ProjectFitCheckpointEntry = {
     key,
     stage: input.stage,
     caseId: input.caseId,
@@ -446,12 +433,12 @@ async function resolveWithCheckpoint(input: {
     await writeRunError(input.reportDirectory, {
       key,
       stage: "resolve",
-      completedResponses: completedCount(input.checkpoint),
+      completedResponses: completedProjectFitResponseCount(input.checkpoint),
     });
     throw error;
   }
   const latencyMs = performance.now() - startedAt;
-  const completed: CheckpointEntry = {
+  const completed: ProjectFitCheckpointEntry = {
     key,
     stage: input.stage,
     caseId: input.caseId,
@@ -466,11 +453,16 @@ async function resolveWithCheckpoint(input: {
   ] = completed;
   await atomicWriteJson(input.checkpointPath, input.checkpoint);
   await waitForCooldown(input.options, key, "completed");
-  await input.options.onCheckpoint?.(completedCount(input.checkpoint));
+  await input.options.onCheckpoint?.(
+    completedProjectFitResponseCount(input.checkpoint),
+  );
 
   try {
-    validateResponseUsage(response, input.perCallOutputTokenLimit);
-    validateCompletedResponseBudget(
+    validateProjectFitResponseUsage(
+      response,
+      input.perCallOutputTokenLimit,
+    );
+    validateProjectFitCompletedResponseBudget(
       input.checkpoint,
       input.totalInputTokenBudget,
       input.totalOutputTokenBudget,
@@ -484,7 +476,7 @@ async function resolveWithCheckpoint(input: {
           response.usage.outputTokens > input.perCallOutputTokenLimit
           ? "budget-validation"
           : "response-validation",
-      completedResponses: completedCount(input.checkpoint),
+      completedResponses: completedProjectFitResponseCount(input.checkpoint),
     });
     throw error;
   }
@@ -612,278 +604,6 @@ function totalAcrossStages(
   );
 }
 
-async function loadOrCreateCheckpoint(
-  path: string,
-  protocol: ProjectFitProtocol,
-  options: RunProjectFitLiveOptions,
-  rates: { input: number; output: number },
-): Promise<LiveCheckpoint> {
-  const existing = await readTextIfExists(path);
-  if (existing === undefined) {
-    const checkpoint: LiveCheckpoint = {
-      version: 2,
-      manifestHash: protocol.manifestHash,
-      model: options.model,
-      provider: options.provider,
-      costPerMillionTokens: rates,
-      entries: [],
-    };
-    await atomicWriteJson(path, checkpoint);
-    return checkpoint;
-  }
-  const checkpoint = parseCheckpoint(
-    parseBoundedJsonText(existing, "Project Fit checkpoint"),
-  );
-  if (
-    checkpoint.manifestHash !== protocol.manifestHash ||
-    checkpoint.model !== options.model ||
-    checkpoint.provider !== options.provider ||
-    checkpoint.costPerMillionTokens.input !== rates.input ||
-    checkpoint.costPerMillionTokens.output !== rates.output
-  ) {
-    throw new Error(
-      "Project Fit checkpoint metadata does not match the requested run",
-    );
-  }
-  return checkpoint;
-}
-
-function parseCheckpoint(input: unknown): LiveCheckpoint {
-  const value = recordValue(input, "Project Fit checkpoint");
-  assertExactKeys(
-    value,
-    [
-      "version",
-      "manifestHash",
-      "model",
-      "provider",
-      "costPerMillionTokens",
-      "entries",
-    ],
-    "Project Fit checkpoint",
-  );
-  if (value.version !== 2) {
-    throw new Error("Project Fit checkpoint.version must be 2");
-  }
-  const rates = recordValue(
-    value.costPerMillionTokens,
-    "Project Fit checkpoint.costPerMillionTokens",
-  );
-  assertExactKeys(
-    rates,
-    ["input", "output"],
-    "Project Fit checkpoint.costPerMillionTokens",
-  );
-  if (!Array.isArray(value.entries)) {
-    throw new Error("Project Fit checkpoint.entries must be an array");
-  }
-  const entries = value.entries.map((entry, index) =>
-    parseCheckpointEntry(entry, index)
-  );
-  const keys = new Set<string>();
-  for (const entry of entries) {
-    if (keys.has(entry.key)) {
-      throw new Error(`Project Fit checkpoint contains duplicate key ${entry.key}`);
-    }
-    keys.add(entry.key);
-  }
-  return {
-    version: 2,
-    manifestHash: hashValue(
-      value.manifestHash,
-      "Project Fit checkpoint.manifestHash",
-    ),
-    model: trimmedString(value.model, "Project Fit checkpoint.model"),
-    provider: trimmedString(value.provider, "Project Fit checkpoint.provider"),
-    costPerMillionTokens: validateTokenRates({
-      input: rates.input as number,
-      output: rates.output as number,
-    }),
-    entries,
-  };
-}
-
-function parseCheckpointEntry(input: unknown, index: number): CheckpointEntry {
-  const path = `Project Fit checkpoint.entries[${index}]`;
-  const value = recordValue(input, path);
-  if (value.status === "pending") {
-    assertExactKeys(
-      value,
-      ["key", "stage", "caseId", "arm", "trial", "status"],
-      path,
-    );
-  } else if (value.status === "completed") {
-    assertExactKeys(
-      value,
-      [
-        "key",
-        "stage",
-        "caseId",
-        "arm",
-        "trial",
-        "status",
-        "response",
-        "latencyMs",
-      ],
-      path,
-    );
-  } else {
-    throw new Error(`${path}.status is invalid`);
-  }
-  const stage = stageValue(value.stage, `${path}.stage`);
-  const arm = armValue(value.arm, `${path}.arm`);
-  const caseId = trimmedString(value.caseId, `${path}.caseId`);
-  const trial = positiveInteger(value.trial, `${path}.trial`);
-  const key = trimmedString(value.key, `${path}.key`);
-  if (key !== trialKey(stage, caseId, arm, trial)) {
-    throw new Error(`${path}.key does not match its coordinates`);
-  }
-  if (value.status === "pending") {
-    return { key, stage, caseId, arm, trial, status: "pending" };
-  }
-  return {
-    key,
-    stage,
-    caseId,
-    arm,
-    trial,
-    status: "completed",
-    response: parseCheckpointResponse(value.response, `${path}.response`),
-    latencyMs: nonNegativeNumber(value.latencyMs, `${path}.latencyMs`),
-  };
-}
-
-function parseCheckpointResponse(input: unknown, path: string): OpenAIResult {
-  const value = recordValue(input, path);
-  assertExactKeys(
-    value,
-    ["responseId", "model", "outputText", "usage"],
-    path,
-  );
-  const usage = recordValue(value.usage, `${path}.usage`);
-  assertExactKeys(
-    usage,
-    ["inputTokens", "outputTokens", "totalTokens"],
-    `${path}.usage`,
-  );
-  return {
-    responseId: trimmedString(value.responseId, `${path}.responseId`),
-    model: trimmedString(value.model, `${path}.model`),
-    outputText: boundedString(value.outputText, `${path}.outputText`),
-    usage: {
-      inputTokens: nonNegativeInteger(
-        usage.inputTokens,
-        `${path}.usage.inputTokens`,
-      ),
-      outputTokens: nonNegativeInteger(
-        usage.outputTokens,
-        `${path}.usage.outputTokens`,
-      ),
-      totalTokens: nonNegativeInteger(
-        usage.totalTokens,
-        `${path}.usage.totalTokens`,
-      ),
-    },
-  };
-}
-
-function validateResponseUsage(
-  response: OpenAIResult,
-  perCallOutputTokenLimit: number,
-): void {
-  if (response.usage === null) {
-    throw new Error(
-      "Project Fit response usage is required for budget accounting",
-    );
-  }
-  if (response.usage.outputTokens > perCallOutputTokenLimit) {
-    throw new Error(
-      `Project Fit response exceeded the per-call output token limit of ${perCallOutputTokenLimit}`,
-    );
-  }
-}
-
-function validateCheckpointEntries(
-  checkpoint: LiveCheckpoint,
-  protocol: ProjectFitProtocol,
-  perCallOutputTokenLimit: number,
-  totalOutputTokenBudget: number,
-): void {
-  const allowedKeys = new Set(
-    protocol.manifest.cases.flatMap((benchmarkCase) =>
-      (["initial", "schemaChange"] as const).flatMap((stage) =>
-        Array.from({ length: protocol.manifest.trials }, (_, index) =>
-          (["typeOnly", "projectContext"] as const).map((arm) =>
-            trialKey(stage, benchmarkCase.id, arm, index + 1)
-          )
-        ).flat()
-      )
-    ),
-  );
-  for (const entry of checkpoint.entries) {
-    if (!allowedKeys.has(entry.key)) {
-      throw new Error(
-        `Project Fit checkpoint entry ${entry.key} is not scheduled by the manifest`,
-      );
-    }
-    if (entry.status === "completed") {
-      validateResponseUsage(entry.response, perCallOutputTokenLimit);
-    }
-  }
-  validateCompletedResponseBudget(
-    checkpoint,
-    protocol.manifest.budget.maxInputTokens,
-    totalOutputTokenBudget,
-  );
-}
-
-function validateCompletedResponseBudget(
-  checkpoint: LiveCheckpoint,
-  maxInputTokens: number,
-  maxOutputTokens: number,
-): void {
-  const usage = checkpoint.entries
-    .filter(
-      (
-        entry,
-      ): entry is Extract<CheckpointEntry, { status: "completed" }> =>
-        entry.status === "completed",
-    )
-    .map((entry) => entry.response.usage);
-  const inputTokens = usage.reduce(
-    (total, value) => total + (value?.inputTokens ?? 0),
-    0,
-  );
-  const outputTokens = usage.reduce(
-    (total, value) => total + (value?.outputTokens ?? 0),
-    0,
-  );
-  if (inputTokens > maxInputTokens) {
-    throw new Error(
-      "Project Fit completed responses exceeded the input token budget",
-    );
-  }
-  if (outputTokens > maxOutputTokens) {
-    throw new Error(
-      "Project Fit completed responses exceeded the output token budget",
-    );
-  }
-}
-
-function trialKey(
-  stage: ProjectFitStage,
-  caseId: string,
-  arm: ProjectFitArm,
-  trial: number,
-): string {
-  return `${stage}:${caseId}:${arm}:${trial}`;
-}
-
-function completedCount(checkpoint: LiveCheckpoint): number {
-  return checkpoint.entries.filter((entry) => entry.status === "completed")
-    .length;
-}
-
 async function writeRunError(
   reportDirectory: string,
   input: {
@@ -897,40 +617,6 @@ async function writeRunError(
     status: "failed",
     ...input,
   });
-}
-
-async function atomicWriteJson(path: string, value: unknown): Promise<void> {
-  await atomicWriteText(path, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-async function atomicWriteText(path: string, value: string): Promise<void> {
-  const temporary = `${path}.tmp-${crypto.randomUUID()}`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
-}
-
-async function readTextIfExists(path: string): Promise<string | undefined> {
-  try {
-    const text = await readFile(path, "utf8");
-    if (Buffer.byteLength(text) > SEMANTIC_LIMITS.externalJsonBytes) {
-      throw new Error("Project Fit checkpoint exceeds input budget");
-    }
-    return text;
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      return undefined;
-    }
-    throw error;
-  }
-}
-
-async function fileExists(path: string): Promise<boolean> {
-  return (await readTextIfExists(path)) !== undefined;
 }
 
 function rate(value: number, total: number): number {
@@ -957,21 +643,6 @@ function safeName(value: string): string {
   return result;
 }
 
-function validateTokenRates(input: {
-  input: unknown;
-  output: unknown;
-}): { input: number; output: number } {
-  const result = { input: input.input, output: input.output };
-  for (const [name, value] of Object.entries(result)) {
-    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-      throw new Error(
-        `Project Fit ${name} token rate must be a non-negative finite number`,
-      );
-    }
-  }
-  return result as { input: number; output: number };
-}
-
 function validateExecutionControls(options: RunProjectFitLiveOptions): void {
   for (const [name, value] of [
     ["cooldownMs", options.cooldownMs ?? 0],
@@ -994,100 +665,4 @@ function estimatedCost(
     (inputTokens * rates.input + outputTokens * rates.output) /
     1_000_000
   );
-}
-
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error(`${path} must be an object`);
-  }
-  return input as Record<string, unknown>;
-}
-
-function assertExactKeys(
-  value: Record<string, unknown>,
-  keys: readonly string[],
-  path: string,
-): void {
-  assertKnownKeys(value, keys, path);
-  const missing = keys.find((key) => !(key in value));
-  if (missing !== undefined) {
-    throw new Error(`${path} is missing ${missing}`);
-  }
-}
-
-function trimmedString(input: unknown, path: string): string {
-  if (
-    typeof input !== "string" ||
-    input.length === 0 ||
-    input.trim() !== input
-  ) {
-    throw new Error(`${path} must be a non-empty trimmed string`);
-  }
-  return input;
-}
-
-function boundedString(input: unknown, path: string): string {
-  const value = trimmedString(input, path);
-  if (Buffer.byteLength(value) > SEMANTIC_LIMITS.externalJsonBytes) {
-    throw new Error(`${path} exceeds input budget`);
-  }
-  return value;
-}
-
-function hashValue(input: unknown, path: string): string {
-  const value = trimmedString(input, path);
-  if (!/^[a-f0-9]{64}$/.test(value)) {
-    throw new Error(`${path} must be a SHA-256 hash`);
-  }
-  return value;
-}
-
-function positiveInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 1
-  ) {
-    throw new Error(`${path} must be a positive safe integer`);
-  }
-  return input;
-}
-
-function nonNegativeInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 0
-  ) {
-    throw new Error(`${path} must be a non-negative safe integer`);
-  }
-  return input;
-}
-
-function nonNegativeNumber(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isFinite(input) ||
-    input < 0
-  ) {
-    throw new Error(`${path} must be a non-negative finite number`);
-  }
-  return input;
-}
-
-function stageValue(input: unknown, path: string): ProjectFitStage {
-  if (input !== "initial" && input !== "schemaChange") {
-    throw new Error(`${path} is invalid`);
-  }
-  return input;
-}
-
-function armValue(input: unknown, path: string): ProjectFitArm {
-  if (input !== "typeOnly" && input !== "projectContext") {
-    throw new Error(`${path} is invalid`);
-  }
-  return input;
 }
