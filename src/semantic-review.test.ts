@@ -1,9 +1,17 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { sha256 } from "./semantic-fingerprint";
 import {
+  approveSemanticReview,
   createPredicateSemanticReview,
   createStaticJudgmentSemanticReview,
   parseReviewCandidate,
@@ -115,6 +123,71 @@ describe("semantic review candidate", () => {
       mutate(candidate);
       expect(() => parseReviewCandidate(candidate)).toThrow();
     }
+  });
+
+  test("rejects a source outside the workspace before reading it", async () => {
+    const workspaceRoot = await temporaryRoot();
+    const created = await createPredicateSemanticReview({
+      workspaceRoot,
+      source: "../outside.ts",
+      output: "predicate/is-ready.generated.ts",
+      symbol: "isReady",
+      conceptId: "customer.ready",
+      provider: "fixture",
+      model: "model",
+      fingerprint: hash("outside-source"),
+      hashes: predicateHashes(),
+      targetTypeName: "ReadyRecord",
+      contextSummary: contextSummary(),
+      resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
+      baseline: undefined,
+      response: null,
+      generatedCode: "export const isReady = () => true;\n",
+      typeSchema: {
+        kind: "object",
+        properties: [],
+      },
+    });
+
+    await expect(
+      approveSemanticReview(created.candidate.id, {
+        workspaceRoot,
+        reviewer: "reviewer",
+      }),
+    ).rejects.toThrow("semantic source must be inside the workspace root");
+  });
+
+  test("rejects an in-workspace source symlink that resolves outside", async () => {
+    const workspaceRoot = await temporaryRoot();
+    const outsideRoot = await temporaryRoot();
+    const outsideSource = resolve(outsideRoot, "outside.ts");
+    await writeFile(outsideSource, "export {};\n", "utf8");
+    await symlink(outsideSource, resolve(workspaceRoot, "linked.ts"));
+    const created = await createPredicateSemanticReview({
+      workspaceRoot,
+      source: "linked.ts",
+      output: "predicate/is-ready.generated.ts",
+      symbol: "isReady",
+      conceptId: "customer.ready",
+      provider: "fixture",
+      model: "model",
+      fingerprint: hash("linked-source"),
+      hashes: predicateHashes(),
+      targetTypeName: "ReadyRecord",
+      contextSummary: contextSummary(),
+      resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
+      baseline: undefined,
+      response: null,
+      generatedCode: "export const isReady = () => true;\n",
+      typeSchema: { kind: "object", properties: [] },
+    });
+
+    await expect(
+      approveSemanticReview(created.candidate.id, {
+        workspaceRoot,
+        reviewer: "reviewer",
+      }),
+    ).rejects.toThrow("semantic source must resolve inside the workspace root");
   });
 
   test("renders stable Predicate and Static Judgment diffs", () => {

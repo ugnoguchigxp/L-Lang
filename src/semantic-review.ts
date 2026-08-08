@@ -2,10 +2,18 @@ import { randomUUID } from "node:crypto";
 import {
   mkdir,
   readFile,
+  realpath,
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { basename, dirname, extname, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  relative,
+  resolve,
+} from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
@@ -28,6 +36,7 @@ import {
   sha256,
   stableJson,
   staticJudgmentSemanticHashes,
+  resolveWorkspacePath,
   workspaceRelativePath,
 } from "./semantic-fingerprint";
 import { readBoundedJsonFile } from "./semantic-limits";
@@ -255,7 +264,12 @@ export async function approveSemanticReview(
   const executeCommand = options.commandRunner ?? runCommand;
 
   if (candidate.kind === "predicate") {
-    const source = await scanSemanticSource(resolve(workspaceRoot, candidate.source));
+    const sourcePath = await resolveReviewSource(
+      workspaceRoot,
+      candidate.source,
+      "semantic source",
+    );
+    const source = await scanSemanticSource(sourcePath);
     const sourceRelative = workspaceRelativePath(
       workspaceRoot,
       source.absolutePath,
@@ -377,8 +391,13 @@ export async function approveSemanticReview(
       runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
     });
   } else {
+    const sourcePath = await resolveReviewSource(
+      workspaceRoot,
+      candidate.source,
+      "Static Judgment source",
+    );
     const source = await scanStaticJudgmentSource(
-      resolve(workspaceRoot, candidate.source),
+      sourcePath,
     );
     const sourceRelative = workspaceRelativePath(
       workspaceRoot,
@@ -688,6 +707,22 @@ async function runCommand(command: string[], cwd: string, stage: string): Promis
 
 async function writeJson(path: string, value: unknown): Promise<void> {
   await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function resolveReviewSource(
+  workspaceRoot: string,
+  path: string,
+  subject: string,
+): Promise<string> {
+  const lexicalRoot = resolve(workspaceRoot);
+  const lexicalSource = resolveWorkspacePath(lexicalRoot, path, subject);
+  const root = await realpath(lexicalRoot);
+  const source = await realpath(lexicalSource);
+  const relation = relative(root, source).replaceAll("\\", "/");
+  if (relation === ".." || relation.startsWith("../") || isAbsolute(relation)) {
+    throw new Error(`${subject} must resolve inside the workspace root`);
+  }
+  return lexicalSource;
 }
 
 async function unlinkIfExists(path: string): Promise<void> {

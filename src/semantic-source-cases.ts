@@ -325,6 +325,8 @@ function assertStaticExpression(
   }
   if (
     ts.isPrefixUnaryExpression(node) &&
+    (node.operator === ts.SyntaxKind.PlusToken ||
+      node.operator === ts.SyntaxKind.MinusToken) &&
     ts.isNumericLiteral(node.operand)
   ) {
     return;
@@ -336,17 +338,31 @@ function assertStaticExpression(
     return;
   }
   if (ts.isObjectLiteralExpression(node)) {
+    const names = new Set<string>();
     for (const property of node.properties) {
-      if (
-        !ts.isPropertyAssignment(property) ||
-        propertyName(property.name) === undefined
-      ) {
+      if (!ts.isPropertyAssignment(property)) {
         throw sourceError(
           sourceFile,
           property,
           "semantic cases only support static object properties",
         );
       }
+      const name = propertyName(property.name);
+      if (name === undefined) {
+        throw sourceError(
+          sourceFile,
+          property,
+          "semantic cases only support static object properties",
+        );
+      }
+      if (names.has(name)) {
+        throw sourceError(
+          sourceFile,
+          property.name,
+          `semantic cases contain duplicate object property ${name}`,
+        );
+      }
+      names.add(name);
       assertStaticExpression(property.initializer, sourceFile);
     }
     return;

@@ -97,6 +97,22 @@ describe("extended Semantic Test source", () => {
 }`,
         message: "only supports explicit property assignments",
       },
+      {
+        source: `{
+  accept: [{ state: "ready",
+    // @ts-ignore exercise the scanner's defense after TypeScript diagnostics
+    state: "stopped" }],
+  reject: [{ state: "stopped" }],
+}`,
+        message: "duplicate object property state",
+      },
+      {
+        source: `{
+  accept: [{ state: "ready", score: !1 }],
+  reject: [{ state: "stopped" }],
+}`,
+        message: "semantic cases must contain only static literals",
+      },
     ];
 
     for (const item of cases) {

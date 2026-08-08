@@ -1,4 +1,4 @@
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { access, readFile, rename, unlink, writeFile } from "node:fs/promises";
 
 import type { OpenAIResult } from "./openai";
 import type {
@@ -148,6 +148,11 @@ export function validateProjectFitCompletedResponseBudget(
       > => entry.status === "completed",
     )
     .map((entry) => entry.response.usage);
+  if (usage.some((value) => value === null)) {
+    throw new Error(
+      "Project Fit response usage is required for budget accounting",
+    );
+  }
   const inputTokens = usage.reduce(
     (total, value) => total + (value?.inputTokens ?? 0),
     0,
@@ -196,12 +201,23 @@ export async function atomicWriteText(
   value: string,
 ): Promise<void> {
   const temporary = `${path}.tmp-${crypto.randomUUID()}`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
+  try {
+    await writeFile(temporary, value, "utf8");
+    await rename(temporary, path);
+  } catch (error) {
+    await unlinkIfExists(temporary);
+    throw error;
+  }
 }
 
 export async function projectFitFileExists(path: string): Promise<boolean> {
-  return (await readTextIfExists(path)) !== undefined;
+  try {
+    await access(path);
+    return true;
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
 }
 
 export function validateProjectFitTokenRates(input: {
@@ -374,16 +390,24 @@ async function readTextIfExists(path: string): Promise<string | undefined> {
     }
     return text;
   } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      return undefined;
-    }
+    if (isNotFound(error)) return undefined;
     throw error;
   }
+}
+
+async function unlinkIfExists(path: string): Promise<void> {
+  try {
+    await unlink(path);
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+}
+
+function isNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" && error !== null && "code" in error &&
+    error.code === "ENOENT"
+  );
 }
 
 function recordValue(input: unknown, path: string): Record<string, unknown> {

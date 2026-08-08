@@ -1,81 +1,30 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { dirname, relative, resolve } from "node:path";
+import { readFile, realpath } from "node:fs/promises";
+import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import {
   parsePredicateExpression,
   type PredicateExpression,
 } from "./ir";
+import { readBoundedJsonFile } from "./semantic-limits";
 import {
   scanBenchmarkSource,
   type BenchmarkSemanticSource,
 } from "./semantic-source";
+import {
+  parseSchemaEvolutionBenchmarkManifest,
+  parseSchemaEvolutionFreezeManifest,
+  type SchemaEvolutionBenchmarkManifest,
+  type SchemaEvolutionChangeType,
+  type SchemaEvolutionFreezeManifest,
+} from "./schema-evolution-protocol-parser";
 
-export type SchemaEvolutionChangeType =
-  | "add-property"
-  | "rename"
-  | "representation"
-  | "optionality"
-  | "remove-role"
-  | "ambiguity";
-
-export type SchemaEvolutionBenchmarkManifest = {
-  version: 1;
-  name: string;
-  trials: number;
-  freeze: string;
-  blindness: {
-    oracleAndCasesSentToModel: false;
-    lockUsed: false;
-    generatedCodeMutationAllowed: false;
-    note: string;
-  };
-  thresholds: {
-    minimumFirstPassCaseRate: number;
-    minimumStableCaseRate: number;
-    minimumClassificationAccuracy: number;
-    minimumHiddenTestPassRate: number;
-    maximumFalseResolutionRate: number;
-    maximumWorkspaceMutationCount: number;
-    minimumConsensusCaseRate?: number;
-    minimumConsensusQuorumRate?: number;
-  };
-  evaluation?: {
-    primary: "trials" | "consensus";
-    samples: 3;
-    quorum: 2;
-    parallel: boolean;
-  };
-  protocol?: {
-    concepts: number;
-    cases: number;
-    resolvedCases: number;
-    unresolvedCases: number;
-    casesPerChangeType: number;
-  };
-  concepts: Array<{
-    id: string;
-    definition: string;
-    baselineSource: string;
-    baselineOracle: string;
-  }>;
-  cases: Array<{
-    id: string;
-    conceptId: string;
-    changeType: SchemaEvolutionChangeType;
-    source: string;
-    oracle: string;
-    tests: string;
-  }>;
-};
-
-export type SchemaEvolutionFreezeManifest = {
-  version: 1;
-  status: "draft" | "frozen";
-  instructions: string;
-  files: Record<string, string>;
-};
+export type {
+  SchemaEvolutionBenchmarkManifest,
+  SchemaEvolutionChangeType,
+  SchemaEvolutionFreezeManifest,
+} from "./schema-evolution-protocol-parser";
 
 export type SchemaEvolutionOracle =
   | {
@@ -113,10 +62,20 @@ export async function readSchemaEvolutionProtocol(
   freeze: SchemaEvolutionFreezeManifest;
 }> {
   const manifestPath = resolve(manifestPathInput);
+  if (basename(manifestPath) !== "benchmark.json") {
+    throw new Error("schema evolution manifest must be named benchmark.json");
+  }
   const directory = dirname(manifestPath);
-  const manifest = parseManifest(await readJson(manifestPath));
-  const freeze = parseFreeze(
-    await readJson(resolve(directory, manifest.freeze)),
+  const manifest = parseSchemaEvolutionBenchmarkManifest(
+    await readJson(manifestPath, "schema evolution benchmark manifest"),
+  );
+  const freezePath = await resolveContainedFile(
+    directory,
+    manifest.freeze,
+    "benchmark.freeze",
+  );
+  const freeze = parseSchemaEvolutionFreezeManifest(
+    await readJson(freezePath, "schema evolution freeze manifest"),
   );
   return { directory, manifest, freeze };
 }
@@ -133,11 +92,21 @@ export async function prepareSchemaEvolutionCases(
     }
   >();
   for (const concept of manifest.concepts) {
+    const baselineSourcePath = await resolveContainedFile(
+      directory,
+      concept.baselineSource,
+      `${concept.id}.baselineSource`,
+    );
+    const baselineOraclePath = await resolveContainedFile(
+      directory,
+      concept.baselineOracle,
+      `${concept.id}.baselineOracle`,
+    );
     const source = await scanBenchmarkSource(
-      resolve(directory, concept.baselineSource),
+      baselineSourcePath,
     );
     const body = parseBaseline(
-      await readJson(resolve(directory, concept.baselineOracle)),
+      await readJson(baselineOraclePath, `${concept.id} baseline oracle`),
     );
     validatePredicateContext(body, source);
     baselines.set(concept.id, { source, body });
@@ -148,8 +117,23 @@ export async function prepareSchemaEvolutionCases(
       if (baseline === undefined) {
         throw new Error(`${entry.id}: baseline is missing`);
       }
+      const sourcePath = await resolveContainedFile(
+        directory,
+        entry.source,
+        `${entry.id}.source`,
+      );
+      const oraclePath = await resolveContainedFile(
+        directory,
+        entry.oracle,
+        `${entry.id}.oracle`,
+      );
+      const testsPath = await resolveContainedFile(
+        directory,
+        entry.tests,
+        `${entry.id}.tests`,
+      );
       const source = await scanBenchmarkSource(
-        resolve(directory, entry.source),
+        sourcePath,
       );
       if (source.concept.id !== entry.conceptId) {
         throw new Error(
@@ -163,10 +147,10 @@ export async function prepareSchemaEvolutionCases(
         source,
         baselineIr: baseline.body,
         oracle: parseOracle(
-          await readJson(resolve(directory, entry.oracle)),
+          await readJson(oraclePath, `${entry.id} oracle`),
         ),
         hiddenCases: parseHiddenCases(
-          await readJson(resolve(directory, entry.tests)),
+          await readJson(testsPath, `${entry.id} hidden cases`),
         ),
       };
     }),
@@ -276,7 +260,12 @@ export async function verifyFrozenFileHashes(
   files: Record<string, string>,
 ): Promise<void> {
   for (const [path, expected] of Object.entries(files)) {
-    const actual = sha256(await readFile(resolve(directory, path)));
+    const target = await resolveContainedFile(
+      directory,
+      path,
+      `frozen input ${path}`,
+    );
+    const actual = sha256(await readFile(target));
     if (actual !== expected) {
       throw new Error(`frozen input hash mismatch: ${path}`);
     }
@@ -288,38 +277,6 @@ export function relativeSchemaEvolutionReportPath(
   path: string,
 ): string {
   return relative(workspaceRoot, path).replaceAll("\\", "/");
-}
-
-function parseManifest(input: unknown): SchemaEvolutionBenchmarkManifest {
-  const value = record(input, "benchmark");
-  if (
-    value.version !== 1 ||
-    typeof value.name !== "string" ||
-    value.trials !== 3 ||
-    !Array.isArray(value.concepts) ||
-    !Array.isArray(value.cases)
-  ) {
-    throw new Error("schema evolution benchmark manifest is invalid");
-  }
-  return input as SchemaEvolutionBenchmarkManifest;
-}
-
-function parseFreeze(input: unknown): SchemaEvolutionFreezeManifest {
-  const value = record(input, "freeze");
-  if (
-    value.version !== 1 ||
-    (value.status !== "draft" && value.status !== "frozen") ||
-    typeof value.instructions !== "string"
-  ) {
-    throw new Error("freeze manifest is invalid");
-  }
-  const files = record(value.files, "freeze.files");
-  for (const [path, hash] of Object.entries(files)) {
-    if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) {
-      throw new Error(`invalid frozen hash: ${path}`);
-    }
-  }
-  return input as SchemaEvolutionFreezeManifest;
 }
 
 function parseBaseline(input: unknown): PredicateExpression {
@@ -382,8 +339,24 @@ function record(value: unknown, path: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-async function readJson(path: string): Promise<unknown> {
-  return JSON.parse(await readFile(path, "utf8")) as unknown;
+async function readJson(path: string, label: string): Promise<unknown> {
+  return readBoundedJsonFile(path, label);
+}
+
+async function resolveContainedFile(
+  directory: string,
+  file: string,
+  label: string,
+): Promise<string> {
+  const lexicalRoot = resolve(directory);
+  const lexicalTarget = resolve(lexicalRoot, file);
+  const root = await realpath(lexicalRoot);
+  const target = await realpath(lexicalTarget);
+  const relation = relative(root, target).replaceAll("\\", "/");
+  if (relation === ".." || relation.startsWith("../") || isAbsolute(relation)) {
+    throw new Error(`${label} must stay inside the benchmark directory`);
+  }
+  return lexicalTarget;
 }
 
 function sha256(value: string | Buffer): string {
