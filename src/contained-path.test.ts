@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test } from "bun:test";
 import {
   mkdir,
   mkdtemp,
-  realpath,
   rm,
   symlink,
   writeFile,
@@ -24,7 +23,7 @@ afterEach(async () => {
 });
 
 describe("contained file paths", () => {
-  test("returns the canonical path of a regular file inside the root", async () => {
+  test("returns the validated lexical path of a regular file inside the root", async () => {
     const root = await temporaryRoot();
     const directory = resolve(root, "nested");
     const file = resolve(directory, "input.json");
@@ -33,9 +32,9 @@ describe("contained file paths", () => {
 
     await expect(
       resolveContainedFile(root, "nested/input.json", "fixture"),
-    ).resolves.toBe(await realpath(file));
+    ).resolves.toBe(file);
     await expect(resolveContainedFile(root, file, "fixture")).resolves.toBe(
-      await realpath(file),
+      file,
     );
   });
 
@@ -62,7 +61,7 @@ describe("contained file paths", () => {
     await symlink(target, link);
 
     await expect(resolveContainedFile(root, link, "fixture")).resolves.toBe(
-      await realpath(target),
+      link,
     );
     await expect(
       resolveContainedFile(root, link, "fixture", {

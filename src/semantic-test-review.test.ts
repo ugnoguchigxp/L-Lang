@@ -5,9 +5,11 @@ import {
   readFile,
   rm,
   stat,
+  symlink,
   writeFile,
 } from "node:fs/promises";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { relative, resolve } from "node:path";
 import { readSemanticTestLock } from "./semantic-test-lock";
 import {
   approveSemanticTestReview,
@@ -23,6 +25,9 @@ describe("Semantic Test Plan review", () => {
     await mkdir(parent, { recursive: true });
     const testRoot = await mkdtemp(resolve(parent, "semantic-test-review-"));
     const sourcePath = resolve(testRoot, "semantic.ts");
+    const outsideRoot = await mkdtemp(
+      resolve(tmpdir(), "semantic-test-review-outside-"),
+    );
     const testLockPath = resolve(testRoot, "semantic-test.lock");
     const reviewRoot = resolve(testRoot, "reviews");
     try {
@@ -189,6 +194,25 @@ describe("Semantic Test Plan review", () => {
       const candidateDocument = JSON.parse(
         await readFile(candidatePath, "utf8"),
       ) as Record<string, unknown>;
+      const outsideSource = resolve(outsideRoot, "outside.ts");
+      const linkedSource = resolve(testRoot, "linked.ts");
+      await writeFile(outsideSource, "export {};\n", "utf8");
+      await symlink(outsideSource, linkedSource);
+      candidateDocument.source = relativeWorkspacePath(linkedSource);
+      await writeFile(
+        candidatePath,
+        `${JSON.stringify(candidateDocument, null, 2)}\n`,
+        "utf8",
+      );
+      await expect(
+        approveSemanticTestReview(created.candidate.id, {
+          reviewer: "staging-user",
+          workspaceRoot,
+          reviewRoot,
+          testLockPath,
+        }),
+      ).rejects.toThrow("must resolve inside the workspace root");
+
       candidateDocument.source = "../outside-workspace.ts";
       await writeFile(
         candidatePath,
@@ -202,9 +226,12 @@ describe("Semantic Test Plan review", () => {
           reviewRoot,
           testLockPath,
         }),
-      ).rejects.toThrow("must be inside the workspace root");
+      ).rejects.toThrow("must resolve inside the workspace root");
     } finally {
-      await rm(testRoot, { recursive: true, force: true });
+      await Promise.all([
+        rm(testRoot, { recursive: true, force: true }),
+        rm(outsideRoot, { recursive: true, force: true }),
+      ]);
     }
   }, 15_000);
 });
@@ -250,4 +277,8 @@ semanticTest(isReviewCustomer, {
 
 void ${JSON.stringify(root)};
 `;
+}
+
+function relativeWorkspacePath(path: string): string {
+  return relative(workspaceRoot, path).replaceAll("\\", "/");
 }

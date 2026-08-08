@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { resolveContainedFile } from "./contained-path";
 import type { PredicateExpression } from "./ir";
 import { parsePredicateExpression } from "./ir";
 import { renderInterpretedExpression } from "./judgement-renderer";
@@ -149,10 +150,11 @@ export async function explainSemanticSource(
   options: ExplainSemanticSourceOptions,
 ): Promise<SemanticExplanation> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const sourcePath = resolveWorkspacePath(
+  const sourcePath = await resolveContainedFile(
     workspaceRoot,
     options.sourcePath,
     "semantic source",
+    { rejectSymbolicLinks: true },
   );
   const sourceKind = await detectSemanticSourceKind(sourcePath);
   const lock = await readSemanticLock(

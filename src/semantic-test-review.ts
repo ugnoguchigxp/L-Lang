@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { resolveContainedFile } from "./contained-path";
 import type { OpenAIResult } from "./openai";
 import { compileSemanticContract } from "./semantic-contract";
 import {
@@ -72,7 +73,13 @@ export async function createSemanticTestReviewCandidate(input: {
   apiCalls: number;
 }> {
   const workspaceRoot = resolve(input.workspaceRoot ?? process.cwd());
-  const source = await scanSemanticSource(input.sourcePath);
+  const sourcePath = await resolveContainedFile(
+    workspaceRoot,
+    input.sourcePath,
+    "semantic source",
+    { rejectSymbolicLinks: true },
+  );
+  const source = await scanSemanticSource(sourcePath);
   const sourceRelative = workspaceRelativePath(
     workspaceRoot,
     source.absolutePath,
@@ -206,11 +213,11 @@ export async function approveSemanticTestReview(
     input.testLockPath ?? resolve(workspaceRoot, "semantic-test.lock"),
   );
 
-  const candidateSourcePath = resolve(workspaceRoot, candidate.source);
-  workspaceRelativePath(
+  const candidateSourcePath = await resolveContainedFile(
     workspaceRoot,
-    candidateSourcePath,
+    candidate.source,
     "Semantic Test review candidate source",
+    { rejectSymbolicLinks: true },
   );
   const source = await scanSemanticSource(candidateSourcePath);
   const compiled = compileSemanticContract(source);

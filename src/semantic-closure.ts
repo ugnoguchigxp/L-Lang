@@ -1,15 +1,13 @@
 import { isAbsolute, resolve } from "node:path";
 
+import { resolveContainedFile } from "./contained-path";
 import {
   explainSemanticSource,
   type GeneratedIntegrity,
   type SemanticExplanation,
   type SemanticExplanationStatus,
 } from "./semantic-explain";
-import {
-  resolveWorkspacePath,
-  workspaceRelativePath,
-} from "./semantic-fingerprint";
+import { workspaceRelativePath } from "./semantic-fingerprint";
 import { readBoundedJsonFile } from "./semantic-limits";
 
 export type SemanticClosureManifestNode = {
@@ -101,10 +99,11 @@ export async function checkSemanticClosure(
   options: CheckSemanticClosureOptions,
 ): Promise<SemanticClosureReport> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const manifestPath = resolveWorkspacePath(
+  const manifestPath = await resolveContainedFile(
     workspaceRoot,
     options.manifestPath,
     "Semantic Closure manifest",
+    { rejectSymbolicLinks: true },
   );
   const manifestRelative = workspaceRelativePath(
     workspaceRoot,
@@ -116,14 +115,24 @@ export async function checkSemanticClosure(
   );
   const normalizedNodes = normalizeAndValidateGraph(manifest, workspaceRoot);
   const explanations = await Promise.all(
-    normalizedNodes.map(async (node) => ({
-      manifestNode: node,
-      explanation: await explainSemanticSource({
-        sourcePath: resolve(workspaceRoot, node.source),
+    normalizedNodes.map(async (node) => {
+      const sourcePath = await resolveContainedFile(
         workspaceRoot,
-        ...(options.lockPath === undefined ? {} : { lockPath: options.lockPath }),
-      }),
-    })),
+        node.source,
+        `Semantic Closure node ${node.id} source`,
+        { rejectSymbolicLinks: true },
+      );
+      return {
+        manifestNode: node,
+        explanation: await explainSemanticSource({
+          sourcePath,
+          workspaceRoot,
+          ...(options.lockPath === undefined
+            ? {}
+            : { lockPath: options.lockPath }),
+        }),
+      };
+    }),
   );
   const intrinsicNodes = explanations.map(
     ({ manifestNode, explanation }): SemanticClosureNode => ({

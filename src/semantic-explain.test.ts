@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { buildProjectContext } from "./project-context";
@@ -27,6 +34,19 @@ afterEach(async () => {
 });
 
 describe("semantic explain", () => {
+  test("rejects source symlinks that escape the workspace", async () => {
+    const workspaceRoot = await temporaryRoot("semantic-explain-workspace-");
+    const outsideRoot = await temporaryRoot("semantic-explain-outside-");
+    const outside = resolve(outsideRoot, "outside.ts");
+    const linked = resolve(workspaceRoot, "linked.ts");
+    await writeFile(outside, "export {};\n", "utf8");
+    await symlink(outside, linked);
+
+    await expect(
+      explainSemanticSource({ sourcePath: linked, workspaceRoot }),
+    ).rejects.toThrow("semantic source must resolve inside the workspace root");
+  });
+
   test("explains a current Predicate from the lock without changing artifacts", async () => {
     const fixture = await createPredicateFixture({ generated: "export const isReady = () => true;\n" });
     const beforeLock = await readFile(fixture.lockPath, "utf8");
@@ -241,6 +261,12 @@ describe("semantic explain", () => {
     );
   });
 });
+
+async function temporaryRoot(prefix: string): Promise<string> {
+  const root = await mkdtemp(resolve(tmpdir(), prefix));
+  temporaryRoots.push(root);
+  return root;
+}
 
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error("required test fixture is missing");

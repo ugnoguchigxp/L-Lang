@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, unlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 
@@ -174,7 +182,9 @@ describe("semantic closure", () => {
         manifestPath: "../outside.json",
         workspaceRoot,
       }),
-    ).rejects.toThrow("Semantic Closure manifest must be inside the workspace root");
+    ).rejects.toThrow(
+      "Semantic Closure manifest must resolve inside the workspace root",
+    );
 
     const cases: Array<{ name: string; nodes: unknown[]; message: string }> = [
       {
@@ -216,6 +226,26 @@ describe("semantic closure", () => {
         checkSemanticClosure({ manifestPath, workspaceRoot }),
       ).rejects.toThrow(testCase.message);
     }
+
+    const outsideRoot = await createWorkspace();
+    const outsideSource = resolve(outsideRoot, "outside.ts");
+    const linkedSource = resolve(workspaceRoot, "linked.ts");
+    await writeFile(outsideSource, "export {};\n", "utf8");
+    await symlink(outsideSource, linkedSource);
+    const linkedManifest = resolve(workspaceRoot, "linked.json");
+    await writeFile(
+      linkedManifest,
+      JSON.stringify({
+        version: 1,
+        nodes: [{ id: "linked", source: "linked.ts" }],
+      }),
+      "utf8",
+    );
+    await expect(
+      checkSemanticClosure({ manifestPath: linkedManifest, workspaceRoot }),
+    ).rejects.toThrow(
+      "Semantic Closure node linked source must resolve inside the workspace root",
+    );
   });
 });
 

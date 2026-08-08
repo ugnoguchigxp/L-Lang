@@ -39,7 +39,7 @@ export async function resolveContainedFile(
   if (!(await stat(canonicalTarget)).isFile()) {
     throw new Error(`${label} must be a regular file`);
   }
-  return canonicalTarget;
+  return lexicalTarget;
 }
 
 export function containedRelativePath(
