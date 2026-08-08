@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { relative, resolve } from "node:path";
 
 import {
@@ -208,6 +216,112 @@ describe("schema evolution transaction", () => {
         expect(await readFile(lockPath, "utf8")).toBe(lockAfterApprove);
       } finally {
         await rm(testRoot, { recursive: true, force: true });
+      }
+    },
+    60_000,
+  );
+
+  test(
+    "rejects tampered candidate JSON and source symlink escapes before validation commands",
+    async () => {
+      const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+      await mkdir(parent, { recursive: true });
+      const testRoot = await mkdtemp(resolve(parent, "evolution-boundary-"));
+      const outsideRoot = await mkdtemp(resolve(tmpdir(), "l-lang-evolution-outside-"));
+      const sourcePath = resolve(testRoot, "semantic.ts");
+      const lockPath = resolve(testRoot, "semantic.lock");
+      const auditRoot = resolve(testRoot, "audit");
+      const evolutionRoot = resolve(testRoot, "evolution");
+      const runner = createRunner();
+
+      try {
+        await writeFile(sourcePath, renderSource("baseline", testRoot), "utf8");
+        await compileSemanticSource({
+          sourcePath,
+          workspaceRoot,
+          mode: "build",
+          provider: "fixture:baseline",
+          model: "gpt-5.4-mini",
+          countsAsApiCall: false,
+          lockPath,
+          auditRoot,
+          commandRunner: runner,
+          resolve: async () => resolvedBaseline(),
+        });
+        await writeFile(sourcePath, renderSource("renamed", testRoot), "utf8");
+        const checked = await checkSemanticEvolution({
+          sourcePath,
+          workspaceRoot,
+          provider: "fixture:evolution",
+          model: "gpt-5.4-mini",
+          countsAsApiCall: false,
+          lockPath,
+          evolutionRoot,
+          commandRunner: runner,
+          resolve: async () => resolvedRenamed(),
+        });
+        if (checked.status !== "candidate-created") {
+          throw new Error("expected an evolution candidate");
+        }
+        const candidatePath = resolve(
+          checked.candidateDirectory,
+          "candidate.json",
+        );
+        const original = JSON.parse(
+          await readFile(candidatePath, "utf8"),
+        ) as Record<string, unknown>;
+        let approvalCalls = 0;
+        const approvalRunner: SemanticCommandRunner = async () => {
+          approvalCalls += 1;
+        };
+
+        await writeFile(
+          candidatePath,
+          `${JSON.stringify({ ...original, unexpected: true }, null, 2)}\n`,
+          "utf8",
+        );
+        await expect(
+          approveSemanticEvolution(checked.candidate.id, {
+            reviewer: "integration-reviewer",
+            workspaceRoot,
+            lockPath,
+            evolutionRoot,
+            commandRunner: approvalRunner,
+          }),
+        ).rejects.toThrow("unknown field unexpected");
+        expect(approvalCalls).toBe(0);
+
+        const outsideSource = resolve(outsideRoot, "outside.ts");
+        const linkedSource = resolve(testRoot, "linked.ts");
+        await writeFile(outsideSource, "export {};\n", "utf8");
+        await symlink(outsideSource, linkedSource);
+        await writeFile(
+          candidatePath,
+          `${JSON.stringify(
+            {
+              ...original,
+              source: relative(workspaceRoot, linkedSource).replaceAll("\\", "/"),
+            },
+            null,
+            2,
+          )}\n`,
+          "utf8",
+        );
+        await expect(
+          approveSemanticEvolution(checked.candidate.id, {
+            reviewer: "integration-reviewer",
+            workspaceRoot,
+            lockPath,
+            evolutionRoot,
+            commandRunner: approvalRunner,
+          }),
+        ).rejects.toThrow("must resolve inside the workspace root");
+        expect(approvalCalls).toBe(0);
+      } finally {
+        await Promise.all([
+          rm(testRoot, { recursive: true, force: true }),
+          rm(outsideRoot, { recursive: true, force: true }),
+        ]);
       }
     },
     60_000,

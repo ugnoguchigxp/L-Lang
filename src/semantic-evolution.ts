@@ -6,35 +6,34 @@ import {
 } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 
+import { resolveContainedFile } from "./contained-path";
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
 import { type PredicateExpression, parsePredicateDefinition } from "./ir";
 import { renderSemanticTestModule } from "./judgement-renderer";
 import type { OpenAIResult } from "./openai";
 import {
-  buildProjectContext,
   type BuiltProjectContext,
-  type ProjectContextSummary,
+  buildProjectContext,
   type ProjectContext,
 } from "./project-context";
 import type {
   SemanticCommandRunner,
   SemanticResolution,
 } from "./semantic-compiler";
-import {
-  fingerprintFor,
-  predicateSemanticHashes,
-  type PredicateSemanticHashes,
-} from "./semantic-fingerprint";
-import {
-  resolveWithSemanticConsensus,
-  type SemanticConsensusResult,
-} from "./semantic-consensus";
+import { resolveWithSemanticConsensus } from "./semantic-consensus";
 import {
   classifySemanticChange,
   renderSemanticDiff,
-  type SemanticDiff,
 } from "./semantic-diff";
+import {
+  parseSemanticEvolutionCandidate,
+  type SemanticEvolutionCandidate,
+} from "./semantic-evolution-candidate";
+import {
+  fingerprintFor,
+  predicateSemanticHashes,
+} from "./semantic-fingerprint";
 import { readBoundedJsonFile } from "./semantic-limits";
 import {
   findReplayEntry,
@@ -45,42 +44,7 @@ import {
 import { promoteSemanticArtifact } from "./semantic-promotion";
 import { type SemanticSource, scanSemanticSource } from "./semantic-source";
 
-export type EvolutionHashes = PredicateSemanticHashes;
-
-export type SemanticEvolutionCandidate = {
-  version: 1;
-  id: string;
-  status: "ready" | "invalid" | "unresolved" | "approved";
-  source: string;
-  output: string;
-  predicate: string;
-  concept: string;
-  conceptId: string;
-  conceptSource: string;
-  provider: string;
-  model: string;
-  baselineFingerprint: string;
-  proposedFingerprint: string;
-  hashes: EvolutionHashes;
-  targetTypeName: string;
-  contextSummary: ProjectContextSummary;
-  previousIr: PredicateExpression;
-  candidateIr: PredicateExpression | null;
-  generatedCodeHash: string | null;
-  response: {
-    id: string;
-    model: string;
-    usage: OpenAIResult["usage"];
-  } | null;
-  consensus: Omit<SemanticConsensusResult, "resolution"> | null;
-  validation: {
-    passed: boolean;
-    error: string | null;
-  };
-  diff: SemanticDiff;
-  createdAt: string;
-  approvedAt: string | null;
-};
+export type { EvolutionHashes, SemanticEvolutionCandidate } from "./semantic-evolution-candidate";
 
 export type CheckSemanticEvolutionOptions = {
   sourcePath: string;
@@ -286,7 +250,7 @@ export async function readSemanticEvolutionCandidate(
     throw new Error("candidate id is invalid");
   }
   const candidateDirectory = resolve(root, candidateId);
-  const candidate = parseCandidate(
+  const candidate = parseSemanticEvolutionCandidate(
     await readBoundedJsonFile(
       resolve(candidateDirectory, "candidate.json"),
       "semantic evolution candidate",
@@ -324,7 +288,11 @@ export async function approveSemanticEvolution(
     throw new Error(`candidate is not approvable: ${candidate.status}`);
   }
 
-  const sourcePath = resolve(workspaceRoot, candidate.source);
+  const sourcePath = await resolveContainedFile(
+    workspaceRoot,
+    candidate.source,
+    "semantic evolution candidate source",
+  );
   const source = await scanSemanticSource(sourcePath);
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
   const { lock, revision: lockRevision } =
@@ -342,8 +310,14 @@ export async function approveSemanticEvolution(
     builtContext,
   );
   if (
+    prepared.source !== candidate.source ||
+    prepared.output !== candidate.output ||
+    prepared.conceptSource !== candidate.conceptSource ||
     prepared.fingerprint !== candidate.proposedFingerprint ||
     stableJson(prepared.hashes) !== stableJson(candidate.hashes) ||
+    candidate.predicate !== source.predicate.name ||
+    candidate.concept !== source.concept.name ||
+    candidate.conceptId !== source.concept.id ||
     candidate.targetTypeName !== source.concept.typeName ||
     stableJson(candidate.contextSummary) !== stableJson(builtContext.summary)
   ) {
@@ -572,21 +546,6 @@ async function validateCandidate(input: {
   } finally {
     await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(testPath)]);
   }
-}
-
-function parseCandidate(input: unknown): SemanticEvolutionCandidate {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error("evolution candidate must be an object");
-  }
-  const value = input as Record<string, unknown>;
-  if (
-    value.version !== 1 ||
-    typeof value.id !== "string" ||
-    !["ready", "invalid", "unresolved", "approved"].includes(String(value.status))
-  ) {
-    throw new Error("evolution candidate is invalid");
-  }
-  return input as SemanticEvolutionCandidate;
 }
 
 async function runCommand(command: string[], cwd: string, stage: string): Promise<void> {
