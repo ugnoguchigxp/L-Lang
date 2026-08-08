@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { dirname, relative, resolve } from "node:path";
 
 import { PREDICATE_PROMPT_VERSION } from "./openai";
+import type { ProjectContext } from "./project-context";
 import type { SemanticSource } from "./semantic-source";
 import { STATIC_JUDGMENT_PROMPT_VERSION } from "./static-judgment";
 import type { StaticJudgmentSource } from "./static-judgment-source";
@@ -12,7 +13,11 @@ export type PredicateSemanticHashes = {
   typeHash: string;
   testHash: string;
   promptHash: string;
+  contextVersion: 1;
+  contextHash: string;
 };
+
+export const TYPE_ONLY_CONTEXT_HASH = sha256("project-context-v1:none");
 
 export type StaticJudgmentSemanticHashes = {
   conceptHash: string;
@@ -42,8 +47,13 @@ export function predicateRequestShape(source: SemanticSource): {
 
 export function predicateSemanticHashes(
   source: SemanticSource,
+  projectContext?: {
+    context: ProjectContext;
+    contextHash: string;
+  },
 ): PredicateSemanticHashes {
   const requestShape = predicateRequestShape(source);
+  const contextHash = projectContext?.contextHash ?? TYPE_ONLY_CONTEXT_HASH;
   return {
     conceptHash: source.concept.hash,
     sourceHash: sha256(source.sourceText),
@@ -57,11 +67,20 @@ export function predicateSemanticHashes(
       stableJson({
         accept: source.tests.acceptSource,
         reject: source.tests.rejectSource,
+        boundary: source.tests.boundarySource,
+        counterfactual: source.tests.counterfactualSource,
+        invariance: source.tests.invarianceSource,
       }),
     ),
     promptHash: sha256(
-      stableJson({ version: PREDICATE_PROMPT_VERSION, ...requestShape }),
+      stableJson({
+        version: PREDICATE_PROMPT_VERSION,
+        ...requestShape,
+        projectContext: projectContext?.context ?? null,
+      }),
     ),
+    contextVersion: 1,
+    contextHash,
   };
 }
 
@@ -129,6 +148,16 @@ export function workspaceRelativePath(
     throw new Error(`${subject} must be inside the workspace root`);
   }
   return result;
+}
+
+export function resolveWorkspacePath(
+  workspaceRoot: string,
+  path: string,
+  subject: string,
+): string {
+  const absolutePath = resolve(workspaceRoot, path);
+  workspaceRelativePath(workspaceRoot, absolutePath, subject);
+  return absolutePath;
 }
 
 export function generatedOutputPath(sourcePath: string, symbol: string): string {

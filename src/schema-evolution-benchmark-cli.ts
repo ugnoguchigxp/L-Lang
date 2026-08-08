@@ -2,8 +2,8 @@ import { resolve } from "node:path";
 
 import {
   relativeSchemaEvolutionReportPath,
-  runSchemaEvolutionBenchmark,
-} from "./schema-evolution-benchmark";
+} from "./schema-evolution-evaluator";
+import { runSchemaEvolutionBenchmark } from "./schema-evolution-benchmark";
 import {
   callOpenAI,
   DEFAULT_OPENAI_MODEL,
@@ -20,33 +20,33 @@ async function main(): Promise<void> {
     apiKey: process.env.OPENAI_API_KEY ?? "",
     baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
   });
-  if (connection.apiKey.length === 0) throw new Error("OPENAI_API_KEY is required");
-
-  const { report, runDirectory } = await runSchemaEvolutionBenchmark({
-    manifestPath,
-    workspaceRoot,
-    outputRoot: resolve(workspaceRoot, ".semantic/benchmarks/schema-evolution"),
-    provider: connection.provider,
-    model,
-    resolve: (input) => callOpenAI(input, connection),
-    requireHumanReview: true,
-    onProgress: (message) => console.log(message),
-  });
-  console.log(
-    [
-      "schema evolution benchmark completed",
-      `status: ${report.status}`,
-      `provider/model: ${report.provider}/${report.model}`,
-      `trials: ${report.protocol.totalTrials}`,
-      `trial pass rate: ${percent(report.summary.trialPassRate)}`,
-      `classification accuracy: ${percent(report.summary.classificationAccuracy)}`,
-      `stable case rate: ${percent(report.summary.stableCaseRate)}`,
-      `false-resolution rate: ${percent(report.summary.falseResolutionRate)}`,
-      `workspace mutations: ${report.summary.workspaceMutationCount}`,
-      `report: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.md"))}`,
-      `json: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.json"))}`,
-    ].join("\n"),
-  );
+  const { report, runDirectory, authoritativeManifestSha256 } =
+    await runSchemaEvolutionBenchmark({
+      manifestPath,
+      workspaceRoot,
+      outputRoot: resolve(workspaceRoot, ".semantic/benchmarks/schema-evolution"),
+      provider: connection.provider,
+      model,
+      resolve: async (input) => {
+        if (connection.apiKey.length === 0) throw new Error("OPENAI_API_KEY is required");
+        return callOpenAI(input, connection);
+      },
+      requireFrozenInputs: true,
+      onProgress: (message) => console.log(message),
+    });
+  console.log([
+    "schema evolution benchmark completed",
+    `status: ${report.status}`,
+    `provider/model: ${report.provider}/${report.model}`,
+    `single first-pass: ${percent(report.summary.firstPassCaseRate)}`,
+    `consensus pass: ${percent(report.summary.consensusCasePassRate)}`,
+    `consensus quorum: ${percent(report.summary.consensusQuorumRate)}`,
+    `consensus false-resolution: ${percent(report.summary.consensusFalseResolutionRate)}`,
+    `workspace mutations: ${report.summary.workspaceMutationCount}`,
+    `frozen manifest sha256: ${authoritativeManifestSha256}`,
+    `report: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.md"))}`,
+    `json: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.json"))}`,
+  ].join("\n"));
 }
 
 function percent(value: number): string {

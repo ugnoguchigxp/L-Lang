@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
 import { promoteSemanticArtifact } from "./semantic-promotion";
-import type { SemanticLock } from "./semantic-lock";
+import { serializeSemanticLock, type SemanticLock } from "./semantic-lock";
 
 const temporaryRoots: string[] = [];
 
@@ -29,7 +29,7 @@ describe("semantic promotion transaction", () => {
       },
       writeLock: async (path, lock) => {
         stages.push("lock");
-        await writeFile(path, `${JSON.stringify(lock)}\n`, "utf8");
+        await writeFile(path, serializeSemanticLock(lock), "utf8");
       },
     });
 
@@ -84,7 +84,7 @@ describe("semantic promotion transaction", () => {
         generatedCode: "new output\n",
         runFullTest: async () => {},
         writeLock: async (path, lock) => {
-          await writeFile(path, `${JSON.stringify(lock)}\n`, "utf8");
+          await writeFile(path, serializeSemanticLock(lock), "utf8");
           throw new Error("post-commit lock failure");
         },
       }),

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/escalatable-case.semantic.ts",
+    "symbol": "isEscalatableCase",
+    "typeName": "CustomerCase",
+    "typeDeclaration": "type CustomerCase = { tier: \"standard\" | \"priority\"; state: \"investigating\" | \"waiting\" | \"resolved\"; blockerCode: string | null };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.escalatable-case",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "CustomerCase",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "tier"
+            ],
+            "value": "priority"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "state"
+            ],
+            "value": "investigating"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "blockerCode"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

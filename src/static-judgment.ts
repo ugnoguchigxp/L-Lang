@@ -3,6 +3,10 @@ import {
   type OpenAIConnection,
   type OpenAIResult,
 } from "./openai";
+import {
+  SEMANTIC_LIMITS,
+  validateDiagnostics,
+} from "./semantic-limits";
 
 export type StaticJudgmentResolution =
   | {
@@ -34,7 +38,11 @@ export const staticJudgmentJsonSchema = {
     value: { anyOf: [{ type: "boolean" }, { type: "null" }] },
     diagnostics: {
       type: "array",
-      items: { type: "string" },
+      maxItems: SEMANTIC_LIMITS.diagnostics,
+      items: {
+        type: "string",
+        maxLength: SEMANTIC_LIMITS.diagnosticCharacters,
+      },
     },
   },
   required: ["outcome", "value", "diagnostics"],
@@ -96,7 +104,7 @@ export function parseStaticJudgmentResolution(
 ): StaticJudgmentResolution {
   const value = expectRecord(input, "static judgment");
   expectExactKeys(value, ["outcome", "value", "diagnostics"], "static judgment");
-  const diagnostics = expectStringArray(
+  const diagnostics = validateDiagnostics(
     value.diagnostics,
     "static judgment.diagnostics",
   );
@@ -123,13 +131,6 @@ function expectRecord(value: unknown, path: string): Record<string, unknown> {
     throw new Error(`${path} must be an object`);
   }
   return value as Record<string, unknown>;
-}
-
-function expectStringArray(value: unknown, path: string): string[] {
-  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
-    throw new Error(`${path} must be an array of strings`);
-  }
-  return value;
 }
 
 function expectExactKeys(

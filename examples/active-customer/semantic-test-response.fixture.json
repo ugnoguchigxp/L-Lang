@@ -1,0 +1,103 @@
+{
+  "outcome": "resolved",
+  "plan": {
+    "version": 1,
+    "contractHash": "f3f5f8e251b2eedf1ea2a219729c501e05ab519cc43872c58261f323a9f1d77c",
+    "obligations": [
+      {
+        "id": "active-customer-accepted",
+        "kind": "example",
+        "sourceClauses": [
+          "requirements[0]",
+          "requirements[1]",
+          "requirements[2]"
+        ],
+        "strength": "hard",
+        "rationale": "An active, non-deleted customer with a present email satisfies every requirement.",
+        "input": {
+          "status": "active",
+          "deletedAt": null,
+          "email": "customer@example.com"
+        },
+        "expected": true
+      },
+      {
+        "id": "suspended-customer-rejected",
+        "kind": "example",
+        "sourceClauses": [
+          "exclusions[0]"
+        ],
+        "strength": "hard",
+        "rationale": "A suspended status is explicitly excluded.",
+        "input": {
+          "status": "suspended",
+          "deletedAt": null,
+          "email": "customer@example.com"
+        },
+        "expected": false
+      },
+      {
+        "id": "deleted-customer-rejected",
+        "kind": "counterfactual",
+        "sourceClauses": [
+          "exclusions[1]"
+        ],
+        "strength": "hard",
+        "rationale": "Adding a deletion timestamp changes an otherwise accepted customer to rejected.",
+        "base": {
+          "status": "active",
+          "deletedAt": null,
+          "email": "customer@example.com"
+        },
+        "changes": [
+          {
+            "property": [
+              "deletedAt"
+            ],
+            "value": "2026-07-23T00:00:00Z"
+          }
+        ],
+        "expectedBefore": true,
+        "expectedAfter": false
+      },
+      {
+        "id": "missing-email-rejected",
+        "kind": "example",
+        "sourceClauses": [
+          "requirements[2]"
+        ],
+        "strength": "hard",
+        "rationale": "A null email does not satisfy the contactability requirement.",
+        "input": {
+          "status": "active",
+          "deletedAt": null,
+          "email": null
+        },
+        "expected": false
+      },
+      {
+        "id": "email-value-invariant",
+        "kind": "invariance",
+        "sourceClauses": [
+          "outOfScope[0]"
+        ],
+        "strength": "exploratory",
+        "rationale": "Email syntax is out of scope, so replacing one present address with another does not change acceptance.",
+        "base": {
+          "status": "active",
+          "deletedAt": null,
+          "email": "customer@example.com"
+        },
+        "changes": [
+          {
+            "property": [
+              "email"
+            ],
+            "value": "renamed@example.net"
+          }
+        ]
+      }
+    ]
+  },
+  "diagnostics": []
+}

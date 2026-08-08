@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "cases": {
+    "product-master-review-ready": [
+      {
+        "name": "nested complete draft",
+        "input": {
+          "identity": {
+            "code": "P-300",
+            "name": "Changed product",
+            "category": "STANDARD"
+          },
+          "state": "draft"
+        },
+        "expected": true
+      },
+      {
+        "name": "nested missing category",
+        "input": {
+          "identity": {
+            "code": "P-300",
+            "name": "Changed product",
+            "category": null
+          },
+          "state": "draft"
+        },
+        "expected": false
+      }
+    ],
+    "product-archive-review-candidate": [
+      {
+        "name": "nested archive candidate",
+        "input": {
+          "status": "discontinued",
+          "stock": { "state": "zero" },
+          "shipping": { "openWork": "none" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested remaining stock",
+        "input": {
+          "status": "discontinued",
+          "stock": { "state": "remaining" },
+          "shipping": { "openWork": "none" }
+        },
+        "expected": false
+      }
+    ],
+    "price-record-review-ready": [
+      {
+        "name": "nested entered price",
+        "input": {
+          "money": { "currency": "JPY", "validation": "entered" },
+          "tax": { "category": "STANDARD" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested missing currency",
+        "input": {
+          "money": { "currency": null, "validation": "entered" },
+          "tax": { "category": "STANDARD" }
+        },
+        "expected": false
+      }
+    ],
+    "quantity-data-review": [
+      {
+        "name": "nested invalid quantity",
+        "input": {
+          "validation": { "state": "invalid" },
+          "measurement": { "unit": "EA" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested valid quantity",
+        "input": {
+          "validation": { "state": "valid" },
+          "measurement": { "unit": "EA" }
+        },
+        "expected": false
+      }
+    ],
+    "inventory-record-review-ready": [
+      {
+        "name": "nested counted inventory",
+        "input": {
+          "item": { "sku": "SKU-300" },
+          "site": { "code": "TOKYO" },
+          "count": { "lifecycle": "counted" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested missing site",
+        "input": {
+          "item": { "sku": "SKU-300" },
+          "site": { "code": null },
+          "count": { "lifecycle": "counted" }
+        },
+        "expected": false
+      }
+    ],
+    "inventory-discrepancy-review": [
+      {
+        "name": "nested assigned variance",
+        "input": {
+          "variance": { "status": "detected" },
+          "audit": { "countedBy": "reviewer-3" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested unknown variance",
+        "input": {
+          "variance": { "status": "unknown" },
+          "audit": { "countedBy": "reviewer-3" }
+        },
+        "expected": false
+      }
+    ],
+    "shipment-preparation-review-ready": [
+      {
+        "name": "nested queued shipment",
+        "input": {
+          "workflow": { "status": "queued" },
+          "destination": { "code": "TOKYO", "validation": "valid" },
+          "inventory": { "status": "ready" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested inventory not ready",
+        "input": {
+          "workflow": { "status": "queued" },
+          "destination": { "code": "TOKYO", "validation": "valid" },
+          "inventory": { "status": "not_ready" }
+        },
+        "expected": false
+      }
+    ],
+    "shipment-exception-review": [
+      {
+        "name": "nested assigned exception",
+        "input": {
+          "exception": { "status": "open" },
+          "ownership": { "assigneeId": "operator-3" }
+        },
+        "expected": true
+      },
+      {
+        "name": "nested unassigned exception",
+        "input": {
+          "exception": { "status": "open" },
+          "ownership": { "assigneeId": null }
+        },
+        "expected": false
+      }
+    ]
+  }
+}

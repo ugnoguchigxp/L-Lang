@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "pilot": "erp-crud-v1",
+  "recordedDate": "2026-07-24",
+  "decision": {
+    "measuredPrivatePilot": "conditional-go",
+    "unconditionalPublicAlpha": "no-go"
+  },
+  "combined": {
+    "initialCases": 8,
+    "schemaEvolutionCases": 8,
+    "apiAttempts": 32,
+    "cooldownCompletions": 32,
+    "hiddenCases": 41,
+    "hiddenCasesPassed": 41,
+    "falseResolutions": 0,
+    "inputTokens": 18178,
+    "outputTokens": 4083,
+    "providerLatencyMs": 69981.759373,
+    "estimatedCostUsd": 0.032007,
+    "businessWrites": 0,
+    "externalIo": 0,
+    "workspaceMutations": 0,
+    "cooldownViolations": 0,
+    "confidentialDataIncidents": 0
+  },
+  "passed": [
+    "first-pass Project Fit",
+    "Schema Evolution 2/3 consensus",
+    "hidden-case safety",
+    "false-resolution safety",
+    "API budget",
+    "cost budget",
+    "cooldown policy",
+    "shadow-only execution"
+  ],
+  "unproven": [
+    "20% median total-task-time improvement",
+    "external ERP domain validation"
+  ],
+  "verification": {
+    "testsPassed": 216,
+    "testsFailed": 0,
+    "expectations": 1110,
+    "functionCoveragePercent": 94.19,
+    "lineCoveragePercent": 93.96,
+    "typecheck": "passed",
+    "format": "passed",
+    "pilotLint": "passed",
+    "protectedInputs": "passed",
+    "semanticSmoke": "passed",
+    "diffCheck": "passed"
+  },
+  "nextGate": "Measured human A/B on non-critical ERP CRUD review flags"
+}

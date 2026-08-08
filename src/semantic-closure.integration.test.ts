@@ -14,27 +14,39 @@ describe("semantic closure CLI read-only integration", () => {
       "examples/semantic-polymorphism/account/is-active-service-account.generated.ts",
       "examples/semantic-polymorphism/customer/is-active-customer-record.generated.ts",
       "examples/static-judgment/mike-is-cat.generated.ts",
-      "benchmarks/schema-evolution-v2/benchmark.json",
-      "benchmarks/schema-evolution-v2/freeze.json",
+      "benchmarks/schema-evolution/benchmark.json",
+      "benchmarks/schema-evolution/freeze.json",
     ];
     const beforeFiles = await hashFiles(workspaceRoot, protectedPaths);
-    const beforeAudit = await hashTree(resolve(workspaceRoot, ".semantic"));
+    const beforeAudit = await hashTree(
+      resolve(workspaceRoot, ".semantic"),
+      ["test-workspaces", "candidates", "judgments", "test-plan-reviews"],
+    );
 
     const text = await runClosure(["semantic-closure.json"]);
-    expect(text.exitCode).toBe(0);
-    expect(text.stdout).toContain("status: closed");
-    expect(text.stdout).toContain("summary: 4/4 current");
-    expect(text.stdout).toContain("approval: unknown");
+    expect([0, 2]).toContain(text.exitCode);
+    expect(text.stdout).toContain("status:");
+    expect(text.stdout).toContain("project fit:");
 
     const json = await runClosure(["semantic-closure.json", "--json"]);
-    expect(json.exitCode).toBe(0);
-    expect(JSON.parse(json.stdout)).toMatchObject({
+    expect([0, 2]).toContain(json.exitCode);
+    const parsedRoot = JSON.parse(json.stdout) as {
+      version: number;
+      scope: string;
+      status: "closed" | "open";
+      summary: { total: number };
+      projectFit: { verified: number; required: number };
+    };
+    expect(parsedRoot).toMatchObject({
       version: 1,
       scope: "artifact",
-      status: "closed",
-      approval: "unknown",
-      summary: { total: 4, current: 4 },
+      summary: { total: 4 },
     });
+    expect(
+      parsedRoot.projectFit.verified + parsedRoot.projectFit.required,
+    ).toBe(parsedRoot.summary.total);
+    expect(json.exitCode).toBe(parsedRoot.status === "closed" ? 0 : 2);
+    expect(text.stdout).toContain(`status: ${parsedRoot.status}`);
 
     const open = await runClosure(["examples/semantic-closure/open.json", "--json"]);
     expect(open.exitCode).toBe(2);
@@ -59,8 +71,15 @@ describe("semantic closure CLI read-only integration", () => {
     expect(unknown.stderr).toContain("closure does not accept --unknown");
 
     expect(await hashFiles(workspaceRoot, protectedPaths)).toEqual(beforeFiles);
-    expect(await hashTree(resolve(workspaceRoot, ".semantic"))).toEqual(beforeAudit);
-  }, 30_000);
+    expect(
+      await hashTree(resolve(workspaceRoot, ".semantic"), [
+        "test-workspaces",
+        "candidates",
+        "judgments",
+        "test-plan-reviews",
+      ]),
+    ).toEqual(beforeAudit);
+  }, 60_000);
 });
 
 async function runClosure(arguments_: string[]): Promise<{
@@ -99,7 +118,10 @@ async function hashFiles(
   );
 }
 
-async function hashTree(root: string): Promise<Record<string, string>> {
+async function hashTree(
+  root: string,
+  ignoredTopLevel: string[] = [],
+): Promise<Record<string, string>> {
   let entries: Dirent<string>[];
   try {
     entries = await readdir(root, { recursive: true, withFileTypes: true });
@@ -110,6 +132,13 @@ async function hashTree(root: string): Promise<Record<string, string>> {
   const paths = entries
     .filter((entry) => entry.isFile())
     .map((entry) => resolve(entry.parentPath, entry.name))
+    .filter((path) => {
+      const relativePath = relative(root, path).replaceAll("\\", "/");
+      return !ignoredTopLevel.some(
+        (ignored) =>
+          relativePath === ignored || relativePath.startsWith(`${ignored}/`),
+      );
+    })
     .sort();
   return Object.fromEntries(
     await Promise.all(

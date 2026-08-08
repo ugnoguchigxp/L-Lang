@@ -1,0 +1,686 @@
+[
+  {
+    "key": "initial:routable-incident:typeOnly:1",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0638126599557a5a016a62e484014c8194b7d0a20ed46db21f",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification is domain-level and does not define a precise boolean condition over SupportIncident properties.\",\"No exact routable criteria are provided for urgency, status, or assigneeId, so a valid Predicate IR cannot be derived without inventing behavior.\"]}",
+      "usage": {
+        "inputTokens": 465,
+        "outputTokens": 106,
+        "totalTokens": 571
+      }
+    },
+    "latencyMs": 5561.63725
+  },
+  {
+    "key": "initial:routable-incident:projectContext:1",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0539f2c23ed1ecc2016a62e4c2f9988193a56f8469c3545997",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"urgency\"],\"value\":\"critical\"},{\"kind\":\"equals\",\"property\":[\"status\"],\"value\":\"open\"},{\"kind\":\"present\",\"property\":[\"assigneeId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 712,
+        "outputTokens": 137,
+        "totalTokens": 849
+      }
+    },
+    "latencyMs": 2266.240875000003
+  },
+  {
+    "key": "initial:routable-incident:typeOnly:2",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0fbe59431185cab2016a62e50136d8819696d883e96ec63e45",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification uses the domain term \\\"routable\\\" but does not define a concrete boolean condition over SupportIncident.\",\"No target property or combination of properties can be derived with confidence from the specification alone.\",\"A Predicate IR expression would require explicit conditions on incident.urgency, incident.status, and/or incident.assigneeId, but the specification does not state any of them.\"]}",
+      "usage": {
+        "inputTokens": 465,
+        "outputTokens": 118,
+        "totalTokens": 583
+      }
+    },
+    "latencyMs": 1915.956750000012
+  },
+  {
+    "key": "initial:routable-incident:projectContext:2",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0c06e70bb8f1c779016a62e53f37a8819688f6b060d0a2b761",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"urgency\"],\"value\":\"critical\"},{\"kind\":\"equals\",\"property\":[\"status\"],\"value\":\"open\"},{\"kind\":\"present\",\"property\":[\"assigneeId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 712,
+        "outputTokens": 105,
+        "totalTokens": 817
+      }
+    },
+    "latencyMs": 1831.7559579999943
+  },
+  {
+    "key": "initial:routable-incident:typeOnly:3",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0e528bde72249df6016a62e57cfe788195a003f4ed53a1bf12",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification describes a business concept ('routable under the support project's operating convention') but does not provide a concrete predicate that can be expressed over SupportIncident fields.\",\"No field-level conditions are specified for incident.urgency, incident.status, or incident.assigneeId, so an exact IR predicate cannot be derived without inventing runtime policy.\"]}",
+      "usage": {
+        "inputTokens": 465,
+        "outputTokens": 118,
+        "totalTokens": 583
+      }
+    },
+    "latencyMs": 2149.32704199999
+  },
+  {
+    "key": "initial:routable-incident:projectContext:3",
+    "stage": "initial",
+    "caseId": "routable-incident",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_089bafd3bdbd0528016a62e5bb354c8190b659dcaa320d051a",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"urgency\"],\"value\":\"critical\"},{\"kind\":\"equals\",\"property\":[\"status\"],\"value\":\"open\"},{\"kind\":\"present\",\"property\":[\"assigneeId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 712,
+        "outputTokens": 141,
+        "totalTokens": 853
+      }
+    },
+    "latencyMs": 1946.2857919999515
+  },
+  {
+    "key": "initial:escalatable-case:typeOnly:1",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_018fa3501b7033d1016a62e5f92c10819584f5b585715662bf",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to determine an exact boolean condition.\",\"No concrete escalation rules were provided for CustomerCase properties such as tier, state, or blockerCode.\",\"Cannot safely infer a precise Predicate IR without inventing business logic.\"]}",
+      "usage": {
+        "inputTokens": 467,
+        "outputTokens": 97,
+        "totalTokens": 564
+      }
+    },
+    "latencyMs": 2139.023749999993
+  },
+  {
+    "key": "initial:escalatable-case:projectContext:1",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_089dcb2e73e827eb016a62e63745808193a22964346c51e126",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"tier\"],\"value\":\"priority\"},{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"investigating\"},{\"kind\":\"present\",\"property\":[\"blockerCode\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 714,
+        "outputTokens": 117,
+        "totalTokens": 831
+      }
+    },
+    "latencyMs": 1843.4400840000017
+  },
+  {
+    "key": "initial:escalatable-case:typeOnly:2",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_01e23b8c3a937906016a62e67528f88194bd919e8990f6fe69",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to derive a concrete boolean condition from the available type alone.\",\"The CustomerCase type only provides tier, state, and blockerCode, but the escalation convention is not defined in the source data.\",\"No specific property/value constraints are stated, so a faithful Predicate IR expression cannot be constructed.\"]}",
+      "usage": {
+        "inputTokens": 467,
+        "outputTokens": 107,
+        "totalTokens": 574
+      }
+    },
+    "latencyMs": 1793.2808339999756
+  },
+  {
+    "key": "initial:escalatable-case:projectContext:2",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0d5c74d21cd40652016a62e6b2eef481909385ffa54ad22f69",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"tier\"],\"value\":\"priority\"},{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"investigating\"},{\"kind\":\"present\",\"property\":[\"blockerCode\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 714,
+        "outputTokens": 138,
+        "totalTokens": 852
+      }
+    },
+    "latencyMs": 2403.439167000004
+  },
+  {
+    "key": "initial:escalatable-case:typeOnly:3",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0e49c7cf234fd2b5016a62e6f15e4c8194a5d2a704a6deab09",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to translate into a precise IR condition.\",\"No concrete, representable criteria are given for escalation (for example, which tier, state, or blockerCode values qualify).\",\"Without an explicit rule, any IR would require inventing runtime semantics, which is not allowed.\"]}",
+      "usage": {
+        "inputTokens": 467,
+        "outputTokens": 105,
+        "totalTokens": 572
+      }
+    },
+    "latencyMs": 1590.6328750000102
+  },
+  {
+    "key": "initial:escalatable-case:projectContext:3",
+    "stage": "initial",
+    "caseId": "escalatable-case",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_07ba50e80addd393016a62e72eec608194b8a9e2d263a07f17",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"tier\"],\"value\":\"priority\"},{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"investigating\"},{\"kind\":\"present\",\"property\":[\"blockerCode\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 714,
+        "outputTokens": 122,
+        "totalTokens": 836
+      }
+    },
+    "latencyMs": 1584.6909579999046
+  },
+  {
+    "key": "initial:triage-ready-request:typeOnly:1",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0e09c259e162aa33016a62e76c86a48190ae1747e505311fe3",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification is too vague to map to a concrete predicate over ServiceRequest.\",\"No source-provided rule defines what 'ready for the project's normal triage queue' means.\",\"Cannot safely infer conditions such as channel, category, triaged, or suppressed without an explicit specification.\"]}",
+      "usage": {
+        "inputTokens": 457,
+        "outputTokens": 131,
+        "totalTokens": 588
+      }
+    },
+    "latencyMs": 2108.3379580000183
+  },
+  {
+    "key": "initial:triage-ready-request:projectContext:1",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0acb6f5b293d9810016a62e7aaa16c8195819907231bac7772",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"channel\"],\"value\":\"portal\"},{\"kind\":\"present\",\"property\":[\"category\"]},{\"kind\":\"equals\",\"property\":[\"triaged\"],\"value\":true},{\"kind\":\"equals\",\"property\":[\"suppressed\"],\"value\":false}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 709,
+        "outputTokens": 162,
+        "totalTokens": 871
+      }
+    },
+    "latencyMs": 2290.0560409999453
+  },
+  {
+    "key": "initial:triage-ready-request:typeOnly:2",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_047b213e4f07c353016a62e7e8ea90819381ff46fe1a2ad507",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification is too vague to derive a unique predicate over ServiceRequest.\",\"No explicit conditions are provided for what makes a request 'ready for the project's normal triage queue'.\",\"Although the target type exposes channel, category, triaged, and suppressed, the specification does not state how any of them should be tested.\"]}",
+      "usage": {
+        "inputTokens": 457,
+        "outputTokens": 158,
+        "totalTokens": 615
+      }
+    },
+    "latencyMs": 1848.8670830000192
+  },
+  {
+    "key": "initial:triage-ready-request:projectContext:2",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0cafe58d28d95d10016a62e826c754819486a00efbeb636678",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"channel\"],\"value\":\"portal\"},{\"kind\":\"present\",\"property\":[\"category\"]},{\"kind\":\"equals\",\"property\":[\"triaged\"],\"value\":true},{\"kind\":\"equals\",\"property\":[\"suppressed\"],\"value\":false}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 709,
+        "outputTokens": 163,
+        "totalTokens": 872
+      }
+    },
+    "latencyMs": 2049.515834000078
+  },
+  {
+    "key": "initial:triage-ready-request:typeOnly:3",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_07c2445c85634796016a62e864f89c81938c96d596a8fe87be",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be mapped to a precise boolean condition.\",\"No explicit, representable criteria are provided for what qualifies a request as 'ready for the project's normal triage queue'.\",\"Although the target type exposes properties such as channel, category, triaged, and suppressed, the specification does not state which of these must be checked or how.\"]}",
+      "usage": {
+        "inputTokens": 457,
+        "outputTokens": 160,
+        "totalTokens": 617
+      }
+    },
+    "latencyMs": 2710.0087079999503
+  },
+  {
+    "key": "initial:triage-ready-request:projectContext:3",
+    "stage": "initial",
+    "caseId": "triage-ready-request",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0052647213a3f542016a62e8a38b7c81979fcb03d402e0a298",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"channel\"],\"value\":\"portal\"},{\"kind\":\"present\",\"property\":[\"category\"]},{\"kind\":\"equals\",\"property\":[\"triaged\"],\"value\":true},{\"kind\":\"equals\",\"property\":[\"suppressed\"],\"value\":false}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 709,
+        "outputTokens": 132,
+        "totalTokens": 841
+      }
+    },
+    "latencyMs": 1805.1793750000652
+  },
+  {
+    "key": "initial:sellable-listing:typeOnly:1",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_02a6b5f966e83304016a62e8e1616c8190833acad1ccb391c0",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to determine a unique boolean condition.\",\"The target type provides fields state, availability, and retiredAt, but the specification does not define which of these properties or values make a listing sellable.\",\"No fully supported Predicate IR expression can be derived without inventing business rules.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 132,
+        "totalTokens": 590
+      }
+    },
+    "latencyMs": 1979.456125000026
+  },
+  {
+    "key": "initial:sellable-listing:projectContext:1",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0d71d47698319e38016a62e91f5c5c8193bb291c89aada2e4e",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"approved\"},{\"kind\":\"equals\",\"property\":[\"availability\"],\"value\":\"in_stock\"},{\"kind\":\"equals\",\"property\":[\"retiredAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 705,
+        "outputTokens": 145,
+        "totalTokens": 850
+      }
+    },
+    "latencyMs": 1939.2096669999883
+  },
+  {
+    "key": "initial:sellable-listing:typeOnly:2",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_05b36e61801d642a016a62e95d53588190a45d8ebdad4c6b14",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The specification is too vague to determine a unique predicate from the available type information.\",\"No explicit conditions are given for 'sellable' or 'publication convention', so any field-based IR would require guessing.\",\"The target type has fields state, availability, and retiredAt, but the specification does not state which of these must be constrained or how.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 207,
+        "totalTokens": 665
+      }
+    },
+    "latencyMs": 18934.01000000001
+  },
+  {
+    "key": "initial:sellable-listing:projectContext:2",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0942137a391999b7016a62e9ac38f88194b35c5f221d194b89",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"approved\"},{\"kind\":\"equals\",\"property\":[\"availability\"],\"value\":\"in_stock\"},{\"kind\":\"equals\",\"property\":[\"retiredAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 705,
+        "outputTokens": 105,
+        "totalTokens": 810
+      }
+    },
+    "latencyMs": 2188.255707999924
+  },
+  {
+    "key": "initial:sellable-listing:typeOnly:3",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_03c8cf77367795aa016a62e9ea6e308194a9cb56338ff2912f",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be mapped to a precise boolean condition from the available type information.\",\"The target type Listing exposes only state, availability, and retiredAt, but the specification does not define which of these fields determine 'sellable under the catalog project's publication convention'.\",\"No exact, source-grounded predicate can be derived without inventing business rules not present in the provided specification.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 151,
+        "totalTokens": 609
+      }
+    },
+    "latencyMs": 2049.504249999998
+  },
+  {
+    "key": "initial:sellable-listing:projectContext:3",
+    "stage": "initial",
+    "caseId": "sellable-listing",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_05793b8cf4938079016a62ea287a708193bb4fd86500ea8b23",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"state\"],\"value\":\"approved\"},{\"kind\":\"equals\",\"property\":[\"availability\"],\"value\":\"in_stock\"},{\"kind\":\"equals\",\"property\":[\"retiredAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 705,
+        "outputTokens": 134,
+        "totalTokens": 839
+      }
+    },
+    "latencyMs": 1648.5537920000497
+  },
+  {
+    "key": "initial:searchable-asset:typeOnly:1",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_064c7a6b34255129016a62ea662944819786fd0564781806d9",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be mapped to a concrete boolean condition.\",\"No catalog search rules were provided, so no property-based predicate can be derived without inventing semantics.\",\"The target type exposes valid properties, but the specification does not identify which of them should constrain search inclusion.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 152,
+        "totalTokens": 610
+      }
+    },
+    "latencyMs": 2376.9929170000833
+  },
+  {
+    "key": "initial:searchable-asset:projectContext:1",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_05c91c43dd213430016a62eaa48bc48195be217926105db36d",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"indexing\"],\"value\":\"enabled\"},{\"kind\":\"equals\",\"property\":[\"visibility\"],\"value\":\"public\"},{\"kind\":\"equals\",\"property\":[\"deletedAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 703,
+        "outputTokens": 144,
+        "totalTokens": 847
+      }
+    },
+    "latencyMs": 2056.596000000136
+  },
+  {
+    "key": "initial:searchable-asset:typeOnly:2",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_03238ed3c5bfb16f016a62eae29a84819699ef54a2e3f12047",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be mapped to a precise boolean condition from the available target type alone.\",\"The phrase \\\"included in search according to this catalog's rules\\\" does not identify concrete checks on DigitalAsset properties such as indexing, visibility, or deletedAt.\",\"A resolvable IR requires an explicit, fully specified predicate; this specification does not provide enough detail.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 160,
+        "totalTokens": 618
+      }
+    },
+    "latencyMs": 1953.377250000136
+  },
+  {
+    "key": "initial:searchable-asset:projectContext:2",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_09868677bc09748b016a62eb208ec88197a47e455e164c6d9c",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"indexing\"],\"value\":\"enabled\"},{\"kind\":\"equals\",\"property\":[\"visibility\"],\"value\":\"public\"},{\"kind\":\"equals\",\"property\":[\"deletedAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 703,
+        "outputTokens": 127,
+        "totalTokens": 830
+      }
+    },
+    "latencyMs": 2010.9259580001235
+  },
+  {
+    "key": "initial:searchable-asset:typeOnly:3",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_09f8baab27b2e718016a62eb5e94e08197ba2737e0a64654e9",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to map to a concrete boolean condition.\",\"No catalog search rules were provided, so the required properties and comparisons cannot be determined from the available source data.\",\"Although the target type exposes properties like indexing, visibility, and deletedAt, the specification does not state which combinations should be included in search.\"]}",
+      "usage": {
+        "inputTokens": 458,
+        "outputTokens": 155,
+        "totalTokens": 613
+      }
+    },
+    "latencyMs": 2929.6541669999715
+  },
+  {
+    "key": "initial:searchable-asset:projectContext:3",
+    "stage": "initial",
+    "caseId": "searchable-asset",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0f8677e3abd99442016a62eb9d80a881938e6cd7b194438510",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"indexing\"],\"value\":\"enabled\"},{\"kind\":\"equals\",\"property\":[\"visibility\"],\"value\":\"public\"},{\"kind\":\"equals\",\"property\":[\"deletedAt\"],\"value\":null}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 703,
+        "outputTokens": 127,
+        "totalTokens": 830
+      }
+    },
+    "latencyMs": 2215.842333999928
+  },
+  {
+    "key": "initial:reviewable-release:typeOnly:1",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "typeOnly",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0c97c2aaa73708f6016a62ebdbbb1c8196b968e1de895786f6",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to map to a unique boolean condition over CatalogRelease.\",\"Multiple fields could plausibly be involved (phase, validation, reviewerId), but the specification does not define which values mean 'ready for the project's review workflow'.\",\"A precise predicate is required to produce an IR expression; otherwise the result would be speculative.\"]}",
+      "usage": {
+        "inputTokens": 460,
+        "outputTokens": 158,
+        "totalTokens": 618
+      }
+    },
+    "latencyMs": 2550.5769999998156
+  },
+  {
+    "key": "initial:reviewable-release:projectContext:1",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "projectContext",
+    "trial": 1,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_07423d500dc869e1016a62ec1a50e4819688e4c2b32883049b",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"phase\"],\"value\":\"candidate\"},{\"kind\":\"equals\",\"property\":[\"validation\"],\"value\":\"passed\"},{\"kind\":\"present\",\"property\":[\"reviewerId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 704,
+        "outputTokens": 117,
+        "totalTokens": 821
+      }
+    },
+    "latencyMs": 1612.8929580000695
+  },
+  {
+    "key": "initial:reviewable-release:typeOnly:2",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "typeOnly",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_01470d0ece8760e6016a62ec57ef6c8196a8ef132fa3e086dc",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be expressed as a precise boolean condition over CatalogRelease.\",\"No explicit property-level rule is provided for what qualifies a release as 'ready for the project's review workflow'.\"]}",
+      "usage": {
+        "inputTokens": 460,
+        "outputTokens": 124,
+        "totalTokens": 584
+      }
+    },
+    "latencyMs": 1876.7638330000918
+  },
+  {
+    "key": "initial:reviewable-release:projectContext:2",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "projectContext",
+    "trial": 2,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_023a995e9c716ed0016a62ec95cd9c81949e923d5c7bd6d912",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"phase\"],\"value\":\"candidate\"},{\"kind\":\"equals\",\"property\":[\"validation\"],\"value\":\"passed\"},{\"kind\":\"present\",\"property\":[\"reviewerId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 704,
+        "outputTokens": 125,
+        "totalTokens": 829
+      }
+    },
+    "latencyMs": 4126.192166999914
+  },
+  {
+    "key": "initial:reviewable-release:typeOnly:3",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "typeOnly",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_0e1ac42a2d1d7a87016a62ecd5e46081969ef9d21ea8b75552",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"unresolved\",\"body\":null,\"diagnostics\":[\"The predicate specification is too vague to be translated into a precise IR condition.\",\"No explicit, representable criteria were provided for which CatalogRelease values count as 'ready for the project's review workflow'.\",\"Although the target type exposes properties such as phase, validation, and reviewerId, the specification does not state any exact constraints on them.\"]}",
+      "usage": {
+        "inputTokens": 460,
+        "outputTokens": 136,
+        "totalTokens": 596
+      }
+    },
+    "latencyMs": 1814.409208000172
+  },
+  {
+    "key": "initial:reviewable-release:projectContext:3",
+    "stage": "initial",
+    "caseId": "reviewable-release",
+    "arm": "projectContext",
+    "trial": 3,
+    "status": "completed",
+    "response": {
+      "responseId": "resp_011b4d2e26057f72016a62ed13c1f081969dca65380260fd73",
+      "model": "gpt-5-4-mini",
+      "outputText": "{\"outcome\":\"resolved\",\"body\":{\"kind\":\"all\",\"conditions\":[{\"kind\":\"equals\",\"property\":[\"phase\"],\"value\":\"candidate\"},{\"kind\":\"equals\",\"property\":[\"validation\"],\"value\":\"passed\"},{\"kind\":\"present\",\"property\":[\"reviewerId\"]}]},\"diagnostics\":[]}",
+      "usage": {
+        "inputTokens": 704,
+        "outputTokens": 106,
+        "totalTokens": 810
+      }
+    },
+    "latencyMs": 1944.2983749997802
+  }
+]

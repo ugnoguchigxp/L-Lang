@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-
+import { sha256 } from "./semantic-fingerprint";
 import {
   createPredicateSemanticReview,
   createStaticJudgmentSemanticReview,
@@ -13,7 +13,6 @@ import {
   renderPredicateReviewDiff,
   renderStaticJudgmentReviewDiff,
 } from "./semantic-review-renderer";
-import { sha256 } from "./semantic-fingerprint";
 
 const temporaryRoots: string[] = [];
 const hash = (value: string) => sha256(value);
@@ -37,6 +36,8 @@ describe("semantic review candidate", () => {
       model: "model",
       fingerprint: hash("fingerprint"),
       hashes: predicateHashes(),
+      targetTypeName: "ReadyRecord",
+      contextSummary: contextSummary(),
       resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
       baseline: undefined,
       response: null,
@@ -98,11 +99,13 @@ describe("semantic review candidate", () => {
   });
 
   test("rejects unknown fields, invalid timestamps, status metadata, and wrong-kind validation", () => {
-    const cases: Array<(candidate: Record<string, any>) => void> = [
+    const cases: Array<(candidate: Record<string, unknown>) => void> = [
       (candidate) => { candidate.extra = true; },
       (candidate) => { candidate.createdAt = "yesterday"; },
       (candidate) => { candidate.reviewer = "alice"; },
-      (candidate) => { candidate.validation.semanticTest = "not-applicable"; },
+      (candidate) => {
+        recordAt(candidate, "validation").semanticTest = "not-applicable";
+      },
       (candidate) => { candidate.generatedCodeHash = "not-a-hash"; },
       (candidate) => { candidate.kind = "unknown"; },
     ];
@@ -140,7 +143,7 @@ describe("semantic review candidate", () => {
   });
 });
 
-function predicateCandidate(): Record<string, any> {
+function predicateCandidate(): Record<string, unknown> {
   return {
     version: 1,
     id: "review-20260721000000-12345678",
@@ -159,6 +162,8 @@ function predicateCandidate(): Record<string, any> {
       projectTypecheck: "passed",
       semanticTest: "passed",
     },
+    targetTypeName: "ReadyRecord",
+    contextSummary: contextSummary(),
     hashes: predicateHashes(),
     resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
     baselineFingerprint: null,
@@ -169,6 +174,17 @@ function predicateCandidate(): Record<string, any> {
   };
 }
 
+function recordAt(
+  input: Record<string, unknown>,
+  key: string,
+): Record<string, unknown> {
+  const value = input[key];
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`expected ${key} to be a record`);
+  }
+  return value as Record<string, unknown>;
+}
+
 function predicateHashes() {
   return {
     conceptHash: hash("concept"),
@@ -176,6 +192,17 @@ function predicateHashes() {
     typeHash: hash("type"),
     testHash: hash("test"),
     promptHash: hash("prompt"),
+    contextVersion: 1 as const,
+    contextHash: hash("context"),
+  };
+}
+
+function contextSummary() {
+  return {
+    version: 1 as const,
+    targetSource: "predicate/semantic.ts",
+    relatedTypeSources: [],
+    verifiedBindingSources: [],
   };
 }
 

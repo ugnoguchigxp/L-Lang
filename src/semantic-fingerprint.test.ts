@@ -5,6 +5,7 @@ import {
   fingerprintFor,
   generatedOutputPath,
   predicateSemanticHashes,
+  resolveWorkspacePath,
   staticJudgmentSemanticHashes,
   workspaceRelativePath,
 } from "./semantic-fingerprint";
@@ -12,6 +13,20 @@ import { scanSemanticSource } from "./semantic-source";
 import { scanStaticJudgmentSource } from "./static-judgment-source";
 
 describe("semantic fingerprint", () => {
+  test("resolves relative paths from the workspace and rejects escapes", () => {
+    const workspaceRoot = resolve("fixtures/workspace");
+    expect(
+      resolveWorkspacePath(
+        workspaceRoot,
+        "nested/source.ts",
+        "semantic source",
+      ),
+    ).toBe(resolve(workspaceRoot, "nested/source.ts"));
+    expect(() =>
+      resolveWorkspacePath(workspaceRoot, "../outside.ts", "semantic source"),
+    ).toThrow("semantic source must be inside the workspace root");
+  });
+
   test("preserves the Predicate lock hashes and fingerprint", async () => {
     const workspaceRoot = process.cwd();
     const source = await scanSemanticSource(
@@ -26,10 +41,12 @@ describe("semantic fingerprint", () => {
 
     expect(hashes).toEqual({
       conceptHash: "f37a8bb48560ef60dff868a7ceda3cdbdee4b5de370f625af021b9b1128821bf",
-      sourceHash: "cce3e4996f4c934b7b3e7ae24a4fdb09591ced2ea73415b5876d47209e380a50",
+      sourceHash: "4a08e9aa1846ba353ca32c4a4664a2a1e07001ad648928a043c59fd41e95f5f8",
       typeHash: "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
-      testHash: "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
-      promptHash: "cce0bcf759af5f2b723e41e99b865c02e5c30c441a812c8cf6f53dbe31971ed0",
+      testHash: "1c93ebef274be501ddf935edf52151d16402d630b2ec0b0104cdcd2b10f2f326",
+      promptHash: "4de2a24673da9a4513cd784dae2cee172cfa26515c2a1b0ea60a3a3e679beb2b",
+      contextVersion: 1,
+      contextHash: "0c1da50c727b7e9825244775e88c1c6ba53a17dbf0be374fa4ea662569996ca7",
     });
     expect(
       fingerprintFor({
@@ -40,7 +57,7 @@ describe("semantic fingerprint", () => {
         model: "gpt-5.4-mini",
         ...hashes,
       }),
-    ).toBe("ad3051010aae2dd7ae17a87cb1347e77891ce6b4ab2b0ce56534cde9edd63359");
+    ).toBe("a1101691af914a95f6fc596167ff7dc072b2cc07b1cdaacc53a73f93d3ec3d13");
     expect(
       workspaceRelativePath(
         workspaceRoot,

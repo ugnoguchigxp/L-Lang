@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "serviceLevel": "premium",
+        "phase": "analysis",
+        "escalation": {
+          "reason": "dependency"
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "base-level",
+      "input": {
+        "serviceLevel": "base",
+        "phase": "analysis",
+        "escalation": {
+          "reason": "dependency"
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "paused",
+      "input": {
+        "serviceLevel": "premium",
+        "phase": "paused",
+        "escalation": {
+          "reason": "dependency"
+        }
+      },
+      "expected": false
+    }
+  ]
+}

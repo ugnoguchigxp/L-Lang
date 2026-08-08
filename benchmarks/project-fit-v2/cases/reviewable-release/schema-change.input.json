@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify catalog releases ready for the project's review workflow.",
+  "target": {
+    "functionName": "isReviewableRelease",
+    "parameterName": "release",
+    "typeName": "UpdatedCatalogRelease",
+    "typeScriptSource": "type UpdatedCatalogRelease = { channel: \"review\" | \"editing\" | \"live\"; checks: \"green\" | \"red\"; approval?: { owner: string } };"
+  }
+}

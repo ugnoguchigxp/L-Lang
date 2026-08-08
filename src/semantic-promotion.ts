@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
-import { readFile, rename, unlink, writeFile } from "node:fs/promises";
-
+import { serializeSemanticLock } from "./semantic-lock";
+import type { SemanticLock, writeSemanticLock } from "./semantic-lock";
 import {
-  writeSemanticLock,
-  type SemanticLock,
-} from "./semantic-lock";
+  executeSemanticTransaction,
+  type SemanticTransactionCommand,
+  type SemanticTransactionFailurePoint,
+} from "./semantic-transaction";
 
 export async function promoteSemanticArtifact(input: {
   outputPath: string;
@@ -13,88 +13,38 @@ export async function promoteSemanticArtifact(input: {
   nextLock: SemanticLock;
   runFullTest: () => Promise<void>;
   writeLock?: typeof writeSemanticLock;
+  expectedLockHash?: string | null;
+  command?: SemanticTransactionCommand;
+  transactionRoot?: string;
+  failureInjector?: (
+    point: SemanticTransactionFailurePoint,
+  ) => void | Promise<void>;
+  persistLock?: boolean;
 }): Promise<void> {
-  const previousOutput = await readOptional(input.outputPath);
-  const previousLock = await readOptional(input.lockPath);
-  let outputApplied = false;
-  let lockWriteAttempted = false;
-
-  try {
-    await atomicWrite(input.outputPath, input.generatedCode);
-    outputApplied = true;
-    await input.runFullTest();
-    lockWriteAttempted = true;
-    await (input.writeLock ?? writeSemanticLock)(input.lockPath, input.nextLock);
-  } catch (error) {
-    const rollbackErrors: unknown[] = [];
-    if (lockWriteAttempted) {
-      try {
-        await restoreFile(input.lockPath, previousLock);
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
-    }
-    if (outputApplied) {
-      try {
-        await restoreFile(input.outputPath, previousOutput);
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
-    }
-    if (rollbackErrors.length > 0) {
-      throw new AggregateError(
-        [error, ...rollbackErrors],
-        "semantic promotion failed and rollback was incomplete",
-      );
-    }
-    throw error;
-  }
-}
-
-async function atomicWrite(path: string, value: string): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.promote.tmp`;
-  try {
-    await writeFile(temporary, value, "utf8");
-    await rename(temporary, path);
-  } catch (error) {
-    await unlinkIfExists(temporary);
-    throw error;
-  }
-}
-
-async function readOptional(path: string): Promise<string | undefined> {
-  try {
-    return await readFile(path, "utf8");
-  } catch (error) {
-    if (isNotFound(error)) return undefined;
-    throw error;
-  }
-}
-
-async function restoreFile(
-  path: string,
-  previous: string | undefined,
-): Promise<void> {
-  if (previous === undefined) {
-    await unlinkIfExists(path);
-    return;
-  }
-  await atomicWrite(path, previous);
-}
-
-async function unlinkIfExists(path: string): Promise<void> {
-  try {
-    await unlink(path);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-  }
-}
-
-function isNotFound(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "ENOENT"
-  );
+  const persistLock = input.persistLock ?? true;
+  const writeLock = input.writeLock;
+  await executeSemanticTransaction({
+    ...(input.transactionRoot === undefined
+      ? {}
+      : { transactionRoot: input.transactionRoot }),
+    outputPath: input.outputPath,
+    nextOutput: input.generatedCode,
+    lockPath: input.lockPath,
+    nextLock: serializeSemanticLock(input.nextLock),
+    ...(input.expectedLockHash === undefined
+      ? {}
+      : { expectedLockHash: input.expectedLockHash }),
+    command: input.command ?? "build",
+    runFullTest: input.runFullTest,
+    ...(!persistLock
+      ? { preserveLock: true }
+      : writeLock === undefined
+        ? {}
+        : {
+            applyLock: () => writeLock(input.lockPath, input.nextLock),
+          }),
+    ...(input.failureInjector === undefined
+      ? {}
+      : { failureInjector: input.failureInjector }),
+  });
 }

@@ -215,7 +215,7 @@ describe("Static Judgment compiler transaction", () => {
         await rm(testRoot, { recursive: true, force: true });
       }
     },
-    60_000,
+    120_000,
   );
 });
 

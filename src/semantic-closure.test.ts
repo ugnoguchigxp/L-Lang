@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, unlink, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 
+import { buildProjectContext } from "./project-context";
 import {
   checkSemanticClosure,
   parseSemanticClosureManifest,
@@ -63,58 +64,118 @@ describe("semantic closure", () => {
     ).toThrow("contains unknown field dependOn");
   });
 
-  test("builds a deterministic mixed graph and aggregates open statuses", async () => {
-    const fixture = await createClosureFixture();
-    const closed = await checkSemanticClosure(fixture);
+  test(
+    "builds a deterministic mixed graph and aggregates open statuses",
+    async () => {
+      const fixture = await createClosureFixture();
+      const closed = await checkSemanticClosure({
+        manifestPath: "semantic-closure.json",
+        workspaceRoot: fixture.workspaceRoot,
+        lockPath: "semantic.lock",
+      });
 
-    expect(closed).toMatchObject({
-      status: "closed",
-      scope: "artifact",
-      approval: "unknown",
-      summary: {
-        total: 2,
-        current: 2,
-        stale: 0,
-        unlocked: 0,
-        integrityError: 0,
-      },
-      edges: [{ from: "judgment", to: "predicate", kind: "depends-on" }],
-    });
-    expect(closed.nodes.map((node) => node.id)).toEqual(["judgment", "predicate"]);
+      expect(closed).toMatchObject({
+        status: "closed",
+        scope: "artifact",
+        summary: {
+          total: 2,
+          current: 2,
+          stale: 0,
+          unlocked: 0,
+          integrityError: 0,
+          verificationRequired: 0,
+          dependencyOpen: 0,
+        },
+        projectFit: { verified: 2, required: 0, legacy: 0 },
+        edges: [{ from: "judgment", to: "predicate", kind: "depends-on" }],
+      });
+      expect(closed.nodes.map((node) => node.id)).toEqual(["judgment", "predicate"]);
+      expect(closed.nodes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "predicate",
+            projectFit: {
+              context: "verified",
+              validation: "verified",
+              satisfied: true,
+            },
+          }),
+          expect.objectContaining({
+            id: "judgment",
+            projectFit: {
+              context: "not-applicable",
+              validation: "verified",
+              satisfied: true,
+            },
+          }),
+        ]),
+      );
 
-    await writeFile(
-      fixture.judgmentSourcePath,
-      staticJudgmentSource().replace("A calico animal that meows.", "A metal sculpture."),
-      "utf8",
-    );
-    const stale = await checkSemanticClosure(fixture);
-    expect(stale.status).toBe("open");
-    expect(stale.summary.stale).toBe(1);
-    expect(stale.blockers).toEqual([
-      expect.objectContaining({ nodeId: "judgment", code: "stale" }),
-    ]);
+      const originalLock = JSON.parse(
+        await readFile(fixture.lockPath, "utf8"),
+      ) as SemanticLock;
+      const legacyLock = structuredClone(originalLock);
+      const legacyEntry = Object.values(legacyLock.entries)[0];
+      if (legacyEntry === undefined) throw new Error("fixture entry is missing");
+      delete legacyEntry.promotion;
+      await writeLock(fixture.lockPath, legacyLock);
+      const legacy = await checkSemanticClosure(fixture);
+      expect(legacy).toMatchObject({
+        status: "open",
+        summary: { verificationRequired: 1, dependencyOpen: 1 },
+        projectFit: { verified: 1, required: 1, legacy: 1 },
+      });
+      expect(legacy.blockers).toEqual([
+        expect.objectContaining({
+          nodeId: "judgment",
+          code: "dependency-open",
+        }),
+        expect.objectContaining({
+          nodeId: "predicate",
+          code: "verification-required",
+        }),
+      ]);
+      await writeLock(fixture.lockPath, originalLock);
 
-    await writeFile(fixture.judgmentSourcePath, staticJudgmentSource(), "utf8");
-    const originalLock = JSON.parse(
-      await readFile(fixture.lockPath, "utf8"),
-    ) as SemanticLock;
-    await writeLock(fixture.lockPath, {
-      ...originalLock,
-      judgments: {},
-    });
-    const unlocked = await checkSemanticClosure(fixture);
-    expect(unlocked.status).toBe("open");
-    expect(unlocked.summary.unlocked).toBe(1);
+      await writeFile(
+        fixture.judgmentSourcePath,
+        staticJudgmentSource().replace("A calico animal that meows.", "A metal sculpture."),
+        "utf8",
+      );
+      const stale = await checkSemanticClosure(fixture);
+      expect(stale.status).toBe("open");
+      expect(stale.summary.stale).toBe(1);
+      expect(stale.blockers).toEqual([
+        expect.objectContaining({ nodeId: "judgment", code: "stale" }),
+      ]);
 
-    await writeLock(fixture.lockPath, originalLock);
-    await unlink(fixture.judgmentGeneratedPath);
-    const integrityError = await checkSemanticClosure(fixture);
-    expect(integrityError.status).toBe("open");
-    expect(integrityError.summary.integrityError).toBe(1);
-  });
+      await writeFile(fixture.judgmentSourcePath, staticJudgmentSource(), "utf8");
+      await writeLock(fixture.lockPath, {
+        ...originalLock,
+        judgments: {},
+      });
+      const unlocked = await checkSemanticClosure(fixture);
+      expect(unlocked.status).toBe("open");
+      expect(unlocked.summary.unlocked).toBe(1);
+
+      await writeLock(fixture.lockPath, originalLock);
+      await unlink(fixture.judgmentGeneratedPath);
+      const integrityError = await checkSemanticClosure(fixture);
+      expect(integrityError.status).toBe("open");
+      expect(integrityError.summary.integrityError).toBe(1);
+    },
+    15_000,
+  );
 
   test("rejects duplicate ids, unknown dependencies, cycles, and workspace escapes", async () => {
     const workspaceRoot = await createWorkspace();
+    await expect(
+      checkSemanticClosure({
+        manifestPath: "../outside.json",
+        workspaceRoot,
+      }),
+    ).rejects.toThrow("Semantic Closure manifest must be inside the workspace root");
+
     const cases: Array<{ name: string; nodes: unknown[]; message: string }> = [
       {
         name: "duplicate",
@@ -190,7 +251,12 @@ async function createClosureFixture(): Promise<ClosureFixture> {
   await writeFile(predicateGeneratedPath, predicateGenerated, "utf8");
   await writeFile(judgmentGeneratedPath, judgmentGenerated, "utf8");
 
-  const predicateHashes = predicateSemanticHashes(predicate);
+  const builtContext = await buildProjectContext({
+    source: predicate,
+    workspaceRoot,
+    lock: { version: 1, entries: {} },
+  });
+  const predicateHashes = predicateSemanticHashes(predicate, builtContext);
   const judgmentHashes = staticJudgmentSemanticHashes(judgment);
   const predicateEntry: SemanticLockEntry = {
     fingerprint: sha256("closure-predicate"),
@@ -207,13 +273,25 @@ async function createClosureFixture(): Promise<ClosureFixture> {
       "predicate concept",
     ),
     predicate: predicate.predicate.name,
+    targetTypeName: predicate.concept.typeName,
     provider: "fixture",
     model: "model",
     ...predicateHashes,
+    contextSummary: builtContext.summary,
     resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
     generatedCodeHash: sha256(predicateGenerated),
     response: null,
     createdAt: "2026-07-21T00:00:00.000Z",
+    promotion: {
+      mode: "auto",
+      promotedAt: "2026-07-21T00:00:00.000Z",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "passed",
+        fullTest: "passed",
+      },
+    },
   };
   const judgmentEntry: StaticJudgmentLockEntry = {
     fingerprint: sha256("closure-judgment"),
@@ -231,6 +309,16 @@ async function createClosureFixture(): Promise<ClosureFixture> {
     generatedCodeHash: sha256(judgmentGenerated),
     response: null,
     createdAt: "2026-07-21T00:00:00.000Z",
+    promotion: {
+      mode: "auto",
+      promotedAt: "2026-07-21T00:00:00.000Z",
+      validation: {
+        candidateTypecheck: "passed",
+        projectTypecheck: "passed",
+        semanticTest: "not-applicable",
+        fullTest: "passed",
+      },
+    },
   };
   const lockPath = resolve(workspaceRoot, "semantic.lock");
   await writeLock(lockPath, {

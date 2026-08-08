@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "cases": {
+    "product-master-review-ready": [
+      {
+        "name": "complete draft",
+        "input": {
+          "productCode": "P-200",
+          "displayName": "Hidden product",
+          "categoryCode": "STANDARD",
+          "lifecycle": "draft"
+        },
+        "expected": true
+      },
+      {
+        "name": "missing display name",
+        "input": {
+          "productCode": "P-200",
+          "displayName": null,
+          "categoryCode": "STANDARD",
+          "lifecycle": "draft"
+        },
+        "expected": false
+      },
+      {
+        "name": "already active",
+        "input": {
+          "productCode": "P-200",
+          "displayName": "Hidden product",
+          "categoryCode": "STANDARD",
+          "lifecycle": "active"
+        },
+        "expected": false
+      }
+    ],
+    "product-archive-review-candidate": [
+      {
+        "name": "safe archive review candidate",
+        "input": {
+          "lifecycle": "discontinued",
+          "inventoryState": "zero",
+          "openShipmentState": "none"
+        },
+        "expected": true
+      },
+      {
+        "name": "unknown inventory",
+        "input": {
+          "lifecycle": "discontinued",
+          "inventoryState": "unknown",
+          "openShipmentState": "none"
+        },
+        "expected": false
+      },
+      {
+        "name": "open shipment remains",
+        "input": {
+          "lifecycle": "discontinued",
+          "inventoryState": "zero",
+          "openShipmentState": "present"
+        },
+        "expected": false
+      }
+    ],
+    "price-record-review-ready": [
+      {
+        "name": "entered price facts",
+        "input": {
+          "currencyCode": "JPY",
+          "amountState": "entered",
+          "taxCategoryCode": "STANDARD"
+        },
+        "expected": true
+      },
+      {
+        "name": "missing tax category",
+        "input": {
+          "currencyCode": "JPY",
+          "amountState": "entered",
+          "taxCategoryCode": null
+        },
+        "expected": false
+      },
+      {
+        "name": "invalid amount fact",
+        "input": {
+          "currencyCode": "JPY",
+          "amountState": "invalid",
+          "taxCategoryCode": "STANDARD"
+        },
+        "expected": false
+      }
+    ],
+    "quantity-data-review": [
+      {
+        "name": "invalid quantity",
+        "input": {
+          "quantityState": "invalid",
+          "unitCode": "EA"
+        },
+        "expected": true
+      },
+      {
+        "name": "missing unit",
+        "input": {
+          "quantityState": "valid",
+          "unitCode": null
+        },
+        "expected": true
+      },
+      {
+        "name": "valid quantity and unit",
+        "input": {
+          "quantityState": "valid",
+          "unitCode": "EA"
+        },
+        "expected": false
+      },
+      {
+        "name": "unknown quantity with unit",
+        "input": {
+          "quantityState": "unknown",
+          "unitCode": "EA"
+        },
+        "expected": false
+      }
+    ],
+    "inventory-record-review-ready": [
+      {
+        "name": "counted inventory",
+        "input": {
+          "sku": "SKU-200",
+          "locationCode": "TOKYO",
+          "countState": "counted"
+        },
+        "expected": true
+      },
+      {
+        "name": "not counted",
+        "input": {
+          "sku": "SKU-200",
+          "locationCode": "TOKYO",
+          "countState": "not_counted"
+        },
+        "expected": false
+      },
+      {
+        "name": "missing location",
+        "input": {
+          "sku": "SKU-200",
+          "locationCode": null,
+          "countState": "counted"
+        },
+        "expected": false
+      }
+    ],
+    "inventory-discrepancy-review": [
+      {
+        "name": "assigned discrepancy",
+        "input": {
+          "discrepancyState": "detected",
+          "countedBy": "reviewer-2"
+        },
+        "expected": true
+      },
+      {
+        "name": "no discrepancy",
+        "input": {
+          "discrepancyState": "none",
+          "countedBy": "reviewer-2"
+        },
+        "expected": false
+      },
+      {
+        "name": "missing counter identity",
+        "input": {
+          "discrepancyState": "detected",
+          "countedBy": null
+        },
+        "expected": false
+      }
+    ],
+    "shipment-preparation-review-ready": [
+      {
+        "name": "queued and prepared",
+        "input": {
+          "lifecycle": "queued",
+          "destinationCode": "TOKYO",
+          "addressValidation": "valid",
+          "inventoryPreparation": "ready"
+        },
+        "expected": true
+      },
+      {
+        "name": "unknown address",
+        "input": {
+          "lifecycle": "queued",
+          "destinationCode": "TOKYO",
+          "addressValidation": "unknown",
+          "inventoryPreparation": "ready"
+        },
+        "expected": false
+      },
+      {
+        "name": "inventory not ready",
+        "input": {
+          "lifecycle": "queued",
+          "destinationCode": "TOKYO",
+          "addressValidation": "valid",
+          "inventoryPreparation": "not_ready"
+        },
+        "expected": false
+      }
+    ],
+    "shipment-exception-review": [
+      {
+        "name": "assigned open exception",
+        "input": {
+          "exceptionState": "open",
+          "assigneeId": "operator-2"
+        },
+        "expected": true
+      },
+      {
+        "name": "no exception",
+        "input": {
+          "exceptionState": "none",
+          "assigneeId": "operator-2"
+        },
+        "expected": false
+      },
+      {
+        "name": "unassigned exception",
+        "input": {
+          "exceptionState": "open",
+          "assigneeId": null
+        },
+        "expected": false
+      }
+    ]
+  }
+}

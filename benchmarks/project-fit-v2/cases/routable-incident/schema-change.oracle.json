@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "priority": "p0",
+        "lifecycle": "active",
+        "ownership": {
+          "agentId": "agent-7"
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "resolved",
+      "input": {
+        "priority": "p0",
+        "lifecycle": "resolved",
+        "ownership": {
+          "agentId": "agent-7"
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "unowned",
+      "input": {
+        "priority": "p0",
+        "lifecycle": "active"
+      },
+      "expected": false
+    }
+  ]
+}

@@ -11,7 +11,10 @@ import {
   type OpenAIRequestInput,
   type OpenAIResult,
 } from "./openai";
-import { scanSemanticSource, type SemanticSource } from "./semantic-source";
+import {
+  scanBenchmarkSource,
+  type BenchmarkSemanticSource,
+} from "./semantic-source";
 
 export type BenchmarkResolver = (
   input: OpenAIRequestInput,
@@ -95,7 +98,7 @@ type TrialResult = {
 type PreparedCase = {
   id: string;
   sourcePath: string;
-  source: SemanticSource;
+  source: BenchmarkSemanticSource;
   oracle: Oracle;
   hiddenCases: HiddenCase[];
   manualPath: string | null;
@@ -284,7 +287,7 @@ async function prepareCase(
   directory: string,
 ): Promise<PreparedCase> {
   const sourcePath = resolve(directory, entry.source);
-  const source = await scanSemanticSource(sourcePath);
+  const source = await scanBenchmarkSource(sourcePath);
   const oracleValue = await readJson(resolve(directory, entry.oracle));
   const oracle = parseOracle(oracleValue);
   const hiddenCases = parseHiddenCases(
@@ -508,9 +511,6 @@ function validateProtocol(
     if (freeze[entry.source.concept.id] !== entry.source.concept.hash) {
       throw new Error(`frozen concept hash mismatch: ${entry.source.concept.id}`);
     }
-    if (entry.source.tests.acceptSource !== "[]" || entry.source.tests.rejectSource !== "[]") {
-      throw new Error(`${entry.id}: benchmark source must not contain oracle cases`);
-    }
     if (
       entry.oracle.expectedOutcome === "resolved" &&
       entry.hiddenCases.length === 0
@@ -595,35 +595,34 @@ function compareHumanTimes(
   thresholds: BenchmarkManifest["thresholds"],
 ) {
   const values = Object.values(entries);
-  const complete = values.every((entry) =>
-    [
-      entry.manualAuthoringMs,
-      entry.manualReviewMs,
-      entry.semanticAuthoringMs,
-      entry.semanticReviewMs,
-    ].every((value) => typeof value === "number"),
-  );
-  if (!complete) {
-    return {
-      status: "pending" as const,
-      passed: null,
-      manualTotalMs: null,
-      semanticTotalMs: null,
-      reduction: null,
-      targetReduction: thresholds.targetManualTimeReduction,
-      reason: "Human manual and semantic authoring/review times have not been measured; null values are never estimated.",
-    };
+  let manualTotalMs = 0;
+  let semanticTotalMs = 0;
+  for (const entry of values) {
+    const {
+      manualAuthoringMs,
+      manualReviewMs,
+      semanticAuthoringMs,
+      semanticReviewMs,
+    } = entry;
+    if (
+      typeof manualAuthoringMs !== "number" ||
+      typeof manualReviewMs !== "number" ||
+      typeof semanticAuthoringMs !== "number" ||
+      typeof semanticReviewMs !== "number"
+    ) {
+      return {
+        status: "pending" as const,
+        passed: null,
+        manualTotalMs: null,
+        semanticTotalMs: null,
+        reduction: null,
+        targetReduction: thresholds.targetManualTimeReduction,
+        reason: "Human manual and semantic authoring/review times have not been measured; null values are never estimated.",
+      };
+    }
+    manualTotalMs += manualAuthoringMs + manualReviewMs;
+    semanticTotalMs += semanticAuthoringMs + semanticReviewMs;
   }
-  const manualTotalMs = values.reduce(
-    (sum, entry) =>
-      sum + entry.manualAuthoringMs! + entry.manualReviewMs!,
-    0,
-  );
-  const semanticTotalMs = values.reduce(
-    (sum, entry) =>
-      sum + entry.semanticAuthoringMs! + entry.semanticReviewMs!,
-    0,
-  );
   const reduction = (manualTotalMs - semanticTotalMs) / manualTotalMs;
   return {
     status: "measured" as const,

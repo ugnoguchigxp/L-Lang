@@ -1,7 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   mkdir,
-  readFile,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -9,38 +8,44 @@ import { basename, dirname, extname, relative, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
+import { type PredicateExpression, parsePredicateDefinition } from "./ir";
 import { renderSemanticTestModule } from "./judgement-renderer";
-import { parsePredicateDefinition, type PredicateExpression } from "./ir";
-import { PREDICATE_PROMPT_VERSION, type OpenAIResult } from "./openai";
+import type { OpenAIResult } from "./openai";
 import {
-  classifySemanticChange,
-  renderSemanticDiff,
-  type SemanticDiff,
-} from "./semantic-diff";
+  buildProjectContext,
+  type BuiltProjectContext,
+  type ProjectContextSummary,
+  type ProjectContext,
+} from "./project-context";
 import type {
   SemanticCommandRunner,
   SemanticResolution,
 } from "./semantic-compiler";
 import {
+  fingerprintFor,
+  predicateSemanticHashes,
+  type PredicateSemanticHashes,
+} from "./semantic-fingerprint";
+import {
   resolveWithSemanticConsensus,
   type SemanticConsensusResult,
 } from "./semantic-consensus";
 import {
+  classifySemanticChange,
+  renderSemanticDiff,
+  type SemanticDiff,
+} from "./semantic-diff";
+import { readBoundedJsonFile } from "./semantic-limits";
+import {
   findReplayEntry,
   readSemanticLock,
-  writeSemanticLock,
+  readSemanticLockSnapshot,
   type SemanticLockEntry,
 } from "./semantic-lock";
 import { promoteSemanticArtifact } from "./semantic-promotion";
-import { scanSemanticSource, type SemanticSource } from "./semantic-source";
+import { type SemanticSource, scanSemanticSource } from "./semantic-source";
 
-export type EvolutionHashes = {
-  conceptHash: string;
-  sourceHash: string;
-  typeHash: string;
-  testHash: string;
-  promptHash: string;
-};
+export type EvolutionHashes = PredicateSemanticHashes;
 
 export type SemanticEvolutionCandidate = {
   version: 1;
@@ -57,6 +62,8 @@ export type SemanticEvolutionCandidate = {
   baselineFingerprint: string;
   proposedFingerprint: string;
   hashes: EvolutionHashes;
+  targetTypeName: string;
+  contextSummary: ProjectContextSummary;
   previousIr: PredicateExpression;
   candidateIr: PredicateExpression | null;
   generatedCodeHash: string | null;
@@ -92,6 +99,7 @@ export type CheckSemanticEvolutionOptions = {
     functionName: string;
     parameterName: string;
     typeName: string;
+    projectContext?: ProjectContext;
   }) => Promise<SemanticResolution>;
 };
 
@@ -114,9 +122,20 @@ export async function checkSemanticEvolution(
 ): Promise<CheckSemanticEvolutionResult> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanSemanticSource(options.sourcePath);
-  const prepared = prepareInput(source, workspaceRoot, options.provider, options.model);
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
   const lock = await readSemanticLock(lockPath);
+  const builtContext = await buildProjectContext({
+    source,
+    workspaceRoot,
+    lock,
+  });
+  const prepared = prepareInput(
+    source,
+    workspaceRoot,
+    options.provider,
+    options.model,
+    builtContext,
+  );
   const current = findReplayEntry(lock, {
     source: prepared.source,
     predicate: source.predicate.name,
@@ -148,6 +167,7 @@ export async function checkSemanticEvolution(
     functionName: source.predicate.name,
     parameterName: source.predicate.parameterName,
     typeName: source.concept.typeName,
+    projectContext: builtContext.context,
   };
   const samples = options.samples ?? 1;
   const quorum = options.quorum ?? 1;
@@ -215,6 +235,8 @@ export async function checkSemanticEvolution(
     baselineFingerprint: baseline.fingerprint,
     proposedFingerprint: prepared.fingerprint,
     hashes: prepared.hashes,
+    targetTypeName: source.concept.typeName,
+    contextSummary: builtContext.summary,
     previousIr: baseline.resolvedIr,
     candidateIr,
     generatedCodeHash: generatedCode.length === 0 ? null : sha256(generatedCode),
@@ -265,7 +287,10 @@ export async function readSemanticEvolutionCandidate(
   }
   const candidateDirectory = resolve(root, candidateId);
   const candidate = parseCandidate(
-    JSON.parse(await readFile(resolve(candidateDirectory, "candidate.json"), "utf8")) as unknown,
+    await readBoundedJsonFile(
+      resolve(candidateDirectory, "candidate.json"),
+      "semantic evolution candidate",
+    ),
   );
   if (candidate.id !== candidateId) throw new Error("candidate id does not match its directory");
   return { candidate, candidateDirectory };
@@ -301,15 +326,29 @@ export async function approveSemanticEvolution(
 
   const sourcePath = resolve(workspaceRoot, candidate.source);
   const source = await scanSemanticSource(sourcePath);
-  const prepared = prepareInput(source, workspaceRoot, candidate.provider, candidate.model);
+  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const { lock, revision: lockRevision } =
+    await readSemanticLockSnapshot(lockPath);
+  const builtContext = await buildProjectContext({
+    source,
+    workspaceRoot,
+    lock,
+  });
+  const prepared = prepareInput(
+    source,
+    workspaceRoot,
+    candidate.provider,
+    candidate.model,
+    builtContext,
+  );
   if (
     prepared.fingerprint !== candidate.proposedFingerprint ||
-    stableJson(prepared.hashes) !== stableJson(candidate.hashes)
+    stableJson(prepared.hashes) !== stableJson(candidate.hashes) ||
+    candidate.targetTypeName !== source.concept.typeName ||
+    stableJson(candidate.contextSummary) !== stableJson(builtContext.summary)
   ) {
     throw new Error("candidate is stale: semantic source changed after check");
   }
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
-  const lock = await readSemanticLock(lockPath);
   const baseline = lock.entries[candidate.baselineFingerprint];
   if (baseline === undefined) {
     throw new Error("candidate baseline is no longer present in semantic.lock");
@@ -354,9 +393,11 @@ export async function approveSemanticEvolution(
     conceptId: candidate.conceptId,
     conceptSource: candidate.conceptSource,
     predicate: candidate.predicate,
+    targetTypeName: candidate.targetTypeName,
     provider: candidate.provider,
     model: candidate.model,
     ...candidate.hashes,
+    contextSummary: candidate.contextSummary,
     resolvedIr: candidate.candidateIr,
     generatedCodeHash: candidate.generatedCodeHash,
     response: candidate.response,
@@ -380,6 +421,8 @@ export async function approveSemanticEvolution(
     generatedCode,
     lockPath,
     nextLock: lock,
+    expectedLockHash: lockRevision,
+    command: "approve",
     runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
   });
 
@@ -397,6 +440,7 @@ function prepareInput(
   workspaceRoot: string,
   provider: string,
   model: string,
+  builtContext: BuiltProjectContext,
 ) {
   const sourceRelative = insideWorkspace(
     workspaceRoot,
@@ -408,39 +452,15 @@ function prepareInput(
     source.concept.definitionPath,
     "concept definition",
   );
-  const requestShape = {
-    specification: source.concept.specification,
-    typeScriptSource: source.concept.typeDeclaration,
-    target: {
-      functionName: source.predicate.name,
-      parameterName: source.predicate.parameterName,
-      typeName: source.concept.typeName,
-    },
-  };
-  const hashes: EvolutionHashes = {
-    conceptHash: source.concept.hash,
-    sourceHash: sha256(source.sourceText),
-    typeHash: sha256(stableJson({
-      declaration: source.concept.typeDeclaration,
-      schema: source.concept.typeSchema,
-    })),
-    testHash: sha256(stableJson({
-      accept: source.tests.acceptSource,
-      reject: source.tests.rejectSource,
-    })),
-    promptHash: sha256(stableJson({
-      version: PREDICATE_PROMPT_VERSION,
-      ...requestShape,
-    })),
-  };
-  const fingerprint = sha256(stableJson({
+  const hashes = predicateSemanticHashes(source, builtContext);
+  const fingerprint = fingerprintFor({
     source: sourceRelative,
     predicate: source.predicate.name,
     conceptId: source.concept.id,
     provider,
     model,
     ...hashes,
-  }));
+  });
   const outputStem = kebabCase(source.predicate.name);
   return {
     source: sourceRelative,
@@ -509,6 +529,9 @@ async function validateCandidate(input: {
     predicateName: input.source.predicate.name,
     acceptSource: input.source.tests.acceptSource,
     rejectSource: input.source.tests.rejectSource,
+    boundarySource: input.source.tests.boundarySource,
+    counterfactualSource: input.source.tests.counterfactualSource,
+    invarianceSource: input.source.tests.invarianceSource,
   });
   await writeFile(resolve(input.candidateDirectory, "candidate.test.ts"), candidateTest, "utf8");
   await writeFile(candidatePath, input.code, "utf8");

@@ -1,114 +1,152 @@
-# L-Lang — Staged Semantic TypeScript MVP
+# L-Lang — Staged Semantic TypeScript
 
-[English](./README.en.md) | [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) | [Contributing](./CONTRIBUTING.md) | [MIT License](./LICENSE)
+[English](./README.en.md) · [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) · [Post-MVP実装計画](./POST_MVP_IMPLEMENTATION_PLAN.md) · [セキュリティ](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
 
-> **意味を一度書く。環境ごとのStaticなロジックへコンパイルする。**<br>
-> LLMの柔軟さをコンパイル時に、TypeScriptの確実さを実行時に。
+> **抽象的な意図を、Projectの型・テスト・履歴にフィットする決定的なTypeScriptへ変換する。**
+>
+> Vibe codingの速度を保ちつつ、LLMの柔軟さをbuild時の検証可能な変換へ閉じ込める。
 
-L-Langは、LLMを実行時のエージェントではなく、**コンパイル時の柔軟な意味判定器**として使うTypeScript DSLです。人間は「何を満たすべきか」というConcept、Goal、Constraintを抽象的に記述し、LLMが対象の型・環境・要件に合わせて制限IRへ具体化します。コンパイラはそのIRを型検査とテストで検証し、通常のStaticなTypeScriptとして固定します。
+L-Langは、自然言語で記述したConceptを、Project固有のTypeScript型、Semantic Test、既存の意味履歴へ適応したpureなBoolean PredicateやStaticなboolean定数へ変換する研究用コンパイラ／TypeScript DSLです。細部をすべて命令しなくても、Projectが持つ文脈から実装を具体化できることを中心価値とします。
 
-従来のプログラムが、個別環境に合わせたロジックそのものを実装資産としてきたのに対し、L-Langは**意味と意図を再利用可能な実装資産にする**ことを目指します。同じ抽象的な定義から、プロジェクトごとに異なる型、命名、表現へ適応した決定的ロジックを生成します。実行時の生成コードはLLMやDSLに依存しません。
+LLMは自由なコードを生成しません。コンパイル時に制限されたSemantic IRを返し、L-Langが型文脈、Semantic Test、プロジェクト全体のテストで検証した後、通常のTypeScriptへ決定的に変換します。生成コードはruntimeでLLM、L-Lang DSL、API keyを必要としません。
 
-> Status: 研究・検証段階のMVPです。現在はpureなBoolean Predicate生成と、literalなStatic値に対するboolean Static Judgmentを実装しています。生成物を無条件に本番コードとして扱わないでください。
+> [!IMPORTANT]
+> 現在は研究・検証段階のMVPです。`semantic build`は、制限IR、型文脈、Semantic Test、Project全体の回帰検証に成功すると、生成物と`semantic.lock`を**自動昇格**します。Semantic TDDでもTest Planのtrace、Red Certificate、Mutation検出を機械的に検証します。信頼境界は、Project contextへの適合を検査するGateです。
+> Semantic TDDのTest Planも、trace・型・Red検証後にImplementation生成前の自動freezeを行います。
 
-現在地、原案との対応状況、未実装領域、次の評価手順は[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)にまとめています。
+## 1. L-Langが解こうとしている問題
 
-## L-Langが目指すもの
+通常のソフトウェアでは、同じ業務上の意味をスキーマごとに別の条件式として実装します。
 
 ```text
-従来:
-  環境ごとのStaticなロジックを人間が直接実装し、コードを再利用する
-
-L-Lang:
-  意味・目的・制約を人間が定義し、
-  LLMがコンパイル時に環境へ適応させ、
-  検証済みのStaticなTypeScriptとして固定する
+Storefront: customer.status === "active" && customer.email !== null
+Back office: account.enabled === true && account.contactAddress !== null
+Legacy:     record.stateCode === 1 && record.deletedAt === null
 ```
 
-これは自然言語をそのまま実行する仕組みではありません。LLMの判断はbuild/check時にだけ使用され、制限IR、型検査、Semantic Test、人間承認を通過した決定的コードだけがruntimeへ進みます。
+L-Langでは、再利用する中心資産を「個別の条件式」から「意味、目的、制約」へ移します。
 
-## 必要環境
+```text
+Projectが与える文脈
+  Concept + 型 + Semantic Test + 既存の履歴
+                         │
+                         ▼ build時のみ
+              LLMによる型への意味対応付け
+                         │
+                         ▼
+                 制限されたPredicate IR
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
+   型文脈・テストで検証          曖昧ならunresolved
+          │
+          ▼
+   決定的な通常のTypeScript
+```
 
-- Bun 1.3以降
-- live実行時のみOpenAI APIまたはAzure OpenAI API key
-- fixtureテスト、lock replay、`semantic explain`、`semantic closure`にはAPI key不要
+同じConceptを異なる型へbindingすることで、命名や表現が異なる環境ごとのStaticな実装を生成できます。この性質を、このプロジェクトでは**Semantic Polymorphism**と呼びます。
 
-## クイックスタート
+## 2. 対象と非対象
 
-APIを呼ばない完全な統合確認:
+### 適している用途
+
+- 抽象的な要求からProjectに馴染む実装を得るVibe coding
+- LLMをコンパイラの一段階として安全に利用する研究
+- pureで決定的なBoolean Predicate
+- 同じConceptを異なるTypeScriptスキーマへ適応する実験
+- スキーマ変更へ抽象的なIntentを再適応する実験
+- build時に確定できる自然言語値のboolean Static Judgment
+- LLM出力を制限IR、型、テスト、lock、監査ログで囲う検証
+
+### 適していない用途
+
+- 認証・認可
+- 金額、請求、会計計算
+- 暗号処理
+- DB transactionや排他制御
+- network、filesystem、secretへの副作用
+- runtimeでのLLM判断
+- 自由なTypeScriptや任意関数の生成
+
+これらは人間が所有する通常のTypeScript、すなわちExact Codeに残してください。
+
+## 3. 現在の実装範囲
+
+| 領域 | 状態 | 現在の範囲 |
+| --- | --- | --- |
+| Predicate生成 | 実装済み | Conceptとローカルrecord型からpureなboolean関数を生成 |
+| Semantic IR | 実装済み | `all`、`any`、`not`、`equals`、`present` |
+| Semantic Test | 実装済み | `accept` / `reject`、boundary、counterfactual、invariance |
+| Semantic Polymorphism | 実装済み | 共有Conceptを複数スキーマへbinding |
+| Static Judgment | MVP実装済み | literalな文字列値をboolean定数へ固定。blind benchmarkのfreeze・Oracle分離・fixture harnessを実装 |
+| Lock / Replay | 実装済み | `semantic.lock`からAPIなしで決定的に再生成 |
+| Candidate staging | 互換機能 | 必要な場合だけ`build --review → diff → approve` |
+| Schema Evolution | 実装・評価中 | 型付き2/3 consensus、diff、明示approve |
+| Explain | 実装済み | lock、入力hash、生成物整合性を読み取り専用で説明 |
+| Semantic Closure | Project Fit-aware | 明示manifest、Context・検証provenance、依存状態を一括検査 |
+| Semantic Verify | 実装済み | Closure、決定的再生成、Semantic Test、typecheckをread-onlyで統合 |
+| Semantic TDD | Predicate POC実装済み | Contract trace、Test IR、Red Certificate、Test Plan自動freeze、Selection Report、read-only検証 |
+| 任意コード・副作用生成 | 非対応 | 設計上の非目標 |
+
+詳細な進捗、未証明の仮説、次の評価Gateは[PROJECT_STATUS_AND_ROADMAP.md](./PROJECT_STATUS_AND_ROADMAP.md)を参照してください。
+
+## 4. 必要環境
+
+- [Bun](https://bun.sh/) 1.3以降
+- TypeScript 5.9（`bun install`で導入）
+- live解決時のみOpenAI APIまたはAzure OpenAI API key
+
+fixture、lock replay、`semantic explain`、`semantic closure`、`semantic verify`にはAPI keyは不要です。
+
+## 5. APIを使わないクイックスタート
 
 ```bash
+git clone <repository-url>
+cd L-Lang
 bun install
+
+bun run typecheck
+bun test
+```
+
+保存済みのOpenAI応答fixtureを使って、Predicateをbuildします。
+
+```bash
 bun run semantic build examples/active-customer/semantic.ts \
   --fixture examples/active-customer/openai-response.fixture.json
 ```
 
-実際のOpenAI APIまたはAzure OpenAIを使う場合:
+このコマンドは通常の`build`と同じ自動昇格経路を使い、検証成功後に次を確定します。
 
-```bash
-cp .env.example .env
-# .envへ接続情報を設定
-bun run semantic build examples/active-customer/semantic.ts
-```
+- `examples/active-customer/is-active-customer.generated.ts`
+- `semantic.lock`
+- `.semantic/candidates/<run-id>/`の監査記録
 
-同じ入力をAPI呼び出しなしで再現する場合:
-
-```bash
-bun run semantic replay examples/active-customer/semantic.ts
-```
-
-通常の`semantic build`は、すべての機械検証とfull testが成功すると生成物と`semantic.lock`を自動適用します。適用前に人間Reviewを挟む場合だけ`--review`を明示します。
-
-```bash
-bun run semantic build examples/active-customer/semantic.ts --review \
-  --fixture examples/active-customer/openai-response.fixture.json
-bun run semantic diff <review-id>
-bun run semantic approve <review-id> --reviewer <id>
-```
-
-`build --review`はPredicateとStatic Judgmentの両方に対応します。検証済みcandidateを`.semantic/reviews/`へ保存しますが、この時点ではtracked生成物とlockを変更しません。`approve`時にsource、baseline、hash、candidateを再検証し、同じpromotion transactionを通過した後だけ適用します。
-
-Static JudgmentをAPIなしのfixtureで定数化し、lockから再現する場合:
-
-```bash
-bun run semantic:judgment:fixture
-bun run semantic:judgment:replay
-```
-
-lock済みのPredicateまたはStatic JudgmentをAPIなし・読み取り専用で説明する場合:
+lock済みの意味と生成物整合性を、APIなし・読み取り専用で確認できます。
 
 ```bash
 bun run semantic explain examples/active-customer/semantic.ts
-bun run semantic explain examples/static-judgment/semantic.ts
-
-# 機械可読なpretty JSON
-bun run semantic explain examples/active-customer/semantic.ts --json
-```
-
-複数のSemantic nodeをAPIなし・読み取り専用で一括検査する場合:
-
-```bash
 bun run semantic:closure
-
-# 機械可読なpretty JSON
-bun run semantic closure semantic-closure.json --json
+bun run semantic:verify
 ```
 
-解釈された判定と、各ケースの入力・期待値・実際の判定を表示する場合:
+## 6. 30秒で分かるTypeScript DSL
 
-```bash
-bun run semantic:test
-# または任意のソースを指定
-bun run semantic test examples/active-customer/semantic.ts
-```
-
-`bun test`は生成済みの通常のTypeScriptコードを検査します。意味解釈まで確認する場合は`semantic:test`を使用します。
-
-## TypeScript内DSL
-
-`examples/active-customer/semantic.ts`が概念、対象型、生成対象、意味テストの唯一の入力です。
+Semantic sourceには、対象型、Concept、生成対象、Semantic Testを置きます。
 
 ```ts
+import {
+  concept,
+  generatePredicate,
+  semanticTest,
+} from "../../src/dsl";
+
+type Customer = {
+  status: "active" | "suspended";
+  deletedAt: string | null;
+  email: string | null;
+};
+
 const ActiveCustomer = concept<Customer>`
 Definition:
 An active customer is permitted to use the service.
@@ -131,41 +169,203 @@ Leave unresolved when:
 export const isActiveCustomer = generatePredicate(ActiveCustomer);
 
 semanticTest(isActiveCustomer, {
-  accept: [{ status: "active", deletedAt: null, email: "a@example.com" }],
-  reject: [{ status: "active", deletedAt: null, email: null }],
+  accept: [
+    { status: "active", deletedAt: null, email: "a@example.com" },
+  ],
+  reject: [
+    { status: "suspended", deletedAt: null, email: "a@example.com" },
+    { status: "active", deletedAt: null, email: null },
+  ],
 });
 ```
 
-Compiler APIとTypeCheckerがこのソースから型宣言と閉じた意味グラフを抽出します。LLMへ渡すのは概念と対象型だけで、`semanticTest`の値は渡しません。
+LLMへ送るのは、Concept specification、対象のTypeScript型宣言、生成対象のメタデータだけです。`semanticTest`の値はモデルへ送らず、解決後の独立した検証に使用します。
 
-Concept本文は名前付きセクションで記述します。`Definition`だけが常に必須で、残り4セクションは意味上必要な場合だけ記述します。
+生成物は通常のTypeScriptです。
 
 ```ts
-export const FulfillableOrder = defineConcept("order.fulfillable")`
+// Generated by staged-semantic-typescript-mvp. Do not edit.
+import type { Customer } from "./semantic";
+
+export function isActiveCustomer(customer: Customer): boolean {
+  return (
+    customer.status === "active" &&
+    customer.deletedAt === null &&
+    (customer.email !== null && customer.email !== undefined)
+  );
+}
+```
+
+## 7. Concept specification
+
+Concept本文は名前付きセクションで記述します。
+
+| セクション | 必須 | 意味 |
+| --- | --- | --- |
+| `Definition` | 常に必須 | Conceptの中心的な定義 |
+| `Requirements` | Predicateではどちらか必須 | 成立に必要な条件 |
+| `Exclusions` | Predicateではどちらか必須 | 明示的に除外する条件 |
+| `Out of scope` | 任意 | このConceptが判断しないこと |
+| `Leave unresolved when` | 任意 | 推測せず停止すべき曖昧さ |
+
+存在するセクションは表の順序を守り、リスト項目は1行の`- item`形式で記述します。次はLLMやfixture resolverを呼ぶ前にコンパイルエラーになります。
+
+- `Definition`の欠落
+- 未知、重複、空、順序違反のセクション
+- 未分割の自由文
+- 旧TOML形式
+- template substitution
+- Predicateで`Requirements`と`Exclusions`が両方ないConcept
+
+Static Judgmentは、単純な分類に限り`Definition`だけのConceptも使用できます。
+
+## 8. 共有ConceptとSemantic Polymorphism
+
+型に依存しないConceptを一度定義します。
+
+```ts
+// concepts/active-customer.ts
+import { defineConcept } from "../src/dsl";
+
+export const ActiveCustomer = defineConcept("customer.active")`
 Definition:
-An order eligible for fulfillment intake.
+A customer that is currently permitted to use the service.
 
 Requirements:
-- Payment is confirmed.
-- A destination is present.
+- The account is enabled.
+- A usable contact method is present.
 
 Exclusions:
-- Cancelled orders.
-- Held orders.
-
-Out of scope:
-- Inventory availability.
+- Suspended or deleted accounts.
 
 Leave unresolved when:
 - A required semantic role cannot be mapped uniquely.
 `;
 ```
 
-`Requirements`、`Exclusions`、`Out of scope`、`Leave unresolved when`は任意です。ただし、存在するセクションは上記の順序を守り、`- item`形式の1行項目を1つ以上必要とします。`generatePredicate`では操作可能な判定条件として`Requirements`または`Exclusions`の少なくとも一方が必須です。`judgeStatic`ではDefinitionだけの単純なConceptも使用できます。未知・重複・空のセクション、旧TOML、未分割の自由文は、resolverやLLMを呼ぶ前にコンパイルエラーになります。型と`semanticTest`はTypeScript側に残るため、`null`と`undefined`も区別できます。
+各スキーマ側でbindingします。
 
-## Static Judgment
+```ts
+const ActiveServiceAccount =
+  bindConcept<ServiceAccount>(ActiveCustomer);
 
-コンパイル時に存在する具体的な自然言語値をConceptに照らして判断し、通常のboolean定数へ固定できます。
+export const isActiveServiceAccount =
+  generatePredicate(ActiveServiceAccount);
+```
+
+実行可能な例:
+
+```bash
+bun run semantic:test:customer-schema
+bun run semantic:test:account-schema
+bun run semantic:fulfillment:test
+```
+
+関連するソースは[`examples/semantic-polymorphism/`](./examples/semantic-polymorphism/)と[`examples/order-fulfillment/`](./examples/order-fulfillment/)にあります。
+
+## 9. 自動適応とPromotion
+
+通常経路は、Project contextへ適応した候補を機械検証し、そのまま確定します。
+
+| 経路 | 用途 | 生成物とlockの更新 |
+| --- | --- | --- |
+| `semantic build` | 既定のVibe coding経路 | 機械検証成功後に自動昇格 |
+| `semantic build --review` | 互換用のcandidate staging | build時は候補保存のみ。`approve`時に昇格 |
+| `semantic replay` | lock済み結果の再現 | 検証後に生成物を確定 |
+| `semantic check` | Schema変更への再適応 | consensus済みcandidateを作成 |
+| `semantic approve` | staged candidateの明示適用 | 再検証後に昇格 |
+
+### 既定の自動昇格
+
+```bash
+bun run semantic build <semantic-source.ts>
+```
+
+lock missではLLMを1回呼び、候補が次の全検証を通ると、生成物と`semantic.lock`を自動更新します。
+
+1. IRの厳格parse
+2. TypeScript型文脈でのproperty pathとliteral検証
+3. 決定的コード生成
+4. candidate専用typecheck
+5. candidate専用Semantic Test
+6. プロジェクト全体typecheck
+7. プロジェクト全体テスト
+8. lock書き込み
+
+失敗した場合は昇格せず、既存の生成物とlockを復元します。
+
+### 互換用のcandidate staging
+
+```bash
+bun run semantic build <semantic-source.ts> --review
+bun run semantic diff <review-id>
+bun run semantic approve <review-id> --reviewer <id>
+```
+
+`--review`は既存ワークフローとの互換性のために残すstaging機能です。検証済みcandidateとdiffを`.semantic/reviews/`へ保存し、明示適用までtracked生成物と`semantic.lock`を変更しません。L-Langの中心経路と価値提案は、通常の`semantic build`による自動適応です。
+
+### Semantic TDD（Predicate POC）
+
+Semantic TDDは、Contractと型だけからTest Planを独立生成し、trace・型・実装前Red検証後に`semantic-test.lock`へ自動freezeしてからImplementationを生成します。
+
+```bash
+# Test Planを機械検証・自動freezeしてからImplementationを生成
+bun run semantic tdd-build examples/active-customer/semantic.ts \
+  --test-fixture examples/active-customer/semantic-test-response.fixture.json \
+  --fixture examples/active-customer/openai-response.fixture.json
+
+# API・書き込みなしで整合性を検証、またはlockから再実行
+bun run semantic tdd-test examples/active-customer/semantic.ts
+bun run semantic tdd-replay examples/active-customer/semantic.ts
+```
+
+`tdd-build`はTest SynthesizerへImplementation IR、生成TypeScript、候補ごとの結果を渡しません。自動freezeは全Hard clause traceと実装前Redを必須とします。`tdd-plan → diff → approve`は既存ワークフロー向けの互換用stagingです。`tdd-test`はContract、両lock、生成物hash、Red Certificate、Selection Reportを読み取り専用で照合します。
+
+## 10. CLIリファレンス
+
+| コマンド | API | 主な動作 |
+| --- | --- | --- |
+| `semantic build <source>` | lock miss時のみ | PredicateまたはStatic Judgmentをbuildし、既定で自動昇格 |
+| `semantic build <source> --review` | lock miss時のみ | 検証済みreview candidateを保存 |
+| `semantic replay <source>` | 呼ばない | 一致するlock entryから再生成・再検証 |
+| `semantic test <source>` | 呼ばない | lock済みPredicateの解釈とSemantic Testを実行 |
+| `semantic check <source>` | 変更時に呼ぶ | Schema Evolution candidateを2/3 consensusで作成 |
+| `semantic diff <candidate-id>` | 呼ばない | review/evolution candidateを表示 |
+| `semantic approve <candidate-id> --reviewer <id>` | 呼ばない | candidateを再検証して昇格 |
+| `semantic explain <source>` | 呼ばない | source、lock、生成物を読み取り専用で説明 |
+| `semantic closure <manifest>` | 呼ばない | Context・検証provenanceを含む複数artifactを読み取り専用で検査 |
+| `semantic verify <manifest>` | 呼ばない | Closure、決定的再生成、Semantic Test、typecheckを一括検証 |
+| `semantic tdd-plan <source>` | fixture時は0、live時は1 | staged freeze用の実装非参照Test Plan candidateを保存 |
+| `semantic tdd-build <source>` | 各lock miss時のみ | Test Planを先に機械検証・freezeし、Predicate候補を検証・昇格 |
+| `semantic tdd-test <source>` | 呼ばない | Test Plan、Implementation、生成物、証明artifactを読み取り専用検証 |
+| `semantic tdd-replay <source>` | 呼ばない | 両lockからSemantic TDD transactionを再実行 |
+
+### Fixture
+
+`build`と`check`は、保存済みResponses API応答を使用できます。
+
+```bash
+bun run semantic build <source> --fixture <response.json>
+bun run semantic check <source> --fixture <response.json>
+```
+
+Fixture利用時はAPI callとして数えません。
+
+### Consensus
+
+`semantic check`の既定値は3 samples / quorum 2です。応答は並列取得され、型付きSemantic signatureが2票揃った場合だけ候補を確定します。
+
+```bash
+# 既定の2/3 consensus
+bun run semantic check <source>
+
+# 旧来の単発方式
+bun run semantic check <source> --samples 1 --quorum 1
+```
+
+## 11. Static Judgment
+
+build時に存在するliteralな自然言語値をConceptに照らして判断し、通常のboolean定数へ固定できます。
 
 ```ts
 import { judgeStatic, staticValue } from "../../src/dsl";
@@ -178,244 +378,264 @@ const mike = staticValue(`
 export const mikeIsCat = judgeStatic(mike, Cat);
 ```
 
-生成物には、検証済みのbooleanだけが残ります。
+生成物:
 
 ```ts
 // Generated by the semantic compiler. Do not edit.
 export const mikeIsCat = true as const;
 ```
 
-Static JudgmentのMVPは、1 sourceにつき1つの`staticValue`と`judgeStatic`を扱います。`staticValue`は文字列literalまたはsubstitutionを含まないtemplate literalだけを受理します。runtime変数、関数戻り値、template substitutionはresolver実行前に拒否します。
+APIなしのfixture buildとlock replay:
 
-判断結果は`semantic.lock`の`judgments`へ保存されます。Concept、Static値、Prompt versionが一致する場合、`semantic replay`はAPIやresolverを使わず同じ生成コードhashを再現します。監査ログは`.semantic/judgments/`へ保存されます。
+```bash
+bun run semantic:judgment:fixture
+bun run semantic:judgment:replay
+```
 
-## Semantic Explain
+blind benchmark基盤は、model input、Oracle、3回分のfixtureを別ファイルとして扱い、manifestを含む全入力のfreeze hashが一致する場合だけread-only評価を実行します。manifestの`profile`は`fixture`または`held-out`で、`held-out`は正確に48 caseを要求します。
 
-`semantic explain`は現在のSemantic source、`semantic.lock`、生成済みTypeScriptだけを読み、PredicateとStatic Judgmentを同じコマンドで説明します。新しい意味判断、API呼び出し、resolver実行、build/replay、lock更新、audit作成は行いません。
+```bash
+bun run benchmark:static-judgment:fixture -- <manifest> --json
+```
 
-出力には、Concept ID・hash・source、判断対象の型またはStatic value hash、lockに保存されたPredicate IRまたはboolean、provider/model・response metadata・作成日時、lock fingerprint、生成物の期待hash・実hashを含みます。filesystem pathはworkspace相対です。Static value本文、Concept specification全文、raw model response、人間承認の推測は含めません。
+Oracleとexpected理由はmodel requestへ含めません。fixture runnerのreportはprofileに関係なく`evidenceEligible: false`です。fixture成功はharnessの検証であり、model精度の証拠ではありません。現在は1 sourceにつき1つの`staticValue`と`judgeStatic`、boolean結果だけを扱います。runtime変数、関数戻り値、template substitutionはresolver実行前に拒否します。48 caseの独立dataset作成とlive判断精度評価は未完了です。
 
-statusは次の4種類です。
+## 12. ExplainとClosure
+
+### Semantic Explain
+
+```bash
+bun run semantic explain examples/active-customer/semantic.ts
+bun run semantic explain examples/static-judgment/semantic.ts
+bun run semantic explain examples/active-customer/semantic.ts --json
+```
+
+`explain`はsource、`semantic.lock`、生成済みTypeScriptだけを読みます。API、resolver、build、lock更新、audit作成は行いません。
 
 | status | 意味 |
 | --- | --- |
-| `current` | 現在の入力と一致するlock entryがあり、生成物hashも一致する |
-| `stale` | 同じsource / symbolの履歴はあるが、Concept・Source・Type・Test・Static value・Promptのいずれかのhashが異なる |
-| `unlocked` | 同じsource / symbolのlock entryがない |
-| `integrity-error` | currentなlock entryはあるが、生成物が欠損またはhash不一致 |
+| `current` | 現在の入力、lock、生成物hashが一致 |
+| `stale` | 同じsource/symbolの履歴はあるがSemantic入力が変化 |
+| `unlocked` | 対応するlock entryがない |
+| `integrity-error` | currentなlock entryに対し生成物が欠損またはhash不一致 |
 
-`stale`と`unlocked`は観測結果として正常に出力します。`integrity-error`も説明データを返し、text出力では生成物整合性を`ERROR`として明示します。現在はCI用の`--strict`やstatus別exit codeは提供しません。`--fixture`は受理しません。
+現行の`explain`にはCI用`--strict`やstatus別exit codeはありません。
 
-## Semantic Closure
+### Semantic Closure
 
-`semantic closure`はmanifestへ明示した複数のPredicate / Static Judgmentを読み、各nodeへ`semantic explain`と同じ検査を適用してartifact-levelのClosure graphを構築します。API、resolver、build/replay、lock更新、生成物更新、audit作成は行いません。
-
-```json
-{
-  "version": 1,
-  "nodes": [
-    {
-      "id": "active-customer",
-      "source": "examples/active-customer/semantic.ts",
-      "dependsOn": []
-    },
-    {
-      "id": "mike-is-cat",
-      "source": "examples/static-judgment/semantic.ts",
-      "dependsOn": ["active-customer"]
-    }
-  ]
-}
+```bash
+bun run semantic:closure
+bun run semantic closure semantic-closure.json --json
 ```
 
-manifestはworkspace相対path、重複しないnode ID、manifest内nodeだけを参照するdependencyを使用します。unknown dependency、self dependency、cycle、workspace外参照、壊れた`semantic.lock`はerrorとして拒否します。node順とdependency順は決定的に正規化されます。
+manifestへ明示した複数のPredicate / Static Judgmentを検査し、Project Fit-aware graphを作ります。
 
-全nodeが`current`なら`closed`でexit code 0、1件でも`stale`、`unlocked`、`integrity-error`なら`open`でexit code 2です。manifest、source、lock、graphが不正ならexit code 1です。
+- 全nodeが`current`: `closed`、exit code 0
+- `stale`、`unlocked`、`integrity-error`、`verification-required`、`dependency-open`を含む: `open`、exit code 2
+- manifest、source、lock、graphが不正: exit code 1
 
-現在のscopeは`artifact`です。リポジトリ全体の自動探索やimport依存解析は行わず、manifestへ宣言されたnodeとedgeだけを検査します。lockはpromotion provenanceを保存しますが、現行Closure reportはまだreview policyを評価せず、承認状態を`unknown`と表示します。
+Closureはリポジトリ全体を自動探索しません。nodeとdependency edgeはmanifestへの明示が必要で、現行reportはdomain correctnessそのものを判定しません。
 
-## コンパイル手順
+### Semantic Verify
 
-1. 1 concept / 1 predicate / 1 semanticTestの閉包を検証
-2. lockが一致すればIRを再利用し、不一致ならStructured OutputsでIRを解決
-3. IR内のプロパティとリテラルをTypeCheckerの型文脈で検証
-4. 一時候補を生成し、型検査と候補専用の意味テストを実行
-5. 成功時だけ最終ファイルへ原子的に昇格し、全テストを実行
-6. 全テスト失敗時は直前の最終ファイルへロールバック
+```bash
+bun run semantic:verify
+bun run semantic verify semantic-closure.json --json
+```
 
-成功した解決結果は`semantic.lock`へ記録します。各試行の入力、応答、IR、候補、レポートは`.semantic/candidates/`へ保存されます。失敗候補も監査用に残ります。
+Closure、lockからの決定的再生成、各PredicateのSemantic Test、Project typecheckをAPIなし・永続書き込みなしで一括検証します。text / JSON reportには具体的なremediationを含みます。検証失敗はexit code 2、manifestやI/Oなどのoperational errorはexit code 1です。
 
-## 現在の制限
+## 13. OpenAI / Azure OpenAI接続
 
-Predicate IRの演算は`all`、`any`、`not`、`equals`、`present`のみです。入力はローカルに宣言したrecord型、3段までのネスト、配列、primitive、literal union、null、undefinedに限定しています。Static Judgmentはboolean結果、literalな文字列入力、1 source / 1 Judgmentに限定し、live精度とSchema Evolution Consensusは未実装です。任意Reviewのdiff/approveはPredicateとStatic Judgmentの両方に対応します。`semantic explain`は1 source / 1 symbolに限定します。`semantic closure`は明示manifestによるartifact検査に限定し、自動探索、import graph解析、review policy検証、自動修復は行いません。複数concept、任意関数、LSP、実行時LLM呼び出しは対象外です。
+`.env.example`をコピーします。Bunが`.env`を自動的に読み込むため、dotenvパッケージは不要です。
 
-## 接続設定
+```bash
+cp .env.example .env
+```
 
-`.env.example`を`.env`へコピーし、APIキーを設定します。Bunが`.env`を自動的に読み込むため、dotenvパッケージは不要です。
+OpenAI:
 
-`OPENAI_MODEL`の既定値は`gpt-5.4-mini`です。Azure OpenAIでは、GPT-5.4 miniを指すデプロイ名を設定します。
+```dotenv
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-5.4-mini
+OPENAI_BASE_URL=https://api.openai.com/v1
+```
 
-### Azure OpenAI
-
-Azure OpenAIでも同じ変数名を使用できます。
+Azure OpenAI:
 
 ```dotenv
 OPENAI_API_KEY=<Azure OpenAI API key>
-OPENAI_MODEL=gpt-5-4-mini # GPT-5.4 miniのAzureデプロイ名
+OPENAI_MODEL=gpt-5-4-mini
 OPENAI_BASE_URL=https://<resource-name>.openai.azure.com
 ```
 
-`.openai.azure.com`のURLを検出した場合、ハーネスは`/openai/v1/responses`へ接続し、`api-key`ヘッダーを使用します。通常のOpenAI APIでは従来どおりBearer認証を使用します。
+`OPENAI_MODEL`の既定値は`gpt-5.4-mini`です。AzureではモデルIDではなくdeployment名を設定します。`.openai.azure.com`を検出すると`/openai/v1/responses`へ正規化し、`api-key`headerを使用します。通常のOpenAI APIではBearer認証を使用します。
 
-旧IR CLIと旧ハーネスも互換確認用に`bun run verify`、`bun run llm:verify`として残しています。
+リクエストはResponses APIのStructured Outputsを使用し、`store: false`を指定します。
 
-## Semantic Polymorphism
+## 14. 安全境界とデータ
 
-共有Conceptを型から分離し、同じ意味を異なるTypeScriptスキーマへbindingできます。
+### モデルへ送るもの
 
-```ts
-// concepts/active-customer.ts
-export const ActiveCustomer = defineConcept("customer.active")`
-  A customer that is currently permitted to use the service.
-  Use only semantic roles unambiguously represented by the supplied type.
-`;
+- Concept IDとConcept specification
+- 対象のTypeScript型宣言
+- 生成するsymbol、parameter、typeの名前
+
+### 通常のモデル入力へ送らないもの
+
+- `semanticTest`の値
+- Benchmark Oracle
+- hidden cases
+- リポジトリ全体
+- API key
+
+### ローカルへ保存するもの
+
+- モデル応答とmetadata
+- 解決されたIRまたはboolean
+- candidate codeと検証report
+- input/output hash
+- promotion provenance
+
+監査情報は`.semantic/`へ保存され、Git管理対象外です。ただし、外部共有前には内容を確認してください。Conceptと型宣言自体に機密情報を含めないでください。
+
+自動昇格が信頼するのは、制限IR、型文脈検証、candidate test、全回帰、crash-consistent transactionという機械的なGateです。promotionはworkspace lockで直列化され、previous/next byteとjournalから中断後にrollbackまたはcommit検証を行います。これはProject contextへの適合を強めますが、業務上の意味が常に正しいことまで保証するものではありません。
+
+詳細は[SECURITY.md](./SECURITY.md)を参照してください。
+
+## 15. 再現性と監査
+
+`semantic.lock`はPredicateとStatic Judgmentを別namespaceで保存し、次の情報を保持します。
+
+- source、Concept、type、test、promptのhash
+- 解決済みPredicate IRまたはboolean
+- provider/modelとtoken metadata
+- 生成コードのSHA-256
+- 作成日時
+- promotion provenance（`reviewed`は互換用staging由来の旧名称）
+
+現在のSemantic入力と一致するentryがあれば、`replay`はproviderやmodelへ接続せず、同じ生成コードhashを再現します。
+
+監査directory:
+
+| directory | 内容 |
+| --- | --- |
+| `.semantic/candidates/` | Predicate buildの試行 |
+| `.semantic/judgments/` | Static Judgmentの試行 |
+| `.semantic/reviews/` | 互換用staging candidate |
+| `.semantic/evolution/` | Schema Evolution candidate |
+| `.semantic/benchmarks/` | Benchmark reportと応答 |
+| `.semantic/transactions/` | promotionのprevious/next snapshotと状態journal |
+
+CLI errorは`SEMANTIC_*`のstable code、stage、message、remediationを持ちます。`--json`対応commandのerrorはversion 1のJSONとして同じcodeを返します。認証情報らしき値はmessageからredactされます。
+
+## 16. 例とBenchmark
+
+### 実行可能な例
+
+| 例 | 内容 |
+| --- | --- |
+| [`examples/active-customer/`](./examples/active-customer/) | 基本的なPredicate build/replay/test |
+| [`examples/semantic-polymorphism/`](./examples/semantic-polymorphism/) | 共有Conceptを2つのスキーマへbinding |
+| [`examples/order-fulfillment/`](./examples/order-fulfillment/) | 1 Conceptを3つの業務表現へ具体化 |
+| [`examples/static-judgment/`](./examples/static-judgment/) | literalな自然言語値のboolean定数化 |
+| [`semantic-closure.json`](./semantic-closure.json) | 複数artifactのClosure manifest |
+
+### 現在までの評価
+
+2026-07-25時点のローカル検証:
+
+- TypeScript typecheck成功
+- sample Semantic Closure: 4/4 nodeがProject Fit verified
+- `semantic verify`: 4/4決定的再生成、3/3 Predicate Semantic Test、typecheck成功
+
+保存済み研究結果:
+
+| 評価 | 結果 | 留保 |
+| --- | --- | --- |
+| Blind Cross-schema | 27/27試行成功、false resolution 0 | 限定された3 Concept / 9 schema |
+| 旧Schema Evolution評価 | 50/54試行成功、false resolution 0 | 単発応答には揺れが残る |
+| 旧応答のConsensus replay | 18/18ケース成功 | 同じ応答を使った事後評価でheld-outではない |
+| Schema Evolution | 未実行 | 評価設計Blockerの解消と新しいfrozen input待ち |
+
+現在の評価設計には、`present`と「usable」の境界、optional nullableの意味、旧評価からの独立性に未解決事項があります。現在の入力を変更して成功証拠として再利用せず、再開条件を満たしてから新しいheld-out評価を行います。詳細は[`benchmarks/schema-evolution/BLOCKER.md`](./benchmarks/schema-evolution/BLOCKER.md)を参照してください。
+
+## 17. 現在の制限
+
+- 1 Predicate sourceにつき、1 Concept / 1 generated Predicate / 1 `semanticTest`
+- 1 Static Judgment sourceにつき、1 `staticValue` / 1 `judgeStatic`
+- `semantic explain`は1 source / 1 symbol
+- Predicate IRは`all`、`any`、`not`、`equals`、`present`だけ
+- Predicate IRは最大256 node / depth 32 / 1条件配列64件 / property path 8 segment
+- fixtureとAPI JSONは2 MiB、`semantic.lock`は16 MiB、diagnosticsは32件・各2,000文字まで
+- collection全体の`some`、`every`、長さ比較は非対応
+- 入力型はローカルrecord、primitive、literal union、array、`null`、`undefined`、最大3段のnestに限定
+- Semantic Testのproperty generator / shrinkerは未実装
+- Closureは明示manifestのみで、import graph自動探索は未実装
+- import graph自動解析、自動修復は未実装
+- Static Judgmentのlive精度は未評価
+- Schema Evolutionの独立held-out評価とmeasured developer Pilotは未完了
+- LSP、独自構文、独自runtime、他言語backendは未実装
+- npm packageとして公開していない
+- promotion中の生成物をL-Lang以外のprocessが読む場合のmulti-file atomicityは保証しない
+- workspace lock競合は待機せず`SEMANTIC_WORKSPACE_BUSY`でfail-fastする
+
+## 18. リポジトリ構成
+
+```text
+src/
+  dsl.ts                         TypeScript内のcompile-time form
+  semantic-source.ts             Predicate source scanner
+  static-judgment-source.ts      Static Judgment source scanner
+  ir.ts                          制限Predicate IR
+  context-validator.ts           TypeScript型文脈でのIR検証
+  generator.ts                   決定的Predicate generator
+  semantic-compiler.ts           Predicate compiler transaction
+  static-judgment-compiler.ts    Static Judgment compiler transaction
+  static-judgment-benchmark.ts   blind benchmarkのfreeze / Oracle分離 / fixture評価
+  semantic-pipeline.ts           compiler共通run / audit / command基盤
+  semantic-transaction.ts        workspace lock / journal / recovery
+  semantic-limits.ts             IR / 外部入力のresource budget
+  semantic-error.ts              stable error codeとsafe diagnostics
+  semantic-review.ts             互換用staging workflow
+  semantic-evolution.ts          Schema Evolution workflow
+  semantic-explain.ts            読み取り専用説明
+  semantic-closure.ts            artifact-level Closure
+  semantic-test-runner.ts        拡張Semantic Testのread-only実行
+  semantic-verify.ts             Project単位の統合read-only検証
+
+concepts/                        共有Concept
+examples/                        実行可能なfixtureと生成物
+benchmarks/                      凍結済み評価入力、Oracle、結果
+semantic.lock                   再現可能な解決結果
 ```
 
-```ts
-const ActiveCustomerRecord = bindConcept<CustomerRecord>(ActiveCustomer);
-const ActiveServiceAccount = bindConcept<ServiceAccount>(ActiveCustomer);
-```
-
-Compiler APIはimportされた`defineConcept`の宣言をTypeCheckerで解決します。両bindingは同じ`conceptId`と`conceptHash`を持ちますが、型、Predicate IR、生成コードはそれぞれ異なります。
+## 19. 開発
 
 ```bash
-# fixtureでビルド
-bun run semantic build examples/semantic-polymorphism/customer/semantic.ts \
-  --fixture examples/semantic-polymorphism/customer/openai-response.fixture.json
-bun run semantic build examples/semantic-polymorphism/account/semantic.ts \
-  --fixture examples/semantic-polymorphism/account/openai-response.fixture.json
-
-# lockからAPI呼び出しなしで意味とケースを表示
-bun run semantic:test:customer-schema
-bun run semantic:test:account-schema
+bun install
+bun run check
+bun run coverage
+bun run ci:smoke
+bun run ci:protected
+git diff --check
 ```
 
-`examples/semantic-polymorphism/ambiguous`は、型のプロパティを意味的役割へ一意に対応付けられない負例です。この入力は推測でコードを生成せず`unresolved`になります。
+2026-07-25時点の同一worktreeでは、全238テスト（1,220 expectations / 60 files）が成功し、coverageはfunctions 93.40% / lines 93.07%です。root manifestの`semantic verify`はClosure 4/4、決定的再生成4/4、Predicate test 3/3、typecheckを通過します。
 
-### Order Fulfillmentの3シナリオ
+変更時は次の原則を維持してください。
 
-[`examples/order-fulfillment`](./examples/order-fulfillment/README.md)では、共通の`FulfillableOrder` Conceptを次の3スキーマへ適用しています。
+- LLM出力から自由なTypeScriptを直接実行しない
+- 新しい生成対象には専用IR、validator、deterministic generator、testを用意する
+- 曖昧な入力を推測でresolvedにしない
+- Oracleとhidden caseをモデル入力やconsensus選択へ使わない
+- 凍結済みBenchmarkを結果に合わせて調整しない
+- Exact CodeとSemantic Codeの境界を崩さない
 
-- ECストア: enumの支払状態、キャンセル日時、配送先
-- 倉庫管理: booleanの支払確認、保留理由、optionalな配送先コード
-- マーケットプレイス: nested object内の承認状態、void flag、配送先
+詳細は[CONTRIBUTING.md](./CONTRIBUTING.md)を参照してください。
 
-各scenarioはfixture、Semantic Test、生成済みStatic Predicate、lock entryを持ちます。同じ意味が異なるプロパティ名、literal、boolean、nullable、optional、nested pathへ変換される様子を比較できます。
+## 20. License
 
-```bash
-bun run semantic:fulfillment:test
-bun run semantic:fulfillment:closure
-```
-
-## Blind Cross-schema Benchmark
-
-3つの固定Conceptを9つの現実的な型（解決可能6、意図的に曖昧3）へ適用し、各入力をlockなしで3回ずつ、合計27回評価します。
-
-```bash
-bun run benchmark:cross-schema
-```
-
-モデルへ渡すのは固定Concept、対象型、生成対象だけです。期待Predicate IRは`benchmarks/cross-schema/oracles/`、隠しケースは`benchmarks/cross-schema/cases/`に分離され、API入力には含まれません。各試行の生レスポンス、解釈結果、隠しテスト結果と集計は`.semantic/benchmarks/<run-id>/`へpretty JSONとMarkdownで保存されます。`semantic.lock`は読み書きしません。
-
-人手比較は`benchmarks/cross-schema/manual/manual-times.json`へ実測値を記録した場合だけ計算します。未計測の`null`値を推定値で補完することはありません。この初期ベンチマークはmodel-blindですが、独立した人間による二重盲検ではありません。
-
-## Schema EvolutionとSemantic Diff
-
-承認済みのsemantic sourceで型を変更した後、通常の`build`ではなく`check`を実行すると、生成コードと`semantic.lock`を変更せずに候補を検査できます。
-
-```bash
-bun run semantic check examples/customer/semantic.ts
-# fixtureで再現する場合
-bun run semantic check examples/customer/semantic.ts --fixture response.json
-# 単発方式を明示的に使う場合
-bun run semantic check examples/customer/semantic.ts --samples 1 --quorum 1
-```
-
-`semantic check`は既定で3応答を並列取得し、型付きPredicate IRのsemantic signatureが2票一致した場合だけ候補を採用します。required nullable型における`x === null`と`!present(x)`のような型上の同値表現も同じ票として扱います。2/3に届かない場合は`unresolved`となり、全応答、署名、型付きrewrite、支持票が候補監査ログへ保存されます。
-
-候補は`.semantic/evolution/<candidate-id>/`へ保存されます。`candidate.json`、生成候補、候補専用テスト、生レスポンス、pretty化された`diff.txt`が含まれます。
-
-```bash
-bun run semantic diff <candidate-id>
-bun run semantic approve <candidate-id> --reviewer <id>
-```
-
-差分分類は次の3種類です。
-
-- `compatible`: IRが同一、または論理構造を保ったプロパティ／値表現の変更
-- `breaking`: 論理演算や条件数が変化した、または候補検証に失敗
-- `unresolved`: 変更後の型から必要な意味的役割を一意に決定できない
-
-分類はレビュー支援情報であり、自動承認には使いません。`compatible`を含むすべての候補が明示的な`approve`を必要とします。`unresolved`と検証失敗候補は承認できません。
-
-承認時にはreviewer IDを必須とし、source hash、型、テスト、Concept、基準lock、候補コードhashを再検証し、候補型検査、意味テスト、project型検査を再実行します。その後に生成コードを一時昇格し、全テストが成功した場合だけ新しいlock entryを原子的に保存します。失敗時は生成コードを直前の状態へ戻します。新規lock entryには`auto`または`reviewed`のpromotion provenanceと検証結果が記録され、既存entryはExplain上で`legacy-auto`と表示されます。
-
-## Blind Schema Evolution Benchmark
-
-Schema Evolutionの実LLM性能は、3 Concept × 6種類の型変更 × 3反復、合計54試行の読み取り専用ベンチマークで評価します。
-
-```bash
-bun run benchmark:schema-evolution
-```
-
-入力は`benchmarks/schema-evolution/`にあり、Concept、baseline、変更後スキーマ、期待IR、隠しケースを`freeze.json`のSHA-256で固定します。期待IRと隠しケースはAPIへ送信しません。ランナーは`semantic.lock`を利用せず、生成済みコードも変更しません。実行前後の`semantic.lock`と全`*.generated.ts`を比較し、1件でも変化すれば評価を失敗させます。
-
-実API実行には独立した人間による入力レビューが必要です。`benchmarks/schema-evolution/REVIEW.md`に従い、レビュー後に`freeze.json`の`status`、`humanReviewed`、`reviewer`、`reviewedAt`だけを記録します。draft状態ではAPI resolverを呼ぶ前に停止します。
-
-各試行のモデル入力、生レスポンス、candidate IR、semantic diff、隠しテスト、診断は`.semantic/benchmarks/schema-evolution/<run-id>/`へpretty JSONで保存され、全体集計はJSONとMarkdownで出力されます。APIエラーは試行失敗として残し、成功するまでの暗黙retryは行いません。
-
-## Type-aware Consensus Replay
-
-保存済みのSchema Evolution試行は、追加API呼び出しなしで型付き同値判定と2/3 consensusを再評価できます。
-
-```bash
-bun run consensus:replay .semantic/benchmarks/schema-evolution/<run-id>/report.json
-```
-
-同値判定は`all`／`any`の順序などを正規化し、requiredな`string | null`型では`x === null`と`!present(x)`を同値と扱います。optionalまたは`undefined`を含む型では両者を同値化しません。
-
-候補選択に使うのはcontext validationと型付きsemantic signatureだけです。隠しケースと期待IRは選択後の採点にのみ利用され、consensusへ漏洩しません。2/3の同値候補がなければ結果を確定しません。派生レポートは`.semantic/benchmarks/schema-evolution-consensus/`へ保存し、元の実測レポートは変更しません。
-
-## Blind Schema Evolution v2
-
-v2はv1で使用したConceptと型を再利用しないheld-out評価です。Actionable Ticket、Payable Invoice、Deployable Release、Enrollable Courseの4 Conceptに対し、6種類の変更を各1件、合計24ケース・72応答で評価します。ネスト、配列、union、nullable、optionalも含みます。
-
-入力、期待条件、hidden case用のpositive/negative値は`benchmarks/schema-evolution-v2/benchmark.json`へ集約し、そのSHA-256を`freeze.json`で固定します。実行時に一時TypeScriptソースへ展開しますが、モデルにはConceptと対象型だけを送り、conditionやfixture値は送りません。
-
-現在のv2はdraftであり、評価設計上の局所Blockerにより人間承認とlive実行を保留しています。`benchmarks/schema-evolution-v2/BLOCKER.md`に問題、影響範囲、禁止事項、再開条件を記録しています。Blockerが解消するまで`freeze.json`を承認状態へ変更せず、live benchmarkを実行しないでください。
-
-```bash
-bun run benchmark:schema-evolution:v2
-```
-
-3応答はケース単位で並列実行されます。レポートには単発1票目の成功率と型付き2/3 consensusの成功率・成立率・誤解決率、トークン、待ち時間、workspace mutation、凍結元manifestのSHA-256が同時に記録されます。合格基準はconsensus正解率95%以上、成立率90%以上、誤解決0、workspace mutation 0です。
-
-## セキュリティとデータ
-
-- API keyは`.env`または環境変数で管理し、Gitへコミットしないでください。
-- ConceptとTypeScript型宣言は、設定したLLM providerへ送信されます。
-- `semanticTest`の値、Benchmark Oracle、hidden casesは通常のモデル入力へ送りません。
-- `.semantic/`には生のモデル応答と監査情報が保存されるため、外部公開前に内容を確認してください。
-- LLM出力は、IR検証、型検査、テスト、人間承認を通過するまで信頼済みコードではありません。
-
-詳細は[`SECURITY.md`](./SECURITY.md)を参照してください。
-
-## Contributing
-
-Issue、実験結果、文書改善、実装へのContributionを歓迎します。凍結済みBenchmarkを変更する場合は、先に[`CONTRIBUTING.md`](./CONTRIBUTING.md)のBenchmark完全性ルールを確認してください。
-
-## License
-
-このプロジェクトは[MIT License](./LICENSE)で公開されます。ライセンス表示と免責条項を維持する限り、利用、複製、変更、配布、サブライセンス、販売を含めて自由に使用できます。
+L-Langは[MIT License](./LICENSE)で公開されています。ライセンス表示と免責条項を維持する限り、利用、複製、変更、配布、サブライセンス、販売を含めて自由に使用できます。
 
 `package.json`の`private: true`はnpmへの誤公開を防ぐための設定であり、MIT Licenseによるソースコード利用を制限するものではありません。

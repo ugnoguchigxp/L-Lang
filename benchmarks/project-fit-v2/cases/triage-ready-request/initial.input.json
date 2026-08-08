@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify requests ready for the project's normal triage queue.",
+  "target": {
+    "functionName": "isTriageReadyRequest",
+    "parameterName": "request",
+    "typeName": "ServiceRequest",
+    "typeScriptSource": "type ServiceRequest = { channel: \"portal\" | \"email\"; category: string | null; triaged: boolean; suppressed: boolean };"
+  }
+}

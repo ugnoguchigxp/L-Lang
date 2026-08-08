@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "discoverability": "indexed",
+        "access": "external",
+        "lifecycle": "active"
+      },
+      "expected": true
+    },
+    {
+      "name": "internal",
+      "input": {
+        "discoverability": "indexed",
+        "access": "internal",
+        "lifecycle": "active"
+      },
+      "expected": false
+    },
+    {
+      "name": "deleted",
+      "input": {
+        "discoverability": "indexed",
+        "access": "external",
+        "lifecycle": "deleted"
+      },
+      "expected": false
+    }
+  ]
+}

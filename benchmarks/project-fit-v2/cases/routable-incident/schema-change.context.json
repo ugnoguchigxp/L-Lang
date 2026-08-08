@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/routable-incident.semantic.ts",
+    "symbol": "isRoutableIncident",
+    "typeName": "UpdatedSupportIncident",
+    "typeDeclaration": "type UpdatedSupportIncident = { priority: \"p0\" | \"p1\" | \"p2\"; lifecycle: \"active\" | \"resolved\"; ownership?: { agentId: string } };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.routable-incident",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "UpdatedSupportIncident",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "priority"
+            ],
+            "value": "p0"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "lifecycle"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "ownership",
+              "agentId"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

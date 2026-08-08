@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "trials": [
+    {
+      "outcome": "unresolved",
+      "projectGatePassed": false,
+      "hiddenTestsPassed": false,
+      "correctionEffort": 1,
+      "inputTokens": 149,
+      "outputTokens": 24,
+      "latencyMs": 31
+    },
+    {
+      "outcome": "unresolved",
+      "projectGatePassed": false,
+      "hiddenTestsPassed": false,
+      "correctionEffort": 1,
+      "inputTokens": 151,
+      "outputTokens": 25,
+      "latencyMs": 33
+    },
+    {
+      "outcome": "unresolved",
+      "projectGatePassed": false,
+      "hiddenTestsPassed": false,
+      "correctionEffort": 1,
+      "inputTokens": 150,
+      "outputTokens": 24,
+      "latencyMs": 32
+    }
+  ]
+}

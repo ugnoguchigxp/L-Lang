@@ -1,0 +1,166 @@
+{
+  "version": 2,
+  "name": "project-fit-v2",
+  "trials": 3,
+  "freeze": "freeze.json",
+  "budget": {
+    "maxApiCalls": 72,
+    "maxInputTokens": 100000,
+    "maxOutputTokensPerCall": 1024,
+    "maxTotalOutputTokens": 73728,
+    "maxEstimatedCost": 10
+  },
+  "thresholds": {
+    "minProjectContextFirstPassCases": 5,
+    "minFirstPassDeltaCases": 1,
+    "maxFalseResolutionDelta": 0,
+    "maxUnresolvedRateRegression": 0.1,
+    "maxLatencyDeltaMs": 10000
+  },
+  "cases": [
+    {
+      "id": "routable-incident",
+      "domain": "support-operations",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/routable-incident/initial.input.json",
+          "projectContext": "cases/routable-incident/initial.context.json",
+          "oracle": "cases/routable-incident/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/routable-incident/schema-change.input.json",
+          "projectContext": "cases/routable-incident/schema-change.context.json",
+          "oracle": "cases/routable-incident/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    },
+    {
+      "id": "escalatable-case",
+      "domain": "support-operations",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/escalatable-case/initial.input.json",
+          "projectContext": "cases/escalatable-case/initial.context.json",
+          "oracle": "cases/escalatable-case/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/escalatable-case/schema-change.input.json",
+          "projectContext": "cases/escalatable-case/schema-change.context.json",
+          "oracle": "cases/escalatable-case/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    },
+    {
+      "id": "triage-ready-request",
+      "domain": "support-operations",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/triage-ready-request/initial.input.json",
+          "projectContext": "cases/triage-ready-request/initial.context.json",
+          "oracle": "cases/triage-ready-request/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/triage-ready-request/schema-change.input.json",
+          "projectContext": "cases/triage-ready-request/schema-change.context.json",
+          "oracle": "cases/triage-ready-request/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    },
+    {
+      "id": "sellable-listing",
+      "domain": "catalog-governance",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/sellable-listing/initial.input.json",
+          "projectContext": "cases/sellable-listing/initial.context.json",
+          "oracle": "cases/sellable-listing/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/sellable-listing/schema-change.input.json",
+          "projectContext": "cases/sellable-listing/schema-change.context.json",
+          "oracle": "cases/sellable-listing/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    },
+    {
+      "id": "searchable-asset",
+      "domain": "catalog-governance",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/searchable-asset/initial.input.json",
+          "projectContext": "cases/searchable-asset/initial.context.json",
+          "oracle": "cases/searchable-asset/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/searchable-asset/schema-change.input.json",
+          "projectContext": "cases/searchable-asset/schema-change.context.json",
+          "oracle": "cases/searchable-asset/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    },
+    {
+      "id": "reviewable-release",
+      "domain": "catalog-governance",
+      "stages": {
+        "initial": {
+          "modelInput": "cases/reviewable-release/initial.input.json",
+          "projectContext": "cases/reviewable-release/initial.context.json",
+          "oracle": "cases/reviewable-release/initial.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/initial.type-only.json",
+            "projectContext": "fixtures/initial.project-context.json"
+          }
+        },
+        "schemaChange": {
+          "modelInput": "cases/reviewable-release/schema-change.input.json",
+          "projectContext": "cases/reviewable-release/schema-change.context.json",
+          "oracle": "cases/reviewable-release/schema-change.oracle.json",
+          "fixtures": {
+            "typeOnly": "fixtures/schema-change.type-only.json",
+            "projectContext": "fixtures/schema-change.project-context.json"
+          }
+        }
+      }
+    }
+  ]
+}

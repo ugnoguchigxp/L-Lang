@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "moderation": "accepted",
+        "inventory": "available",
+        "lifecycle": "current"
+      },
+      "expected": true
+    },
+    {
+      "name": "pending",
+      "input": {
+        "moderation": "pending",
+        "inventory": "available",
+        "lifecycle": "current"
+      },
+      "expected": false
+    },
+    {
+      "name": "unavailable",
+      "input": {
+        "moderation": "accepted",
+        "inventory": "unavailable",
+        "lifecycle": "current"
+      },
+      "expected": false
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "intake": "self-service",
+        "classification": {
+          "code": "billing"
+        },
+        "workflow": "triaged",
+        "visibility": "normal"
+      },
+      "expected": true
+    },
+    {
+      "name": "mail",
+      "input": {
+        "intake": "mail",
+        "classification": {
+          "code": "billing"
+        },
+        "workflow": "triaged",
+        "visibility": "normal"
+      },
+      "expected": false
+    },
+    {
+      "name": "new",
+      "input": {
+        "intake": "self-service",
+        "classification": {
+          "code": "billing"
+        },
+        "workflow": "new",
+        "visibility": "normal"
+      },
+      "expected": false
+    }
+  ]
+}

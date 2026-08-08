@@ -37,7 +37,7 @@ Blind Benchmarkの期待値、hidden cases、freeze hashは評価結果を見た
 - Consensusの候補選択にOracleやhidden casesを利用しない
 - APIエラーと意味的失敗を区別して記録する
 - 成功結果だけでなく、失敗と`unresolved`も保存する
-- human review必須のBenchmarkを自動承認しない
+- `draft`のBenchmark入力でlive実行せず、`frozen`な入力hashだけを評価する
 
 ## Pull request
 

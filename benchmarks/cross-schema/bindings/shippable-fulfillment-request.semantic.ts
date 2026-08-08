@@ -1,5 +1,5 @@
 import { BenchmarkShippableOrder } from "../concepts/shippable-order";
-import { bindConcept, generatePredicate, semanticTest } from "../../../src/dsl";
+import { bindConcept, generatePredicate, benchmarkProbe } from "../../../src/dsl";
 
 export type BenchmarkFulfillmentRequest = {
   paymentCaptured: boolean;
@@ -11,4 +11,4 @@ const Bound = bindConcept<BenchmarkFulfillmentRequest>(BenchmarkShippableOrder);
 export const isBenchmarkShippableRequest = generatePredicate(Bound);
 
 // Benchmark oracle cases live outside this source and are never sent to the model.
-semanticTest(isBenchmarkShippableRequest, { accept: [], reject: [] });
+benchmarkProbe(isBenchmarkShippableRequest);

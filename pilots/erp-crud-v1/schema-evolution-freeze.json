@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "status": "frozen",
+  "instructions": "Do not change frozen Pilot input after observing model output.",
+  "files": {
+    "baselines/schema-change-predicates.ts": "a6dfb706a1a975743fa58cb411c727adaf678bb6bf53e90b54bc0be32bf3d802",
+    "cases/schema-change-fixture-results.json": "69d0601be00574b2085a20e0faa2916b0e181577af0d4a170496760f21d10ec3",
+    "cases/schema-change-hidden-cases.json": "5cf55196b2c475e604120ea1dc828033278a95be52e3c651cb841ecd9a1a8bb9",
+    "concepts/inventory-discrepancy-review.ts": "fb6d60c393faa520b75f8151910ecf4c517fbf8cbd6d60d2913ff31352b1e63d",
+    "concepts/inventory-record-review-ready.ts": "a35cc8affb4cc0cf07304fadff79cc5fb106aedde2df5c7ae3e002bf132073a2",
+    "concepts/price-record-review-ready.ts": "ecd317bdf9a24ff673d7cf6b4505ac5daae72b175b4013024bf33630ed23ac3c",
+    "concepts/product-archive-review-candidate.ts": "c4ad9e47c184afa61439a53b0de9fdc4267eee74be31aab4859c14b1aef4fc38",
+    "concepts/product-master-review-ready.ts": "6250b4a42fd3529efabaf0fb50b7ca6a37c3f008ee343881ff5656b29833710f",
+    "concepts/quantity-data-review.ts": "4a94f321e03648375c9384e5073c4d9072c720ca2b3f86efc1616f2506222d52",
+    "concepts/shipment-exception-review.ts": "bdfac910854b488cdd0c2e652630c2dad96c92a2649e22033ba475c11b911c0d",
+    "concepts/shipment-preparation-review-ready.ts": "7cf25ca51cf980f9458d448e416d9b0d35075a39d2602883377dfb8215575e7e",
+    "review.json": "b7849ff7daa6e2ffd2a5c64abc4b7a433e247c90b8af656fb2aafb67c10e1bd4",
+    "schema-changes/inventory-discrepancy-review.semantic.ts": "a096c2c5140a8950df7d14c683c08413b25710c0257d024092d115f31b135f80",
+    "schema-changes/inventory-record-review-ready.semantic.ts": "acd47c65d01b95a207d252351e752da53204953247157631dbaaa2a967e0124a",
+    "schema-changes/price-record-review-ready.semantic.ts": "bd0a09cd1d316f3295d7dc96b1d2bea089402b6a8b6a094c0caa9c9f1f08ffe3",
+    "schema-changes/product-archive-review-candidate.semantic.ts": "6a59540cb71d58a87d839d8e118b61c47f9b33135657b4942e1f22bb27947b77",
+    "schema-changes/product-master-review-ready.semantic.ts": "8ddc8811a38c5a9e1bacd63e9fa53f1bf0b7865390d8e97b27eb83c288fa2c34",
+    "schema-changes/quantity-data-review.semantic.ts": "064dbfda1b9f358c665151e64f2acacce2b9089c920763a8a59ce7a78e7c15a1",
+    "schema-changes/shipment-exception-review.semantic.ts": "f24915820fd07ff838459328bfead4574249d60b13851096019a0106a4de9d5a",
+    "schema-changes/shipment-preparation-review-ready.semantic.ts": "275acab7aa21dfb975dc5ac75852a7fe5642fcd52dca9c9e6382fedabddb55b7",
+    "schema-evolution-manifest.json": "18cd33dd432218eb773ca7a2bb8c47b1876a6976412dfb69a484d5d92de49191"
+  }
+}

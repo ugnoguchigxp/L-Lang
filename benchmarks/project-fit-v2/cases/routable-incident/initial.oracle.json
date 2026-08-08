@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "urgency": "critical",
+        "status": "open",
+        "assigneeId": "agent-7"
+      },
+      "expected": true
+    },
+    {
+      "name": "non-critical",
+      "input": {
+        "urgency": "high",
+        "status": "open",
+        "assigneeId": "agent-7"
+      },
+      "expected": false
+    },
+    {
+      "name": "unowned",
+      "input": {
+        "urgency": "critical",
+        "status": "open",
+        "assigneeId": null
+      },
+      "expected": false
+    }
+  ]
+}

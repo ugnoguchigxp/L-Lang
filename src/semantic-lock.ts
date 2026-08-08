@@ -1,8 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { readFile, rename, writeFile } from "node:fs/promises";
 
-import { parsePredicateExpression, type PredicateExpression } from "./ir";
+import { type PredicateExpression, parsePredicateExpression } from "./ir";
 import type { OpenAIResult } from "./openai";
+import type { ProjectContextSummary } from "./project-context";
+import { sha256 } from "./semantic-fingerprint";
+import {
+  assertKnownKeys,
+  assertTextByteLength,
+  parseBoundedJsonText,
+  SEMANTIC_LIMITS,
+} from "./semantic-limits";
 
 export type PromotionValidation = {
   candidateTypecheck: "passed";
@@ -33,12 +41,16 @@ export type SemanticLockEntry = {
   conceptHash?: string;
   conceptSource?: string;
   predicate: string;
+  targetTypeName?: string;
   provider: string;
   model: string;
   sourceHash: string;
   typeHash: string;
   testHash: string;
   promptHash: string;
+  contextVersion?: 1;
+  contextHash?: string;
+  contextSummary?: ProjectContextSummary;
   resolvedIr: PredicateExpression;
   generatedCodeHash: string;
   response: {
@@ -78,10 +90,32 @@ export type SemanticLock = {
 };
 
 export async function readSemanticLock(path: string): Promise<SemanticLock> {
+  return (await readSemanticLockSnapshot(path)).lock;
+}
+
+export async function readSemanticLockSnapshot(path: string): Promise<{
+  lock: SemanticLock;
+  revision: string | null;
+}> {
   try {
-    return parseSemanticLock(JSON.parse(await readFile(path, "utf8")) as unknown);
+    const data = await readFile(path);
+    if (data.byteLength > SEMANTIC_LIMITS.lockBytes) {
+      throw new Error(`semantic.lock exceeds ${SEMANTIC_LIMITS.lockBytes} bytes`);
+    }
+    return {
+      lock: parseSemanticLock(
+        parseBoundedJsonText(
+          data.toString("utf8"),
+          "semantic.lock",
+          SEMANTIC_LIMITS.lockBytes,
+        ),
+      ),
+      revision: sha256(data),
+    };
   } catch (error) {
-    if (isNotFound(error)) return { version: 1, entries: {} };
+    if (isNotFound(error)) {
+      return { lock: { version: 1, entries: {} }, revision: null };
+    }
     throw error;
   }
 }
@@ -91,8 +125,22 @@ export async function writeSemanticLock(
   lock: SemanticLock,
 ): Promise<void> {
   const temporary = `${path}.${randomUUID()}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
+  const serialized = serializeSemanticLock(lock);
+  assertTextByteLength(
+    serialized,
+    SEMANTIC_LIMITS.lockBytes,
+    "semantic.lock",
+  );
+  await writeFile(temporary, serialized, "utf8");
   await rename(temporary, path);
+}
+
+export function serializeSemanticLock(lock: SemanticLock): string {
+  return `${JSON.stringify(lock, null, 2)}\n`;
+}
+
+export function semanticLockRevision(lock: SemanticLock): string {
+  return sha256(serializeSemanticLock(lock));
 }
 
 export function findReplayEntry(
@@ -100,7 +148,7 @@ export function findReplayEntry(
   match: Pick<
     SemanticLockEntry,
     "source" | "predicate" | "sourceHash" | "typeHash" | "testHash" | "promptHash"
-  > & { conceptId: string; conceptHash: string },
+  > & { conceptId: string; conceptHash: string; contextHash?: string },
 ): SemanticLockEntry | undefined {
   return Object.values(lock.entries)
     .filter(
@@ -112,7 +160,9 @@ export function findReplayEntry(
         entry.sourceHash === match.sourceHash &&
         entry.typeHash === match.typeHash &&
         entry.testHash === match.testHash &&
-        entry.promptHash === match.promptHash,
+        entry.promptHash === match.promptHash &&
+        (match.contextHash === undefined ||
+          entry.contextHash === match.contextHash),
     )
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
@@ -174,6 +224,11 @@ function newestEntry<T extends { createdAt: string }>(entries: T[]): T | undefin
 
 function parseSemanticLock(input: unknown): SemanticLock {
   const value = objectValue(input, "semantic.lock");
+  assertKnownKeys(
+    value,
+    ["version", "entries", "judgments"],
+    "semantic.lock",
+  );
   if (value.version !== 1) {
     throw new Error("semantic.lock.version must be 1");
   }
@@ -216,6 +271,48 @@ function parseEntryRecord<T extends { fingerprint: string }>(
 
 function parsePredicateEntry(input: unknown, path: string): SemanticLockEntry {
   const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    [
+      "fingerprint",
+      "source",
+      "concept",
+      "conceptId",
+      "conceptHash",
+      "conceptSource",
+      "predicate",
+      "targetTypeName",
+      "provider",
+      "model",
+      "sourceHash",
+      "typeHash",
+      "testHash",
+      "promptHash",
+      "contextVersion",
+      "contextHash",
+      "contextSummary",
+      "resolvedIr",
+      "generatedCodeHash",
+      "response",
+      "createdAt",
+      "promotion",
+    ],
+    path,
+  );
+  const contextFields = [
+    value.targetTypeName,
+    value.contextVersion,
+    value.contextHash,
+    value.contextSummary,
+  ];
+  const presentContextFields = contextFields.filter(
+    (field) => field !== undefined,
+  ).length;
+  if (presentContextFields !== 0 && presentContextFields !== contextFields.length) {
+    throw new Error(
+      `${path} must include all Project Context metadata or none for a legacy entry`,
+    );
+  }
   return {
     fingerprint: hashValue(value.fingerprint, `${path}.fingerprint`),
     source: stringValue(value.source, `${path}.source`),
@@ -235,12 +332,39 @@ function parsePredicateEntry(input: unknown, path: string): SemanticLockEntry {
           ),
         }),
     predicate: stringValue(value.predicate, `${path}.predicate`),
+    ...(value.targetTypeName === undefined
+      ? {}
+      : {
+          targetTypeName: stringValue(
+            value.targetTypeName,
+            `${path}.targetTypeName`,
+          ),
+        }),
     provider: stringValue(value.provider, `${path}.provider`),
     model: stringValue(value.model, `${path}.model`),
     sourceHash: hashValue(value.sourceHash, `${path}.sourceHash`),
     typeHash: hashValue(value.typeHash, `${path}.typeHash`),
     testHash: hashValue(value.testHash, `${path}.testHash`),
     promptHash: hashValue(value.promptHash, `${path}.promptHash`),
+    ...(value.contextVersion === undefined
+      ? {}
+      : {
+          contextVersion: versionOne(
+            value.contextVersion,
+            `${path}.contextVersion`,
+          ),
+        }),
+    ...(value.contextHash === undefined
+      ? {}
+      : { contextHash: hashValue(value.contextHash, `${path}.contextHash`) }),
+    ...(value.contextSummary === undefined
+      ? {}
+      : {
+          contextSummary: projectContextSummaryValue(
+            value.contextSummary,
+            `${path}.contextSummary`,
+          ),
+        }),
     resolvedIr: parsePredicateExpression(
       value.resolvedIr,
       `${path}.resolvedIr`,
@@ -262,6 +386,26 @@ function parseStaticJudgmentEntry(
   path: string,
 ): StaticJudgmentLockEntry {
   const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    [
+      "fingerprint",
+      "source",
+      "judgment",
+      "conceptId",
+      "conceptHash",
+      "valueHash",
+      "promptHash",
+      "provider",
+      "model",
+      "resolvedValue",
+      "generatedCodeHash",
+      "response",
+      "createdAt",
+      "promotion",
+    ],
+    path,
+  );
   if (typeof value.resolvedValue !== "boolean") {
     throw new Error(`${path}.resolvedValue must be a boolean`);
   }
@@ -300,6 +444,11 @@ function promotionValue(
   kind: "predicate" | "static-judgment",
 ): PromotionProvenance {
   const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    ["mode", "promotedAt", "candidateId", "reviewer", "validation"],
+    path,
+  );
   if (value.mode !== "auto" && value.mode !== "reviewed") {
     throw new Error(`${path}.mode must be auto or reviewed`);
   }
@@ -332,6 +481,16 @@ function promotionValidationValue(
   kind: "predicate" | "static-judgment",
 ): PromotionValidation {
   const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    [
+      "candidateTypecheck",
+      "projectTypecheck",
+      "semanticTest",
+      "fullTest",
+    ],
+    path,
+  );
   if (value.candidateTypecheck !== "passed") {
     throw new Error(`${path}.candidateTypecheck must be passed`);
   }
@@ -363,6 +522,7 @@ function responseValue(
 ): SemanticLockEntry["response"] {
   if (input === null) return null;
   const value = objectValue(input, path);
+  assertKnownKeys(value, ["id", "model", "usage"], path);
   return {
     id: stringValue(value.id, `${path}.id`),
     model: stringValue(value.model, `${path}.model`),
@@ -378,6 +538,11 @@ function usageValue(
   path: string,
 ): NonNullable<OpenAIResult["usage"]> {
   const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    ["inputTokens", "outputTokens", "totalTokens"],
+    path,
+  );
   return {
     inputTokens: nonNegativeInteger(value.inputTokens, `${path}.inputTokens`),
     outputTokens: nonNegativeInteger(value.outputTokens, `${path}.outputTokens`),
@@ -413,6 +578,47 @@ function hashValue(input: unknown, path: string): string {
     throw new Error(`${path} must be a lowercase SHA-256 hash`);
   }
   return value;
+}
+
+function versionOne(input: unknown, path: string): 1 {
+  if (input !== 1) throw new Error(`${path} must be 1`);
+  return 1;
+}
+
+function projectContextSummaryValue(
+  input: unknown,
+  path: string,
+): ProjectContextSummary {
+  const value = objectValue(input, path);
+  assertKnownKeys(
+    value,
+    [
+      "version",
+      "targetSource",
+      "relatedTypeSources",
+      "verifiedBindingSources",
+    ],
+    path,
+  );
+  return {
+    version: versionOne(value.version, `${path}.version`),
+    targetSource: stringValue(value.targetSource, `${path}.targetSource`),
+    relatedTypeSources: stringArray(
+      value.relatedTypeSources,
+      `${path}.relatedTypeSources`,
+    ),
+    verifiedBindingSources: stringArray(
+      value.verifiedBindingSources,
+      `${path}.verifiedBindingSources`,
+    ),
+  };
+}
+
+function stringArray(input: unknown, path: string): string[] {
+  if (!Array.isArray(input)) throw new Error(`${path} must be an array`);
+  return input.map((value, index) =>
+    stringValue(value, `${path}[${index}]`)
+  );
 }
 
 function dateValue(input: unknown, path: string): string {

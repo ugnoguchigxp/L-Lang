@@ -65,9 +65,13 @@ export function classifySemanticChange(input: {
 
   const previousSignature = expressionSignature(input.previous);
   const candidateSignature = expressionSignature(input.candidate);
+  const candidateExpression = candidateForShape.expression;
+  if (candidateExpression === null) {
+    throw new Error("normalized candidate unexpectedly became unresolved");
+  }
   const logicalShapeChanged =
     logicalShapeSignature(previousForShape.expression) !==
-    logicalShapeSignature(candidateForShape.expression!);
+    logicalShapeSignature(candidateExpression);
   const validationPassed = input.validationPassed ?? true;
   const classification =
     validationPassed && !logicalShapeChanged ? "compatible" : "breaking";
@@ -215,10 +219,13 @@ function alignLeaves(before: Leaf[], after: Leaf[]): Array<[Leaf | null, Leaf | 
     }
     const [left] = remainingBefore.splice(bestLeft, 1);
     const [right] = remainingAfter.splice(bestRight, 1);
+    if (left === undefined || right === undefined) {
+      throw new Error("failed to align predicate leaves");
+    }
     matched.push({
-      before: left!.leaf,
-      after: right!.leaf,
-      beforeIndex: left!.index,
+      before: left.leaf,
+      after: right.leaf,
+      beforeIndex: left.index,
     });
   }
   matched.sort((left, right) => left.beforeIndex - right.beforeIndex);

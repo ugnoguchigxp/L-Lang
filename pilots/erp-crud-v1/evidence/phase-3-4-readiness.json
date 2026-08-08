@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "pilot": "erp-crud-v1",
+  "recordedDate": "2026-07-24",
+  "status": "superseded-by-initial-live",
+  "supersededBy": "pilots/erp-crud-v1/evidence/initial-live.json",
+  "freezeStatus": "draft",
+  "providerApiCalls": 0,
+  "implemented": [
+    "strict independent review artifact",
+    "real owner and case approval validation",
+    "review-gated frozen transition",
+    "live OpenAI/Azure OpenAI runner",
+    "pre-call atomic checkpoint",
+    "uncertain pending call duplicate prevention",
+    "API call, estimated cost, wall-clock, and per-response output guards",
+    "60-second cooldown after success, HTTP 429, and terminal failure",
+    "429 retry bounded by the API call budget",
+    "sanitized response and versioned report artifacts"
+  ],
+  "injectedProviderVerification": {
+    "normalRun": {
+      "cases": 8,
+      "apiAttempts": 8,
+      "cooldownCompletions": 8,
+      "status": "passed"
+    },
+    "rateLimitRun": {
+      "cases": 8,
+      "apiAttempts": 9,
+      "cooldownCompletions": 9,
+      "http429Retries": 1,
+      "status": "passed"
+    },
+    "terminalFailureRun": {
+      "apiAttempts": 1,
+      "cooldownCompletions": 1,
+      "duplicateResumeRejected": true
+    }
+  },
+  "realWorkspaceGuards": {
+    "frozenTransition": "rejected: Pilot review must be approved before freezing inputs",
+    "liveRun": "rejected before provider connection: Pilot inputs must be frozen before live execution"
+  },
+  "verification": [
+    {
+      "command": "bun test",
+      "result": "215 pass, 0 fail, 1108 expectations"
+    },
+    {
+      "command": "bun run coverage",
+      "result": "passed; 94.10% functions, 94.00% lines"
+    },
+    {
+      "command": "bun run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "bun run format:check",
+      "result": "passed, 56 files"
+    },
+    {
+      "command": "bun run lint",
+      "result": "passed with 91 pre-existing warnings and no Pilot-file warnings"
+    },
+    {
+      "command": "bun run ci:protected",
+      "result": "passed"
+    },
+    {
+      "command": "bun run ci:smoke",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "artifacts": {
+    "manifestSha256": "0effa171139b03e687a1aedeafcf3fc678c3a3bc70bce33818faf7ced7e1bb5f",
+    "draftReviewSha256": "4d0b60085f3781560aa6462f03dfc4ec7ab5348f91df8758c2685dce8c5d778d",
+    "draftFreezeSha256": "6948070089aeb8cb338e9c2c665c2767d4718b3f2e7652b0157fcab7794e8355",
+    "fixtureReportJsonSha256": "848e078d9223b3bdba091653e68e69e9e63fddbe5a570c20320e233b094dcddf",
+    "fixtureReportMarkdownSha256": "c0dd46e482d8946cd77dda88deed76f0bba74574c759042f72eab2194fd50a73",
+    "liveRunnerSha256": "bbb4019c9a2bade4c4e913f385359ddea9d48d53e071d4fc648981a2e52b7c67",
+    "liveRunnerTestSha256": "9f390eaa1876599e01dc4a56cc0115d0dbf1c90d8eedda2e7267bb6a7dba46b7"
+  },
+  "remainingGate": [
+    "An identified ERP domain reviewer independent from implementation must approve review.json.",
+    "All eight manifest and review case owners must be replaced with matching real owners.",
+    "The reviewer must confirm all nine safety and authority decisions.",
+    "Only then may freeze.json transition from draft to frozen and a provider API run begin."
+  ]
+}

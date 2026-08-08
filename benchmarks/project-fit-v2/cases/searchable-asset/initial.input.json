@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify assets included in search according to this catalog's rules.",
+  "target": {
+    "functionName": "isSearchableAsset",
+    "parameterName": "asset",
+    "typeName": "DigitalAsset",
+    "typeScriptSource": "type DigitalAsset = { indexing: \"enabled\" | \"disabled\"; visibility: \"public\" | \"private\"; deletedAt: string | null };"
+  }
+}

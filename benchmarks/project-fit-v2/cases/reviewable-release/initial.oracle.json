@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "phase": "candidate",
+        "validation": "passed",
+        "reviewerId": "reviewer-2"
+      },
+      "expected": true
+    },
+    {
+      "name": "draft",
+      "input": {
+        "phase": "draft",
+        "validation": "passed",
+        "reviewerId": "reviewer-2"
+      },
+      "expected": false
+    },
+    {
+      "name": "unassigned",
+      "input": {
+        "phase": "candidate",
+        "validation": "passed",
+        "reviewerId": null
+      },
+      "expected": false
+    }
+  ]
+}

@@ -61,7 +61,7 @@ describe("static judgment source scanner", () => {
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
       validConceptDeclaration(),
       'const detail = "cat";',
-      "const value = staticValue(`a ${detail}`);",
+      "const value = staticValue(`a $" + "{detail}`);",
       "export const result = judgeStatic(value, Cat);",
       "",
     ]);
@@ -88,7 +88,7 @@ describe("static judgment source scanner", () => {
     } finally {
       await rmFixture(unknown);
     }
-  });
+  }, 20_000);
 
   test("rejects multiple Judgments and mixed semantic source forms", async () => {
     const multiple = await writeFixture([

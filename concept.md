@@ -2,7 +2,7 @@
 
 ## Status
 
-Discussion draft / MVP concept.
+Executable research MVP concept.
 
 本書は、TypeScriptを基盤として、プログラミング言語と自然言語を同一ソース内に共存させる新しい言語処理系のコンセプトを定義する。
 
@@ -46,6 +46,8 @@ LLMによる判断が完了した後は、通常のTypeScriptへ変換し、実�
 本構想の基本原則は、次の一文で表現できる。
 
 > 自然言語によって意味・目的・概念・制約を記述し、LLMがそれらをコンパイル時に解釈して、決定的なTypeScriptへ具体化する。
+
+中心価値は、生成過程を管理しやすくすることではなく、**抽象的で細部を省いたIntentを、Projectの型・テスト・履歴へ自動的に適合させること**にある。開発者はVibe codingの速度を保ち、Project側の文脈が不足した詳細を補う。成功は、初回適合率、Project全体の回帰通過率、修正に必要な追加指示量、Schema変更への追従率で測る。
 
 処理全体は次のようになる。
 
@@ -165,13 +167,13 @@ function calculateTotal(
 ドメインに存在する概念、関係、制約、能力を定義する領域。
 
 ```typescript
-const Cat = concept`
-  生物学的なイエネコ。
+const Cat = defineConcept("animal.cat")`
+Definition:
+A domesticated animal that is a biological cat.
 
-  年齢、毛の有無、身体的欠損は問わない。
-
-  猫を描いた画像、玩具、ロボット、
-  大型の野生ネコ科動物は含まない。
+Exclusions:
+- Mechanical or virtual cat-shaped objects.
+- Large wild felids.
 `;
 ```
 
@@ -179,10 +181,23 @@ const Cat = concept`
 
 ```typescript
 const ActiveCustomer = concept<Customer>`
-  現在サービスを利用可能な顧客。
+Definition:
+A customer that is currently active and contactable.
 
-  停止または削除されておらず、
-  有効な連絡手段を持つ。
+Requirements:
+- status is "active".
+- deletedAt is null.
+- email is present.
+
+Exclusions:
+- Customers whose status is "suspended".
+- Customers whose deletedAt is not null.
+
+Out of scope:
+- Email address syntax and deliverability.
+
+Leave unresolved when:
+- The schema does not expose status, deletion, or email roles unambiguously.
 `;
 ```
 
@@ -229,17 +244,29 @@ const mikeIsCat = true;
 自然言語による意味・目的・制約から、再利用可能な型、関数、条件式、テストなどを生成する領域。
 
 ```typescript
-const isActiveCustomer =
-  generatePredicate<[Customer], boolean>`
-    現在サービスを利用可能な顧客を判定する。
+const ActiveCustomer = concept<Customer>`
+Definition:
+A customer that is currently active and contactable.
 
-    停止または削除されている顧客は除外する。
-    有効な連絡手段を持たない顧客は除外する。
+Requirements:
+- status is "active".
+- deletedAt is null.
+- email is present.
 
-    pure;
-    deterministic;
-    no network;
-  `;
+Exclusions:
+- Suspended or deleted customers.
+`;
+
+const isActiveCustomer = generatePredicate(ActiveCustomer);
+
+semanticTest(isActiveCustomer, {
+  accept: [
+    { status: "active", deletedAt: null, email: "customer@example.com" },
+  ],
+  reject: [
+    { status: "suspended", deletedAt: null, email: "customer@example.com" },
+  ],
+});
 ```
 
 コンパイル後は、通常のTypeScript関数になる。
@@ -270,19 +297,21 @@ Semantic Generationは、将来の入力にも適用できる再利用可能な�
 
 ただし、自然言語が果たす役割は、外側の形式構文によって厳密に指定する。
 
+現在のExecutable MVPでは、役割を次の形式構文で固定する。
+
 ```typescript
-concept`...`;
+const LocalConcept = concept<Input>`...`;
+const SharedConcept = defineConcept("stable.id")`...`;
+const BoundConcept = bindConcept<Input>(SharedConcept);
 
-judgeStatic(value, concept);
+const predicate = generatePredicate(LocalConcept);
+semanticTest(predicate, { accept: [...], reject: [...] });
 
-generatePredicate`...`;
-
-generateType`...`;
-
-generateFunction`...`;
-
-semanticTest`...`;
+const value = staticValue("...");
+const judgment = judgeStatic(value, SharedConcept);
 ```
+
+`generateType`や`generateFunction`は将来構想のconceptual syntaxであり、現在のMVPでは実行できない。
 
 自然言語部分だけを見て、コンパイラがその目的を推測してはならない。
 
@@ -334,10 +363,8 @@ Static値は、Static Judgmentに使用できる。
 コンパイル中に、LLMや決定的Generatorによって生成される値・型・関数。
 
 ```typescript
-const isCat = generatePredicate<
-  [Animal],
-  boolean
->`猫を判定する`;
+const CatForAnimal = bindConcept<Animal>(Cat);
+const isCat = generatePredicate(CatForAnimal);
 ```
 
 ### 6.3 Runtime
@@ -365,11 +392,8 @@ SemanticStageError:
 一方、Runtime値を処理する関数を事前生成することは可能である。
 
 ```typescript
-const isCat =
-  generatePredicate<[Animal], boolean>`
-    入力された動物が猫であるかを、
-    利用可能な構造化データから判定する。
-  `;
+const CatForAnimal = bindConcept<Animal>(Cat);
+const isCat = generatePredicate(CatForAnimal);
 ```
 
 ---
@@ -398,7 +422,7 @@ TypeScript
 * Semantic IRがすべてTypeScriptへ変換されている
 * 型チェックが成功している
 * 必須テストが成功している
-* 必要な人間承認が完了している
+* Project全体の適合Gateが成功している
 
 解決できない場合、コンパイラは推測でビルドを継続せず、エラーを返す。
 
@@ -447,7 +471,7 @@ LLMは制限された中間表現である `Semantic IR` を出力する。
 }
 ```
 
-Semantic IRはZodなどによって検証する。
+Semantic IRは、OpenAI structured outputへ渡すJSON Schemaと、実装内の厳格なruntime parserによって検証する。さらにTypeScript Compiler APIでsource contextを検査し、生成候補をTypeScript型検査へ通す。
 
 検証済みIRを、決定的なGeneratorがTypeScriptへ変換する。
 
@@ -455,7 +479,7 @@ Semantic IRはZodなどによって検証する。
 LLM
   ↓
 Semantic IR
-  ↓ Zod Validation
+  ↓ JSON Schema + strict runtime validation
 Validated IR
   ↓ Deterministic Generator
 TypeScript
@@ -507,7 +531,7 @@ Boundary Zone
   Interface
   Port
   Binding
-  Approval
+  Verification Gate
 
         ↓
 
@@ -562,10 +586,19 @@ export const refundPort: RefundPort =
 例えば、次のConceptを定義する。
 
 ```typescript
-const ActiveCustomer = concept`
-  現在サービスを利用でき、
-  停止または削除されておらず、
-  有効な連絡手段を持つ顧客。
+const ActiveCustomer = defineConcept("customer.active")`
+Definition:
+A customer that can currently use the service.
+
+Requirements:
+- The customer is enabled.
+- A verified contact method is present.
+
+Exclusions:
+- Suspended or deleted customers.
+
+Leave unresolved when:
+- The project schema cannot be mapped to these roles unambiguously.
 `;
 ```
 
@@ -597,28 +630,22 @@ Semantic Polymorphismは、同じ意図や世界理解から、環境ごとに�
 
 ---
 
-## 11. Semantic Test
+## 11. Semantic TestとSemantic TDD
 
 テストを補助機能ではなく、意味を確定するための第一級要素とする。
 
 ### 11.1 Example Test
 
+現在のExecutable MVPは、生成対象のPredicateに対する非空の`accept` / `reject`に加え、名前付きboundary、counterfactual、invarianceを提供する。
+
 ```typescript
-semanticTest(Cat, {
+semanticTest(isCat, {
   accept: [
-    "一般的な飼い猫",
-    "毛のない猫",
-    "脚を一本失った猫",
+    { species: "felis_catus", description: "A domesticated calico cat." },
   ],
-
   reject: [
-    "猫型ロボット",
-    "猫のぬいぐるみ",
-    "虎",
-  ],
-
-  unknown: [
-    "遠くに写った小型動物",
+    { species: "panthera_tigris", description: "A tiger." },
+    { species: "robot", description: "A cat-shaped robot." },
   ],
 });
 ```
@@ -628,20 +655,17 @@ semanticTest(Cat, {
 概念の境界を検査する。
 
 ```typescript
-semanticBoundaryTest(Cat, [
-  {
-    input: "野生化したイエネコ",
-    expected: "accepted",
-  },
-  {
-    input: "ヨーロッパヤマネコ",
-    expected: "rejected",
-  },
-  {
-    input: "イエネコとヤマネコの交雑種",
-    expected: "unknown",
-  },
-]);
+semanticTest(isCat, {
+  accept: [{ species: "felis_catus", domesticated: true }],
+  reject: [{ species: "robot", domesticated: false }],
+  boundary: [
+    {
+      name: "feral-domestic-cat",
+      input: { species: "felis_catus", domesticated: false },
+      expected: "accepted",
+    },
+  ],
+});
 ```
 
 ### 11.3 Counterfactual Test
@@ -649,16 +673,21 @@ semanticBoundaryTest(Cat, [
 入力の一部分だけを変更し、判断がどのように変化すべきかを検査する。
 
 ```typescript
-semanticCounterfactualTest({
-  base: "三毛模様の生きた飼い猫",
-
-  mutations: [
-    {
-      replace: "生きた飼い猫",
-      with: "電池で動く猫型玩具",
-      expected: "rejected",
+semanticTest(isCat, {
+  accept: [{ species: "felis_catus", mechanical: false }],
+  reject: [{ species: "robot", mechanical: true }],
+  counterfactual: [{
+    name: "biological-to-mechanical",
+    base: {
+      input: { species: "felis_catus", mechanical: false },
+      expected: "accepted",
     },
-  ],
+    variants: [{
+      name: "robot",
+      input: { species: "robot", mechanical: true },
+      expected: "rejected",
+    }],
+  }],
 });
 ```
 
@@ -667,22 +696,265 @@ semanticCounterfactualTest({
 意味が同じなら表現が変わっても結果が変化しないことを検査する。
 
 ```typescript
-semanticInvariantTest(Cat, {
-  inputs: [
-    "一般家庭で飼われる三毛猫",
-    "家庭で飼育されている三色のイエネコ",
-    "a domesticated calico cat",
-  ],
+semanticTest(isCat, {
+  accept: [{ species: "felis_catus", description: "calico cat" }],
+  reject: [{ species: "robot", description: "cat-shaped toy" }],
+  invariance: [{
+    name: "description-language",
+    expected: "accepted",
+    inputs: [
+      { species: "felis_catus", description: "三毛猫" },
+      { species: "felis_catus", description: "calico cat" },
+    ],
+  }],
 });
 ```
 
 ### 11.5 Semantic Mutation Test
+
+ここから11.6までは将来構想であり、現在のsource DSLが直接提供するAPIではない。
 
 Concept、Constraint、Goalを意図的に変更し、テストが意味の欠陥を検出できるか確認する。
 
 ### 11.6 Model Migration Test
 
 使用モデルを変更した際、過去のJudgmentがどの程度変化したかを比較する。
+
+### 11.7 Semantic TDD
+
+L-Langでは、人間が大量の具体的なテストコードを書く代わりに、振る舞い、境界、禁止事項、変化に対する関係を意味契約として先に定義する。
+
+L-Langは意味契約からテストと実装を別々に具体化し、先に固定されたテスト義務を満たす実装候補だけを採用する。この開発方式を`Semantic TDD`と呼ぶ。
+
+```text
+Semantic Contract
+        ↓
+契約条項の正規化
+        ↓
+Test Obligation IR
+        ↓ Red検証 / 自動Freeze
+Implementation IR候補
+        ↓
+型 / Effect / Test / Mutation検査
+        ↓
+採用候補
+        ↓
+semantic.lock
+```
+
+Semantic TDDの正本は生成されたテストコードではない。次を資産として扱う。
+
+* 人間が定義した意味契約
+* 契約条項から導出されたTest Obligation IR
+* Test IRの生成根拠と契約条項へのtrace
+* 検証済みImplementation IR
+* Red検証、型検査、Effect検査、Test、Mutationの結果
+* それらを固定するLockfile
+
+#### 11.7.1 緩いTDD
+
+通常のTDDでは、人間が実装前に具体的なテストコードを書く。
+
+L-Langでは、人間が先に固定するのはテストコードではなく、次のようなテストの意味である。
+
+```text
+何を必ず満たすか
+何を受理するか
+何を拒否するか
+何を判断不能とするか
+何が変化しても結果が変わらないか
+どの変化によって結果が変わるべきか
+どの副作用を許可しないか
+```
+
+具体的なfixture、property、counterfactual、invariance、実行可能なテストコードはコンパイラが展開する。この意味で、Semantic TDDはテスト記述量を減らした「緩いTDD」である。
+
+ただし、合否条件を緩くするものではない。Hardな意味義務、型、Effect、安全境界はすべて満たさなければならない。
+
+#### 11.7.2 Test IRとImplementation IRの分離
+
+同じ生成結果の中で実装とテストを作ると、同じ誤解を共有した自己確認になる。
+
+Semantic TDDでは、意味契約から少なくとも二つの独立した生成経路を持つ。
+
+```text
+                    ┌─→ Test Synthesizer ─→ Test Obligation IR
+Semantic Contract ─┤
+                    └─→ Implementation Synthesizer ─→ Implementation IR
+```
+
+Test Synthesizerは次を参照できる。
+
+* Goal、Concept、Requirements、Exclusions
+* 型定義と有効な入力領域
+* Projectに蓄積された正例、反例、境界
+* 過去の不具合と検証済みTest Pattern
+
+Test Synthesizerへ生成済みImplementation IRや生成コードを見せない。
+
+Implementation Synthesizerは次を参照できる。
+
+* Goal、Concept、Requirements、Exclusions
+* 型定義
+* Effect制約
+* 必要な場合に限り、公開すると決めたTest Obligationの一部
+
+Implementation Synthesizerへ、holdout Test、Mutationの生存情報、Oracle実装を見せない。
+
+生成経路の分離だけでは、自然言語の同じ曖昧さを両者が誤解する可能性は消えない。そのため、Test IRは機械検証可能で、各義務が元の契約条項を追跡でき、実装前RedとMutation検出によって有効性を証明できなければならない。
+
+#### 11.7.3 Test Obligation IR
+
+Test Obligation IRは、実行可能なテストコードより前に存在する、言語非依存の検証契約である。
+
+概念例:
+
+```yaml
+version: 1
+contract: customer.active
+obligations:
+  - id: reject-deleted
+    source: exclusions[1]
+    kind: property
+    when:
+      deletedAt: present
+    expect: rejected
+
+  - id: status-transition
+    source: requirements[1]
+    kind: counterfactual
+    change:
+      status:
+        from: active
+        to: suspended
+    expect:
+      from: accepted
+      to: rejected
+
+  - id: display-name-invariant
+    source: invariants[1]
+    kind: invariance
+    change:
+      property: displayName
+    expect: unchanged
+```
+
+すべてのHardな契約条項は、1件以上のTest Obligationに対応しなければならない。対応のないHard条項がある場合、テスト計画は未完了としてfail-closedにする。
+
+Test IRからTypeScriptとBun向けテストコードを決定的に生成する。LLMが自由なテストコードを直接生成して実行してはならない。
+
+#### 11.7.4 Redの証明
+
+テストが実装より先に存在しても、どの実装でも通る空虚なテストでは意味がない。
+
+Test Planを固定する前に、少なくとも次の既知不正実装を検出できるか確認する。
+
+* 常に`true`を返すPredicate
+* 常に`false`を返すPredicate
+* 条件を一つ削除したPredicate IR
+* `equals`の期待値を反転したPredicate IR
+* `all`と`any`を交換したPredicate IR
+
+要求に関係する既知不正実装をTest Planが検出した結果を`Red Certificate`として保存する。
+
+すべてのMutationを必ず検出できるとは限らない。型や契約上同値なMutation、到達不能なMutationは除外理由を記録し、単純にMutation scoreの分母へ含めない。
+
+#### 11.7.5 Hard GateとSoft Quality
+
+L-Langの80点思想は、既知の要求への違反を許容する意味ではない。
+
+```yaml
+quality:
+  hard:
+    normative_obligations: pass
+    typecheck: pass
+    forbidden_effects: zero
+    security_tests: pass
+
+  soft:
+    obligation_coverage: 0.80
+    boundary_coverage: 0.75
+    mutation_score: 0.70
+    implementation_stability: 0.80
+```
+
+Hard Testは100%合格を要求する。
+
+Soft指標は、生成できた境界の広さ、探索的テストの充実度、Mutation検出力、複数回生成時の安定性を評価する。既知の期待結果に失敗する候補を「80%合格」として自動採用してはならない。
+
+#### 11.7.6 `unknown`と`unresolved`
+
+Semantic TDDでは、次を区別する。
+
+* `unresolved`: コンパイル時にConceptを対象Schemaへ一意に対応付けられない
+* `unknown`: 実行時入力に情報が不足し、acceptedまたはrejectedを決定できない
+
+Boolean Predicateは`true`または`false`だけを返すため、実行時の`unknown`を表現しない。実行時に三値判断が必要な場合は、Boolean Predicateへ暗黙に追加せず、`accepted | rejected | unknown`を返す専用Judgment IRを定義する。
+
+Predicate MVPでは、コンパイル時の`unresolved`だけを扱う。
+
+#### 11.7.7 Freeze、選択、Lock
+
+Test PlanはImplementation IR生成前にhashで固定する。
+
+Implementation候補の評価中にTest Planを変更した場合、同じ試行の継続とはみなさず、新しいSemantic Contract revisionとして最初から検証する。
+
+Best-of-Nで複数のImplementation IRを生成する場合、次を守る。
+
+* すべての候補を同じ凍結済みTest Planで評価する
+* holdout Testの内容を候補生成へ返さない
+* holdout結果を使った反復修正を無制限に行わない
+* 合格候補が複数ある場合、IRの単純さ、Effect、安定性を含む決定的な選択規則を使用する
+* 合格候補がない場合、Test Planを実装へ合わせて弱めず`unresolved`にする
+
+Lockfileには少なくとも次を記録する。
+
+```text
+contractHash
+testPlanHash
+testCompilerVersion
+implementationIr
+generatedCodeHash
+redCertificate
+validationSummary
+promotionProvenance
+```
+
+#### 11.7.8 Semantic Test Pattern
+
+検証済みのTest Obligation抽象はSemantic Packageとして再利用できる。
+
+```text
+Payment
+├─ 二重決済防止
+├─ Idempotency
+├─ 失敗時の再試行
+├─ 部分成功
+└─ 監査ログ
+```
+
+Test Patternは具体的なfixtureを無条件にコピーするものではない。Capability、型、Effect、対象Schemaへbindingし、適用できないroleがある場合は推測せず`unresolved`にする。
+
+#### 11.7.9 導入順序
+
+Semantic TDDは、最初から任意関数生成へ適用しない。
+
+Predicate MVPで次を順に検証する。
+
+1. Test Obligation IRと契約条項trace
+2. Exampleからの決定的fixture展開
+3. CounterfactualとInvariance
+4. Red Certificate
+5. Predicate IR Mutation
+6. Implementation IRの複数候補生成と選択
+7. Property Test用generatorとshrinker
+8. Test Planと採用IRのLock
+
+Predicateでテスト生成の妥当性、実装との独立性、false acceptance、Mutation検出力、追加指示量を検証した後だけ、Validation、Mapping、状態遷移などの専用IRへ拡張する。
+
+段階的な実装順、Gate、検証、停止条件は[`SEMANTIC_TDD_IMPLEMENTATION_PLAN.md`](./SEMANTIC_TDD_IMPLEMENTATION_PLAN.md)を正とする。
+
+Predicate POCでは、`tdd-build`がtrace・型・実装前Redを検証したTest PlanをImplementation生成前に自動freezeする。`tdd-plan → diff → approve → tdd-build`は互換用のstaging経路としてのみ残す。`tdd-test`はAPI・書き込みなしの整合性検証、`tdd-replay`は両lockからのtransaction再実行である。Test PlanとRed Certificate、Selection Reportは`semantic-test.lock`へ、Implementation IRと生成物hashは既存`semantic.lock`へ分離して固定する。
 
 ---
 
@@ -702,7 +974,7 @@ LLMの判断結果と生成結果を再現可能にするため、`semantic.lock
       "model": "example-model",
       "result": "accepted",
       "resolvedIrHash": "sha256:...",
-      "approved": true
+      "validated": true
     }
   }
 }
@@ -717,7 +989,7 @@ Lockfileは次の用途を持つ。
 * LLM利用料金削減
 * モデル変更時の差分検出
 * Judgment監査
-* 人間承認記録
+* 検証・freeze方式の記録
 * Semantic Regression Test
 
 ---
@@ -803,7 +1075,7 @@ Leave unresolved when:
 * `generatePredicate`
 * `semanticTest`
 * Semantic IR
-* Zod Validation
+* JSON Schemaと厳格なruntime parserによるIR Validation
 * TypeScript Generator
 * `semantic.lock`
 * `semantic build`
@@ -833,67 +1105,66 @@ Leave unresolved when:
 
 ## 15. MVP構文例
 
+ここからは概念説明用の疑似構文ではなく、現在のscanner / compilerが受理するExecutable MVP syntaxを示す。PredicateとStatic Judgmentはsource kindが異なるため、同じSemantic sourceへ置かない。
+
+共有Conceptを`cat.ts`で定義する。
+
+```typescript
+import { defineConcept } from "../../src/dsl";
+
+export const Cat = defineConcept("animal.cat")`
+Definition:
+A domesticated animal that is a biological cat.
+
+Exclusions:
+- Mechanical or virtual cat-shaped objects.
+- Large wild felids.
+`;
+```
+
+Predicateは`predicate.ts`で型へbindし、生成対象のPredicateをSemantic Testへ渡す。
+
 ```typescript
 import {
-  concept,
+  bindConcept,
   generatePredicate,
-  judgeStatic,
   semanticTest,
-  staticValue,
-} from "@semantic-ts/core";
+} from "../../src/dsl";
+import { Cat } from "./cat";
 
 type Animal = {
-  species?: string;
-  taxonomyId?: number;
+  species: "felis_catus" | "panthera_tigris" | "robot";
   description: string;
 };
 
-const Cat = concept<Animal>`
-  生物学的なイエネコ。
+const CatForAnimal = bindConcept<Animal>(Cat);
+export const isCat = generatePredicate(CatForAnimal);
 
-  年齢、毛の有無、身体的欠損は問わない。
-
-  猫を描いた画像、玩具、ロボット、
-  虎やライオンなどの大型ネコ科動物は含まない。
-`;
-
-const mike = staticValue(`
-  三毛模様でニャーと鳴き、
-  人間の家で飼育されている小型動物
-`);
-
-export const mikeIsCat =
-  judgeStatic(mike, Cat);
-
-export const isCat =
-  generatePredicate<[Animal], boolean>`
-    Animalの構造化情報から、
-    生物学的なイエネコであるかを判定する。
-
-    pure;
-    deterministic;
-    no network;
-    no mutation;
-  `;
-
-semanticTest(Cat, {
+semanticTest(isCat, {
   accept: [
-    "一般的な飼い猫",
-    "スフィンクス",
-    "脚を失った猫",
+    { species: "felis_catus", description: "A domesticated calico cat." },
   ],
-
   reject: [
-    "虎",
-    "猫型ロボット",
-    "猫のぬいぐるみ",
-  ],
-
-  unknown: [
-    "遠くに見える小型の四足動物",
+    { species: "panthera_tigris", description: "A tiger." },
+    { species: "robot", description: "A cat-shaped robot." },
   ],
 });
 ```
+
+Static Judgmentは別の`judgment.ts`へ置き、型へbindする前の共有Conceptを直接使用する。
+
+```typescript
+import { judgeStatic, staticValue } from "../../src/dsl";
+import { Cat } from "./cat";
+
+const mike = staticValue(`
+  A small domesticated calico animal that meows.
+`);
+
+export const mikeIsCat = judgeStatic(mike, Cat);
+```
+
+実際に継続検証しているsourceは、[`examples/active-customer/semantic.ts`](./examples/active-customer/semantic.ts)、[`examples/static-judgment/cat.ts`](./examples/static-judgment/cat.ts)、[`examples/static-judgment/semantic.ts`](./examples/static-judgment/semantic.ts)、[`examples/semantic-polymorphism/`](./examples/semantic-polymorphism/)を正とする。
 
 想定される生成結果は次のようになる。
 
@@ -977,9 +1248,10 @@ MVPでは次の技術を使用する。
 * TypeScript
 * Bun
 * TypeScript Compiler API
-* Zod
 * VitestまたはBun Test
 * JSONベースSemantic IR
+* OpenAI structured output用JSON Schema
+* 厳格なruntime parser
 * LLM API Adapter
 * SHA-256ベースの入力・Concept・Contextハッシュ
 
@@ -1044,7 +1316,11 @@ ConceptとSemantic Testを修正する方が、大量の手書きif文を修正�
 
 ### 仮説7
 
-生成コード全体を確認するより、Semantic Diffを確認する方がレビュー負荷を下げられる。
+抽象的なIntentとProject文脈から、追加指示を抑えながらProjectに適合する実装を生成できる。
+
+### 仮説8
+
+意味契約からTest IRを先に固定し、Implementation IRを分離生成する方が、実装とテストを同じ生成結果から作る方式よりfalse acceptanceを減らせる。
 
 ---
 
@@ -1059,9 +1335,14 @@ MVPでは次の指標を測定する。
 | Semantic Closure Rate     | 未解決ノードなしでビルドできた割合        |
 | Generated Type Safety     | TypeScript型検査成功率         |
 | Test Pass Rate            | 生成後のテスト成功率               |
+| Hard Clause Trace Coverage | Hardな契約条項がTest Obligationへ対応する割合 |
+| False Acceptance          | 意味的に誤ったImplementation候補をTest Planが受理した割合 |
+| Red Mutation Kill Rate    | Test Planが対象とする既知不正IRを検出した割合 |
 | Semantic Mutation Score   | 意味定義の欠陥を検出できた割合          |
 | Code Reduction            | 手書き条件とのコード量比較            |
-| Review Time               | 生成コードとSemantic Diffの確認時間 |
+| Intent-to-Fit Time        | 抽象的な指示からProject回帰通過までの総時間 |
+| Correction Burden         | 初回適合までに必要な追加指示量と修正回数 |
+| Project Regression Pass   | 生成候補がProject全体の回帰を通過した割合 |
 | Build Cost                | LLM利用時間と料金               |
 | Runtime Overhead          | 通常TypeScriptとの差          |
 | Cross-schema Reuse        | 異なるスキーマへの適用成功率           |
@@ -1078,6 +1359,10 @@ MVPでは次の指標を測定する。
 対策として次を利用する。
 
 * 人間が定義した正例・反例
+* Test IRとImplementation IRの分離生成
+* 契約条項からTest Obligationへのtrace
+* Test Planの先行freeze
+* Red Certificate
 * TypeScript型検査
 * Property-based Test
 * Counterfactual Test
@@ -1096,7 +1381,9 @@ MVPでは次の指標を測定する。
 * Context Hash
 * Model ID
 * Semantic Regression Test
-* 人間承認
+* Project固有のRegression Test
+* 複数サンプルのConsensus
+* 曖昧時の`unresolved`
 
 ### 20.3 生成コードの肥大化
 
@@ -1184,10 +1471,10 @@ MVPで価値が確認された場合、次の機能を段階的に検討する�
 * TypeScript生成
 * 型チェック
 * テスト
-* Review
+* Project Context Fit
 * Semantic Diff
 * 修正ループ
-* Human approval
+* 自動検証とfreeze
 
 ```text
 ContextStill
@@ -1260,3 +1547,15 @@ LLM:
 MVPの中心命題は次のとおりである。
 
 > 自然言語をコードの代わりに実行するのではなく、自然言語をコンパイル時に型・値・条件式・テストへ変換する。
+
+`Semantic TDD`を、次のように定義する。
+
+> 開発者が意味契約を与え、コンパイラが実装を参照せずTest Obligation IRを生成・Red検証・自動freezeした後、別経路でImplementation IRを生成し、凍結済みのHard義務をすべて満たす候補だけを採用する生成型TDD。
+
+`Test Obligation IR`を、次のように定義する。
+
+> 実行可能なテストコードより前に存在し、期待する振る舞い、入力変換、結果間の関係、強度、根拠となる契約条項を言語非依存に表現する検証契約。
+
+`Red Certificate`を、次のように定義する。
+
+> Test Planが定数実装や契約条件を欠落・反転させた既知不正IRを検出できることと、検出できないMutationの分類理由を記録した検証artifact。

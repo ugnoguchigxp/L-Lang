@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": {
+    "source": "catalog-governance/searchable-asset.semantic.ts",
+    "symbol": "isSearchableAsset",
+    "typeName": "UpdatedDigitalAsset",
+    "typeDeclaration": "type UpdatedDigitalAsset = { discoverability: \"indexed\" | \"excluded\"; access: \"external\" | \"internal\"; lifecycle: \"active\" | \"deleted\" };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "catalog-governance.searchable-asset",
+      "source": "catalog-governance/conventions.semantic.ts",
+      "targetTypeName": "UpdatedDigitalAsset",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "discoverability"
+            ],
+            "value": "indexed"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "access"
+            ],
+            "value": "external"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "lifecycle"
+            ],
+            "value": "active"
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

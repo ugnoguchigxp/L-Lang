@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": {
+    "source": "catalog-governance/sellable-listing.semantic.ts",
+    "symbol": "isSellableListing",
+    "typeName": "UpdatedListing",
+    "typeDeclaration": "type UpdatedListing = { moderation: \"accepted\" | \"pending\"; inventory: \"available\" | \"unavailable\"; lifecycle: \"current\" | \"retired\" };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "catalog-governance.sellable-listing",
+      "source": "catalog-governance/conventions.semantic.ts",
+      "targetTypeName": "UpdatedListing",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "moderation"
+            ],
+            "value": "accepted"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "inventory"
+            ],
+            "value": "available"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "lifecycle"
+            ],
+            "value": "current"
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

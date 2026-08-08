@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 
 import {
@@ -12,6 +12,67 @@ import { SemanticSourceError } from "./semantic-source";
 const workspaceRoot = resolve(import.meta.dir, "..");
 
 describe("semantic compiler transaction", () => {
+  for (const invalidSource of [
+    {
+      name: "empty accept cases",
+      source: renderInvalidSemanticSource("[]", '[{ state: "waiting" }]'),
+      expectedError: "semanticTest.accept must contain at least one case",
+    },
+    {
+      name: "empty reject cases",
+      source: renderInvalidSemanticSource('[{ state: "ready" }]', "[]"),
+      expectedError: "semanticTest.reject must contain at least one case",
+    },
+    {
+      name: "empty accept and reject cases",
+      source: renderInvalidSemanticSource("[]", "[]"),
+      expectedError: "semanticTest.accept must contain at least one case",
+    },
+    {
+      name: "a research benchmarkProbe",
+      source: renderBenchmarkProbeSource(),
+      expectedError: "benchmarkProbe is restricted to research benchmark runners",
+    },
+  ]) {
+    test(`rejects ${invalidSource.name} before resolution without changing artifacts`, async () => {
+      const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+      await mkdir(parent, { recursive: true });
+      const testRoot = await mkdtemp(resolve(parent, "invalid-semantic-source-"));
+      const sourcePath = resolve(testRoot, "semantic.ts");
+      const lockPath = resolve(testRoot, "semantic.lock");
+      const finalPath = resolve(testRoot, "is-customer.generated.ts");
+      const lockBefore = "sentinel lock\n";
+      const outputBefore = "export const sentinel = true;\n";
+      let resolverCalled = false;
+
+      try {
+        await writeFile(sourcePath, invalidSource.source, "utf8");
+        await writeFile(lockPath, lockBefore, "utf8");
+        await writeFile(finalPath, outputBefore, "utf8");
+
+        const compilation = compileSemanticSource({
+          sourcePath,
+          workspaceRoot,
+          mode: "build",
+          lockPath,
+          auditRoot: resolve(testRoot, "audit"),
+          resolve: async () => {
+            resolverCalled = true;
+            return resolvedCustomer();
+          },
+        });
+
+        await expect(compilation).rejects.toBeInstanceOf(SemanticSourceError);
+        await expect(compilation).rejects.toThrow(invalidSource.expectedError);
+        expect(resolverCalled).toBe(false);
+        expect(await readFile(lockPath, "utf8")).toBe(lockBefore);
+        expect(await readFile(finalPath, "utf8")).toBe(outputBefore);
+      } finally {
+        await rm(testRoot, { recursive: true, force: true });
+      }
+    });
+  }
+
   test("rejects unsectioned prose before calling the resolver", async () => {
     const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
     await mkdir(parent, { recursive: true });
@@ -86,6 +147,7 @@ describe("semantic compiler transaction", () => {
         const stages: string[] = [];
         const runner = createIntegrationRunner(stages);
         const resolution = resolvedCustomer();
+        let capturedContextVersion: number | undefined;
 
         const built = await compileSemanticSource({
           sourcePath,
@@ -97,11 +159,15 @@ describe("semantic compiler transaction", () => {
           lockPath,
           auditRoot,
           commandRunner: runner,
-          resolve: async () => resolution,
+          resolve: async (input) => {
+            capturedContextVersion = input.projectContext?.version;
+            return resolution;
+          },
         });
         const firstCode = await readFile(finalPath, "utf8");
         expect(built.cacheHit).toBe(false);
         expect(built.apiCalls).toBe(0);
+        expect(capturedContextVersion).toBe(1);
         expect(firstCode).toContain('integrationCustomer.status === "active"');
         expect(stages).toEqual([
           "candidate-typecheck",
@@ -204,6 +270,10 @@ describe("semantic compiler transaction", () => {
           entries: Record<string, {
             conceptId: string;
             conceptHash: string;
+            targetTypeName: string;
+            contextVersion: number;
+            contextHash: string;
+            contextSummary: { targetSource: string };
             promotion: { mode: string; validation: { semanticTest: string } };
           }>;
         };
@@ -211,6 +281,12 @@ describe("semantic compiler transaction", () => {
         expect(entries).toHaveLength(1);
         expect(entries[0]?.conceptId).toBe("customer.active");
         expect(entries[0]?.conceptHash).toMatch(/^[a-f0-9]{64}$/);
+        expect(entries[0]).toMatchObject({
+          targetTypeName: "IntegrationCustomer",
+          contextVersion: 1,
+          contextSummary: { targetSource: expect.any(String) },
+        });
+        expect(entries[0]?.contextHash).toMatch(/^[a-f0-9]{64}$/);
         expect(entries[0]?.promotion).toMatchObject({
           mode: "auto",
           validation: { semanticTest: "passed" },
@@ -219,7 +295,7 @@ describe("semantic compiler transaction", () => {
         await rm(testRoot, { recursive: true, force: true });
       }
     },
-    60_000,
+    120_000,
   );
 });
 
@@ -291,7 +367,7 @@ function renderUnsectionedSource(testRoot: string): string {
     "type Customer = { status: string };",
     "const CustomerConcept = concept<Customer>`A customer described only by prose.`;",
     "export const isCustomer = generatePredicate(CustomerConcept);",
-    'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [] });',
+    'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [{ status: "inactive" }] });',
     "",
   ].join("\n");
 }
@@ -305,9 +381,52 @@ function renderDefinitionOnlySource(testRoot: string): string {
     "type Customer = { status: string };",
     "const CustomerConcept = concept<Customer>`Definition:\nA customer.`;",
     "export const isCustomer = generatePredicate(CustomerConcept);",
-    'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [] });',
+    'semanticTest(isCustomer, { accept: [{ status: "active" }], reject: [{ status: "inactive" }] });',
     "",
   ].join("\n");
+}
+
+function renderInvalidSemanticSource(accept: string, reject: string): string {
+  return [
+    "type Concept<T> = { readonly input?: T };",
+    "type Predicate<T> = (value: T) => boolean;",
+    "declare function concept<T>(strings: TemplateStringsArray): Concept<T>;",
+    "declare function generatePredicate<T>(concept: Concept<T>): Predicate<T>;",
+    "declare function semanticTest<T>(",
+    "  predicate: Predicate<T>,",
+    "  cases: { accept: readonly T[]; reject: readonly T[] },",
+    "): void;",
+    ...renderCustomerPredicate(),
+    `semanticTest(isCustomer, { accept: ${accept}, reject: ${reject} });`,
+    "",
+  ].join("\n");
+}
+
+function renderBenchmarkProbeSource(): string {
+  return [
+    "type Concept<T> = { readonly input?: T };",
+    "type Predicate<T> = (value: T) => boolean;",
+    "declare function concept<T>(strings: TemplateStringsArray): Concept<T>;",
+    "declare function generatePredicate<T>(concept: Concept<T>): Predicate<T>;",
+    "declare function benchmarkProbe<T>(predicate: Predicate<T>): void;",
+    ...renderCustomerPredicate(),
+    "benchmarkProbe(isCustomer);",
+    "",
+  ].join("\n");
+}
+
+function renderCustomerPredicate(): string[] {
+  return [
+    'type Customer = { state: "ready" | "waiting" };',
+    "const CustomerConcept = concept<Customer>`",
+    "Definition:",
+    "A customer that is ready.",
+    "",
+    "Requirements:",
+    "- The customer state is ready.",
+    "`;",
+    "export const isCustomer = generatePredicate(CustomerConcept);",
+  ];
 }
 
 function resolvedCustomer(): SemanticResolution {

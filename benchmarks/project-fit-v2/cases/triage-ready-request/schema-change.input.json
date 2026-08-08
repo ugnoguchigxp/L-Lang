@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify requests ready for the project's normal triage queue.",
+  "target": {
+    "functionName": "isTriageReadyRequest",
+    "parameterName": "request",
+    "typeName": "UpdatedServiceRequest",
+    "typeScriptSource": "type UpdatedServiceRequest = { intake: \"self-service\" | \"mail\"; classification?: { code: string }; workflow: \"triaged\" | \"new\"; visibility: \"normal\" | \"suppressed\" };"
+  }
+}

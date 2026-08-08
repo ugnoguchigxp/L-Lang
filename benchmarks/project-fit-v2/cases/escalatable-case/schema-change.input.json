@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify customer cases that qualify for escalation under this service team's convention.",
+  "target": {
+    "functionName": "isEscalatableCase",
+    "parameterName": "customerCase",
+    "typeName": "UpdatedCustomerCase",
+    "typeScriptSource": "type UpdatedCustomerCase = { serviceLevel: \"base\" | \"premium\"; phase: \"analysis\" | \"paused\" | \"done\"; escalation?: { reason: string } };"
+  }
+}

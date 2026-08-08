@@ -1,7 +1,7 @@
 import ts from "typescript";
 
 import type { Literal, PredicateExpression } from "./ir";
-import type { SemanticSource } from "./semantic-source";
+import type { SemanticSourceBase } from "./semantic-source";
 
 export class ContextValidationError extends Error {
   override name = "ContextValidationError";
@@ -9,22 +9,22 @@ export class ContextValidationError extends Error {
 
 export function validatePredicateContext(
   expression: PredicateExpression,
-  source: SemanticSource,
+  source: SemanticSourceBase,
 ): void {
   validateExpression(expression, source, "body");
 }
 
 function validateExpression(
   expression: PredicateExpression,
-  source: SemanticSource,
+  source: SemanticSourceBase,
   path: string,
 ): void {
   switch (expression.kind) {
     case "all":
     case "any":
-      expression.conditions.forEach((condition, index) =>
-        validateExpression(condition, source, `${path}.conditions[${index}]`),
-      );
+      expression.conditions.forEach((condition, index) => {
+        validateExpression(condition, source, `${path}.conditions[${index}]`);
+      });
       return;
     case "not":
       validateExpression(expression.condition, source, `${path}.condition`);
@@ -51,7 +51,7 @@ function validateExpression(
 
 function resolveProperty(
   propertyPath: string[],
-  source: SemanticSource,
+  source: SemanticSourceBase,
   expressionPath: string,
 ): { type: ts.Type; optional: boolean } {
   let currentType = source.concept.inputType;

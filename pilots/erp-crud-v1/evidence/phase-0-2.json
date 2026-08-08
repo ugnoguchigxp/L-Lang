@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "pilot": "erp-crud-v1",
+  "recordedDate": "2026-07-24",
+  "completedPhases": [0, 1, 2],
+  "status": "passed",
+  "nextPhase": 3,
+  "freezeStatus": "draft",
+  "scope": "fixture-only preflight; no provider API call",
+  "artifacts": {
+    "manifest": {
+      "path": "pilots/erp-crud-v1/manifest.json",
+      "sha256": "c22f2b8eb339fee424abb235800ea81b3bc18edb9df576358a5d7cd602a7e18d"
+    },
+    "draftFreeze": {
+      "path": "pilots/erp-crud-v1/freeze.json",
+      "sha256": "e06e749b1f577812efb9188522a9f7caa30c8f6d8ae92336712da6ea2f3c8276"
+    },
+    "fixtureReportJson": {
+      "path": ".semantic/pilots/erp-crud-v1-fixture-c22f2b8eb339/report.json",
+      "sha256": "b293132dcea38a41a3a2833ffd0043d18ca62b35b67b5e938f87fd0a3cc71cae"
+    },
+    "fixtureReportMarkdown": {
+      "path": ".semantic/pilots/erp-crud-v1-fixture-c22f2b8eb339/report.md",
+      "sha256": "0289bfb22e96ec2b33d82666b4f340fa6726b4c7f7bf8e13e5fd7baa9a4c87c3"
+    }
+  },
+  "fixtureResult": {
+    "cases": 8,
+    "resolved": 8,
+    "firstPassProjectFit": 8,
+    "hiddenCases": 25,
+    "hiddenCasesPassed": 25,
+    "falseResolutions": 0,
+    "businessWrites": 0,
+    "externalIo": 0,
+    "workspaceMutations": 0,
+    "confidentialDataIncidents": 0
+  },
+  "verification": [
+    {
+      "command": "bun test src/pilot-manifest.test.ts src/pilot-runner.test.ts pilots/erp-crud-v1",
+      "result": "8 pass, 0 fail, 129 expectations"
+    },
+    {
+      "command": "bun run pilot:run pilots/erp-crud-v1/manifest.json --fixture",
+      "result": "fixture-passed, first-pass 8/8, hidden cases 25/25"
+    },
+    {
+      "command": "bun run pilot:run pilots/erp-crud-v1/manifest.json --live",
+      "result": "rejected before API call because freeze status is draft"
+    },
+    {
+      "command": "bun test",
+      "result": "210 pass, 0 fail, 1090 expectations"
+    },
+    {
+      "command": "bun run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "bun run format:check",
+      "result": "passed, 54 files"
+    },
+    {
+      "command": "bun run lint",
+      "result": "passed with 92 pre-existing warnings and no pilot warnings"
+    },
+    {
+      "command": "bun run coverage",
+      "result": "passed; 94.03% functions, 94.06% lines"
+    },
+    {
+      "command": "bun run ci:protected",
+      "result": "passed"
+    },
+    {
+      "command": "bun run ci:smoke",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "limitations": [
+    "No OpenAI or Azure OpenAI API was called in phases 0-2.",
+    "The 60-second cooldown was verified with injected clocks for success, HTTP 429, and terminal failure; no real cooldown evidence exists yet.",
+    "Token, latency, baseline-work, and semantic-work values in the fixture report are placeholders and are not evidence of cost or time improvement.",
+    "The draft freeze is not authorization for a live run.",
+    "This evidence does not constitute a Pilot Go/No-Go decision."
+  ]
+}

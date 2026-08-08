@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify listings sellable under the catalog project's publication convention.",
+  "target": {
+    "functionName": "isSellableListing",
+    "parameterName": "listing",
+    "typeName": "UpdatedListing",
+    "typeScriptSource": "type UpdatedListing = { moderation: \"accepted\" | \"pending\"; inventory: \"available\" | \"unavailable\"; lifecycle: \"current\" | \"retired\" };"
+  }
+}

@@ -16,6 +16,8 @@ L-Langは研究・検証段階のソフトウェアです。生成候補を無�
 
 ## Trust boundary
 
-LLM出力は信頼済みコードではありません。制限IRのparse、型文脈検証、決定的生成、型検査、テスト、人間承認を通過するまで候補として扱ってください。`compatible`なSemantic Diffも安全性や業務上の正しさを保証しません。
+LLM出力は信頼済みコードではありません。通常の`semantic build`は、制限IRのparse、型文脈検証、決定的生成、候補専用の型検査とSemantic Test、全体typecheck、全体testを通過すると自動昇格します。`--review`、`diff`、`approve`は互換用のcandidate stagingであり、セキュリティ上の信頼水準を引き上げるものではありません。自動昇格済みのartifactも、安全性や業務上の正しさが保証されるわけではありません。`compatible`なSemantic Diffも同様です。
+
+外部JSON、IR、diagnostics、lockにはresource budgetとknown-key検査があります。promotionはworkspace lock、previous/next snapshot、transaction journalを使用します。未知hashを検出した回復処理は`manual-recovery-required`として停止し、推測でartifactを上書きしません。L-Lang以外のprocessから見た複数fileの同時可視性は保証されないため、promotion中の生成物を直接監視しないでください。
 
 認可、暗号、金額、DB transaction、network副作用、secretアクセスをSemantic Generationへ委譲しないでください。

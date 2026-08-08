@@ -5,9 +5,9 @@ export function renderSemanticClosure(report: SemanticClosureReport): string {
     "semantic closure",
     `status: ${report.status}`,
     `scope: ${report.scope}`,
-    `approval: ${report.approval}`,
     `manifest: ${report.manifest}`,
-    `summary: ${report.summary.current}/${report.summary.total} current, ${report.summary.stale} stale, ${report.summary.unlocked} unlocked, ${report.summary.integrityError} integrity-error`,
+    `summary: ${report.summary.current}/${report.summary.total} current, ${report.summary.stale} stale, ${report.summary.unlocked} unlocked, ${report.summary.integrityError} integrity-error, ${report.summary.verificationRequired} verification-required, ${report.summary.dependencyOpen} dependency-open`,
+    `project fit: ${report.projectFit.verified}/${report.nodes.length} verified, ${report.projectFit.required} required, ${report.projectFit.legacy} legacy`,
     "",
     "nodes:",
   ];
@@ -18,6 +18,8 @@ export function renderSemanticClosure(report: SemanticClosureReport): string {
       `    source: ${node.source}#${node.symbol}`,
       `    concept: ${node.conceptId}`,
       `    depends on: ${node.dependsOn.length === 0 ? "none" : node.dependsOn.join(", ")}`,
+      `    open dependencies: ${node.openDependencies.length === 0 ? "none" : node.openDependencies.join(", ")}`,
+      `    project fit: context=${node.projectFit.context}, validation=${node.projectFit.validation}`,
       `    generated: ${node.generated === null ? "not checked" : `${node.generated.path} (${node.generated.state})`}`,
     );
   }

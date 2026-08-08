@@ -1,0 +1,266 @@
+{
+  "version": 1,
+  "entries": {
+    "ced6f8c8b7098d8c9a1b5d39ceb2aba46413a78692791aec2ee81280c031b653": {
+      "fingerprint": "ced6f8c8b7098d8c9a1b5d39ceb2aba46413a78692791aec2ee81280c031b653",
+      "source": "examples/active-customer/semantic.ts",
+      "conceptId": "local:ActiveCustomer",
+      "contractHash": "f3f5f8e251b2eedf1ea2a219729c501e05ab519cc43872c58261f323a9f1d77c",
+      "testPlanHash": "84be5b7febf238e1ddd72b140a0dc9e37d60479f1fe7e8966896d38d5909b864",
+      "testCompilerVersion": "semantic-test-v1",
+      "plan": {
+        "version": 1,
+        "contractHash": "f3f5f8e251b2eedf1ea2a219729c501e05ab519cc43872c58261f323a9f1d77c",
+        "obligations": [
+          {
+            "id": "active-customer-accepted",
+            "sourceClauses": [
+              "requirements[0]",
+              "requirements[1]",
+              "requirements[2]"
+            ],
+            "strength": "hard",
+            "rationale": "An active, non-deleted customer with a present email satisfies every requirement.",
+            "kind": "example",
+            "input": {
+              "status": "active",
+              "deletedAt": null,
+              "email": "customer@example.com"
+            },
+            "expected": true
+          },
+          {
+            "id": "suspended-customer-rejected",
+            "sourceClauses": [
+              "exclusions[0]"
+            ],
+            "strength": "hard",
+            "rationale": "A suspended status is explicitly excluded.",
+            "kind": "example",
+            "input": {
+              "status": "suspended",
+              "deletedAt": null,
+              "email": "customer@example.com"
+            },
+            "expected": false
+          },
+          {
+            "id": "deleted-customer-rejected",
+            "sourceClauses": [
+              "exclusions[1]"
+            ],
+            "strength": "hard",
+            "rationale": "Adding a deletion timestamp changes an otherwise accepted customer to rejected.",
+            "kind": "counterfactual",
+            "base": {
+              "status": "active",
+              "deletedAt": null,
+              "email": "customer@example.com"
+            },
+            "changes": [
+              {
+                "property": [
+                  "deletedAt"
+                ],
+                "value": "2026-07-23T00:00:00Z"
+              }
+            ],
+            "expectedBefore": true,
+            "expectedAfter": false
+          },
+          {
+            "id": "missing-email-rejected",
+            "sourceClauses": [
+              "requirements[2]"
+            ],
+            "strength": "hard",
+            "rationale": "A null email does not satisfy the contactability requirement.",
+            "kind": "example",
+            "input": {
+              "status": "active",
+              "deletedAt": null,
+              "email": null
+            },
+            "expected": false
+          },
+          {
+            "id": "email-value-invariant",
+            "sourceClauses": [
+              "outOfScope[0]"
+            ],
+            "strength": "exploratory",
+            "rationale": "Email syntax is out of scope, so replacing one present address with another does not change acceptance.",
+            "kind": "invariance",
+            "base": {
+              "status": "active",
+              "deletedAt": null,
+              "email": "customer@example.com"
+            },
+            "changes": [
+              {
+                "property": [
+                  "email"
+                ],
+                "value": "renamed@example.net"
+              }
+            ]
+          }
+        ]
+      },
+      "preImplementationRed": {
+        "version": 1,
+        "testPlanHash": "84be5b7febf238e1ddd72b140a0dc9e37d60479f1fe7e8966896d38d5909b864",
+        "implementationSignature": null,
+        "mutants": [
+          {
+            "id": "constant-false",
+            "kind": "constant",
+            "classification": "killed",
+            "killedBy": [
+              "active-customer-accepted",
+              "deleted-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "constant-true",
+            "kind": "constant",
+            "classification": "killed",
+            "killedBy": [
+              "suspended-customer-rejected",
+              "deleted-customer-rejected",
+              "missing-email-rejected"
+            ],
+            "reason": null
+          }
+        ],
+        "hardClauseCoverage": 1,
+        "mutationScore": 1
+      },
+      "postImplementationRed": {
+        "version": 1,
+        "testPlanHash": "84be5b7febf238e1ddd72b140a0dc9e37d60479f1fe7e8966896d38d5909b864",
+        "implementationSignature": "d8fe6d62a4bc543c178b071f222792babd9a603d286cdbffc03c4b33a31b059f",
+        "mutants": [
+          {
+            "id": "constant-false",
+            "kind": "constant",
+            "classification": "killed",
+            "killedBy": [
+              "active-customer-accepted",
+              "deleted-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "constant-true",
+            "kind": "constant",
+            "classification": "killed",
+            "killedBy": [
+              "suspended-customer-rejected",
+              "deleted-customer-rejected",
+              "missing-email-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root:replace-all-with-any",
+            "kind": "junction-replacement",
+            "classification": "killed",
+            "killedBy": [
+              "suspended-customer-rejected",
+              "deleted-customer-rejected",
+              "missing-email-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root:delete-condition-0",
+            "kind": "condition-deletion",
+            "classification": "killed",
+            "killedBy": [
+              "suspended-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root:delete-condition-1",
+            "kind": "condition-deletion",
+            "classification": "killed",
+            "killedBy": [
+              "deleted-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root:delete-condition-2",
+            "kind": "condition-deletion",
+            "classification": "killed",
+            "killedBy": [
+              "missing-email-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root.conditions[0]:negate-condition",
+            "kind": "condition-negation",
+            "classification": "killed",
+            "killedBy": [
+              "active-customer-accepted",
+              "suspended-customer-rejected",
+              "deleted-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root.conditions[1]:negate-condition",
+            "kind": "condition-negation",
+            "classification": "killed",
+            "killedBy": [
+              "active-customer-accepted",
+              "deleted-customer-rejected"
+            ],
+            "reason": null
+          },
+          {
+            "id": "root.conditions[2]:negate-condition",
+            "kind": "condition-negation",
+            "classification": "killed",
+            "killedBy": [
+              "active-customer-accepted",
+              "deleted-customer-rejected",
+              "missing-email-rejected"
+            ],
+            "reason": null
+          }
+        ],
+        "hardClauseCoverage": 1,
+        "mutationScore": 1
+      },
+      "selectionReport": {
+        "version": 1,
+        "contractHash": "f3f5f8e251b2eedf1ea2a219729c501e05ab519cc43872c58261f323a9f1d77c",
+        "testPlanHash": "84be5b7febf238e1ddd72b140a0dc9e37d60479f1fe7e8966896d38d5909b864",
+        "redCertificateHash": "5d92586c5f60c32a7eb5ef60438f4435f49ed2cc6715a4f556cbb85307629b70",
+        "candidates": [
+          {
+            "id": "ad3051010aae2dd7ae17a87cb1347e77891ce6b4ab2b0ce56534cde9edd63359",
+            "semanticSignature": "d8fe6d62a4bc543c178b071f222792babd9a603d286cdbffc03c4b33a31b059f",
+            "hardPassed": true,
+            "mutationPassed": true,
+            "mutationScore": 1,
+            "irNodeCount": 4,
+            "irDepth": 2
+          }
+        ],
+        "selectedCandidate": "ad3051010aae2dd7ae17a87cb1347e77891ce6b4ab2b0ce56534cde9edd63359",
+        "outcome": "selected"
+      },
+      "provider": "fixture:semantic-test-response.fixture.json",
+      "model": "fixture-model",
+      "response": null,
+      "freezeMode": "staged",
+      "frozenAt": "2026-07-23T14:26:18.368Z"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "channel": "portal",
+        "category": "billing",
+        "triaged": true,
+        "suppressed": false
+      },
+      "expected": true
+    },
+    {
+      "name": "email",
+      "input": {
+        "channel": "email",
+        "category": "billing",
+        "triaged": true,
+        "suppressed": false
+      },
+      "expected": false
+    },
+    {
+      "name": "suppressed",
+      "input": {
+        "channel": "portal",
+        "category": "billing",
+        "triaged": true,
+        "suppressed": true
+      },
+      "expected": false
+    }
+  ]
+}

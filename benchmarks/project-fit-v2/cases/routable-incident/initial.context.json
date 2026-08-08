@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/routable-incident.semantic.ts",
+    "symbol": "isRoutableIncident",
+    "typeName": "SupportIncident",
+    "typeDeclaration": "type SupportIncident = { urgency: \"critical\" | \"high\" | \"normal\"; status: \"open\" | \"closed\"; assigneeId: string | null };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.routable-incident",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "SupportIncident",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "urgency"
+            ],
+            "value": "critical"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "open"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "assigneeId"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

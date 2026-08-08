@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "state": "approved",
+        "availability": "in_stock",
+        "retiredAt": null
+      },
+      "expected": true
+    },
+    {
+      "name": "draft",
+      "input": {
+        "state": "draft",
+        "availability": "in_stock",
+        "retiredAt": null
+      },
+      "expected": false
+    },
+    {
+      "name": "retired",
+      "input": {
+        "state": "approved",
+        "availability": "in_stock",
+        "retiredAt": "2026-06-01"
+      },
+      "expected": false
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { BenchmarkActiveCustomer } from "../concepts/active-customer";
-import { bindConcept, generatePredicate, semanticTest } from "../../../src/dsl";
+import { bindConcept, generatePredicate, benchmarkProbe } from "../../../src/dsl";
 
 export type BenchmarkOpaqueCustomer = {
   mode: string;
@@ -11,4 +11,4 @@ const Bound = bindConcept<BenchmarkOpaqueCustomer>(BenchmarkActiveCustomer);
 export const isBenchmarkOpaqueActiveCustomer = generatePredicate(Bound);
 
 // This intentionally opaque schema is expected to remain unresolved.
-semanticTest(isBenchmarkOpaqueActiveCustomer, { accept: [], reject: [] });
+benchmarkProbe(isBenchmarkOpaqueActiveCustomer);

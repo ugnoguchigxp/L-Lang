@@ -31,7 +31,9 @@ describe("live semantic consensus", () => {
         started += 1;
         if (started === 3) release();
         await gate;
-        return resolved(bodies[index]!);
+        const body = bodies[index];
+        if (body === undefined) throw new Error("missing consensus fixture");
+        return resolved(body);
       },
     });
     await gate;
@@ -55,7 +57,13 @@ describe("live semantic consensus", () => {
       source,
       samples: 3,
       quorum: 2,
-      resolve: async () => resolutions[index++]!,
+      resolve: async () => {
+        const resolution = resolutions[index++];
+        if (resolution === undefined) {
+          throw new Error("missing consensus resolution fixture");
+        }
+        return resolution;
+      },
     });
     expect(result.reached).toBe(false);
     expect(result.resolution.elaboration.outcome).toBe("unresolved");

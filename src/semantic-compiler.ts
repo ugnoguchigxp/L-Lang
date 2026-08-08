@@ -1,7 +1,4 @@
-import { randomUUID } from "node:crypto";
 import {
-  mkdir,
-  unlink,
   writeFile,
 } from "node:fs/promises";
 import {
@@ -14,19 +11,24 @@ import {
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
 import {
+  type PredicateDefinition,
+  parsePredicateDefinition,
+  parsePredicateExpression,
+} from "./ir";
+import {
   renderInterpretedJudgement,
   renderSemanticTestModule,
 } from "./judgement-renderer";
-import {
-  parsePredicateDefinition,
-  parsePredicateExpression,
-  type PredicateDefinition,
-} from "./ir";
 import {
   buildOpenAIRequest,
   type ElaborationResult,
   type OpenAIResult,
 } from "./openai";
+import {
+  buildProjectContext,
+  type ProjectContextSummary,
+  type ProjectContext,
+} from "./project-context";
 import {
   fingerprintFor,
   generatedOutputPath,
@@ -38,13 +40,23 @@ import {
 import {
   findLatestPredicateEntry,
   findReplayEntry,
-  readSemanticLock,
-  writeSemanticLock,
+  readSemanticLockSnapshot,
   type SemanticLockEntry,
+  type writeSemanticLock,
 } from "./semantic-lock";
+import {
+  cleanupSemanticFiles,
+  createSemanticPipelineRun,
+  type SemanticCommandRunner,
+  semanticResponseMetadata,
+  semanticRunDuration,
+  writeSemanticJson,
+} from "./semantic-pipeline";
 import { promoteSemanticArtifact } from "./semantic-promotion";
 import { createPredicateSemanticReview } from "./semantic-review";
 import { scanSemanticSource } from "./semantic-source";
+
+export type { SemanticCommandRunner } from "./semantic-pipeline";
 
 export type SemanticResolution = {
   elaboration: ElaborationResult;
@@ -65,20 +77,23 @@ export type SemanticCompileOptions = {
   reviewRoot?: string;
   commandRunner?: SemanticCommandRunner;
   writeLock?: typeof writeSemanticLock;
+  validateCandidate?: (input: {
+    source: Awaited<ReturnType<typeof scanSemanticSource>>;
+    definition: PredicateDefinition;
+    candidatePath: string;
+    workspaceRoot: string;
+    executeCommand: SemanticCommandRunner;
+  }) => Promise<void>;
+  projectContextMode?: "project-context" | "type-only";
   resolve?: (input: {
     specification: string;
     typeScriptSource: string;
     functionName: string;
     parameterName: string;
     typeName: string;
+    projectContext?: ProjectContext;
   }) => Promise<SemanticResolution>;
 };
-
-export type SemanticCommandRunner = (
-  command: string[],
-  cwd: string,
-  stage: string,
-) => Promise<void>;
 
 type SemanticCompileResultBase = {
   source: string;
@@ -126,11 +141,22 @@ export async function compileSemanticSource(
     source.concept.definitionPath,
     "concept definition",
   );
-  const requestShape = predicateRequestShape(source);
-  const hashes = predicateSemanticHashes(source);
-
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
-  const lock = await readSemanticLock(lockPath);
+  const { lock, revision: lockRevision } =
+    await readSemanticLockSnapshot(lockPath);
+  const requestShape = predicateRequestShape(source);
+  const builtContext =
+    options.projectContextMode === "type-only"
+      ? undefined
+      : await buildProjectContext({ source, workspaceRoot, lock });
+  const hashes = predicateSemanticHashes(source, builtContext);
+  const contextSummary: ProjectContextSummary =
+    builtContext?.summary ?? {
+      version: 1,
+      targetSource: sourceRelative,
+      relatedTypeSources: [],
+      verifiedBindingSources: [],
+    };
   let provider = options.provider ?? "lock";
   let model = options.model ?? "lock";
   let fingerprint = fingerprintFor({
@@ -192,16 +218,29 @@ export async function compileSemanticSource(
       specification: requestShape.specification,
       typeScriptSource: requestShape.typeScriptSource,
       ...requestShape.target,
+      ...(builtContext === undefined
+        ? {}
+        : { projectContext: builtContext.context }),
     });
   }
 
-  const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}-${randomUUID().slice(0, 8)}`;
-  const auditDirectory = resolve(
-    options.auditRoot ?? resolve(workspaceRoot, ".semantic", "candidates"),
+  const pipeline = await createSemanticPipelineRun({
+    workspaceRoot,
+    ...(options.auditRoot === undefined ? {} : { auditRoot: options.auditRoot }),
+    defaultAuditKind: "candidates",
+    ...(options.commandRunner === undefined
+      ? {}
+      : { commandRunner: options.commandRunner }),
+    ...(options.writeLock === undefined ? {} : { writeLock: options.writeLock }),
+  });
+  const {
     runId,
-  );
-  await mkdir(auditDirectory, { recursive: true });
-  await writeJson(resolve(auditDirectory, "input.json"), {
+    auditDirectory,
+    reportPath,
+    executeCommand,
+    persistLock,
+  } = pipeline;
+  await writeSemanticJson(resolve(auditDirectory, "input.json"), {
     version: 1,
     source: sourceRelative,
     concept: source.concept.name,
@@ -218,8 +257,17 @@ export async function compileSemanticSource(
     provider,
     model,
     hashes,
+    projectContext: {
+      version: hashes.contextVersion,
+      hash: hashes.contextHash,
+      summary: contextSummary,
+      modelVisible: builtContext !== undefined,
+    },
   });
-  await writeJson(resolve(auditDirectory, "response.output.json"), resolution.rawOutput);
+  await writeSemanticJson(
+    resolve(auditDirectory, "response.output.json"),
+    resolution.rawOutput,
+  );
 
   const sourceDirectory = dirname(source.absolutePath);
   const outputStem = basename(
@@ -232,13 +280,9 @@ export async function compileSemanticSource(
     sourceDirectory,
     `.${outputStem}.${runId}.candidate.test.ts`,
   );
-  const reportPath = resolve(auditDirectory, "report.json");
   let stage = "elaboration";
   let code = "";
   let definition: PredicateDefinition | null = null;
-  const startedAt = Date.now();
-  const executeCommand = options.commandRunner ?? runCommand;
-  const persistLock = options.writeLock ?? writeSemanticLock;
 
   try {
     if (resolution.elaboration.outcome === "unresolved") {
@@ -281,8 +325,14 @@ export async function compileSemanticSource(
       predicateName: source.predicate.name,
       acceptSource: source.tests.acceptSource,
       rejectSource: source.tests.rejectSource,
+      boundarySource: source.tests.boundarySource,
+      counterfactualSource: source.tests.counterfactualSource,
+      invarianceSource: source.tests.invarianceSource,
     });
-    await writeJson(resolve(auditDirectory, "predicate.ir.json"), definition);
+    await writeSemanticJson(
+      resolve(auditDirectory, "predicate.ir.json"),
+      definition,
+    );
     await writeFile(resolve(auditDirectory, "candidate.ts"), code, "utf8");
     await writeFile(resolve(auditDirectory, "candidate.test.ts"), candidateTest, "utf8");
     await writeFile(candidatePath, code, "utf8");
@@ -313,9 +363,19 @@ export async function compileSemanticSource(
     );
     stage = "semantic-test";
     await executeCommand(["bun", "test", candidateTestPath], workspaceRoot, stage);
+    if (options.validateCandidate !== undefined) {
+      stage = "additional-candidate-validation";
+      await options.validateCandidate({
+        source,
+        definition,
+        candidatePath,
+        workspaceRoot,
+        executeCommand,
+      });
+    }
     stage = "project-typecheck";
     await executeCommand(["bun", "run", "typecheck"], workspaceRoot, stage);
-    await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(candidateTestPath)]);
+    await cleanupSemanticFiles([candidatePath, candidateTestPath]);
 
     const generatedCodeHash = sha256(code);
     const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
@@ -331,6 +391,8 @@ export async function compileSemanticSource(
         model,
         fingerprint,
         hashes,
+        targetTypeName: source.concept.typeName,
+        contextSummary,
         resolvedIr: definition.body,
         baseline: findLatestPredicateEntry(lock, {
           source: sourceRelative,
@@ -341,7 +403,7 @@ export async function compileSemanticSource(
         typeSchema: source.concept.typeSchema,
       });
       stage = "report";
-      await writeJson(reportPath, {
+      await writeSemanticJson(reportPath, {
         version: 1,
         status: "review-required",
         stage: "complete",
@@ -355,14 +417,13 @@ export async function compileSemanticSource(
         ),
         provider,
         model,
-        response: responseMetadata(resolution.response),
+        response: semanticResponseMetadata(resolution.response),
         fingerprint,
         apiCalls,
         cacheHit,
         replayed: false,
         hashes: { ...hashes, generatedCodeHash },
-        durationMs: Date.now() - startedAt,
-        completedAt: new Date().toISOString(),
+        ...semanticRunDuration(pipeline),
       });
       return {
         status: "review-required",
@@ -394,9 +455,11 @@ export async function compileSemanticSource(
         conceptId: source.concept.id,
         conceptSource,
         predicate: source.predicate.name,
+        targetTypeName: source.concept.typeName,
         provider,
         model,
         ...hashes,
+        contextSummary,
         resolvedIr: definition.body,
         generatedCodeHash,
         response: resolution.response
@@ -426,6 +489,9 @@ export async function compileSemanticSource(
       generatedCode: code,
       lockPath,
       nextLock: lock,
+      expectedLockHash: lockRevision,
+      command: options.mode,
+      persistLock: !cacheHit,
       runFullTest: async () => {
         stage = "full-test";
         await executeCommand(["bun", "test"], workspaceRoot, stage);
@@ -436,7 +502,7 @@ export async function compileSemanticSource(
       },
     });
     stage = "report";
-    await writeJson(reportPath, {
+    await writeSemanticJson(reportPath, {
       version: 1,
       status: "passed",
       promotionMode: options.mode === "replay" ? "replay" : "auto",
@@ -445,14 +511,13 @@ export async function compileSemanticSource(
       output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
       provider,
       model,
-      response: responseMetadata(resolution.response),
+      response: semanticResponseMetadata(resolution.response),
       fingerprint,
       apiCalls,
       cacheHit,
       replayed: options.mode === "replay",
       hashes: { ...hashes, generatedCodeHash },
-      durationMs: Date.now() - startedAt,
-      completedAt: new Date().toISOString(),
+      ...semanticRunDuration(pipeline),
     });
 
     return {
@@ -470,14 +535,14 @@ export async function compileSemanticSource(
       generatedCodeHash,
     };
   } catch (error) {
-    await writeJson(reportPath, {
+    await writeSemanticJson(reportPath, {
       version: 1,
       status: "failed",
       failedStage: stage,
       source: sourceRelative,
       provider,
       model,
-      response: responseMetadata(resolution.response),
+      response: semanticResponseMetadata(resolution.response),
       fingerprint,
       apiCalls,
       cacheHit,
@@ -487,47 +552,12 @@ export async function compileSemanticSource(
         generatedCodeHash: code.length > 0 ? sha256(code) : null,
       },
       error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startedAt,
-      completedAt: new Date().toISOString(),
+      ...semanticRunDuration(pipeline),
     });
     throw error;
   } finally {
-    await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(candidateTestPath)]);
+    await cleanupSemanticFiles([candidatePath, candidateTestPath]);
   }
-}
-
-async function runCommand(command: string[], cwd: string, stage: string): Promise<void> {
-  const child = Bun.spawn(command, {
-    cwd,
-    stdin: "inherit",
-    stdout: "inherit",
-    stderr: "inherit",
-  });
-  const exitCode = await child.exited;
-  if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
-}
-
-async function unlinkIfExists(path: string): Promise<void> {
-  try {
-    await unlink(path);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-  }
-}
-
-async function writeJson(path: string, value: unknown): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function responseMetadata(response: OpenAIResult | null): object | null {
-  return response === null
-    ? null
-    : {
-        id: response.responseId,
-        model: response.model,
-        usage: response.usage,
-      };
 }
 
 function lockResponse(
@@ -542,15 +572,6 @@ function lockResponse(
       };
 }
 
-function isNotFound(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "ENOENT"
-  );
-}
-
 export function renderPromptForAudit(input: {
   model: string;
   specification: string;
@@ -558,6 +579,7 @@ export function renderPromptForAudit(input: {
   functionName: string;
   parameterName: string;
   typeName: string;
+  projectContext?: ProjectContext;
 }): object {
   return buildOpenAIRequest({
     model: input.model,
@@ -568,5 +590,8 @@ export function renderPromptForAudit(input: {
       parameterName: input.parameterName,
       typeName: input.typeName,
     },
+    ...(input.projectContext === undefined
+      ? {}
+      : { projectContext: input.projectContext }),
   });
 }

@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "cases": {
+    "product-master-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["state"], "value": "draft" },
+          { "kind": "present", "property": ["identity", "code"] },
+          { "kind": "present", "property": ["identity", "name"] },
+          { "kind": "present", "property": ["identity", "category"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "product-archive-review-candidate": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["status"], "value": "discontinued" },
+          { "kind": "equals", "property": ["stock", "state"], "value": "zero" },
+          { "kind": "equals", "property": ["shipping", "openWork"], "value": "none" }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "price-record-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["money", "validation"], "value": "entered" },
+          { "kind": "present", "property": ["money", "currency"] },
+          { "kind": "present", "property": ["tax", "category"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "quantity-data-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "any",
+        "conditions": [
+          { "kind": "equals", "property": ["validation", "state"], "value": "invalid" },
+          {
+            "kind": "not",
+            "condition": { "kind": "present", "property": ["measurement", "unit"] }
+          }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "inventory-record-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["count", "lifecycle"], "value": "counted" },
+          { "kind": "present", "property": ["item", "sku"] },
+          { "kind": "present", "property": ["site", "code"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "inventory-discrepancy-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["variance", "status"], "value": "detected" },
+          { "kind": "present", "property": ["audit", "countedBy"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "shipment-preparation-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["workflow", "status"], "value": "queued" },
+          { "kind": "present", "property": ["destination", "code"] },
+          { "kind": "equals", "property": ["destination", "validation"], "value": "valid" },
+          { "kind": "equals", "property": ["inventory", "status"], "value": "ready" }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "shipment-exception-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["exception", "status"], "value": "open" },
+          { "kind": "present", "property": ["ownership", "assigneeId"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    }
+  }
+}

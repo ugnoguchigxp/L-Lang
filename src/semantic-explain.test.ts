@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
-
+import { buildProjectContext } from "./project-context";
 import { explainSemanticSource } from "./semantic-explain";
 import { renderSemanticExplanation } from "./semantic-explain-renderer";
 import {
@@ -73,7 +73,7 @@ describe("semantic explain", () => {
   test("reports Concept and prompt hash changes without treating provider/model as stale", async () => {
     const fixture = await createPredicateFixture();
     const lock = JSON.parse(await readFile(fixture.lockPath, "utf8")) as SemanticLock;
-    const entry = Object.values(lock.entries)[0]!;
+    const entry = required(Object.values(lock.entries)[0]);
     entry.conceptHash = sha256("older-concept");
     entry.promptHash = sha256("older-prompt");
     entry.provider = "different-provider";
@@ -89,38 +89,46 @@ describe("semantic explain", () => {
     ]);
   });
 
-  test("distinguishes unlocked, missing, and mismatched Predicate output", async () => {
-    const unlocked = await createPredicateFixture({ unlocked: true });
-    const unlockedExplanation = await explainSemanticSource(unlocked);
-    expect(unlockedExplanation.status).toBe("unlocked");
-    expect(unlockedExplanation.lock).toBeNull();
-    expect(unlockedExplanation.resolution).toBeNull();
+  test(
+    "distinguishes unlocked, missing, and mismatched Predicate output",
+    async () => {
+      const unlocked = await createPredicateFixture({ unlocked: true });
+      const unlockedExplanation = await explainSemanticSource(unlocked);
+      expect(unlockedExplanation.status).toBe("unlocked");
+      expect(unlockedExplanation.lock).toBeNull();
+      expect(unlockedExplanation.resolution).toBeNull();
 
-    const missing = await createPredicateFixture();
-    const missingExplanation = await explainSemanticSource(missing);
-    expect(missingExplanation.status).toBe("integrity-error");
-    expect(missingExplanation.generated?.state).toBe("missing");
-    expect(missingExplanation.generated?.actualHash).toBeNull();
-    expect(renderSemanticExplanation(missingExplanation)).toContain(
-      "generated integrity: ERROR (missing)",
-    );
+      const missing = await createPredicateFixture();
+      const missingExplanation = await explainSemanticSource(missing);
+      expect(missingExplanation.status).toBe("integrity-error");
+      expect(missingExplanation.generated?.state).toBe("missing");
+      expect(missingExplanation.generated?.actualHash).toBeNull();
+      expect(renderSemanticExplanation(missingExplanation)).toContain(
+        "generated integrity: ERROR (missing)",
+      );
 
-    const mismatch = await createPredicateFixture({ generated: "changed output\n" });
-    const lock = JSON.parse(await readFile(mismatch.lockPath, "utf8")) as SemanticLock;
-    const entry = Object.values(lock.entries)[0]!;
-    entry.generatedCodeHash = sha256("expected output\n");
-    await writeLock(mismatch.lockPath, lock);
-    const mismatchExplanation = await explainSemanticSource(mismatch);
-    expect(mismatchExplanation.status).toBe("integrity-error");
-    expect(mismatchExplanation.generated?.state).toBe("mismatch");
-  });
+      const mismatch = await createPredicateFixture({
+        generated: "changed output\n",
+      });
+      const lock = JSON.parse(
+        await readFile(mismatch.lockPath, "utf8"),
+      ) as SemanticLock;
+      const entry = required(Object.values(lock.entries)[0]);
+      entry.generatedCodeHash = sha256("expected output\n");
+      await writeLock(mismatch.lockPath, lock);
+      const mismatchExplanation = await explainSemanticSource(mismatch);
+      expect(mismatchExplanation.status).toBe("integrity-error");
+      expect(mismatchExplanation.generated?.state).toBe("mismatch");
+    },
+    20_000,
+  );
 
   test("hashes generated output as bytes", async () => {
     const fixture = await createPredicateFixture();
     const generated = new Uint8Array([0xff, 0x00, 0x80, 0x0a]);
     await writeFile(fixture.generatedPath, generated);
     const lock = JSON.parse(await readFile(fixture.lockPath, "utf8")) as SemanticLock;
-    Object.values(lock.entries)[0]!.generatedCodeHash = sha256(generated);
+    required(Object.values(lock.entries)[0]).generatedCodeHash = sha256(generated);
     await writeLock(fixture.lockPath, lock);
 
     const explanation = await explainSemanticSource(fixture);
@@ -191,7 +199,7 @@ describe("semantic explain", () => {
     const automaticLock = JSON.parse(
       await readFile(automatic.lockPath, "utf8"),
     ) as SemanticLock;
-    Object.values(automaticLock.entries)[0]!.promotion = {
+    required(Object.values(automaticLock.entries)[0]).promotion = {
       mode: "auto",
       promotedAt: "2026-07-20T01:00:00.000Z",
       validation: {
@@ -212,7 +220,8 @@ describe("semantic explain", () => {
     const reviewedLock = JSON.parse(
       await readFile(reviewed.lockPath, "utf8"),
     ) as SemanticLock;
-    Object.values(reviewedLock.judgments!)[0]!.promotion = {
+    const judgments = required(reviewedLock.judgments);
+    required(Object.values(judgments)[0]).promotion = {
       mode: "reviewed",
       promotedAt: "2026-07-20T02:00:00.000Z",
       candidateId: "20260720020000-12345678",
@@ -233,6 +242,11 @@ describe("semantic explain", () => {
   });
 });
 
+function required<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error("required test fixture is missing");
+  return value;
+}
+
 type Fixture = {
   sourcePath: string;
   workspaceRoot: string;
@@ -249,7 +263,12 @@ async function createPredicateFixture(options: {
   await mkdir(dirname(sourcePath), { recursive: true });
   await writeFile(sourcePath, predicateSource(), "utf8");
   const source = await scanSemanticSource(sourcePath);
-  const hashes = predicateSemanticHashes(source);
+  const builtContext = await buildProjectContext({
+    source,
+    workspaceRoot,
+    lock: { version: 1, entries: {} },
+  });
+  const hashes = predicateSemanticHashes(source, builtContext);
   const generatedPath = generatedOutputPath(sourcePath, source.predicate.name);
   const generated = options.generated;
   const entry: SemanticLockEntry = {
@@ -259,9 +278,11 @@ async function createPredicateFixture(options: {
     conceptId: source.concept.id,
     conceptSource: "predicate/semantic.ts",
     predicate: source.predicate.name,
+    targetTypeName: source.concept.typeName,
     provider: "fixture",
     model: "model",
     ...hashes,
+    contextSummary: builtContext.summary,
     resolvedIr: { kind: "equals", property: ["state"], value: "ready" },
     generatedCodeHash: sha256(generated ?? "expected output\n"),
     response: null,

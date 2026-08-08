@@ -1,15 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 
 import type { PredicateExpression } from "./ir";
-import {
-  assertHumanReviewedFreeze,
-  runSchemaEvolutionBenchmark,
-  verifyFrozenFileHashes,
-} from "./schema-evolution-benchmark";
-import { scanSemanticSource } from "./semantic-source";
+import { runSchemaEvolutionBenchmark } from "./schema-evolution-benchmark";
 
 const workspaceRoot = resolve(import.meta.dir, "..");
 const manifestPath = resolve(
@@ -21,134 +16,118 @@ describe("blind schema evolution benchmark", () => {
   let outputRoot = "";
 
   beforeAll(async () => {
-    outputRoot = await mkdtemp(join(tmpdir(), "schema-evolution-benchmark-"));
+    outputRoot = await mkdtemp(join(tmpdir(), "schema-evolution-output-"));
   });
 
   afterAll(async () => {
     await rm(outputRoot, { recursive: true, force: true });
   });
 
-  test("refuses live execution metadata before independent human review", () => {
-    expect(() =>
-      assertHumanReviewedFreeze({
-        status: "draft",
-        humanReviewed: false,
-        reviewer: null,
-        reviewedAt: null,
-      }),
-    ).toThrow("independent human review is required");
+  test("refuses execution while the authoritative input is draft", async () => {
+    let calls = 0;
+    await expect(runSchemaEvolutionBenchmark({
+      manifestPath,
+      workspaceRoot,
+      outputRoot,
+      provider: "fixture",
+      model: "gpt-5.4-mini-test",
+      resolve: async () => {
+        calls += 1;
+        throw new Error("must not be called");
+      },
+    })).rejects.toThrow("benchmark inputs must be frozen before live execution");
+    expect(calls).toBe(0);
   });
 
-  test("rejects a changed frozen file", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "schema-evolution-freeze-"));
-    try {
-      await writeFile(resolve(directory, "input.txt"), "changed", "utf8");
-      await expect(
-        verifyFrozenFileHashes(directory, {
-          "input.txt": "0000000000000000000000000000000000000000000000000000000000000000",
-        }),
-      ).rejects.toThrow("frozen input hash mismatch: input.txt");
-    } finally {
-      await rm(directory, { recursive: true, force: true });
-    }
-  });
-
-  test(
-    "runs 54 model-blind, lockless trials and preserves approved workspace artifacts",
-    async () => {
-      const fixtureBodies = await loadFixtureBodies();
-      const seenInputs: unknown[] = [];
-      let responseNumber = 0;
-      const { report, runDirectory } = await runSchemaEvolutionBenchmark({
-        manifestPath,
-        workspaceRoot,
-        outputRoot,
-        provider: "fixture",
-        model: "gpt-5.4-mini-test",
-        requireHumanReview: false,
-        resolve: async (input) => {
-          seenInputs.push(input);
-          responseNumber += 1;
-          const body = fixtureBodies.get(input.target.functionName);
-          const output = body === null
-            ? {
-                outcome: "unresolved",
-                body: null,
-                diagnostics: ["The evolved schema is missing or ambiguously represents a required role."],
-              }
-            : { outcome: "resolved", body, diagnostics: [] };
-          if (body === undefined) throw new Error(`fixture missing: ${input.target.functionName}`);
-          return {
-            responseId: `fixture-${responseNumber}`,
-            model: "gpt-5.4-mini-test",
-            outputText: JSON.stringify(output),
-            usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
-          };
-        },
-      });
-
-      expect(seenInputs).toHaveLength(54);
-      const serializedInputs = JSON.stringify(seenInputs);
-      expect(serializedInputs).not.toContain("a@example.com");
-      expect(serializedInputs).not.toContain("expectedOutcome");
-      expect(serializedInputs).not.toContain("hiddenTests");
-      expect(report).toMatchObject({
-        status: "passed",
-        lockUsed: false,
-        generatedCodeMutated: false,
-        oracleAndCasesSentToModel: false,
-        protocol: {
-          concepts: 3,
-          changeTypes: 6,
-          cases: 18,
-          resolvedCases: 12,
-          unresolvedCases: 6,
-          trialsPerCase: 3,
-          totalTrials: 54,
-        },
-        summary: {
-          modelGatePassed: true,
-          trialPassRate: 1,
-          firstPassCaseRate: 1,
-          stableCaseRate: 1,
-          outcomeAccuracy: 1,
-          classificationAccuracy: 1,
-          exactIrRate: 1,
-          hiddenTestPassRate: 1,
-          falseResolutionRate: 0,
-          workspaceMutationCount: 0,
-        },
-      });
-      expect(report.cases).toHaveLength(18);
-      expect(report.cases.flatMap((entry) => entry.trials)).toHaveLength(54);
-
-      const savedTrial = await readFile(
-        resolve(runDirectory, "trials/active-customer-rename/1.json"),
-        "utf8",
-      );
-      expect(savedTrial).toContain('\n  "trial": 1');
-      expect(savedTrial).toContain('"actualClassification": "compatible"');
-      expect(savedTrial).toContain('"outputText"');
-      expect(await readFile(resolve(runDirectory, "report.md"), "utf8")).toContain(
-        "Trials: 54",
-      );
-    },
-    60_000,
-  );
+  test("materializes 24 held-out cases and compares single with consensus", async () => {
+    const fixtures = await loadFixtures();
+    let calls = 0;
+    let active = 0;
+    let maximumActive = 0;
+    const { report } = await runSchemaEvolutionBenchmark({
+      manifestPath,
+      workspaceRoot,
+      outputRoot,
+      provider: "fixture",
+      model: "gpt-5.4-mini-test",
+      requireFrozenInputs: false,
+      resolve: async (input) => {
+        calls += 1;
+        active += 1;
+        maximumActive = Math.max(maximumActive, active);
+        await Promise.resolve();
+        active -= 1;
+        const fixture = fixtures.get(input.target.functionName);
+        if (fixture === undefined) throw new Error(`missing fixture: ${input.target.functionName}`);
+        return {
+          responseId: `fixture-${calls}`,
+          model: "gpt-5.4-mini-test",
+          outputText: JSON.stringify(fixture.body === null
+            ? { outcome: "unresolved", body: null, diagnostics: ["role is absent or ambiguous"] }
+            : { outcome: "resolved", body: fixture.body, diagnostics: [] }),
+          usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+        };
+      },
+    });
+    expect(calls).toBe(72);
+    expect(maximumActive).toBe(3);
+    expect(report).toMatchObject({
+      status: "fixture-gate-passed-input-freeze-pending",
+      evaluation: { primary: "consensus", samples: 3, quorum: 2, parallel: true },
+      protocol: {
+        concepts: 4,
+        cases: 24,
+        resolvedCases: 16,
+        unresolvedCases: 8,
+        totalTrials: 72,
+      },
+      summary: {
+        modelGatePassed: true,
+        firstPassCaseRate: 1,
+        consensusCasePassRate: 1,
+        consensusQuorumRate: 1,
+        consensusFalseResolutionRate: 0,
+        workspaceMutationCount: 0,
+      },
+    });
+    expect(report.cases).toHaveLength(24);
+    expect(report.cases.every((entry) => entry.consensus.passed)).toBe(true);
+  }, 120_000);
 });
 
-async function loadFixtureBodies(): Promise<Map<string, PredicateExpression | null>> {
+async function loadFixtures() {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
-    cases: Array<{ source: string; oracle: string }>;
+    concepts: Array<{
+      exportName: string;
+      cases: Record<string, {
+        expectedOutcome: "resolved" | "unresolved";
+        fields: Array<{
+          path: string[];
+          condition?:
+            | { kind: "equals"; value: string | number | boolean | null }
+            | { kind: "present" };
+        }>;
+      }>;
+    }>;
   };
-  const directory = dirname(manifestPath);
-  const result = new Map<string, PredicateExpression | null>();
-  for (const entry of manifest.cases) {
-    const source = await scanSemanticSource(resolve(directory, entry.source));
-    const oracle = JSON.parse(
-      await readFile(resolve(directory, entry.oracle), "utf8"),
-    ) as { body: PredicateExpression | null };
-    result.set(source.predicate.name, oracle.body);
+  const fixtures = new Map<string, { body: PredicateExpression | null }>();
+  for (const concept of manifest.concepts) {
+    for (const [change, schema] of Object.entries(concept.cases)) {
+      const suffix = change.split("-")
+        .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+        .join("");
+      const functionName = `is${concept.exportName}${suffix}`;
+      const conditions: PredicateExpression[] = [];
+      for (const field of schema.fields) {
+        if (field.condition === undefined) continue;
+        conditions.push(field.condition.kind === "present"
+          ? { kind: "present", property: field.path }
+          : { kind: "equals", property: field.path, value: field.condition.value });
+      }
+      fixtures.set(functionName, {
+        body: schema.expectedOutcome === "resolved" ? { kind: "all", conditions } : null,
+      });
+    }
   }
-  return result;
+  return fixtures;
 }

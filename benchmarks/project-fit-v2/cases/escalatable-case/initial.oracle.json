@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "tier": "priority",
+        "state": "investigating",
+        "blockerCode": "DEP-4"
+      },
+      "expected": true
+    },
+    {
+      "name": "standard-tier",
+      "input": {
+        "tier": "standard",
+        "state": "investigating",
+        "blockerCode": "DEP-4"
+      },
+      "expected": false
+    },
+    {
+      "name": "no-blocker",
+      "input": {
+        "tier": "priority",
+        "state": "investigating",
+        "blockerCode": null
+      },
+      "expected": false
+    }
+  ]
+}

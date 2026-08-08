@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "cases": {
+    "product-master-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["lifecycle"], "value": "draft" },
+          { "kind": "present", "property": ["productCode"] },
+          { "kind": "present", "property": ["displayName"] },
+          { "kind": "present", "property": ["categoryCode"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "product-archive-review-candidate": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["lifecycle"], "value": "discontinued" },
+          { "kind": "equals", "property": ["inventoryState"], "value": "zero" },
+          { "kind": "equals", "property": ["openShipmentState"], "value": "none" }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "price-record-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["amountState"], "value": "entered" },
+          { "kind": "present", "property": ["currencyCode"] },
+          { "kind": "present", "property": ["taxCategoryCode"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "quantity-data-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "any",
+        "conditions": [
+          { "kind": "equals", "property": ["quantityState"], "value": "invalid" },
+          {
+            "kind": "not",
+            "condition": { "kind": "present", "property": ["unitCode"] }
+          }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "inventory-record-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["countState"], "value": "counted" },
+          { "kind": "present", "property": ["sku"] },
+          { "kind": "present", "property": ["locationCode"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "inventory-discrepancy-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["discrepancyState"], "value": "detected" },
+          { "kind": "present", "property": ["countedBy"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "shipment-preparation-review-ready": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["lifecycle"], "value": "queued" },
+          { "kind": "present", "property": ["destinationCode"] },
+          { "kind": "equals", "property": ["addressValidation"], "value": "valid" },
+          { "kind": "equals", "property": ["inventoryPreparation"], "value": "ready" }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    },
+    "shipment-exception-review": {
+      "outcome": "resolved",
+      "body": {
+        "kind": "all",
+        "conditions": [
+          { "kind": "equals", "property": ["exceptionState"], "value": "open" },
+          { "kind": "present", "property": ["assigneeId"] }
+        ]
+      },
+      "diagnostics": [],
+      "correctionEffort": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "latencyMs": 0,
+      "baselineWorkMs": 0,
+      "semanticWorkMs": 0
+    }
+  }
+}

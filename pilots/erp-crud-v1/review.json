@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "status": "approved",
+  "reviewer": {
+    "name": "Jane Doe",
+    "role": "Synthetic ERP Pilot Reviewer",
+    "independentFromImplementation": true
+  },
+  "reviewedAt": "2026-07-24T11:50:34Z",
+  "decisions": {
+    "businessDefinitionsApproved": true,
+    "baselinesApproved": true,
+    "hiddenCasesApproved": true,
+    "schemaChangesApproved": true,
+    "syntheticDataOnly": true,
+    "advisoryOnly": true,
+    "budgetApproved": true,
+    "stopAuthorityConfirmed": true,
+    "goNoGoAuthorityConfirmed": true
+  },
+  "cases": [
+    {
+      "caseId": "product-master-review-ready",
+      "owner": "John Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "product-archive-review-candidate",
+      "owner": "Alex Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "price-record-review-ready",
+      "owner": "Taylor Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "quantity-data-review",
+      "owner": "Jordan Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "inventory-record-review-ready",
+      "owner": "Casey Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "inventory-discrepancy-review",
+      "owner": "Morgan Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "shipment-preparation-review-ready",
+      "owner": "Riley Doe",
+      "risk": "low",
+      "approved": true
+    },
+    {
+      "caseId": "shipment-exception-review",
+      "owner": "Jamie Doe",
+      "risk": "low",
+      "approved": true
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "benchmark": "project-fit-v2",
+  "recordedDate": "2026-07-24",
+  "policyChange": {
+    "baseline": "Project Context input-token delta was a Gate condition with a 4,000-token ceiling.",
+    "revised": "Input and output tokens are measured but are not Gate conditions.",
+    "retainedSafety": [
+      "maximum API calls",
+      "maximum estimated cost",
+      "per-response output ceiling",
+      "aggregate execution ceilings",
+      "latency Gate",
+      "false-resolution safety"
+    ]
+  },
+  "runs": {
+    "tokenGatedBaseline": {
+      "manifestHash": "93fdea485138a4b323e7b49048c77f1d1a0db8c1b5853015613293942f40f15c",
+      "status": "failed",
+      "decision": "Iterate",
+      "completedApiCalls": 36,
+      "pendingApiCalls": 0,
+      "cooldownMsAfterEveryAttempt": 60000,
+      "rateLimitRetries": 0,
+      "failure": {
+        "check": "inputTokenBudget",
+        "observedContextInputDelta": 4446,
+        "ceiling": 4000
+      },
+      "artifacts": {
+        "reportJsonSha256": "bbd893b4ba93cf71dd50439231bc10cb8b492a7b08896819d83b680e8c3486a6",
+        "reportMarkdownSha256": "00c4aed400927d029d2b5f75b68b46f44e3deb3d0429e98903795725323b4d6c",
+        "responsesJsonSha256": "1dcc1b80c4a665d91d82074b84e1536120507abc420f5ed5b7e646cb3406cd29",
+        "checkpointJsonSha256": "95987cf8afaf88046bf47af0faead04a45e84eb2e512b91f5ac3481dde745087"
+      }
+    },
+    "tokenObservationOnly": {
+      "manifestHash": "37af7c7cc6d1f2baf49a1ecbd4e4cd51fe0d2e2a7035ab3d3cc488f108853323",
+      "status": "passed",
+      "decision": "Go",
+      "completedApiCalls": 72,
+      "pendingApiCalls": 0,
+      "cooldownMsAfterEveryAttempt": 60000,
+      "rateLimitRetries": 0,
+      "estimatedCostUsd": 0.07683525,
+      "initial": {
+        "projectContextFirstPassCases": 6,
+        "projectContextFirstPassTrials": 18,
+        "typeOnlyFirstPassCases": 0,
+        "typeOnlyFirstPassTrials": 0
+      },
+      "schemaChange": {
+        "projectContextFirstPassCases": 6,
+        "projectContextFirstPassTrials": 18,
+        "typeOnlyFirstPassCases": 0,
+        "typeOnlyFirstPassTrials": 1
+      },
+      "safety": {
+        "falseResolutions": 0,
+        "contextContamination": 0,
+        "integrityIncidents": 0,
+        "workspaceMutations": 0
+      },
+      "artifacts": {
+        "reportJsonSha256": "cc47c3be4b5ec214967b123befc22014191f6e78c5f1abb6003f901923539d16",
+        "reportMarkdownSha256": "310c60d2fc8eb0d40bb2990728fe2c5ff310ace73789e9d300704f79fba09cbe",
+        "responsesJsonSha256": "0c1efd6e49e5552df3f0ce491902e3998d08c248a1eb886c74e613fc1496cc09",
+        "checkpointJsonSha256": "bdd0972e3fe95d2835de875925fe7d88e4c072f19688354063db2c001022c091"
+      }
+    }
+  },
+  "verification": {
+    "repositoryTests": {
+      "passed": 202,
+      "failed": 0,
+      "expectations": 961
+    },
+    "coverage": {
+      "functionsPercent": 94.15,
+      "linesPercent": 94.29,
+      "thresholdsPassed": true
+    },
+    "fixture": "passed",
+    "format": "passed",
+    "lint": "passed-with-91-existing-warnings",
+    "typecheck": "passed",
+    "ciSmoke": "passed",
+    "protectedInputs": "passed",
+    "semanticClosure": "closed",
+    "sourceArtifactSensitiveValueMatches": 0
+  },
+  "exclusions": [
+    "API credentials",
+    "authorization headers",
+    ".env contents",
+    "Azure endpoint host",
+    "checkpoint payload duplication; its SHA-256 and counts are retained"
+  ]
+}

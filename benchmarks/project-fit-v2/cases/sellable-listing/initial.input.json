@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify listings sellable under the catalog project's publication convention.",
+  "target": {
+    "functionName": "isSellableListing",
+    "parameterName": "listing",
+    "typeName": "Listing",
+    "typeScriptSource": "type Listing = { state: \"approved\" | \"draft\"; availability: \"in_stock\" | \"out_of_stock\"; retiredAt: string | null };"
+  }
+}

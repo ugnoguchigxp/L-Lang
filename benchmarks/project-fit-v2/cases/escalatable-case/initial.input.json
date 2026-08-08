@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify customer cases that qualify for escalation under this service team's convention.",
+  "target": {
+    "functionName": "isEscalatableCase",
+    "parameterName": "customerCase",
+    "typeName": "CustomerCase",
+    "typeScriptSource": "type CustomerCase = { tier: \"standard\" | \"priority\"; state: \"investigating\" | \"waiting\" | \"resolved\"; blockerCode: string | null };"
+  }
+}

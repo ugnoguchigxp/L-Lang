@@ -12,6 +12,35 @@ export type Concept<T> = {
 
 export type Predicate<T> = (value: T) => boolean;
 
+export type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
+
+export type SemanticExpected = "accepted" | "rejected";
+
+export type SemanticNamedCase<T> = {
+  name: string;
+  input: T;
+  expected: SemanticExpected;
+};
+
+export type SemanticTestCases<T> = {
+  accept: NonEmptyReadonlyArray<T>;
+  reject: NonEmptyReadonlyArray<T>;
+  boundary?: readonly SemanticNamedCase<T>[];
+  counterfactual?: readonly {
+    name: string;
+    base: {
+      input: T;
+      expected: SemanticExpected;
+    };
+    variants: NonEmptyReadonlyArray<SemanticNamedCase<T>>;
+  }[];
+  invariance?: readonly {
+    name: string;
+    expected: SemanticExpected;
+    inputs: NonEmptyReadonlyArray<T>;
+  }[];
+};
+
 export type StaticValue = {
   readonly [staticValueBrand]: true;
 };
@@ -47,12 +76,13 @@ export function generatePredicate<T>(_concept: Concept<T>): Predicate<T> {
 
 export function semanticTest<T>(
   _predicate: Predicate<T>,
-  _cases: {
-    accept: readonly T[];
-    reject: readonly T[];
-  },
+  _cases: SemanticTestCases<T>,
 ): void {
   compileTimeOnly("semanticTest");
+}
+
+export function benchmarkProbe<T>(_predicate: Predicate<T>): void {
+  compileTimeOnly("benchmarkProbe");
 }
 
 export function staticValue(_value: string): StaticValue {

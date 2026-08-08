@@ -1,0 +1,37 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+  "files": {
+    "includes": ["src/**/*.ts", "examples/**/*.ts", "pilots/**/*.ts"]
+  },
+  "formatter": {
+    "enabled": true,
+    "includes": [
+      "src/ir*.ts",
+      "src/openai*.ts",
+      "src/pilot-*.ts",
+      "src/semantic-arguments*.ts",
+      "src/semantic-error*.ts",
+      "src/semantic-limits*.ts",
+      "src/semantic-pipeline*.ts",
+      "src/semantic-promotion*.ts",
+      "src/semantic-transaction*.ts",
+      "pilots/**/*.ts"
+    ],
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  }
+}

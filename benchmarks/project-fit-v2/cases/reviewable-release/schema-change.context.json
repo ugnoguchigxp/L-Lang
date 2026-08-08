@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": {
+    "source": "catalog-governance/reviewable-release.semantic.ts",
+    "symbol": "isReviewableRelease",
+    "typeName": "UpdatedCatalogRelease",
+    "typeDeclaration": "type UpdatedCatalogRelease = { channel: \"review\" | \"editing\" | \"live\"; checks: \"green\" | \"red\"; approval?: { owner: string } };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "catalog-governance.reviewable-release",
+      "source": "catalog-governance/conventions.semantic.ts",
+      "targetTypeName": "UpdatedCatalogRelease",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "channel"
+            ],
+            "value": "review"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "checks"
+            ],
+            "value": "green"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "approval",
+              "owner"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

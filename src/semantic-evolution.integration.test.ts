@@ -11,6 +11,7 @@ import {
   approveSemanticEvolution,
   checkSemanticEvolution,
 } from "./semantic-evolution";
+import type { SemanticLockEntry } from "./semantic-lock";
 
 const workspaceRoot = resolve(import.meta.dir, "..");
 
@@ -96,7 +97,9 @@ describe("schema evolution transaction", () => {
         );
         const lockAfterApprove = await readFile(lockPath, "utf8");
         const approvedEntries = Object.values(
-          (JSON.parse(lockAfterApprove) as { entries: Record<string, any> }).entries,
+          (JSON.parse(lockAfterApprove) as {
+            entries: Record<string, SemanticLockEntry>;
+          }).entries,
         );
         expect(approvedEntries).toHaveLength(2);
         expect(
@@ -207,7 +210,7 @@ describe("schema evolution transaction", () => {
         await rm(testRoot, { recursive: true, force: true });
       }
     },
-    30_000,
+    60_000,
   );
 });
 

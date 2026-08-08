@@ -1,991 +1,449 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, relative, resolve } from "node:path";
 
-import { validatePredicateContext } from "./context-validator";
-import { evaluateExpression, expressionSignature } from "./cross-schema-benchmark";
-import { parsePredicateExpression, type PredicateExpression } from "./ir";
+import type { PredicateExpression } from "./ir";
 import {
-  parseElaborationResult,
-  type OpenAIRequestInput,
-  type OpenAIResult,
-} from "./openai";
-import {
-  classifySemanticChange,
-  type SemanticChangeClassification,
-  type SemanticDiff,
-} from "./semantic-diff";
-import {
-  comparePredicatesOnType,
-  predicateSemanticSignature,
-  type PredicateEquivalenceRelation,
-} from "./predicate-equivalence";
-import { selectConsensusVotes, type ConsensusSelection } from "./schema-evolution-consensus";
-import { scanSemanticSource, type SemanticSource } from "./semantic-source";
+  assertFrozenInputs,
+  evaluateMaterializedSchemaEvolution,
+  verifyFrozenFileHashes,
+  type MaterializedSchemaEvolutionOptions,
+} from "./schema-evolution-evaluator";
 
-export type SchemaEvolutionBenchmarkResolver = (
-  input: OpenAIRequestInput,
-) => Promise<OpenAIResult>;
-
-export type SchemaEvolutionBenchmarkOptions = {
-  manifestPath: string;
-  workspaceRoot?: string;
-  outputRoot: string;
-  provider: string;
-  model: string;
-  resolve: SchemaEvolutionBenchmarkResolver;
-  requireHumanReview?: boolean;
-  parallelTrials?: boolean;
-  onProgress?: (message: string) => void;
+type FieldDescriptor = {
+  path: string[];
+  type: string;
+  optional?: boolean;
+  omitWhenNegative?: boolean;
+  positive: unknown;
+  condition?:
+    | { kind: "equals"; value: string | number | boolean | null }
+    | { kind: "present" };
+  negative?: unknown;
 };
 
-type ChangeType =
-  | "add-property"
-  | "rename"
-  | "representation"
-  | "optionality"
-  | "remove-role"
-  | "ambiguity";
+type SchemaDescriptor = {
+  typeName: string;
+  expectedOutcome: "resolved" | "unresolved";
+  fields: FieldDescriptor[];
+};
 
-type BenchmarkManifest = {
-  version: 1;
+type SchemaEvolutionConcept = {
+  id: string;
+  exportName: string;
+  displayName: string;
+  specification: string;
+  baseline: SchemaDescriptor;
+  cases: Record<
+    "add-property" | "rename" | "representation" | "optionality" | "remove-role" | "ambiguity",
+    SchemaDescriptor
+  >;
+};
+
+type SchemaEvolutionManifest = {
+  version: 2;
   name: string;
-  trials: number;
-  freeze: string;
-  blindness: {
-    oracleAndCasesSentToModel: false;
-    lockUsed: false;
-    generatedCodeMutationAllowed: false;
-    note: string;
-  };
+  trials: 3;
+  concepts: SchemaEvolutionConcept[];
   thresholds: {
-    minimumFirstPassCaseRate: number;
-    minimumStableCaseRate: number;
-    minimumClassificationAccuracy: number;
-    minimumHiddenTestPassRate: number;
+    minimumConsensusCaseRate: number;
+    minimumConsensusQuorumRate: number;
     maximumFalseResolutionRate: number;
     maximumWorkspaceMutationCount: number;
-    minimumConsensusCaseRate?: number;
-    minimumConsensusQuorumRate?: number;
   };
-  evaluation?: {
-    primary: "trials" | "consensus";
-    samples: 3;
-    quorum: 2;
-    parallel: boolean;
-  };
-  protocol?: {
-    concepts: number;
-    cases: number;
-    resolvedCases: number;
-    unresolvedCases: number;
-    casesPerChangeType: number;
-  };
-  concepts: Array<{
-    id: string;
-    definition: string;
-    baselineSource: string;
-    baselineOracle: string;
-  }>;
-  cases: Array<{
-    id: string;
-    conceptId: string;
-    changeType: ChangeType;
-    source: string;
-    oracle: string;
-    tests: string;
-  }>;
 };
 
-type FreezeManifest = {
+type SchemaEvolutionFreeze = {
   version: 1;
-  status: "draft" | "human-reviewed";
-  humanReviewed: boolean;
-  reviewer: string | null;
-  reviewedAt: string | null;
+  status: "draft" | "frozen";
   instructions: string;
   files: Record<string, string>;
 };
 
-type Oracle =
-  | {
-      expectedOutcome: "resolved";
-      expectedClassification: "compatible";
-      body: PredicateExpression;
-    }
-  | {
-      expectedOutcome: "unresolved";
-      expectedClassification: "unresolved";
-      body: null;
-    };
-
-type HiddenCase = {
-  name: string;
-  input: Record<string, unknown>;
-  expected: boolean;
-};
-
-type PreparedCase = {
-  id: string;
-  conceptId: string;
-  changeType: ChangeType;
-  source: SemanticSource;
-  baselineIr: PredicateExpression;
-  oracle: Oracle;
-  hiddenCases: HiddenCase[];
-};
-
-type TrialResult = {
-  trial: number;
-  expectedOutcome: Oracle["expectedOutcome"];
-  actualOutcome: "resolved" | "unresolved" | "error";
-  expectedClassification: SemanticChangeClassification;
-  actualClassification: SemanticChangeClassification | "error";
-  passed: boolean;
-  outcomeCorrect: boolean;
-  classificationCorrect: boolean;
-  falseResolution: boolean;
-  contextValid: boolean | null;
-  exactIrMatch: boolean | null;
-  hiddenTestsPassed: boolean | null;
-  hiddenTestResults: Array<{
-    name: string;
-    expected: boolean;
-    actual: boolean;
-    passed: boolean;
-  }>;
-  actualBody: PredicateExpression | null;
-  diff: SemanticDiff | null;
-  diagnostics: string[];
-  error: string | null;
-  signature: string;
-  latencyMs: number;
-  modelInput: OpenAIRequestInput;
-  response: {
-    id: string;
-    model: string;
-    usage: OpenAIResult["usage"];
-    outputText: string;
-  } | null;
-};
-
-type ConsensusCaseResult = {
-  selection: ConsensusSelection;
-  selectedTrial: number | null;
-  selectedOutcome: "resolved" | "unresolved" | null;
-  relationToOracle: PredicateEquivalenceRelation | null;
-  hiddenTestsPassed: boolean | null;
-  outcomeCorrect: boolean;
-  semanticMatch: boolean;
-  falseResolution: boolean;
-  passed: boolean;
+export type SchemaEvolutionBenchmarkOptions = Omit<
+  MaterializedSchemaEvolutionOptions,
+  "manifestPath" | "requireFrozenInputs" | "parallelTrials"
+> & {
+  manifestPath: string;
+  requireFrozenInputs?: boolean;
 };
 
 export async function runSchemaEvolutionBenchmark(
   options: SchemaEvolutionBenchmarkOptions,
 ) {
-  const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const manifestPath = resolve(options.manifestPath);
   const directory = dirname(manifestPath);
-  const manifest = parseManifest(await readJson(manifestPath));
-  const freeze = parseFreeze(await readJson(resolve(directory, manifest.freeze)));
-  await verifySchemaEvolutionFreeze(directory, manifest, freeze);
-  if (options.requireHumanReview ?? true) assertHumanReviewedFreeze(freeze);
-
-  const prepared = await prepareCases(manifest, directory);
-  validateProtocol(manifest, prepared);
-  const beforeArtifacts = await snapshotWorkspaceArtifacts(workspaceRoot);
-  const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}`;
-  const runDirectory = resolve(options.outputRoot, `${runId}-${manifest.name}`);
-  await mkdir(runDirectory, { recursive: true });
-  const startedAt = Date.now();
-  const caseReports: Array<{
-    id: string;
-    conceptId: string;
-    changeType: ChangeType;
-    expectedOutcome: Oracle["expectedOutcome"];
-    expectedClassification: SemanticChangeClassification;
-    firstPass: boolean;
-    stable: boolean;
-    consensus: ConsensusCaseResult;
-    trials: TrialResult[];
-  }> = [];
-
-  for (const [caseIndex, benchmarkCase] of prepared.entries()) {
-    const runOne = async (trial: number) => {
-      options.onProgress?.(
-        `[${caseIndex + 1}/${prepared.length}] ${benchmarkCase.id} trial ${trial}/${manifest.trials}`,
-      );
-      const result = await runTrial(benchmarkCase, trial, options.model, options.resolve);
-      await writeJson(
-        resolve(runDirectory, "trials", benchmarkCase.id, `${trial}.json`),
-        result,
-      );
-      return result;
-    };
-    const parallel = options.parallelTrials ?? manifest.evaluation?.parallel ?? false;
-    const trials = parallel
-      ? await Promise.all(Array.from({ length: manifest.trials }, (_, index) => runOne(index + 1)))
-      : await runSequentially(manifest.trials, runOne);
-    const consensus = evaluateCaseConsensus(benchmarkCase, trials, manifest.evaluation?.quorum ?? 2);
-    caseReports.push({
-      id: benchmarkCase.id,
-      conceptId: benchmarkCase.conceptId,
-      changeType: benchmarkCase.changeType,
-      expectedOutcome: benchmarkCase.oracle.expectedOutcome,
-      expectedClassification: benchmarkCase.oracle.expectedClassification,
-      firstPass: trials[0]?.passed ?? false,
-      stable: new Set(trials.map((trial) => trial.signature)).size === 1,
-      consensus,
-      trials,
-    });
-  }
-
-  const afterArtifacts = await snapshotWorkspaceArtifacts(workspaceRoot);
-  const workspaceMutations = compareSnapshots(beforeArtifacts, afterArtifacts);
-  const allTrials = caseReports.flatMap((entry) => entry.trials);
-  const resolvedExpected = allTrials.filter(
-    (trial) => trial.expectedOutcome === "resolved",
+  const manifest = parseManifest(
+    JSON.parse(await readFile(manifestPath, "utf8")) as unknown,
   );
-  const unresolvedExpected = allTrials.filter(
-    (trial) => trial.expectedOutcome === "unresolved",
+  const freeze = parseFreeze(
+    JSON.parse(await readFile(resolve(directory, "freeze.json"), "utf8")) as unknown,
   );
-  const summary = {
-    trialPassRate: ratio(allTrials.filter((trial) => trial.passed).length, allTrials.length),
-    firstPassCaseRate: ratio(
-      caseReports.filter((entry) => entry.firstPass).length,
-      caseReports.length,
-    ),
-    stableCaseRate: ratio(
-      caseReports.filter((entry) => entry.stable).length,
-      caseReports.length,
-    ),
-    outcomeAccuracy: ratio(
-      allTrials.filter((trial) => trial.outcomeCorrect).length,
-      allTrials.length,
-    ),
-    classificationAccuracy: ratio(
-      allTrials.filter((trial) => trial.classificationCorrect).length,
-      allTrials.length,
-    ),
-    exactIrRate: ratio(
-      resolvedExpected.filter((trial) => trial.exactIrMatch === true).length,
-      resolvedExpected.length,
-    ),
-    hiddenTestPassRate: ratio(
-      resolvedExpected.filter((trial) => trial.hiddenTestsPassed === true).length,
-      resolvedExpected.length,
-    ),
-    falseResolutionRate: ratio(
-      unresolvedExpected.filter((trial) => trial.falseResolution).length,
-      unresolvedExpected.length,
-    ),
-    consensusCasePassRate: ratio(
-      caseReports.filter((entry) => entry.consensus.passed).length,
-      caseReports.length,
-    ),
-    consensusQuorumRate: ratio(
-      caseReports.filter((entry) => entry.consensus.selection.reached).length,
-      caseReports.length,
-    ),
-    consensusFalseResolutionRate: ratio(
-      caseReports.filter((entry) => entry.consensus.falseResolution).length,
-      caseReports.filter((entry) => entry.expectedOutcome === "unresolved").length,
-    ),
-    workspaceMutationCount: workspaceMutations.length,
-    workspaceMutations,
-    totalLatencyMs: allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0),
-    averageLatencyMs: Math.round(
-      allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0) / allTrials.length,
-    ),
-    usage: sumUsage(allTrials),
-  };
-  const consensusPrimary = manifest.evaluation?.primary === "consensus";
-  const modelGatePassed = consensusPrimary
-    ? summary.consensusCasePassRate >= (manifest.thresholds.minimumConsensusCaseRate ?? 1) &&
-      summary.consensusQuorumRate >= (manifest.thresholds.minimumConsensusQuorumRate ?? 1) &&
-      summary.consensusFalseResolutionRate <= manifest.thresholds.maximumFalseResolutionRate &&
-      summary.workspaceMutationCount <= manifest.thresholds.maximumWorkspaceMutationCount
-    : summary.firstPassCaseRate >= manifest.thresholds.minimumFirstPassCaseRate &&
-      summary.stableCaseRate >= manifest.thresholds.minimumStableCaseRate &&
-      summary.classificationAccuracy >= manifest.thresholds.minimumClassificationAccuracy &&
-      summary.hiddenTestPassRate >= manifest.thresholds.minimumHiddenTestPassRate &&
-      summary.falseResolutionRate <= manifest.thresholds.maximumFalseResolutionRate &&
-      summary.workspaceMutationCount <= manifest.thresholds.maximumWorkspaceMutationCount;
-  const report = {
-    version: 1,
-    benchmark: manifest.name,
-    status: modelGatePassed
-      ? freeze.humanReviewed
-        ? "passed"
-        : "fixture-gate-passed-human-review-pending"
-      : "failed",
-    provider: options.provider,
-    model: options.model,
-    lockUsed: false,
-    generatedCodeMutated: workspaceMutations.some((path) => path !== "semantic.lock"),
-    oracleAndCasesSentToModel: false,
-    evaluation: manifest.evaluation ?? {
-      primary: "trials",
-      samples: 3,
-      quorum: 2,
-      parallel: false,
-    },
-    freeze: {
-      status: freeze.status,
-      humanReviewed: freeze.humanReviewed,
-      reviewer: freeze.reviewer,
-      reviewedAt: freeze.reviewedAt,
-      fileCount: Object.keys(freeze.files).length,
-    },
-    protocol: {
-      concepts: manifest.concepts.length,
-      changeTypes: 6,
-      cases: prepared.length,
-      resolvedCases: prepared.filter((entry) => entry.oracle.expectedOutcome === "resolved").length,
-      unresolvedCases: prepared.filter((entry) => entry.oracle.expectedOutcome === "unresolved").length,
-      trialsPerCase: manifest.trials,
-      totalTrials: allTrials.length,
-    },
-    summary: { ...summary, modelGatePassed },
-    thresholds: manifest.thresholds,
-    cases: caseReports,
-    durationMs: Date.now() - startedAt,
-    completedAt: new Date().toISOString(),
-  };
-  await writeJson(resolve(runDirectory, "report.json"), report);
-  await writeFile(resolve(runDirectory, "report.md"), renderReport(report), "utf8");
-  return { report, runDirectory };
-}
-
-export function assertHumanReviewedFreeze(freeze: {
-  status: "draft" | "human-reviewed";
-  humanReviewed: boolean;
-  reviewer: string | null;
-  reviewedAt: string | null;
-}): void {
-  if (
-    !freeze.humanReviewed ||
-    freeze.status !== "human-reviewed" ||
-    typeof freeze.reviewer !== "string" ||
-    freeze.reviewer.trim().length === 0 ||
-    typeof freeze.reviewedAt !== "string" ||
-    Number.isNaN(Date.parse(freeze.reviewedAt))
-  ) {
-    throw new Error(
-      "benchmark inputs are frozen as draft; independent human review is required before live execution",
-    );
-  }
-}
-
-async function runTrial(
-  benchmarkCase: PreparedCase,
-  trial: number,
-  model: string,
-  resolver: SchemaEvolutionBenchmarkResolver,
-): Promise<TrialResult> {
-  const modelInput: OpenAIRequestInput = {
-    model,
-    specification: benchmarkCase.source.concept.specification,
-    typeScriptSource: benchmarkCase.source.concept.typeDeclaration,
-    target: {
-      functionName: benchmarkCase.source.predicate.name,
-      parameterName: benchmarkCase.source.predicate.parameterName,
-      typeName: benchmarkCase.source.concept.typeName,
-    },
-  };
-  const startedAt = performance.now();
-  try {
-    const response = await resolver(modelInput);
-    const elaboration = parseElaborationResult(JSON.parse(response.outputText) as unknown);
-    const responseAudit = {
-      id: response.responseId,
-      model: response.model,
-      usage: response.usage,
-      outputText: response.outputText,
-    };
-    if (elaboration.outcome === "unresolved") {
-      const diff = classifySemanticChange({
-        previous: benchmarkCase.baselineIr,
-        candidate: null,
-        diagnostics: elaboration.diagnostics,
-      validationPassed: false,
-      typeSchema: benchmarkCase.source.concept.typeSchema,
-      });
-      const outcomeCorrect = benchmarkCase.oracle.expectedOutcome === "unresolved";
-      const classificationCorrect =
-        diff.classification === benchmarkCase.oracle.expectedClassification;
-      return {
-        trial,
-        expectedOutcome: benchmarkCase.oracle.expectedOutcome,
-        actualOutcome: "unresolved",
-        expectedClassification: benchmarkCase.oracle.expectedClassification,
-        actualClassification: diff.classification,
-        passed: outcomeCorrect && classificationCorrect,
-        outcomeCorrect,
-        classificationCorrect,
-        falseResolution: false,
-        contextValid: null,
-        exactIrMatch: null,
-        hiddenTestsPassed: null,
-        hiddenTestResults: [],
-        actualBody: null,
-        diff,
-        diagnostics: elaboration.diagnostics,
-        error: null,
-        signature: stableJson({ outcome: "unresolved" }),
-        latencyMs: Math.round(performance.now() - startedAt),
-        modelInput,
-        response: responseAudit,
-      };
-    }
-
-    let contextValid = true;
-    let contextError: string | null = null;
-    try {
-      validatePredicateContext(elaboration.body, benchmarkCase.source);
-    } catch (error) {
-      contextValid = false;
-      contextError = error instanceof Error ? error.message : String(error);
-    }
-    const hiddenTestResults = benchmarkCase.hiddenCases.map((hiddenCase) => {
-      const actual = evaluateExpression(elaboration.body, hiddenCase.input);
-      return {
-        name: hiddenCase.name,
-        expected: hiddenCase.expected,
-        actual,
-        passed: actual === hiddenCase.expected,
-      };
-    });
-    const hiddenTestsPassed = hiddenTestResults.every((result) => result.passed);
-    const exactIrMatch =
-      benchmarkCase.oracle.expectedOutcome === "resolved" &&
-      expressionSignature(elaboration.body) === expressionSignature(benchmarkCase.oracle.body);
-    const diff = classifySemanticChange({
-      previous: benchmarkCase.baselineIr,
-      candidate: elaboration.body,
-      diagnostics: elaboration.diagnostics,
-      validationPassed: contextValid,
-      validationError: contextError,
-      typeSchema: benchmarkCase.source.concept.typeSchema,
-    });
-    const outcomeCorrect = benchmarkCase.oracle.expectedOutcome === "resolved";
-    const classificationCorrect =
-      diff.classification === benchmarkCase.oracle.expectedClassification;
-    return {
-      trial,
-      expectedOutcome: benchmarkCase.oracle.expectedOutcome,
-      actualOutcome: "resolved",
-      expectedClassification: benchmarkCase.oracle.expectedClassification,
-      actualClassification: diff.classification,
-      passed:
-        outcomeCorrect &&
-        classificationCorrect &&
-        contextValid &&
-        exactIrMatch &&
-        hiddenTestsPassed,
-      outcomeCorrect,
-      classificationCorrect,
-      falseResolution: benchmarkCase.oracle.expectedOutcome === "unresolved",
-      contextValid,
-      exactIrMatch,
-      hiddenTestsPassed,
-      hiddenTestResults,
-      actualBody: elaboration.body,
-      diff,
-      diagnostics: contextError
-        ? [...elaboration.diagnostics, contextError]
-        : elaboration.diagnostics,
-      error: null,
-      signature: stableJson({ outcome: "resolved", body: expressionSignature(elaboration.body) }),
-      latencyMs: Math.round(performance.now() - startedAt),
-      modelInput,
-      response: responseAudit,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return {
-      trial,
-      expectedOutcome: benchmarkCase.oracle.expectedOutcome,
-      actualOutcome: "error",
-      expectedClassification: benchmarkCase.oracle.expectedClassification,
-      actualClassification: "error",
-      passed: false,
-      outcomeCorrect: false,
-      classificationCorrect: false,
-      falseResolution: false,
-      contextValid: null,
-      exactIrMatch: null,
-      hiddenTestsPassed: null,
-      hiddenTestResults: [],
-      actualBody: null,
-      diff: null,
-      diagnostics: [],
-      error: message,
-      signature: stableJson({ outcome: "error", message }),
-      latencyMs: Math.round(performance.now() - startedAt),
-      modelInput,
-      response: null,
-    };
-  }
-}
-
-function evaluateCaseConsensus(
-  benchmarkCase: PreparedCase,
-  trials: TrialResult[],
-  quorum: number,
-): ConsensusCaseResult {
-  const votes = trials.map((trial) => {
-    if (trial.actualOutcome === "unresolved") {
-      return {
-        trial: trial.trial,
-        outcome: "unresolved" as const,
-        eligible: true,
-        signature: "unresolved",
-      };
-    }
-    if (
-      trial.actualOutcome === "resolved" &&
-      trial.actualBody !== null &&
-      trial.contextValid === true
-    ) {
-      return {
-        trial: trial.trial,
-        outcome: "resolved" as const,
-        eligible: true,
-        signature: predicateSemanticSignature(
-          trial.actualBody,
-          benchmarkCase.source.concept.typeSchema,
-        ).signature,
-      };
-    }
-    return {
-      trial: trial.trial,
-      outcome: "error" as const,
-      eligible: false,
-      signature: null,
-    };
-  });
-  const selection = selectConsensusVotes(votes, quorum);
-  const representative = selection.selectedOutcome === "resolved"
-    ? trials.find((trial) =>
-        trial.actualOutcome === "resolved" &&
-        trial.actualBody !== null &&
-        predicateSemanticSignature(
-          trial.actualBody,
-          benchmarkCase.source.concept.typeSchema,
-        ).signature === selection.selectedSignature
-      )
-    : selection.selectedOutcome === "unresolved"
-      ? trials.find((trial) => trial.actualOutcome === "unresolved")
-      : undefined;
-  const relationToOracle =
-    representative?.actualBody !== null &&
-    representative?.actualBody !== undefined &&
-    benchmarkCase.oracle.expectedOutcome === "resolved"
-      ? comparePredicatesOnType(
-          representative.actualBody,
-          benchmarkCase.oracle.body,
-          benchmarkCase.source.concept.typeSchema,
-        ).relation
-      : null;
-  const outcomeCorrect =
-    selection.reached && selection.selectedOutcome === benchmarkCase.oracle.expectedOutcome;
-  const semanticMatch = benchmarkCase.oracle.expectedOutcome === "unresolved"
-    ? selection.selectedOutcome === "unresolved"
-    : relationToOracle === "exact" || relationToOracle === "equivalent";
-  const hiddenTestsPassed = representative?.hiddenTestsPassed ?? null;
-  const falseResolution =
-    benchmarkCase.oracle.expectedOutcome === "unresolved" &&
-    selection.selectedOutcome === "resolved";
-  return {
-    selection,
-    selectedTrial: representative?.trial ?? null,
-    selectedOutcome: selection.selectedOutcome,
-    relationToOracle,
-    hiddenTestsPassed,
-    outcomeCorrect,
-    semanticMatch,
-    falseResolution,
-    passed:
-      outcomeCorrect &&
-      semanticMatch &&
-      (benchmarkCase.oracle.expectedOutcome === "unresolved" || hiddenTestsPassed === true),
-  };
-}
-
-async function runSequentially<T>(
-  count: number,
-  run: (index: number) => Promise<T>,
-): Promise<T[]> {
-  const results: T[] = [];
-  for (let index = 1; index <= count; index += 1) results.push(await run(index));
-  return results;
-}
-
-async function prepareCases(
-  manifest: BenchmarkManifest,
-  directory: string,
-): Promise<PreparedCase[]> {
-  const baselines = new Map<string, { source: SemanticSource; body: PredicateExpression }>();
-  for (const concept of manifest.concepts) {
-    const source = await scanSemanticSource(resolve(directory, concept.baselineSource));
-    const body = parseBaseline(await readJson(resolve(directory, concept.baselineOracle)));
-    validatePredicateContext(body, source);
-    baselines.set(concept.id, { source, body });
-  }
-  return Promise.all(manifest.cases.map(async (entry) => {
-    const baseline = baselines.get(entry.conceptId);
-    if (baseline === undefined) throw new Error(`${entry.id}: baseline is missing`);
-    const source = await scanSemanticSource(resolve(directory, entry.source));
-    if (source.concept.id !== entry.conceptId) {
-      throw new Error(`${entry.id}: source Concept does not match manifest`);
-    }
-    return {
-      id: entry.id,
-      conceptId: entry.conceptId,
-      changeType: entry.changeType,
-      source,
-      baselineIr: baseline.body,
-      oracle: parseOracle(await readJson(resolve(directory, entry.oracle))),
-      hiddenCases: parseHiddenCases(await readJson(resolve(directory, entry.tests))),
-    };
-  }));
-}
-
-function validateProtocol(manifest: BenchmarkManifest, cases: PreparedCase[]): void {
-  const protocol = manifest.protocol ?? {
-    concepts: 3,
-    cases: 18,
-    resolvedCases: 12,
-    unresolvedCases: 6,
-    casesPerChangeType: 3,
-  };
-  if (
-    manifest.trials !== 3 ||
-    manifest.concepts.length !== protocol.concepts ||
-    cases.length !== protocol.cases
-  ) {
-    throw new Error(
-      `protocol requires exactly ${protocol.concepts} Concepts, ${protocol.cases} cases, and 3 trials`,
-    );
-  }
-  const changeTypes: ChangeType[] = [
-    "add-property", "rename", "representation", "optionality", "remove-role", "ambiguity",
-  ];
-  for (const changeType of changeTypes) {
-    if (
-      cases.filter((entry) => entry.changeType === changeType).length !==
-        protocol.casesPerChangeType
-    ) {
-      throw new Error(
-        `protocol requires ${protocol.casesPerChangeType} cases for ${changeType}`,
-      );
-    }
-  }
-  const resolved = cases.filter((entry) => entry.oracle.expectedOutcome === "resolved");
-  if (
-    resolved.length !== protocol.resolvedCases ||
-    cases.length - resolved.length !== protocol.unresolvedCases
-  ) {
-    throw new Error(
-      `protocol requires exactly ${protocol.resolvedCases} resolved and ${protocol.unresolvedCases} unresolved cases`,
-    );
-  }
-  for (const entry of cases) {
-    if (entry.source.tests.acceptSource !== "[]" || entry.source.tests.rejectSource !== "[]") {
-      throw new Error(`${entry.id}: source must not contain oracle cases`);
-    }
-    if (entry.oracle.expectedOutcome === "resolved") {
-      validatePredicateContext(entry.oracle.body, entry.source);
-      if (entry.hiddenCases.length === 0) throw new Error(`${entry.id}: hidden cases required`);
-    } else if (entry.hiddenCases.length !== 0) {
-      throw new Error(`${entry.id}: unresolved case must not contain behavioral oracle cases`);
-    }
-  }
-}
-
-export async function verifySchemaEvolutionFreeze(
-  directory: string,
-  manifest: BenchmarkManifest,
-  freeze: FreezeManifest,
-): Promise<void> {
-  const required = new Set([
-    "benchmark.json",
-    ...manifest.concepts.flatMap((entry) => [
-      entry.definition,
-      entry.baselineSource,
-      entry.baselineOracle,
-    ]),
-    ...manifest.cases.flatMap((entry) => [entry.source, entry.oracle, entry.tests]),
-  ]);
-  const frozen = new Set(Object.keys(freeze.files));
-  if (stableJson([...required].sort()) !== stableJson([...frozen].sort())) {
-    throw new Error("freeze file set does not exactly match benchmark inputs");
+  if (Object.keys(freeze.files).length !== 1 || freeze.files["benchmark.json"] === undefined) {
+    throw new Error("freeze must contain exactly benchmark.json");
   }
   await verifyFrozenFileHashes(directory, freeze.files);
-}
+  if (options.requireFrozenInputs ?? true) assertFrozenInputs(freeze);
+  validateProtocol(manifest);
 
-export async function verifyFrozenFileHashes(
-  directory: string,
-  files: Record<string, string>,
-): Promise<void> {
-  for (const [path, expected] of Object.entries(files)) {
-    const actual = sha256(await readFile(resolve(directory, path)));
-    if (actual !== expected) throw new Error(`frozen input hash mismatch: ${path}`);
-  }
-}
-
-async function snapshotWorkspaceArtifacts(workspaceRoot: string) {
-  const snapshot: Record<string, string | null> = {};
-  const lockPath = resolve(workspaceRoot, "semantic.lock");
-  snapshot["semantic.lock"] = await hashOptional(lockPath);
-  const glob = new Bun.Glob("**/*.generated.ts");
-  for await (const path of glob.scan({ cwd: workspaceRoot, dot: false, onlyFiles: true })) {
-    snapshot[path] = sha256(await readFile(resolve(workspaceRoot, path)));
-  }
-  return snapshot;
-}
-
-function compareSnapshots(
-  before: Record<string, string | null>,
-  after: Record<string, string | null>,
-): string[] {
-  return [...new Set([...Object.keys(before), ...Object.keys(after)])]
-    .filter((path) => before[path] !== after[path])
-    .sort();
-}
-
-async function hashOptional(path: string): Promise<string | null> {
+  const materializedRoot = await mkdtemp(resolve(tmpdir(), "l-lang-schema-evolution-"));
   try {
-    return sha256(await readFile(path));
-  } catch (error) {
-    if (isNotFound(error)) return null;
-    throw error;
+    const generatedManifestPath = await materializeBenchmark(
+      materializedRoot,
+      resolve(options.workspaceRoot ?? process.cwd()),
+      manifest,
+      freeze,
+    );
+    const result = await evaluateMaterializedSchemaEvolution({
+      ...options,
+      manifestPath: generatedManifestPath,
+      requireFrozenInputs: false,
+      parallelTrials: true,
+    });
+    const authoritativeManifestSha256 = sha256(await readFile(manifestPath));
+    const report = {
+      ...result.report,
+      authoritativeInput: {
+        manifest: manifestPath,
+        sha256: authoritativeManifestSha256,
+        freezeStatus: freeze.status,
+      },
+    };
+    await writeFile(
+      resolve(result.runDirectory, "report.json"),
+      json(report),
+      "utf8",
+    );
+    await writeFile(
+      resolve(result.runDirectory, "report.md"),
+      `${await readFile(resolve(result.runDirectory, "report.md"), "utf8")}\n## Authoritative input\n\n- Manifest: ${manifestPath}\n- SHA-256: ${authoritativeManifestSha256}\n- Freeze: ${freeze.status}\n`,
+      "utf8",
+    );
+    return {
+      report,
+      runDirectory: result.runDirectory,
+      authoritativeManifest: manifestPath,
+      authoritativeManifestSha256,
+    };
+  } finally {
+    await rm(materializedRoot, { recursive: true, force: true });
   }
 }
 
-function parseManifest(input: unknown): BenchmarkManifest {
-  const value = record(input, "benchmark");
-  if (
-    value.version !== 1 ||
-    typeof value.name !== "string" ||
-    value.trials !== 3 ||
-    !Array.isArray(value.concepts) ||
-    !Array.isArray(value.cases)
-  ) {
-    throw new Error("schema evolution benchmark manifest is invalid");
+function validateProtocol(manifest: SchemaEvolutionManifest): void {
+  if (manifest.concepts.length !== 4 || manifest.trials !== 3) {
+    throw new Error("protocol requires exactly 4 Concepts and 3 samples");
   }
-  return input as BenchmarkManifest;
-}
-
-function parseFreeze(input: unknown): FreezeManifest {
-  const value = record(input, "freeze");
-  if (
-    value.version !== 1 ||
-    (value.status !== "draft" && value.status !== "human-reviewed") ||
-    typeof value.humanReviewed !== "boolean" ||
-    !(typeof value.reviewer === "string" || value.reviewer === null) ||
-    !(typeof value.reviewedAt === "string" || value.reviewedAt === null) ||
-    typeof value.instructions !== "string"
-  ) {
-    throw new Error("freeze manifest is invalid");
-  }
-  const files = record(value.files, "freeze.files");
-  if (
-    value.humanReviewed === true &&
-    (value.status !== "human-reviewed" ||
-      typeof value.reviewer !== "string" ||
-      value.reviewer.trim().length === 0 ||
-      typeof value.reviewedAt !== "string" ||
-      Number.isNaN(Date.parse(value.reviewedAt)))
-  ) {
-    throw new Error("human-reviewed freeze requires reviewer and reviewedAt");
-  }
-  for (const [path, hash] of Object.entries(files)) {
-    if (typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) {
-      throw new Error(`invalid frozen hash: ${path}`);
+  const ids = new Set<string>();
+  const expectedChanges = [
+    "add-property",
+    "rename",
+    "representation",
+    "optionality",
+    "remove-role",
+    "ambiguity",
+  ] as const;
+  for (const concept of manifest.concepts) {
+    if (ids.has(concept.id)) throw new Error(`duplicate Concept id: ${concept.id}`);
+    ids.add(concept.id);
+    validateSchema(concept.baseline, `${concept.id}.baseline`, true);
+    for (const change of expectedChanges) {
+      validateSchema(concept.cases[change], `${concept.id}.${change}`, false);
+      const expected = change === "remove-role" || change === "ambiguity"
+        ? "unresolved"
+        : "resolved";
+      if (concept.cases[change].expectedOutcome !== expected) {
+        throw new Error(`${concept.id}.${change}: expectedOutcome must be ${expected}`);
+      }
     }
   }
-  return input as FreezeManifest;
 }
 
-function parseBaseline(input: unknown): PredicateExpression {
-  const value = record(input, "baseline oracle");
-  if (value.version !== 1) throw new Error("baseline oracle version must be 1");
-  return parsePredicateExpression(value.body, "baseline oracle.body");
-}
-
-function parseOracle(input: unknown): Oracle {
-  const value = record(input, "oracle");
-  if (value.version !== 1) throw new Error("oracle version must be 1");
-  if (
-    value.expectedOutcome === "unresolved" &&
-    value.expectedClassification === "unresolved" &&
-    value.body === null
-  ) {
-    return { expectedOutcome: "unresolved", expectedClassification: "unresolved", body: null };
+function validateSchema(schema: SchemaDescriptor, path: string, baseline: boolean): void {
+  if (schema.fields.length < 2) throw new Error(`${path}: at least two fields are required`);
+  const conditionFields = schema.fields.filter((field) => field.condition !== undefined);
+  if ((baseline || schema.expectedOutcome === "resolved") && conditionFields.length !== 3) {
+    throw new Error(`${path}: resolved schemas require exactly three frozen conditions`);
   }
-  if (value.expectedOutcome === "resolved" && value.expectedClassification === "compatible") {
-    return {
-      expectedOutcome: "resolved",
-      expectedClassification: "compatible",
-      body: parsePredicateExpression(value.body, "oracle.body"),
-    };
+  if (schema.expectedOutcome === "unresolved" && conditionFields.length !== 0) {
+    throw new Error(`${path}: unresolved schemas must not encode an oracle condition`);
   }
-  throw new Error("oracle outcome, classification, or body is invalid");
-}
-
-function parseHiddenCases(input: unknown): HiddenCase[] {
-  const value = record(input, "hidden cases");
-  if (value.version !== 1 || !Array.isArray(value.tests)) {
-    throw new Error("hidden cases file is invalid");
-  }
-  return value.tests.map((item, index) => {
-    const test = record(item, `hidden cases[${index}]`);
-    if (typeof test.name !== "string" || typeof test.expected !== "boolean") {
-      throw new Error(`hidden cases[${index}] is invalid`);
+  for (const [index, field] of schema.fields.entries()) {
+    if (field.path.length === 0 || field.path.some((part) => !/^[$A-Z_a-z][$\w]*$/.test(part))) {
+      throw new Error(`${path}.fields[${index}]: invalid property path`);
     }
-    return {
-      name: test.name,
-      input: record(test.input, `hidden cases[${index}].input`),
-      expected: test.expected,
-    };
-  });
+    if (field.condition !== undefined && !("negative" in field)) {
+      throw new Error(`${path}.fields[${index}]: condition fields require a negative value`);
+    }
+  }
 }
 
-function renderReport(report: {
-  benchmark: string;
-  status: string;
-  provider: string;
-  model: string;
-  freeze: {
-    status: string;
-    humanReviewed: boolean;
-    reviewer: string | null;
-    reviewedAt: string | null;
-    fileCount: number;
+async function materializeBenchmark(
+  root: string,
+  workspaceRoot: string,
+  manifest: SchemaEvolutionManifest,
+  freeze: SchemaEvolutionFreeze,
+): Promise<string> {
+  const files = new Map<string, string>();
+  const concepts = [];
+  const cases = [];
+  for (const concept of manifest.concepts) {
+    const slug = slugify(concept.displayName);
+    const definition = `concepts/${slug}.ts`;
+    const baselineSource = `baselines/${slug}.semantic.ts`;
+    const baselineOracle = `baselines/${slug}.oracle.json`;
+    files.set(definition, renderConcept(concept, modulePath(relative(resolve(root, "concepts"), resolve(workspaceRoot, "src/dsl")))));
+    files.set(
+      baselineSource,
+      renderSource(concept, concept.baseline, "Baseline", modulePath(relative(resolve(root, "baselines"), resolve(root, "concepts", slug))), modulePath(relative(resolve(root, "baselines"), resolve(workspaceRoot, "src/dsl")))),
+    );
+    files.set(baselineOracle, json({ version: 1, body: bodyFor(concept.baseline) }));
+    concepts.push({ id: concept.id, definition, baselineSource, baselineOracle });
+
+    for (const [changeType, schema] of Object.entries(concept.cases)) {
+      const id = `${slug}-${changeType}`;
+      const source = `changes/${slug}/${changeType}.semantic.ts`;
+      const oracle = `oracles/${id}.oracle.json`;
+      const tests = `cases/${id}.cases.json`;
+      files.set(
+        source,
+        renderSource(concept, schema, pascalCase(changeType), modulePath(relative(resolve(root, "changes", slug), resolve(root, "concepts", slug))), modulePath(relative(resolve(root, "changes", slug), resolve(workspaceRoot, "src/dsl")))),
+      );
+      files.set(
+        oracle,
+        json(schema.expectedOutcome === "resolved"
+          ? {
+              version: 1,
+              expectedOutcome: "resolved",
+              expectedClassification: "compatible",
+              body: bodyFor(schema),
+            }
+          : {
+              version: 1,
+              expectedOutcome: "unresolved",
+              expectedClassification: "unresolved",
+              body: null,
+            }),
+      );
+      files.set(tests, json({ version: 1, tests: hiddenCasesFor(schema) }));
+      cases.push({ id, conceptId: concept.id, changeType, source, oracle, tests });
+    }
+  }
+  const generatedManifest = {
+    version: 1,
+    name: manifest.name,
+    trials: 3,
+    freeze: "freeze.json",
+    blindness: {
+      oracleAndCasesSentToModel: false,
+      lockUsed: false,
+      generatedCodeMutationAllowed: false,
+      note: "The model receives only each frozen Concept, evolved TypeScript type, and target predicate.",
+    },
+    evaluation: { primary: "consensus", samples: 3, quorum: 2, parallel: true },
+    protocol: {
+      concepts: 4,
+      cases: 24,
+      resolvedCases: 16,
+      unresolvedCases: 8,
+      casesPerChangeType: 4,
+    },
+    thresholds: {
+      minimumFirstPassCaseRate: 0,
+      minimumStableCaseRate: 0,
+      minimumClassificationAccuracy: 0,
+      minimumHiddenTestPassRate: 0,
+      maximumFalseResolutionRate: manifest.thresholds.maximumFalseResolutionRate,
+      maximumWorkspaceMutationCount: manifest.thresholds.maximumWorkspaceMutationCount,
+      minimumConsensusCaseRate: manifest.thresholds.minimumConsensusCaseRate,
+      minimumConsensusQuorumRate: manifest.thresholds.minimumConsensusQuorumRate,
+    },
+    concepts,
+    cases,
   };
-  protocol: { totalTrials: number };
-  summary: {
-    modelGatePassed: boolean;
-    trialPassRate: number;
-    firstPassCaseRate: number;
-    stableCaseRate: number;
-    classificationAccuracy: number;
-    exactIrRate: number;
-    hiddenTestPassRate: number;
-    falseResolutionRate: number;
-    consensusCasePassRate: number;
-    consensusQuorumRate: number;
-    consensusFalseResolutionRate: number;
-    workspaceMutationCount: number;
-    averageLatencyMs: number;
-    usage: { totalTokens: number };
-  };
-  cases: Array<{
-    id: string;
-    changeType: ChangeType;
-    expectedOutcome: string;
-    firstPass: boolean;
-    stable: boolean;
-    consensus: ConsensusCaseResult;
-    trials: TrialResult[];
-  }>;
-}): string {
-  const summary = report.summary;
+  files.set("benchmark.json", json(generatedManifest));
+  const hashes = Object.fromEntries(
+    [...files.entries()].map(([path, content]) => [path, sha256(content)]),
+  );
+  files.set("freeze.json", json({
+    version: 1,
+    status: freeze.status,
+    instructions: freeze.instructions,
+    files: hashes,
+  }));
+  await writeFile(
+    resolve(root, "tsconfig.json"),
+    json({ extends: resolve(workspaceRoot, "tsconfig.json") }),
+    "utf8",
+  );
+  await Promise.all([...files.entries()].map(async ([path, content]) => {
+    const absolute = resolve(root, path);
+    await mkdir(dirname(absolute), { recursive: true });
+    await writeFile(absolute, content, "utf8");
+  }));
+  return resolve(root, "benchmark.json");
+}
+
+function renderConcept(concept: SchemaEvolutionConcept, dslModule: string): string {
   return [
-    `# ${report.benchmark}`,
+    `import { defineConcept } from ${JSON.stringify(dslModule)};`,
     "",
-    `- Status: ${report.status}`,
-    `- Provider/model: ${report.provider}/${report.model}`,
-    `- Freeze: ${report.freeze.status} (human reviewed: ${report.freeze.humanReviewed})`,
-    "- Lock used: false",
-    "- Oracle/tests sent to model: false",
-    `- Model gate: ${summary.modelGatePassed ? "PASS" : "FAIL"}`,
-    "",
-    "## Metrics",
-    "",
-    `- Trials: ${report.protocol.totalTrials}`,
-    `- Trial pass rate: ${percent(summary.trialPassRate)}`,
-    `- First-pass case rate: ${percent(summary.firstPassCaseRate)}`,
-    `- Stable case rate: ${percent(summary.stableCaseRate)}`,
-    `- Classification accuracy: ${percent(summary.classificationAccuracy)}`,
-    `- Exact IR rate: ${percent(summary.exactIrRate)}`,
-    `- Hidden-test pass rate: ${percent(summary.hiddenTestPassRate)}`,
-    `- False-resolution rate: ${percent(summary.falseResolutionRate)}`,
-    `- Consensus case pass rate: ${percent(summary.consensusCasePassRate)}`,
-    `- Consensus quorum rate: ${percent(summary.consensusQuorumRate)}`,
-    `- Consensus false-resolution rate: ${percent(summary.consensusFalseResolutionRate)}`,
-    `- Workspace mutations: ${summary.workspaceMutationCount}`,
-    `- Average API latency: ${summary.averageLatencyMs} ms`,
-    `- Total tokens: ${summary.usage.totalTokens}`,
-    "",
-    "## Cases",
-    "",
-    "| Case | Change | Expected | First pass | Consensus | Stable | Outcomes |",
-    "| --- | --- | --- | --- | --- | --- | --- |",
-    ...report.cases.map((entry) =>
-      `| ${entry.id} | ${entry.changeType} | ${entry.expectedOutcome} | ${entry.firstPass ? "PASS" : "FAIL"} | ${entry.consensus.passed ? "PASS" : "FAIL"} (${entry.consensus.selection.supportingTrials.join(",") || "no quorum"}) | ${entry.stable ? "yes" : "no"} | ${entry.trials.map((trial) => `${trial.actualOutcome}/${trial.actualClassification}:${trial.passed ? "pass" : "fail"}`).join(", ")} |`,
-    ),
+    `export const ${concept.exportName} = defineConcept(${JSON.stringify(concept.id)})\``,
+    concept.specification.trim(),
+    "`;",
     "",
   ].join("\n");
 }
 
-function sumUsage(trials: TrialResult[]) {
-  const usage = trials.flatMap((trial) => trial.response?.usage ? [trial.response.usage] : []);
-  return {
-    inputTokens: usage.reduce((sum, entry) => sum + entry.inputTokens, 0),
-    outputTokens: usage.reduce((sum, entry) => sum + entry.outputTokens, 0),
-    totalTokens: usage.reduce((sum, entry) => sum + entry.totalTokens, 0),
-  };
+function renderSource(
+  concept: SchemaEvolutionConcept,
+  schema: SchemaDescriptor,
+  suffix: string,
+  conceptModule: string,
+  dslModule: string,
+): string {
+  const predicate = `is${concept.exportName}${suffix}`;
+  return [
+    `import { ${concept.exportName} } from ${JSON.stringify(conceptModule)};`,
+    `import { benchmarkProbe, bindConcept, generatePredicate } from ${JSON.stringify(dslModule)};`,
+    "",
+    renderType(schema),
+    "",
+    `const Bound = bindConcept<${schema.typeName}>(${concept.exportName});`,
+    `export const ${predicate} = generatePredicate(Bound);`,
+    `benchmarkProbe(${predicate});`,
+    "",
+  ].join("\n");
 }
 
-function record(value: unknown, path: string): Record<string, unknown> {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${path} must be an object`);
+function renderType(schema: SchemaDescriptor): string {
+  const root: FieldTree = { children: new Map() };
+  for (const field of schema.fields) {
+    let node = root;
+    for (const part of field.path.slice(0, -1)) {
+      const child = node.children.get(part) ?? { children: new Map() };
+      node.children.set(part, child);
+      node = child;
+    }
+    const leaf = field.path.at(-1);
+    if (leaf === undefined) throw new Error("field path must not be empty");
+    node.children.set(leaf, { children: new Map(), field });
   }
-  return value as Record<string, unknown>;
+  return `export type ${schema.typeName} = ${renderObject(root, 0)};`;
 }
 
-async function readJson(path: string): Promise<unknown> {
-  return JSON.parse(await readFile(path, "utf8")) as unknown;
+type FieldTree = { children: Map<string, FieldTree>; field?: FieldDescriptor };
+
+function renderObject(node: FieldTree, depth: number): string {
+  const indent = "  ".repeat(depth);
+  const childIndent = "  ".repeat(depth + 1);
+  return [
+    "{",
+    ...[...node.children.entries()].map(([name, child]) =>
+      `${childIndent}${name}${child.field?.optional ? "?" : ""}: ${child.field ? child.field.type : renderObject(child, depth + 1)};`,
+    ),
+    `${indent}}`,
+  ].join("\n");
 }
 
-async function writeJson(path: string, value: unknown): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+function bodyFor(schema: SchemaDescriptor): PredicateExpression {
+  const conditions: PredicateExpression[] = [];
+  for (const field of schema.fields) {
+    if (field.condition === undefined) continue;
+    conditions.push(field.condition.kind === "present"
+      ? { kind: "present", property: field.path }
+      : { kind: "equals", property: field.path, value: field.condition.value });
+  }
+  return { kind: "all", conditions };
+}
+
+function hiddenCasesFor(schema: SchemaDescriptor) {
+  if (schema.expectedOutcome === "unresolved") return [];
+  const positive = fixtureFor(schema.fields, null);
+  return [
+    { name: "eligible", input: positive, expected: true },
+    ...schema.fields.flatMap((field) => field.condition === undefined
+      ? []
+      : [{
+          name: `rejects-${field.path.join("-")}`,
+          input: fixtureFor(schema.fields, field),
+          expected: false,
+        }]),
+  ];
+}
+
+function fixtureFor(fields: FieldDescriptor[], negativeField: FieldDescriptor | null) {
+  const result: Record<string, unknown> = {};
+  for (const field of fields) {
+    if (field === negativeField && field.omitWhenNegative) continue;
+    setPath(result, field.path, field === negativeField ? field.negative : field.positive);
+  }
+  return result;
+}
+
+function setPath(target: Record<string, unknown>, path: string[], value: unknown): void {
+  let current = target;
+  for (const part of path.slice(0, -1)) {
+    const existing = current[part];
+    if (typeof existing === "object" && existing !== null && !Array.isArray(existing)) {
+      current = existing as Record<string, unknown>;
+    } else {
+      const child: Record<string, unknown> = {};
+      current[part] = child;
+      current = child;
+    }
+  }
+  const leaf = path.at(-1);
+  if (leaf === undefined) throw new Error("fixture path must not be empty");
+  current[leaf] = value;
+}
+
+function parseManifest(input: unknown): SchemaEvolutionManifest {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error("benchmark manifest must be an object");
+  }
+  const value = input as Record<string, unknown>;
+  if (value.version !== 2 || value.trials !== 3 || !Array.isArray(value.concepts)) {
+    throw new Error("benchmark manifest is invalid");
+  }
+  return input as SchemaEvolutionManifest;
+}
+
+function parseFreeze(input: unknown): SchemaEvolutionFreeze {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error("freeze must be an object");
+  }
+  const value = input as Record<string, unknown>;
+  if (
+    value.version !== 1 ||
+    (value.status !== "draft" && value.status !== "frozen") ||
+    typeof value.instructions !== "string" ||
+    typeof value.files !== "object" ||
+    value.files === null
+  ) {
+    throw new Error("freeze is invalid");
+  }
+  return input as SchemaEvolutionFreeze;
+}
+
+function modulePath(value: string): string {
+  const normalized = value.replaceAll("\\", "/");
+  return normalized.startsWith(".") ? normalized : `./${normalized}`;
+}
+
+function slugify(value: string): string {
+  return value.trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "");
+}
+
+function pascalCase(value: string): string {
+  return value.split("-").map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("");
+}
+
+function json(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`;
 }
 
 function sha256(value: string | Buffer): string {
   return createHash("sha256").update(value).digest("hex");
-}
-
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (typeof value === "object" && value !== null) {
-    const object = value as Record<string, unknown>;
-    return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`).join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
-function ratio(numerator: number, denominator: number): number {
-  return denominator === 0 ? 0 : numerator / denominator;
-}
-
-function percent(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
-}
-
-function isNotFound(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error &&
-    (error as { code?: string }).code === "ENOENT";
-}
-
-export function relativeSchemaEvolutionReportPath(
-  workspaceRoot: string,
-  path: string,
-): string {
-  return relative(workspaceRoot, path).replaceAll("\\", "/");
 }

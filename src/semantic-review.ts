@@ -9,28 +9,34 @@ import { basename, dirname, extname, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
-import { renderSemanticTestModule } from "./judgement-renderer";
 import {
+  type PredicateExpression,
   parsePredicateDefinition,
   parsePredicateExpression,
-  type PredicateExpression,
 } from "./ir";
+import { renderSemanticTestModule } from "./judgement-renderer";
 import type { OpenAIResult } from "./openai";
+import {
+  buildProjectContext,
+  type ProjectContextSummary,
+} from "./project-context";
 import type { SemanticCommandRunner } from "./semantic-compiler";
 import {
   fingerprintFor,
   generatedOutputPath,
+  type PredicateSemanticHashes,
   predicateSemanticHashes,
+  type StaticJudgmentSemanticHashes,
   sha256,
+  stableJson,
   staticJudgmentSemanticHashes,
   workspaceRelativePath,
-  type PredicateSemanticHashes,
-  type StaticJudgmentSemanticHashes,
 } from "./semantic-fingerprint";
+import { readBoundedJsonFile } from "./semantic-limits";
 import {
   findLatestPredicateEntry,
   findLatestStaticJudgmentEntry,
-  readSemanticLock,
+  readSemanticLockSnapshot,
   type SemanticLockEntry,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
@@ -69,6 +75,8 @@ type ReviewCandidateBase = {
 
 export type PredicateReviewCandidate = ReviewCandidateBase & {
   kind: "predicate";
+  targetTypeName: string;
+  contextSummary: ProjectContextSummary;
   hashes: PredicateSemanticHashes;
   resolvedIr: PredicateExpression;
   baselineFingerprint: string | null;
@@ -105,6 +113,8 @@ export async function createPredicateSemanticReview(input: {
   model: string;
   fingerprint: string;
   hashes: PredicateSemanticHashes;
+  targetTypeName: string;
+  contextSummary: ProjectContextSummary;
   resolvedIr: PredicateExpression;
   baseline: SemanticLockEntry | undefined;
   response: SemanticLockEntry["response"];
@@ -130,6 +140,8 @@ export async function createPredicateSemanticReview(input: {
       projectTypecheck: "passed",
       semanticTest: "passed",
     },
+    targetTypeName: input.targetTypeName,
+    contextSummary: input.contextSummary,
     hashes: input.hashes,
     resolvedIr: input.resolvedIr,
     baselineFingerprint: input.baseline?.fingerprint ?? null,
@@ -222,9 +234,10 @@ export async function readSemanticReviewCandidate(
   );
   const candidateDirectory = resolve(reviewRoot, candidateId);
   const candidate = parseReviewCandidate(
-    JSON.parse(
-      await readFile(resolve(candidateDirectory, "candidate.json"), "utf8"),
-    ) as unknown,
+    await readBoundedJsonFile(
+      resolve(candidateDirectory, "candidate.json"),
+      "semantic review candidate",
+    ),
   );
   if (candidate.id !== candidateId) {
     throw new Error("review candidate id does not match its directory");
@@ -270,7 +283,8 @@ export async function approveSemanticReview(
   }
 
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
-  const lock = await readSemanticLock(lockPath);
+  const { lock, revision: lockRevision } =
+    await readSemanticLockSnapshot(lockPath);
   const executeCommand = options.commandRunner ?? runCommand;
 
   if (candidate.kind === "predicate") {
@@ -285,7 +299,12 @@ export async function approveSemanticReview(
       generatedOutputPath(source.absolutePath, source.predicate.name),
       "generated output",
     );
-    const hashes = predicateSemanticHashes(source);
+    const builtContext = await buildProjectContext({
+      source,
+      workspaceRoot,
+      lock,
+    });
+    const hashes = predicateSemanticHashes(source, builtContext);
     assertCandidateIdentity(candidate, {
       source: sourceRelative,
       output,
@@ -301,6 +320,14 @@ export async function approveSemanticReview(
       }),
       hashes,
     });
+    if (
+      candidate.targetTypeName !== source.concept.typeName ||
+      stableJson(candidate.contextSummary) !== stableJson(builtContext.summary)
+    ) {
+      throw new Error(
+        "review candidate is stale: Project Context changed after build",
+      );
+    }
     const generatedCode = generatePredicate(
       parsePredicateDefinition({
         version: 1,
@@ -362,9 +389,11 @@ export async function approveSemanticReview(
         "concept definition",
       ),
       predicate: candidate.symbol,
+      targetTypeName: candidate.targetTypeName,
       provider: candidate.provider,
       model: candidate.model,
       ...candidate.hashes,
+      contextSummary: candidate.contextSummary,
       resolvedIr: candidate.resolvedIr,
       generatedCodeHash: candidate.generatedCodeHash,
       response: candidate.response,
@@ -376,6 +405,8 @@ export async function approveSemanticReview(
       generatedCode,
       lockPath,
       nextLock: lock,
+      expectedLockHash: lockRevision,
+      command: "approve",
       runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
     });
   } else {
@@ -469,6 +500,8 @@ export async function approveSemanticReview(
       generatedCode,
       lockPath,
       nextLock: lock,
+      expectedLockHash: lockRevision,
+      command: "approve",
       runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
     });
   }
@@ -680,7 +713,8 @@ export function parseReviewCandidate(input: unknown): ReviewCandidate {
     ? [
         "version", "id", "status", "kind", "source", "output", "symbol",
         "conceptId", "provider", "model", "fingerprint", "generatedCodeHash",
-        "validation", "hashes", "resolvedIr", "baselineFingerprint", "response",
+        "validation", "targetTypeName", "contextSummary", "hashes",
+        "resolvedIr", "baselineFingerprint", "response",
         "createdAt", "approvedAt", "reviewer",
       ]
     : [
@@ -734,6 +768,11 @@ export function parseReviewCandidate(input: unknown): ReviewCandidate {
     return {
       ...base,
       kind,
+      targetTypeName: stringValue(
+        value.targetTypeName,
+        "review candidate.targetTypeName",
+      ),
+      contextSummary: contextSummaryValue(value.contextSummary),
       validation: validationValue(value.validation, "passed"),
       hashes: predicateHashesValue(value.hashes),
       resolvedIr: parsePredicateExpression(value.resolvedIr, "review candidate.resolvedIr"),
@@ -777,14 +816,73 @@ function validationValue(
 
 function predicateHashesValue(input: unknown): PredicateSemanticHashes {
   const value = objectValue(input, "review candidate.hashes");
-  assertKeys(value, ["conceptHash", "sourceHash", "typeHash", "testHash", "promptHash"], "review candidate.hashes");
+  assertKeys(
+    value,
+    [
+      "conceptHash",
+      "sourceHash",
+      "typeHash",
+      "testHash",
+      "promptHash",
+      "contextVersion",
+      "contextHash",
+    ],
+    "review candidate.hashes",
+  );
+  if (value.contextVersion !== 1) {
+    throw new Error("review candidate.hashes.contextVersion must be 1");
+  }
   return {
     conceptHash: hashValue(value.conceptHash, "review candidate.hashes.conceptHash"),
     sourceHash: hashValue(value.sourceHash, "review candidate.hashes.sourceHash"),
     typeHash: hashValue(value.typeHash, "review candidate.hashes.typeHash"),
     testHash: hashValue(value.testHash, "review candidate.hashes.testHash"),
     promptHash: hashValue(value.promptHash, "review candidate.hashes.promptHash"),
+    contextVersion: 1,
+    contextHash: hashValue(
+      value.contextHash,
+      "review candidate.hashes.contextHash",
+    ),
   };
+}
+
+function contextSummaryValue(input: unknown): ProjectContextSummary {
+  const value = objectValue(input, "review candidate.contextSummary");
+  assertKeys(
+    value,
+    [
+      "version",
+      "targetSource",
+      "relatedTypeSources",
+      "verifiedBindingSources",
+    ],
+    "review candidate.contextSummary",
+  );
+  if (value.version !== 1) {
+    throw new Error("review candidate.contextSummary.version must be 1");
+  }
+  return {
+    version: 1,
+    targetSource: stringValue(
+      value.targetSource,
+      "review candidate.contextSummary.targetSource",
+    ),
+    relatedTypeSources: stringArrayValue(
+      value.relatedTypeSources,
+      "review candidate.contextSummary.relatedTypeSources",
+    ),
+    verifiedBindingSources: stringArrayValue(
+      value.verifiedBindingSources,
+      "review candidate.contextSummary.verifiedBindingSources",
+    ),
+  };
+}
+
+function stringArrayValue(input: unknown, path: string): string[] {
+  if (!Array.isArray(input)) throw new Error(`${path} must be an array`);
+  return input.map((value, index) =>
+    stringValue(value, `${path}[${index}]`)
+  );
 }
 
 function staticHashesValue(input: unknown): StaticJudgmentSemanticHashes {

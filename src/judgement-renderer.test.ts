@@ -37,6 +37,12 @@ describe("judgement renderer", () => {
       predicateName: "isExample",
       acceptSource: '[{ state: "ready" }]',
       rejectSource: '[{ state: "stopped" }]',
+      boundarySource:
+        '[{ name: "edge", input: { state: "ready" }, expected: "accepted" }]',
+      counterfactualSource:
+        '[{ name: "transition", base: { input: { state: "ready" }, expected: "accepted" }, variants: [{ name: "stop", input: { state: "stopped" }, expected: "rejected" }] }]',
+      invarianceSource:
+        '[{ name: "stable", expected: "accepted", inputs: [{ state: "ready" }] }]',
     });
 
     expect(module).toContain("function prettyCase");
@@ -47,5 +53,8 @@ describe("judgement renderer", () => {
     expect(module).toContain("const actual = isExample(value)");
     expect(module).toContain('item === undefined ? "<undefined>" : item');
     expect(module).toContain("    2,");
+    expect(module).toContain('"boundary:" + item.name');
+    expect(module).toContain('"counterfactual:" + group.name + ":base"');
+    expect(module).toContain('"invariance:" + group.name + "[" + index + "]"');
   });
 });

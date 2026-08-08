@@ -1,39 +1,40 @@
-# Blind Schema Evolution v1 review
+# Blind Schema Evolution freeze protocol
 
-This review must be completed before the live Azure OpenAI run. The reviewer must not use model outputs from this benchmark when deciding expected results.
+> **Status: blocked before input freeze.** Keep `freeze.json` as `draft` and
+> do not run the live benchmark. See
+> [`BLOCKER.md`](./BLOCKER.md) for the recorded evaluation-design issues and
+> resume conditions.
 
-## Review checklist
+This held-out benchmark is independent from prior evaluation inputs. Do not
+use model output while finalizing it or alter `benchmark.json` after freeze.
 
-- Confirm the three Concept definitions express the intended business semantics.
-- Confirm every evolved schema represents the stated change type and does not contain accidental semantic hints.
-- Confirm all `add-property`, `rename`, `representation`, and `optionality` oracles contain the expected Predicate IR.
-- Confirm all `remove-role` and `ambiguity` cases should be `unresolved` rather than guessed.
-- Confirm hidden cases cover the positive case and every required negative condition.
-- Do not change any reviewed input after recording approval. A changed input will fail its frozen SHA-256 check.
+## What is frozen
 
-## Matrix
+- Four new Concepts: actionable ticket, payable invoice, deployable release, and enrollable course.
+- Six schema changes per Concept, for 24 cases and 72 model calls.
+- Each resolved schema has exactly three condition-bearing fields. Their `condition`, `positive`, and `negative` values define the oracle and hidden tests.
+- `remove-role` and `ambiguity` cases contain no condition-bearing fields and must remain unresolved.
+- Nested objects, arrays, unions, nullable fields, optional fields, renames, and boolean representations are included.
 
-| Concept | add-property | rename | representation | optionality | remove-role | ambiguity |
-| --- | --- | --- | --- | --- | --- | --- |
-| Active Customer | compatible | compatible | compatible | compatible | unresolved | unresolved |
-| Shippable Order | compatible | compatible | compatible | compatible | unresolved | unresolved |
-| Publishable Article | compatible | compatible | compatible | compatible | unresolved | unresolved |
+## Expected matrix
 
-## Record approval
+| Change | Cases | Expected |
+| --- | ---: | --- |
+| add-property | 4 | resolved |
+| rename | 4 | resolved |
+| representation | 4 | resolved |
+| optionality | 4 | resolved |
+| remove-role | 4 | unresolved |
+| ambiguity | 4 | unresolved |
 
-After review, edit only the review metadata in `freeze.json`:
+## Freeze
+
+After the design blocker is resolved, independently review the replacement
+input and record the following in `freeze.json`:
 
 ```json
-{
-  "status": "human-reviewed",
-  "humanReviewed": true,
-  "reviewer": "reviewer name or identifier",
-  "reviewedAt": "2026-07-20T00:00:00.000Z"
-}
+"status": "frozen"
 ```
 
-Do not regenerate hashes to conceal a post-review input change. Then run:
-
-```bash
-bun run benchmark:schema-evolution
-```
+Then run the live benchmark. The command refuses API execution while the input
+is still `draft` or if a frozen SHA-256 changes.

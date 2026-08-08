@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "indexing": "enabled",
+        "visibility": "public",
+        "deletedAt": null
+      },
+      "expected": true
+    },
+    {
+      "name": "private",
+      "input": {
+        "indexing": "enabled",
+        "visibility": "private",
+        "deletedAt": null
+      },
+      "expected": false
+    },
+    {
+      "name": "deleted",
+      "input": {
+        "indexing": "enabled",
+        "visibility": "public",
+        "deletedAt": "2026-06-01"
+      },
+      "expected": false
+    }
+  ]
+}

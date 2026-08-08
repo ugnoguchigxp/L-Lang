@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "target": {
+    "source": "catalog-governance/reviewable-release.semantic.ts",
+    "symbol": "isReviewableRelease",
+    "typeName": "CatalogRelease",
+    "typeDeclaration": "type CatalogRelease = { phase: \"candidate\" | \"draft\" | \"published\"; validation: \"passed\" | \"failed\"; reviewerId: string | null };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "catalog-governance.reviewable-release",
+      "source": "catalog-governance/conventions.semantic.ts",
+      "targetTypeName": "CatalogRelease",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "phase"
+            ],
+            "value": "candidate"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "validation"
+            ],
+            "value": "passed"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "reviewerId"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

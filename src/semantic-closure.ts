@@ -1,12 +1,16 @@
-import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 
 import {
   explainSemanticSource,
   type GeneratedIntegrity,
+  type SemanticExplanation,
   type SemanticExplanationStatus,
 } from "./semantic-explain";
-import { workspaceRelativePath } from "./semantic-fingerprint";
+import {
+  resolveWorkspacePath,
+  workspaceRelativePath,
+} from "./semantic-fingerprint";
+import { readBoundedJsonFile } from "./semantic-limits";
 
 export type SemanticClosureManifestNode = {
   id: string;
@@ -19,15 +23,29 @@ export type SemanticClosureManifest = {
   nodes: SemanticClosureManifestNode[];
 };
 
+export type SemanticClosureNodeStatus =
+  | SemanticExplanationStatus
+  | "verification-required"
+  | "dependency-open";
+
+export type SemanticProjectFitStatus = {
+  context: "verified" | "not-applicable" | "missing";
+  validation: "verified" | "legacy" | "missing";
+  satisfied: boolean;
+};
+
 export type SemanticClosureNode = {
   id: string;
   kind: "predicate" | "static-judgment";
   source: string;
   symbol: string;
   conceptId: string;
-  status: SemanticExplanationStatus;
+  status: SemanticClosureNodeStatus;
+  semanticStatus: SemanticExplanationStatus;
+  projectFit: SemanticProjectFitStatus;
   generated: GeneratedIntegrity | null;
   dependsOn: string[];
+  openDependencies: string[];
 };
 
 export type SemanticClosureEdge = {
@@ -38,7 +56,7 @@ export type SemanticClosureEdge = {
 
 export type SemanticClosureBlocker = {
   nodeId: string;
-  code: Exclude<SemanticExplanationStatus, "current">;
+  code: Exclude<SemanticClosureNodeStatus, "current">;
   message: string;
 };
 
@@ -46,7 +64,6 @@ export type SemanticClosureReport = {
   version: 1;
   scope: "artifact";
   status: "closed" | "open";
-  approval: "unknown";
   manifest: string;
   nodes: SemanticClosureNode[];
   edges: SemanticClosureEdge[];
@@ -57,6 +74,13 @@ export type SemanticClosureReport = {
     stale: number;
     unlocked: number;
     integrityError: number;
+    verificationRequired: number;
+    dependencyOpen: number;
+  };
+  projectFit: {
+    verified: number;
+    required: number;
+    legacy: number;
   };
   limitations: string[];
 };
@@ -70,7 +94,6 @@ export type CheckSemanticClosureOptions = {
 const limitations = [
   "Closure is limited to artifacts explicitly declared in the manifest.",
   "Dependencies are explicit declarations; imports and undeclared semantic sources are not discovered.",
-  "Human approval is unknown because semantic.lock does not record approval provenance.",
   "This check does not build, replay, repair, or perform a new semantic judgment.",
 ];
 
@@ -78,14 +101,18 @@ export async function checkSemanticClosure(
   options: CheckSemanticClosureOptions,
 ): Promise<SemanticClosureReport> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const manifestPath = resolve(options.manifestPath);
+  const manifestPath = resolveWorkspacePath(
+    workspaceRoot,
+    options.manifestPath,
+    "Semantic Closure manifest",
+  );
   const manifestRelative = workspaceRelativePath(
     workspaceRoot,
     manifestPath,
     "Semantic Closure manifest",
   );
   const manifest = parseSemanticClosureManifest(
-    JSON.parse(await readFile(manifestPath, "utf8")) as unknown,
+    await readBoundedJsonFile(manifestPath, "Semantic Closure manifest"),
   );
   const normalizedNodes = normalizeAndValidateGraph(manifest, workspaceRoot);
   const explanations = await Promise.all(
@@ -98,18 +125,22 @@ export async function checkSemanticClosure(
       }),
     })),
   );
-  const nodes: SemanticClosureNode[] = explanations.map(
-    ({ manifestNode, explanation }) => ({
+  const intrinsicNodes = explanations.map(
+    ({ manifestNode, explanation }): SemanticClosureNode => ({
       id: manifestNode.id,
       kind: explanation.kind,
       source: explanation.source,
       symbol: explanation.symbol,
       conceptId: explanation.concept.id,
-      status: explanation.status,
+      status: intrinsicStatus(explanation.status, projectFitStatus(explanation)),
+      semanticStatus: explanation.status,
+      projectFit: projectFitStatus(explanation),
       generated: explanation.generated,
       dependsOn: manifestNode.dependsOn,
+      openDependencies: [],
     }),
   );
+  const nodes = applyDependencyStatuses(intrinsicNodes);
   const blockers = nodes.flatMap((node): SemanticClosureBlocker[] =>
     node.status === "current"
       ? []
@@ -117,7 +148,7 @@ export async function checkSemanticClosure(
           {
             nodeId: node.id,
             code: node.status,
-            message: blockerMessage(node.status),
+            message: blockerMessage(node.status, node.openDependencies),
           },
         ],
   );
@@ -126,7 +157,6 @@ export async function checkSemanticClosure(
     version: 1,
     scope: "artifact",
     status: blockers.length === 0 ? "closed" : "open",
-    approval: "unknown",
     manifest: manifestRelative,
     nodes,
     edges: normalizedNodes
@@ -147,6 +177,15 @@ export async function checkSemanticClosure(
       stale: countStatus(nodes, "stale"),
       unlocked: countStatus(nodes, "unlocked"),
       integrityError: countStatus(nodes, "integrity-error"),
+      verificationRequired: countStatus(nodes, "verification-required"),
+      dependencyOpen: countStatus(nodes, "dependency-open"),
+    },
+    projectFit: {
+      verified: nodes.filter((node) => node.projectFit.satisfied).length,
+      required: nodes.filter((node) => !node.projectFit.satisfied).length,
+      legacy: nodes.filter(
+        (node) => node.projectFit.validation === "legacy",
+      ).length,
     },
     limitations: [...limitations],
   };
@@ -258,7 +297,13 @@ function assertAcyclic(
     visiting.add(node.id);
     path.push(node.id);
     for (const dependency of node.dependsOn) {
-      visit(nodeById.get(dependency)!, path);
+      const dependencyNode = nodeById.get(dependency);
+      if (dependencyNode === undefined) {
+        throw new Error(
+          `Semantic Closure node ${node.id} depends on unknown node ${dependency}`,
+        );
+      }
+      visit(dependencyNode, path);
     }
     path.pop();
     visiting.delete(node.id);
@@ -267,17 +312,88 @@ function assertAcyclic(
   for (const node of nodes) visit(node, []);
 }
 
+function projectFitStatus(
+  explanation: SemanticExplanation,
+): SemanticProjectFitStatus {
+  const context =
+    explanation.kind === "static-judgment"
+      ? "not-applicable"
+      : explanation.status === "current"
+        ? "verified"
+        : "missing";
+  const validation =
+    explanation.lock === null
+      ? "missing"
+      : explanation.lock.promotion.validation === undefined
+        ? "legacy"
+        : "verified";
+  return {
+    context,
+    validation,
+    satisfied:
+      context !== "missing" && validation === "verified",
+  };
+}
+
+function intrinsicStatus(
+  semanticStatus: SemanticExplanationStatus,
+  projectFit: SemanticProjectFitStatus,
+): SemanticClosureNodeStatus {
+  if (semanticStatus !== "current") return semanticStatus;
+  return projectFit.satisfied ? "current" : "verification-required";
+}
+
+function applyDependencyStatuses(
+  intrinsicNodes: SemanticClosureNode[],
+): SemanticClosureNode[] {
+  const byId = new Map(intrinsicNodes.map((node) => [node.id, node]));
+  const completed = new Map<string, SemanticClosureNode>();
+  const resolveNode = (node: SemanticClosureNode): SemanticClosureNode => {
+    const existing = completed.get(node.id);
+    if (existing !== undefined) return existing;
+    const dependencies = node.dependsOn.map((id) => {
+      const dependency = byId.get(id);
+      if (dependency === undefined) {
+        throw new Error(`Semantic Closure node ${node.id} depends on unknown node ${id}`);
+      }
+      return resolveNode(dependency);
+    });
+    const openDependencies = dependencies
+      .filter((dependency) => dependency.status !== "current")
+      .map((dependency) => dependency.id)
+      .sort();
+    const result = {
+      ...node,
+      status:
+        node.status === "current" && openDependencies.length > 0
+          ? "dependency-open" as const
+          : node.status,
+      openDependencies,
+    };
+    completed.set(node.id, result);
+    return result;
+  };
+  return intrinsicNodes.map(resolveNode);
+}
+
 function blockerMessage(
-  status: Exclude<SemanticExplanationStatus, "current">,
+  status: Exclude<SemanticClosureNodeStatus, "current">,
+  openDependencies: string[] = [],
 ): string {
   if (status === "stale") return "semantic inputs differ from the latest lock entry";
   if (status === "unlocked") return "no lock entry exists for this semantic source";
+  if (status === "verification-required") {
+    return "verified Project Context or machine validation provenance is missing";
+  }
+  if (status === "dependency-open") {
+    return `semantic dependencies are open: ${openDependencies.join(", ")}`;
+  }
   return "the generated output is missing or does not match the lock hash";
 }
 
 function countStatus(
   nodes: SemanticClosureNode[],
-  status: SemanticExplanationStatus,
+  status: SemanticClosureNodeStatus,
 ): number {
   return nodes.filter((node) => node.status === status).length;
 }

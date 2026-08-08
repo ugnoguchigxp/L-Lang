@@ -5,26 +5,31 @@ import type { PredicateExpression } from "./ir";
 import { parsePredicateExpression } from "./ir";
 import { renderInterpretedExpression } from "./judgement-renderer";
 import {
+  buildProjectContext,
+  type ProjectContextSummary,
+} from "./project-context";
+import {
   generatedOutputPath,
+  type PredicateSemanticHashes,
   predicateSemanticHashes,
+  resolveWorkspacePath,
+  type StaticJudgmentSemanticHashes,
   sha256,
   staticJudgmentSemanticHashes,
   workspaceRelativePath,
-  type PredicateSemanticHashes,
-  type StaticJudgmentSemanticHashes,
 } from "./semantic-fingerprint";
 import {
   findLatestPredicateEntry,
   findLatestStaticJudgmentEntry,
   findReplayEntry,
   findStaticJudgmentReplayEntry,
-  readSemanticLock,
   type PromotionValidation,
+  readSemanticLock,
   type SemanticLockEntry,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
-import { detectSemanticSourceKind } from "./semantic-source-kind";
 import { scanSemanticSource, type TypeSchema } from "./semantic-source";
+import { detectSemanticSourceKind } from "./semantic-source-kind";
 import { scanStaticJudgmentSource } from "./static-judgment-source";
 
 export type SemanticExplanationStatus =
@@ -38,6 +43,11 @@ export type PredicateExplainInput = {
   typeName: string;
   typeSchema: TypeSchema;
   hashes: PredicateSemanticHashes;
+  projectContext: {
+    version: 1;
+    hash: string;
+    summary: ProjectContextSummary;
+  };
 };
 
 export type StaticJudgmentExplainInput = {
@@ -80,7 +90,8 @@ export type PredicateStaleReason =
   | "sourceHash changed"
   | "typeHash changed"
   | "testHash changed"
-  | "promptHash changed";
+  | "promptHash changed"
+  | "contextHash changed";
 
 export type StaticJudgmentStaleReason =
   | "conceptHash changed"
@@ -130,7 +141,7 @@ export type ExplainSemanticSourceOptions = {
 
 const commonLimitations = [
   "This explanation only reports information present in the current source, semantic.lock, and generated output.",
-  "It does not perform a new semantic judgment or infer human approval.",
+  "It does not perform a new semantic judgment or establish domain correctness.",
   "A null response does not identify whether the entry came from a fixture, replay, or manual process.",
 ];
 
@@ -138,10 +149,18 @@ export async function explainSemanticSource(
   options: ExplainSemanticSourceOptions,
 ): Promise<SemanticExplanation> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const sourcePath = resolve(options.sourcePath);
+  const sourcePath = resolveWorkspacePath(
+    workspaceRoot,
+    options.sourcePath,
+    "semantic source",
+  );
   const sourceKind = await detectSemanticSourceKind(sourcePath);
   const lock = await readSemanticLock(
-    resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock")),
+    resolveWorkspacePath(
+      workspaceRoot,
+      options.lockPath ?? "semantic.lock",
+      "semantic lock",
+    ),
   );
 
   if (sourceKind === "static-judgment") {
@@ -213,7 +232,12 @@ export async function explainSemanticSource(
     source.concept.definitionPath,
     "concept definition",
   );
-  const hashes = predicateSemanticHashes(source);
+  const builtContext = await buildProjectContext({
+    source,
+    workspaceRoot,
+    lock,
+  });
+  const hashes = predicateSemanticHashes(source, builtContext);
   const currentEntry = findReplayEntry(lock, {
     source: sourceRelative,
     predicate: source.predicate.name,
@@ -258,6 +282,11 @@ export async function explainSemanticSource(
       typeName: source.concept.typeName,
       typeSchema: source.concept.typeSchema,
       hashes,
+      projectContext: {
+        version: 1,
+        hash: builtContext.contextHash,
+        summary: builtContext.summary,
+      },
     },
     resolution:
       resolvedIr === null
@@ -347,6 +376,7 @@ function predicateStaleReasons(
   if (entry.typeHash !== current.typeHash) reasons.push("typeHash changed");
   if (entry.testHash !== current.testHash) reasons.push("testHash changed");
   if (entry.promptHash !== current.promptHash) reasons.push("promptHash changed");
+  if (entry.contextHash !== current.contextHash) reasons.push("contextHash changed");
   return reasons;
 }
 

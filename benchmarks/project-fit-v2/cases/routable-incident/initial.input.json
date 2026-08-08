@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify incidents that are routable under the support project's operating convention.",
+  "target": {
+    "functionName": "isRoutableIncident",
+    "parameterName": "incident",
+    "typeName": "SupportIncident",
+    "typeScriptSource": "type SupportIncident = { urgency: \"critical\" | \"high\" | \"normal\"; status: \"open\" | \"closed\"; assigneeId: string | null };"
+  }
+}

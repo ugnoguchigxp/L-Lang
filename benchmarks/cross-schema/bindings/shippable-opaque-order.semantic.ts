@@ -1,5 +1,5 @@
 import { BenchmarkShippableOrder } from "../concepts/shippable-order";
-import { bindConcept, generatePredicate, semanticTest } from "../../../src/dsl";
+import { bindConcept, generatePredicate, benchmarkProbe } from "../../../src/dsl";
 
 export type BenchmarkOpaqueOrder = {
   phase: string;
@@ -11,4 +11,4 @@ const Bound = bindConcept<BenchmarkOpaqueOrder>(BenchmarkShippableOrder);
 export const isBenchmarkOpaqueShippableOrder = generatePredicate(Bound);
 
 // This intentionally opaque schema is expected to remain unresolved.
-semanticTest(isBenchmarkOpaqueShippableOrder, { accept: [], reject: [] });
+benchmarkProbe(isBenchmarkOpaqueShippableOrder);

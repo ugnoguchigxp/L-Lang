@@ -50,4 +50,53 @@ semanticTest(isActiveCustomer, {
     { status: "active", deletedAt: null, email: null },
     { status: "active", deletedAt: null, email: undefined },
   ],
+  boundary: [
+    {
+      name: "empty-email-is-still-present",
+      input: { status: "active", deletedAt: null, email: "" },
+      expected: "accepted",
+    },
+  ],
+  counterfactual: [
+    {
+      name: "suspension-changes-eligibility",
+      base: {
+        input: {
+          status: "active",
+          deletedAt: null,
+          email: "customer@example.com",
+        },
+        expected: "accepted",
+      },
+      variants: [
+        {
+          name: "suspended",
+          input: {
+            status: "suspended",
+            deletedAt: null,
+            email: "customer@example.com",
+          },
+          expected: "rejected",
+        },
+      ],
+    },
+  ],
+  invariance: [
+    {
+      name: "contact-address-spelling",
+      expected: "accepted",
+      inputs: [
+        {
+          status: "active",
+          deletedAt: null,
+          email: "customer@example.com",
+        },
+        {
+          status: "active",
+          deletedAt: null,
+          email: "alternate@example.net",
+        },
+      ],
+    },
+  ],
 });

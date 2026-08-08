@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/triage-ready-request.semantic.ts",
+    "symbol": "isTriageReadyRequest",
+    "typeName": "UpdatedServiceRequest",
+    "typeDeclaration": "type UpdatedServiceRequest = { intake: \"self-service\" | \"mail\"; classification?: { code: string }; workflow: \"triaged\" | \"new\"; visibility: \"normal\" | \"suppressed\" };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.triage-ready-request",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "UpdatedServiceRequest",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "intake"
+            ],
+            "value": "self-service"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "classification",
+              "code"
+            ]
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "workflow"
+            ],
+            "value": "triaged"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "visibility"
+            ],
+            "value": "normal"
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

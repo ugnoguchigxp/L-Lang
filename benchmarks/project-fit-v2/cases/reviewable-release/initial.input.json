@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "intent": "Identify catalog releases ready for the project's review workflow.",
+  "target": {
+    "functionName": "isReviewableRelease",
+    "parameterName": "release",
+    "typeName": "CatalogRelease",
+    "typeScriptSource": "type CatalogRelease = { phase: \"candidate\" | \"draft\" | \"published\"; validation: \"passed\" | \"failed\"; reviewerId: string | null };"
+  }
+}

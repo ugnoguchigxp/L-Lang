@@ -30,6 +30,11 @@ export function renderSemanticExplanation(
       `type hash: ${explanation.input.hashes.typeHash}`,
       `semantic test hash: ${explanation.input.hashes.testHash}`,
       `prompt hash: ${explanation.input.hashes.promptHash}`,
+      `project context version: ${explanation.input.projectContext.version}`,
+      `project context hash: ${explanation.input.projectContext.hash}`,
+      `project context target: ${explanation.input.projectContext.summary.targetSource}`,
+      `project context related types: ${explanation.input.projectContext.summary.relatedTypeSources.length}`,
+      `project context verified bindings: ${explanation.input.projectContext.summary.verifiedBindingSources.length}`,
     );
   } else {
     lines.push(

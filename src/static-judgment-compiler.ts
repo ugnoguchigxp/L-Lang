@@ -1,12 +1,8 @@
-import { randomUUID } from "node:crypto";
 import {
-  mkdir,
-  unlink,
   writeFile,
 } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 
-import type { SemanticCommandRunner } from "./semantic-compiler";
 import {
   fingerprintFor,
   generatedOutputPath,
@@ -18,11 +14,19 @@ import {
 import {
   findLatestStaticJudgmentEntry,
   findStaticJudgmentReplayEntry,
-  readSemanticLock,
-  writeSemanticLock,
+  readSemanticLockSnapshot,
   type StaticJudgmentLockEntry,
 } from "./semantic-lock";
+import type { writeSemanticLock } from "./semantic-lock";
 import { promoteSemanticArtifact } from "./semantic-promotion";
+import {
+  cleanupSemanticFiles,
+  createSemanticPipelineRun,
+  semanticResponseMetadata,
+  semanticRunDuration,
+  writeSemanticJson,
+  type SemanticCommandRunner,
+} from "./semantic-pipeline";
 import { createStaticJudgmentSemanticReview } from "./semantic-review";
 import { generateStaticJudgmentConstant } from "./static-judgment-generator";
 import { scanStaticJudgmentSource } from "./static-judgment-source";
@@ -109,7 +113,8 @@ export async function compileStaticJudgmentSource(
   const hashes = staticJudgmentSemanticHashes(source);
 
   const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
-  const lock = await readSemanticLock(lockPath);
+  const { lock, revision: lockRevision } =
+    await readSemanticLockSnapshot(lockPath);
   let provider = options.provider ?? "lock";
   let model = options.model ?? "lock";
   let fingerprint = fingerprintFor({
@@ -170,13 +175,23 @@ export async function compileStaticJudgmentSource(
     resolution = await options.resolve(requestShape);
   }
 
-  const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}-${randomUUID().slice(0, 8)}`;
-  const auditDirectory = resolve(
-    options.auditRoot ?? resolve(workspaceRoot, ".semantic", "judgments"),
+  const pipeline = await createSemanticPipelineRun({
+    workspaceRoot,
+    ...(options.auditRoot === undefined ? {} : { auditRoot: options.auditRoot }),
+    defaultAuditKind: "judgments",
+    ...(options.commandRunner === undefined
+      ? {}
+      : { commandRunner: options.commandRunner }),
+    ...(options.writeLock === undefined ? {} : { writeLock: options.writeLock }),
+  });
+  const {
     runId,
-  );
-  await mkdir(auditDirectory, { recursive: true });
-  await writeJson(resolve(auditDirectory, "input.json"), {
+    auditDirectory,
+    reportPath,
+    executeCommand,
+    persistLock,
+  } = pipeline;
+  await writeSemanticJson(resolve(auditDirectory, "input.json"), {
     version: 1,
     source: sourceRelative,
     judgment: source.judgment.name,
@@ -191,11 +206,14 @@ export async function compileStaticJudgmentSource(
     provider,
     model,
   });
-  await writeJson(
+  await writeSemanticJson(
     resolve(auditDirectory, "response.output.json"),
     resolution.rawOutput,
   );
-  await writeJson(resolve(auditDirectory, "judgment.json"), resolution.judgment);
+  await writeSemanticJson(
+    resolve(auditDirectory, "judgment.json"),
+    resolution.judgment,
+  );
 
   const sourceDirectory = dirname(source.absolutePath);
   const finalPath = generatedOutputPath(source.absolutePath, source.judgment.name);
@@ -204,10 +222,6 @@ export async function compileStaticJudgmentSource(
     sourceDirectory,
     `.${outputStem}.${runId}.candidate.ts`,
   );
-  const reportPath = resolve(auditDirectory, "report.json");
-  const executeCommand = options.commandRunner ?? runCommand;
-  const persistLock = options.writeLock ?? writeSemanticLock;
-  const startedAt = Date.now();
   let stage = "judgment";
   let code = "";
 
@@ -255,7 +269,7 @@ export async function compileStaticJudgmentSource(
     );
     stage = "project-typecheck";
     await executeCommand(["bun", "run", "typecheck"], workspaceRoot, stage);
-    await unlinkIfExists(candidatePath);
+    await cleanupSemanticFiles([candidatePath]);
 
     const generatedCodeHash = sha256(code);
     const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
@@ -280,7 +294,7 @@ export async function compileStaticJudgmentSource(
         generatedCode: code,
       });
       stage = "report";
-      await writeJson(reportPath, {
+      await writeSemanticJson(reportPath, {
         version: 1,
         status: "review-required",
         stage: "complete",
@@ -296,14 +310,13 @@ export async function compileStaticJudgmentSource(
         resolvedValue: resolution.judgment.value,
         provider,
         model,
-        response: responseMetadata(resolution.response),
+        response: semanticResponseMetadata(resolution.response),
         fingerprint,
         apiCalls,
         cacheHit,
         replayed: false,
         hashes: { ...hashes, generatedCodeHash },
-        durationMs: Date.now() - startedAt,
-        completedAt: new Date().toISOString(),
+        ...semanticRunDuration(pipeline),
       });
       return {
         status: "review-required",
@@ -367,6 +380,9 @@ export async function compileStaticJudgmentSource(
       generatedCode: code,
       lockPath,
       nextLock: lock,
+      expectedLockHash: lockRevision,
+      command: options.mode,
+      persistLock: !cacheHit,
       runFullTest: async () => {
         stage = "full-test";
         await executeCommand(["bun", "test"], workspaceRoot, stage);
@@ -378,7 +394,7 @@ export async function compileStaticJudgmentSource(
     });
 
     stage = "report";
-    await writeJson(reportPath, {
+    await writeSemanticJson(reportPath, {
       version: 1,
       status: "passed",
       stage: "complete",
@@ -388,14 +404,13 @@ export async function compileStaticJudgmentSource(
       resolvedValue: resolution.judgment.value,
       provider,
       model,
-      response: responseMetadata(resolution.response),
+      response: semanticResponseMetadata(resolution.response),
       fingerprint,
       apiCalls,
       cacheHit,
       replayed: options.mode === "replay",
       hashes: { ...hashes, generatedCodeHash },
-      durationMs: Date.now() - startedAt,
-      completedAt: new Date().toISOString(),
+      ...semanticRunDuration(pipeline),
     });
 
     return {
@@ -414,7 +429,7 @@ export async function compileStaticJudgmentSource(
       generatedCodeHash,
     };
   } catch (error) {
-    await writeJson(reportPath, {
+    await writeSemanticJson(reportPath, {
       version: 1,
       status: "failed",
       failedStage: stage,
@@ -422,7 +437,7 @@ export async function compileStaticJudgmentSource(
       judgment: source.judgment.name,
       provider,
       model,
-      response: responseMetadata(resolution.response),
+      response: semanticResponseMetadata(resolution.response),
       fingerprint,
       apiCalls,
       cacheHit,
@@ -432,51 +447,12 @@ export async function compileStaticJudgmentSource(
         generatedCodeHash: code.length > 0 ? sha256(code) : null,
       },
       error: error instanceof Error ? error.message : String(error),
-      durationMs: Date.now() - startedAt,
-      completedAt: new Date().toISOString(),
+      ...semanticRunDuration(pipeline),
     });
     throw error;
   } finally {
-    await unlinkIfExists(candidatePath);
+    await cleanupSemanticFiles([candidatePath]);
   }
-}
-
-async function runCommand(
-  command: string[],
-  cwd: string,
-  stage: string,
-): Promise<void> {
-  const child = Bun.spawn(command, {
-    cwd,
-    stdin: "inherit",
-    stdout: "inherit",
-    stderr: "inherit",
-  });
-  const exitCode = await child.exited;
-  if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
-}
-
-async function unlinkIfExists(path: string): Promise<void> {
-  try {
-    await unlink(path);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-  }
-}
-
-async function writeJson(path: string, value: unknown): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function responseMetadata(response: OpenAIResult | null): object | null {
-  return response === null
-    ? null
-    : {
-        id: response.responseId,
-        model: response.model,
-        usage: response.usage,
-      };
 }
 
 function lockResponse(
@@ -489,13 +465,4 @@ function lockResponse(
         model: response.model,
         usage: response.usage,
       };
-}
-
-function isNotFound(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "ENOENT"
-  );
 }

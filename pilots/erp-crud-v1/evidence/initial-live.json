@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "pilot": "erp-crud-v1",
+  "recordedDate": "2026-07-24",
+  "stage": "initial-generation",
+  "status": "passed",
+  "provider": "azure-openai",
+  "model": "gpt-5-4-mini",
+  "authorization": {
+    "reviewer": "Jane Doe",
+    "reviewerRole": "Synthetic ERP Pilot Reviewer",
+    "identityPolicy": "Synthetic John Doe-based identities assigned by user direction",
+    "externalDomainValidationClaimed": false
+  },
+  "authoritativeInput": {
+    "manifestSha256": "828ffc25e2e4fad7e0799171e0eacfe9036174c8234bbbc21ad184f03b55ef48",
+    "reviewSha256": "b7849ff7daa6e2ffd2a5c64abc4b7a433e247c90b8af656fb2aafb67c10e1bd4",
+    "freezeSha256": "460ddd39c8cd8f5c5a87943cd90443df92ff122cfac458707c5f4905f2909eeb",
+    "freezeStatus": "frozen"
+  },
+  "result": {
+    "cases": 8,
+    "resolved": 8,
+    "firstPassProjectFit": 8,
+    "hiddenCases": 25,
+    "hiddenCasesPassed": 25,
+    "falseResolutions": 0,
+    "apiAttempts": 8,
+    "cooldownCompletions": 8,
+    "inputTokens": 4477,
+    "outputTokens": 1048,
+    "providerLatencyMs": 18955.274498000053,
+    "estimatedCostUsd": 0.00807375,
+    "http429": 0,
+    "apiErrors": 0
+  },
+  "safety": {
+    "escapedFalseResolutions": 0,
+    "businessWrites": 0,
+    "externalIo": 0,
+    "workspaceMutations": 0,
+    "cooldownViolations": 0,
+    "confidentialDataIncidents": 0
+  },
+  "artifacts": {
+    "reportJson": {
+      "path": ".semantic/pilots/erp-crud-v1-live-828ffc25e2e4-erp-live-20260724-01/report.json",
+      "sha256": "7dd2607546021451809e92462f1c2083c30d081640d23e60ec22177a79a5c21c"
+    },
+    "reportMarkdown": {
+      "path": ".semantic/pilots/erp-crud-v1-live-828ffc25e2e4-erp-live-20260724-01/report.md",
+      "sha256": "bb8f971404584150ff997fd91e1be7edec613ef44bf408dac781373cd8ff73c7"
+    },
+    "responses": {
+      "path": ".semantic/pilots/erp-crud-v1-live-828ffc25e2e4-erp-live-20260724-01/responses.json",
+      "sha256": "ecea479a9f71219939da64ab37aec7b49c182c396e018b053f70861cd06ed3da"
+    },
+    "checkpoint": {
+      "path": ".semantic/pilots/erp-crud-v1-live-828ffc25e2e4-erp-live-20260724-01/checkpoint.json",
+      "sha256": "74400d4f4878ffef41d1046cea10b35226087b5f97deae352bf52acaf68f4108"
+    }
+  },
+  "limitations": [
+    "The reviewer and owners are synthetic Pilot identities, not evidence of an external ERP domain review.",
+    "Human baseline authoring and review time were not measured, so this run does not establish a time-saving claim.",
+    "This evidence covers initial generation only; Schema Evolution remains a separate stage."
+  ]
+}

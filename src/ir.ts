@@ -1,3 +1,5 @@
+import { assertKnownKeys, SEMANTIC_LIMITS } from "./semantic-limits";
+
 export type Literal = string | number | boolean | null;
 
 export type PredicateExpression =
@@ -36,13 +38,26 @@ const identifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 export function parsePredicateDefinition(input: unknown): PredicateDefinition {
   const value = expectRecord(input, "definition");
+  assertKnownKeys(
+    value,
+    ["version", "name", "description", "input", "returns", "body"],
+    "definition",
+  );
 
   if (value.version !== 1) {
     throw new Error("definition.version must be 1");
   }
 
   const definitionInput = expectRecord(value.input, "definition.input");
-  const moduleName = expectString(definitionInput.module, "definition.input.module");
+  assertKnownKeys(
+    definitionInput,
+    ["parameter", "type", "module"],
+    "definition.input",
+  );
+  const moduleName = expectString(
+    definitionInput.module,
+    "definition.input.module",
+  );
 
   if (!moduleName.startsWith("./") && !moduleName.startsWith("../")) {
     throw new Error("definition.input.module must be a relative module path");
@@ -73,35 +88,75 @@ export function parsePredicateExpression(
   input: unknown,
   path = "expression",
 ): PredicateExpression {
+  return parseExpression(input, path, { nodes: 0 }, 1);
+}
+
+function parseExpression(
+  input: unknown,
+  path: string,
+  state: { nodes: number },
+  depth: number,
+): PredicateExpression {
+  state.nodes += 1;
+  if (state.nodes > SEMANTIC_LIMITS.predicateExpressionNodes) {
+    throw new Error(
+      `${path} exceeds the ${SEMANTIC_LIMITS.predicateExpressionNodes} node limit`,
+    );
+  }
+  if (depth > SEMANTIC_LIMITS.predicateExpressionDepth) {
+    throw new Error(
+      `${path} exceeds the ${SEMANTIC_LIMITS.predicateExpressionDepth} level depth limit`,
+    );
+  }
+
   const value = expectRecord(input, path);
   const kind = expectString(value.kind, `${path}.kind`);
 
   switch (kind) {
     case "all":
     case "any": {
+      assertKnownKeys(value, ["kind", "conditions"], path);
       if (!Array.isArray(value.conditions) || value.conditions.length === 0) {
         throw new Error(`${path}.conditions must be a non-empty array`);
+      }
+      if (value.conditions.length > SEMANTIC_LIMITS.predicateConditions) {
+        throw new Error(
+          `${path}.conditions must contain at most ${SEMANTIC_LIMITS.predicateConditions} items`,
+        );
       }
 
       return {
         kind,
         conditions: value.conditions.map((condition, index) =>
-          parsePredicateExpression(condition, `${path}.conditions[${index}]`),
+          parseExpression(
+            condition,
+            `${path}.conditions[${index}]`,
+            state,
+            depth + 1,
+          ),
         ),
       };
     }
     case "not":
+      assertKnownKeys(value, ["kind", "condition"], path);
       return {
         kind,
-        condition: parsePredicateExpression(value.condition, `${path}.condition`),
+        condition: parseExpression(
+          value.condition,
+          `${path}.condition`,
+          state,
+          depth + 1,
+        ),
       };
     case "equals":
+      assertKnownKeys(value, ["kind", "property", "value"], path);
       return {
         kind,
         property: expectPropertyPath(value.property, `${path}.property`),
         value: expectLiteral(value.value, `${path}.value`),
       };
     case "present":
+      assertKnownKeys(value, ["kind", "property"], path);
       return {
         kind,
         property: expectPropertyPath(value.property, `${path}.property`),
@@ -141,10 +196,21 @@ function expectPropertyPath(value: unknown, path: string): string[] {
   if (!Array.isArray(value) || value.length === 0) {
     throw new Error(`${path} must be a non-empty array`);
   }
+  if (value.length > SEMANTIC_LIMITS.propertyPathSegments) {
+    throw new Error(
+      `${path} must contain at most ${SEMANTIC_LIMITS.propertyPathSegments} segments`,
+    );
+  }
 
-  return value.map((part, index) =>
-    expectIdentifier(part, `${path}[${index}]`),
-  );
+  return value.map((part, index) => {
+    const identifier = expectIdentifier(part, `${path}[${index}]`);
+    if (identifier.length > SEMANTIC_LIMITS.propertySegmentCharacters) {
+      throw new Error(
+        `${path}[${index}] must contain at most ${SEMANTIC_LIMITS.propertySegmentCharacters} characters`,
+      );
+    }
+    return identifier;
+  });
 }
 
 function expectLiteral(value: unknown, path: string): Literal {

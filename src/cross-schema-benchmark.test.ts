@@ -75,7 +75,7 @@ describe("cross-schema benchmark", () => {
   });
 
   test("evaluates the restricted Predicate IR", () => {
-    const expression = bodies.isBenchmarkActiveCustomer!;
+    const expression = required(bodies.isBenchmarkActiveCustomer);
     expect(
       evaluateExpression(expression, {
         status: "active",
@@ -93,7 +93,7 @@ describe("cross-schema benchmark", () => {
   });
 
   test("normalizes commutative condition order for stability", () => {
-    const forward = bodies.isBenchmarkActiveCustomer!;
+    const forward = required(bodies.isBenchmarkActiveCustomer);
     if (forward.kind !== "all") throw new Error("test fixture must be all");
     const reverse: PredicateExpression = {
       kind: "all",
@@ -162,7 +162,7 @@ describe("cross-schema benchmark", () => {
           "utf8",
         ),
       ) as { actualBody: PredicateExpression; response: { outputText: string } };
-      expect(saved.actualBody).toEqual(bodies.isBenchmarkActiveCustomer!);
+      expect(saved.actualBody).toEqual(required(bodies.isBenchmarkActiveCustomer));
       expect(saved.response.outputText).toContain('"outcome":"resolved"');
       expect(await readFile(resolve(runDirectory, "report.md"), "utf8")).toContain(
         "Trial pass rate: 100.0%",
@@ -171,3 +171,8 @@ describe("cross-schema benchmark", () => {
     30_000,
   );
 });
+
+function required<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error("required test fixture is missing");
+  return value;
+}

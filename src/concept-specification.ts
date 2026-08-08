@@ -61,8 +61,10 @@ export function parseConceptSpecification(
     const position = positions.get(section.heading);
     return position === undefined ? [] : [{ section, position }];
   });
-  for (let index = 1; index < present.length; index += 1) {
-    if (present[index]!.position < present[index - 1]!.position) {
+  for (const [index, current] of present.entries()) {
+    if (index === 0) continue;
+    const previous = present[index - 1];
+    if (previous !== undefined && current.position < previous.position) {
       throw new Error(
         `Concept sections must appear in this order: ${SECTIONS.map(({ heading }) => heading).join(" ")}`,
       );
@@ -71,8 +73,7 @@ export function parseConceptSpecification(
 
   let definition = "";
   const structure: StructuredConceptSpecification = { definition };
-  for (let index = 0; index < present.length; index += 1) {
-    const { section, position } = present[index]!;
+  for (const [index, { section, position }] of present.entries()) {
     const body = lines.slice(
       position + 1,
       present[index + 1]?.position ?? lines.length,
@@ -138,7 +139,7 @@ function dedent(input: string): string[] {
   while (lines.at(-1)?.trim() === "") lines.pop();
   const indents = lines
     .filter((line) => line.trim().length > 0)
-    .map((line) => line.match(/^\s*/)![0].length);
+    .map((line) => line.length - line.trimStart().length);
   const commonIndent = indents.length === 0 ? 0 : Math.min(...indents);
   return lines.map((line) => line.slice(commonIndent).trimEnd());
 }

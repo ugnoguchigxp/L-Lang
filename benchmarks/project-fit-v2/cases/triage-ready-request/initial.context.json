@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/triage-ready-request.semantic.ts",
+    "symbol": "isTriageReadyRequest",
+    "typeName": "ServiceRequest",
+    "typeDeclaration": "type ServiceRequest = { channel: \"portal\" | \"email\"; category: string | null; triaged: boolean; suppressed: boolean };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.triage-ready-request",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "ServiceRequest",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "channel"
+            ],
+            "value": "portal"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "category"
+            ]
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "triaged"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "suppressed"
+            ],
+            "value": false
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

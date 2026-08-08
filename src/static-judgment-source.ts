@@ -102,7 +102,14 @@ export async function scanStaticJudgmentSource(
             "staticValue requires exactly one literal string argument",
           );
         }
-        const argument = initializer.arguments[0]!;
+        const [argument] = initializer.arguments;
+        if (argument === undefined) {
+          throw sourceError(
+            sourceFile,
+            initializer,
+            "staticValue requires exactly one literal string argument",
+          );
+        }
         if (
           !ts.isStringLiteral(argument) &&
           !ts.isNoSubstitutionTemplateLiteral(argument)
@@ -126,10 +133,13 @@ export async function scanStaticJudgmentSource(
         ts.isIdentifier(initializer.expression) &&
         initializer.expression.text === "judgeStatic"
       ) {
+        const [valueArgument, conceptArgument] = initializer.arguments;
         if (
           initializer.arguments.length !== 2 ||
-          !ts.isIdentifier(initializer.arguments[0]!) ||
-          !ts.isIdentifier(initializer.arguments[1]!)
+          valueArgument === undefined ||
+          conceptArgument === undefined ||
+          !ts.isIdentifier(valueArgument) ||
+          !ts.isIdentifier(conceptArgument)
         ) {
           throw sourceError(
             sourceFile,
@@ -139,8 +149,8 @@ export async function scanStaticJudgmentSource(
         }
         judgments.push({
           name: declaration.name.text,
-          valueName: initializer.arguments[0]!.text,
-          conceptName: initializer.arguments[1]!.text,
+          valueName: valueArgument.text,
+          conceptName: conceptArgument.text,
           node: initializer,
         });
       }
@@ -153,8 +163,11 @@ export async function scanStaticJudgmentSource(
     );
   }
 
-  const value = values[0]!;
-  const judgment = judgments[0]!;
+  const [value] = values;
+  const [judgment] = judgments;
+  if (value === undefined || judgment === undefined) {
+    throw new SemanticSourceError("Static Judgment cardinality validation failed");
+  }
   if (judgment.valueName !== value.name) {
     throw sourceError(
       sourceFile,
@@ -163,7 +176,14 @@ export async function scanStaticJudgmentSource(
     );
   }
 
-  const conceptReference = judgment.node.arguments[1]!;
+  const conceptReference = judgment.node.arguments[1];
+  if (conceptReference === undefined) {
+    throw sourceError(
+      sourceFile,
+      judgment.node,
+      "judgeStatic Concept must be an identifier",
+    );
+  }
   if (!ts.isIdentifier(conceptReference)) {
     throw sourceError(
       sourceFile,

@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "id": "erp-crud-v1",
+  "freeze": "freeze.json",
+  "review": "review.json",
+  "domains": [
+    "product-master",
+    "price-quantity",
+    "inventory",
+    "shipment"
+  ],
+  "projectFiles": [
+    "project/types.ts",
+    "project/facts.ts",
+    "baselines/schema-change-predicates.ts",
+    "cases/schema-change-hidden-cases.json",
+    "concepts/product-master-review-ready.ts",
+    "concepts/product-archive-review-candidate.ts",
+    "concepts/price-record-review-ready.ts",
+    "concepts/quantity-data-review.ts",
+    "concepts/inventory-record-review-ready.ts",
+    "concepts/inventory-discrepancy-review.ts",
+    "concepts/shipment-preparation-review-ready.ts",
+    "concepts/shipment-exception-review.ts"
+  ],
+  "cases": [
+    {
+      "id": "product-master-review-ready",
+      "domain": "product-master",
+      "source": "semantic/product-master-review-ready.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/product-master-review-ready.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "John Doe"
+    },
+    {
+      "id": "product-archive-review-candidate",
+      "domain": "product-master",
+      "source": "semantic/product-archive-review-candidate.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/product-archive-review-candidate.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Alex Doe"
+    },
+    {
+      "id": "price-record-review-ready",
+      "domain": "price-quantity",
+      "source": "semantic/price-record-review-ready.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/price-record-review-ready.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Taylor Doe"
+    },
+    {
+      "id": "quantity-data-review",
+      "domain": "price-quantity",
+      "source": "semantic/quantity-data-review.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/quantity-data-review.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Jordan Doe"
+    },
+    {
+      "id": "inventory-record-review-ready",
+      "domain": "inventory",
+      "source": "semantic/inventory-record-review-ready.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/inventory-record-review-ready.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Casey Doe"
+    },
+    {
+      "id": "inventory-discrepancy-review",
+      "domain": "inventory",
+      "source": "semantic/inventory-discrepancy-review.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/inventory-discrepancy-review.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Morgan Doe"
+    },
+    {
+      "id": "shipment-preparation-review-ready",
+      "domain": "shipment",
+      "source": "semantic/shipment-preparation-review-ready.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/shipment-preparation-review-ready.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Riley Doe"
+    },
+    {
+      "id": "shipment-exception-review",
+      "domain": "shipment",
+      "source": "semantic/shipment-exception-review.semantic.ts",
+      "baseline": "baselines/predicates.ts",
+      "hiddenCases": "cases/hidden-cases.json",
+      "schemaEvolutionSource": "schema-changes/shipment-exception-review.semantic.ts",
+      "fixture": "cases/fixture-results.json",
+      "risk": "low",
+      "owner": "Jamie Doe"
+    }
+  ],
+  "budget": {
+    "maxApiCalls": 16,
+    "maxEstimatedCost": 1,
+    "maxWallClockMs": 3600000,
+    "maxResponseOutputTokens": 1000,
+    "cooldownMsAfterEveryAttempt": 60000
+  },
+  "execution": {
+    "mode": "shadow",
+    "businessWritesAllowed": false,
+    "externalIoAllowed": false
+  },
+  "thresholds": {
+    "minFirstPassProjectFitRate": 0.8,
+    "maxUnresolvedRate": 0.3,
+    "maxFalseResolutions": 0
+  }
+}

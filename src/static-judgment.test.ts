@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { generateStaticJudgmentConstant } from "./static-judgment-generator";
+import { SEMANTIC_LIMITS } from "./semantic-limits";
 import {
   buildStaticJudgmentRequest,
   parseStaticJudgmentResolution,
   STATIC_JUDGMENT_PROMPT_VERSION,
+  staticJudgmentJsonSchema,
 } from "./static-judgment";
 
 describe("static judgment contract", () => {
@@ -71,8 +73,34 @@ describe("static judgment contract", () => {
       strict: true,
       name: "static_judgment",
     });
+    expect(staticJudgmentJsonSchema.properties.diagnostics.maxItems).toBe(
+      SEMANTIC_LIMITS.diagnostics,
+    );
+    expect(staticJudgmentJsonSchema.properties.diagnostics.items.maxLength).toBe(
+      SEMANTIC_LIMITS.diagnosticCharacters,
+    );
     expect(request.input).toContain("<concept_specification>");
     expect(request.input).toContain("<static_value>");
+  });
+
+  test("rejects oversized diagnostics", () => {
+    expect(() =>
+      parseStaticJudgmentResolution({
+        outcome: "unresolved",
+        value: null,
+        diagnostics: Array.from(
+          { length: SEMANTIC_LIMITS.diagnostics + 1 },
+          () => "diagnostic",
+        ),
+      }),
+    ).toThrow("at most");
+    expect(() =>
+      parseStaticJudgmentResolution({
+        outcome: "unresolved",
+        value: null,
+        diagnostics: ["x".repeat(SEMANTIC_LIMITS.diagnosticCharacters + 1)],
+      }),
+    ).toThrow("at most");
   });
 
   test("generates only a deterministic boolean constant", () => {

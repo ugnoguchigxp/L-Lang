@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "hiddenCases": [
+    {
+      "name": "qualifies",
+      "input": {
+        "channel": "review",
+        "checks": "green",
+        "approval": {
+          "owner": "reviewer-2"
+        }
+      },
+      "expected": true
+    },
+    {
+      "name": "editing",
+      "input": {
+        "channel": "editing",
+        "checks": "green",
+        "approval": {
+          "owner": "reviewer-2"
+        }
+      },
+      "expected": false
+    },
+    {
+      "name": "red-checks",
+      "input": {
+        "channel": "review",
+        "checks": "red",
+        "approval": {
+          "owner": "reviewer-2"
+        }
+      },
+      "expected": false
+    }
+  ]
+}

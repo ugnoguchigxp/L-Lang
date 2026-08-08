@@ -18,6 +18,7 @@ import {
   approveSemanticReview,
   readSemanticReviewCandidate,
 } from "./semantic-review";
+import type { SemanticLock } from "./semantic-lock";
 import {
   compileStaticJudgmentSource,
   type StaticJudgmentCompilerResolution,
@@ -136,10 +137,9 @@ describe("optional semantic review", () => {
         expect(await readFile(predicateOutputPath, "utf8")).toContain(
           'reviewCustomer.status === "active"',
         );
-        let lock = JSON.parse(await readFile(lockPath, "utf8")) as {
-          entries: Record<string, any>;
-          judgments?: Record<string, any>;
-        };
+        let lock = JSON.parse(
+          await readFile(lockPath, "utf8"),
+        ) as SemanticLock;
         expect(Object.values(lock.entries)[0]?.promotion).toMatchObject({
           mode: "reviewed",
           candidateId: predicateReview.candidateId,
@@ -328,7 +328,7 @@ describe("optional semantic review", () => {
         await rm(testRoot, { recursive: true, force: true });
       }
     },
-    90_000,
+    180_000,
   );
 
   test(

@@ -1194,6 +1194,504 @@
           "fullTest": "passed"
         }
       }
+    },
+    "7904045c27d682a1e1b7acbd98bceb685bb75fb8fe9a8b4197614d724bfa3ff7": {
+      "fingerprint": "7904045c27d682a1e1b7acbd98bceb685bb75fb8fe9a8b4197614d724bfa3ff7",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "conceptId": "local:ActiveCustomer",
+      "conceptHash": "f37a8bb48560ef60dff868a7ceda3cdbdee4b5de370f625af021b9b1128821bf",
+      "conceptSource": "examples/active-customer/semantic.ts",
+      "predicate": "isActiveCustomer",
+      "targetTypeName": "Customer",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "cce3e4996f4c934b7b3e7ae24a4fdb09591ced2ea73415b5876d47209e380a50",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "8b54b33055863a7d41466cc3fffc0284d54f9241351e721f97eda60a1ac7a174",
+      "contextVersion": 1,
+      "contextHash": "5830c352ae2cc495238d38b5a39e2cccb1ad2d75b8250c7e61b2b0bedebb244a",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/active-customer/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": []
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0f30b3efc6742e4af24ddbbb765c567a962f29592a0c4229d031d66aa4de2713",
+      "response": {
+        "id": "resp_fixture_active_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-24T00:49:05.775Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-24T00:49:05.775Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "81dbbc4cc937531e262333e259346380dab877ff64a648d493c542d203abbd0e": {
+      "fingerprint": "81dbbc4cc937531e262333e259346380dab877ff64a648d493c542d203abbd0e",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "targetTypeName": "ServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "62c1177fd6347a62ed5844b27870591f9036c9dd80893ff8fd53b66500f3b343",
+      "contextVersion": 1,
+      "contextHash": "cd4807d4898b15cb365d4d177f70dc638b0334ea323ead27b28edbd9340c9a8b",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/semantic-polymorphism/account/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": []
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "9d5eddcd15ff55882927f1cccb450f948314d05c1baf86141f4c851e696b9561",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-24T00:52:26.100Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-24T00:52:26.100Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "a0baa05d451ce26c422ac16ebed117e011ac80b85d9aeff0800fd82b1dd4d3ee": {
+      "fingerprint": "a0baa05d451ce26c422ac16ebed117e011ac80b85d9aeff0800fd82b1dd4d3ee",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "targetTypeName": "CustomerRecord",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "a657838b34667dfd72900d66c36cd158f00712b58441c0f27d244ffa664a4a37",
+      "promptHash": "f3b5f8a1541ca2ca9c465d4f3de7ca142bbb98868c23fa4a56fdeec336828dda",
+      "contextVersion": 1,
+      "contextHash": "f86b2ba4d6bb8270ab595d378aa88332dcfd8ace3f362bf80d009edc11d8ea85",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/semantic-polymorphism/customer/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": [
+          "examples/semantic-polymorphism/account/semantic.ts"
+        ]
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0779a0cc44c2b0544f81a741e8cf12698324fd71361962199b97021e34097412",
+      "response": {
+        "id": "resp_fixture_polymorphism_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-24T00:54:22.551Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-24T00:54:22.551Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "fecf55222c964e15aeadbba18adde61b64574d2e13d46b36ba43a9123c9b0f9d": {
+      "fingerprint": "fecf55222c964e15aeadbba18adde61b64574d2e13d46b36ba43a9123c9b0f9d",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "targetTypeName": "ServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "5bfcdff0ec442332606e8818a9fbb9052187f8a4fe646ea20aebfb4caf366408",
+      "promptHash": "9e1e5374fc5c1b8d73a708ea83ab1786139196737c9db537a9f71584ae82d396",
+      "contextVersion": 1,
+      "contextHash": "281dfa6c2269342d517890c47bce5011b2b8fbdc28bcb7293760365e705a0fca",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/semantic-polymorphism/account/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": [
+          "examples/semantic-polymorphism/customer/semantic.ts"
+        ]
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "9d5eddcd15ff55882927f1cccb450f948314d05c1baf86141f4c851e696b9561",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-24T00:56:45.350Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-24T00:56:45.350Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "9f7424367af4ca9394363a165b9bc719302a13499296dc7312aa319428842c71": {
+      "fingerprint": "9f7424367af4ca9394363a165b9bc719302a13499296dc7312aa319428842c71",
+      "source": "examples/active-customer/semantic.ts",
+      "concept": "ActiveCustomer",
+      "conceptId": "local:ActiveCustomer",
+      "conceptHash": "f37a8bb48560ef60dff868a7ceda3cdbdee4b5de370f625af021b9b1128821bf",
+      "conceptSource": "examples/active-customer/semantic.ts",
+      "predicate": "isActiveCustomer",
+      "targetTypeName": "Customer",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "4a08e9aa1846ba353ca32c4a4664a2a1e07001ad648928a043c59fd41e95f5f8",
+      "typeHash": "e7548c874bb83c456c7e19013acac574381d20744e1602f717e96405c1184e47",
+      "testHash": "1c93ebef274be501ddf935edf52151d16402d630b2ec0b0104cdcd2b10f2f326",
+      "promptHash": "8b54b33055863a7d41466cc3fffc0284d54f9241351e721f97eda60a1ac7a174",
+      "contextVersion": 1,
+      "contextHash": "5830c352ae2cc495238d38b5a39e2cccb1ad2d75b8250c7e61b2b0bedebb244a",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/active-customer/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": []
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0f30b3efc6742e4af24ddbbb765c567a962f29592a0c4229d031d66aa4de2713",
+      "response": {
+        "id": "resp_fixture_active_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-25T11:42:36.495Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-25T11:42:36.495Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "2544c9c6b5a31d2765c6064434508edea7bfeeaf327013a1fc2645f3f48811b5": {
+      "fingerprint": "2544c9c6b5a31d2765c6064434508edea7bfeeaf327013a1fc2645f3f48811b5",
+      "source": "examples/semantic-polymorphism/customer/semantic.ts",
+      "concept": "ActiveCustomerRecord",
+      "conceptId": "customer.active",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveCustomerRecord",
+      "targetTypeName": "CustomerRecord",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "sourceHash": "b1f76ffdece80c8a829222775d4dd0363a2daa4672760b685770de558e0e77e2",
+      "typeHash": "f787fc0dc8a2e0214167552cb4fa0fb9d53b31027c86af490c37bf240110a255",
+      "testHash": "37a9f755b3d7feef117e742066d8ba20ce989e179f815af9dc23dca9dc0d3dfe",
+      "promptHash": "f3b5f8a1541ca2ca9c465d4f3de7ca142bbb98868c23fa4a56fdeec336828dda",
+      "contextVersion": 1,
+      "contextHash": "f86b2ba4d6bb8270ab595d378aa88332dcfd8ace3f362bf80d009edc11d8ea85",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/semantic-polymorphism/customer/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": [
+          "examples/semantic-polymorphism/account/semantic.ts"
+        ]
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "status"
+            ],
+            "value": "active"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "deletedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "0779a0cc44c2b0544f81a741e8cf12698324fd71361962199b97021e34097412",
+      "response": {
+        "id": "resp_fixture_polymorphism_customer",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-25T11:45:06.329Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-25T11:45:06.329Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
+    },
+    "4fc597915efe0bc2075602df01c6e911ae836d09d3a9b91ab0b53cf32daedfee": {
+      "fingerprint": "4fc597915efe0bc2075602df01c6e911ae836d09d3a9b91ab0b53cf32daedfee",
+      "source": "examples/semantic-polymorphism/account/semantic.ts",
+      "concept": "ActiveServiceAccount",
+      "conceptId": "customer.active",
+      "conceptSource": "concepts/active-customer.ts",
+      "predicate": "isActiveServiceAccount",
+      "targetTypeName": "ServiceAccount",
+      "provider": "fixture:openai-response.fixture.json",
+      "model": "gpt-5.4-mini",
+      "conceptHash": "59eac7cbc377262e7549a705dd386f016ccd8eec25f7c1aa195d5fe9c439395d",
+      "sourceHash": "209eeda904066dd1c8491e990206126f4105d6ba783aeea035bc7734e77345e7",
+      "typeHash": "cd98f37f1b538090b16d68b7ff18483fb9b6b65d9abd987ae6bf3ea29c77681d",
+      "testHash": "7dc2562edb4275a56191401399e393096361e635566acf338a22cee0cf0cdf68",
+      "promptHash": "9e1e5374fc5c1b8d73a708ea83ab1786139196737c9db537a9f71584ae82d396",
+      "contextVersion": 1,
+      "contextHash": "281dfa6c2269342d517890c47bce5011b2b8fbdc28bcb7293760365e705a0fca",
+      "contextSummary": {
+        "version": 1,
+        "targetSource": "examples/semantic-polymorphism/account/semantic.ts",
+        "relatedTypeSources": [],
+        "verifiedBindingSources": [
+          "examples/semantic-polymorphism/customer/semantic.ts"
+        ]
+      },
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "blockedAt"
+            ],
+            "value": null
+          },
+          {
+            "kind": "present",
+            "property": [
+              "contactAddress"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "9d5eddcd15ff55882927f1cccb450f948314d05c1baf86141f4c851e696b9561",
+      "response": {
+        "id": "resp_fixture_polymorphism_account",
+        "model": "gpt-5.4-mini",
+        "usage": {
+          "inputTokens": 200,
+          "outputTokens": 80,
+          "totalTokens": 280
+        }
+      },
+      "createdAt": "2026-07-25T11:49:05.163Z",
+      "promotion": {
+        "mode": "auto",
+        "promotedAt": "2026-07-25T11:49:05.163Z",
+        "validation": {
+          "candidateTypecheck": "passed",
+          "projectTypecheck": "passed",
+          "semanticTest": "passed",
+          "fullTest": "passed"
+        }
+      }
     }
   },
   "judgments": {

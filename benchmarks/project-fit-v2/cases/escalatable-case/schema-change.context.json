@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "target": {
+    "source": "support-operations/escalatable-case.semantic.ts",
+    "symbol": "isEscalatableCase",
+    "typeName": "UpdatedCustomerCase",
+    "typeDeclaration": "type UpdatedCustomerCase = { serviceLevel: \"base\" | \"premium\"; phase: \"analysis\" | \"paused\" | \"done\"; escalation?: { reason: string } };"
+  },
+  "relatedTypes": [],
+  "verifiedBindings": [
+    {
+      "conceptId": "support-operations.escalatable-case",
+      "source": "support-operations/conventions.semantic.ts",
+      "targetTypeName": "UpdatedCustomerCase",
+      "typeSchemaHash": "1111111111111111111111111111111111111111111111111111111111111111",
+      "resolvedIr": {
+        "kind": "all",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "serviceLevel"
+            ],
+            "value": "premium"
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "phase"
+            ],
+            "value": "analysis"
+          },
+          {
+            "kind": "present",
+            "property": [
+              "escalation",
+              "reason"
+            ]
+          }
+        ]
+      },
+      "generatedCodeHash": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "compilerContext": {
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  }
+}

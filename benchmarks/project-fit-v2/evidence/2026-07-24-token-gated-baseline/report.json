@@ -1,0 +1,130 @@
+{
+  "version": 2,
+  "benchmark": "project-fit-v2",
+  "status": "failed",
+  "provider": "azure-openai",
+  "model": "gpt-5-4-mini",
+  "contextVersion": 1,
+  "authoritativeInput": {
+    "manifestHash": "93fdea485138a4b323e7b49048c77f1d1a0db8c1b5853015613293942f40f15c",
+    "freezeStatus": "frozen"
+  },
+  "stages": {
+    "initial": {
+      "arms": {
+        "typeOnly": {
+          "trials": 18,
+          "resolved": 0,
+          "unresolved": 18,
+          "errors": 0,
+          "firstPassProjectFit": 0,
+          "falseResolutions": 0,
+          "medianCorrectionEffort": 1,
+          "inputTokens": 8295,
+          "outputTokens": 2475,
+          "latencyMs": 58281.81700000027
+        },
+        "projectContext": {
+          "trials": 18,
+          "resolved": 18,
+          "unresolved": 0,
+          "errors": 0,
+          "firstPassProjectFit": 18,
+          "falseResolutions": 0,
+          "medianCorrectionEffort": 0,
+          "inputTokens": 12741,
+          "outputTokens": 2347,
+          "latencyMs": 37763.37104299986
+        }
+      },
+      "comparison": {
+        "firstPassDelta": 18,
+        "unresolvedRateDelta": -1,
+        "medianCorrectionEffortDelta": -1,
+        "inputTokenDelta": 4446,
+        "latencyDeltaMs": -20518.44595700041
+      }
+    },
+    "schemaChange": {
+      "arms": {
+        "typeOnly": {
+          "trials": 0,
+          "resolved": 0,
+          "unresolved": 0,
+          "errors": 0,
+          "firstPassProjectFit": 0,
+          "falseResolutions": 0,
+          "medianCorrectionEffort": 0,
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "latencyMs": 0
+        },
+        "projectContext": {
+          "trials": 0,
+          "resolved": 0,
+          "unresolved": 0,
+          "errors": 0,
+          "firstPassProjectFit": 0,
+          "falseResolutions": 0,
+          "medianCorrectionEffort": 0,
+          "inputTokens": 0,
+          "outputTokens": 0,
+          "latencyMs": 0
+        }
+      },
+      "comparison": {
+        "firstPassDelta": 0,
+        "unresolvedRateDelta": 0,
+        "medianCorrectionEffortDelta": 0,
+        "inputTokenDelta": 0,
+        "latencyDeltaMs": 0
+      }
+    }
+  },
+  "safety": {
+    "falseResolutions": 0,
+    "escapedFalseResolutions": 0,
+    "contextContamination": 0,
+    "integrityIncidents": 0,
+    "workspaceMutations": 0
+  },
+  "gateC": {
+    "evidence": "live",
+    "passed": false,
+    "estimatedCost": 0.037476,
+    "costPerMillionTokens": {
+      "input": 0.75,
+      "output": 4.5
+    },
+    "stages": {
+      "initial": {
+        "status": "failed",
+        "projectContextFirstPassCases": 6,
+        "typeOnlyFirstPassCases": 0,
+        "checks": {
+          "minimumProjectContextFirstPass": true,
+          "minimumFirstPassDelta": true,
+          "falseResolutionDelta": true,
+          "unresolvedRateRegression": true,
+          "inputTokenBudget": false,
+          "latencyBudget": true,
+          "projectContextFalseResolutionSafety": true
+        }
+      },
+      "schemaChange": {
+        "status": "not-run",
+        "projectContextFirstPassCases": 0,
+        "typeOnlyFirstPassCases": 0,
+        "checks": {}
+      }
+    },
+    "checks": {
+      "initialGeneration": false,
+      "schemaChange": false,
+      "totalInputTokenBudget": true,
+      "totalOutputTokenBudget": true,
+      "estimatedCostBudget": true,
+      "falseResolutionSafety": true
+    }
+  }
+}
