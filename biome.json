@@ -10,7 +10,12 @@
   },
   "formatter": {
     "enabled": true,
-    "includes": ["src/**/*.ts", "examples/**/*.ts", "pilots/**/*.ts"],
+    "includes": [
+      "src/**/*.ts",
+      "examples/**/*.ts",
+      "pilots/**/*.ts",
+      "!examples/**/semantic.ts"
+    ],
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 80

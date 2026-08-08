@@ -1,5 +1,9 @@
 import { ActiveCustomer } from "../../../concepts/active-customer";
-import { bindConcept, generatePredicate, semanticTest } from "../../../src/dsl";
+import {
+  bindConcept,
+  generatePredicate,
+  semanticTest,
+} from "../../../src/dsl";
 
 export type ServiceAccount = {
   enabled: boolean;
