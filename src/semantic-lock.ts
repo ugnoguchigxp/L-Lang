@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
-import { readFile, rename, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 
+import { atomicWriteText } from "./atomic-file";
 import { type PredicateExpression, parsePredicateExpression } from "./ir";
 import type { OpenAIResult } from "./openai";
 import type { ProjectContextSummary } from "./project-context";
@@ -124,15 +124,13 @@ export async function writeSemanticLock(
   path: string,
   lock: SemanticLock,
 ): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.tmp`;
   const serialized = serializeSemanticLock(lock);
   assertTextByteLength(
     serialized,
     SEMANTIC_LIMITS.lockBytes,
     "semantic.lock",
   );
-  await writeFile(temporary, serialized, "utf8");
-  await rename(temporary, path);
+  await atomicWriteText(path, serialized);
 }
 
 export function serializeSemanticLock(lock: SemanticLock): string {

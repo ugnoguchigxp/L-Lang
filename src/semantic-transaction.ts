@@ -6,13 +6,13 @@ import {
   readdir,
   readFile,
   realpath,
-  rename,
   rm,
   unlink,
   writeFile,
 } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 
+import { atomicWriteFile } from "./atomic-file";
 import { assertKnownKeys, parseBoundedJsonText } from "./semantic-limits";
 
 export type SemanticTransactionCommand = "build" | "replay" | "approve";
@@ -704,21 +704,7 @@ function workspacePath(root: string, path: string, label: string): string {
 }
 
 async function atomicWrite(path: string, value: Uint8Array): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.${randomUUID()}.transaction.tmp`;
-  try {
-    const handle = await open(temporary, "wx", 0o600);
-    try {
-      await handle.writeFile(value);
-      await handle.sync();
-    } finally {
-      await handle.close();
-    }
-    await rename(temporary, path);
-  } catch (error) {
-    await unlinkIfExists(temporary);
-    throw error;
-  }
+  await atomicWriteFile(path, value);
 }
 
 async function restoreFile(

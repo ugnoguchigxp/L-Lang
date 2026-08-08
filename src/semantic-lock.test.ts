@@ -12,6 +12,7 @@ import {
   type SemanticLock,
   type SemanticLockEntry,
   type StaticJudgmentLockEntry,
+  writeSemanticLock,
 } from "./semantic-lock";
 
 const temporaryRoots: string[] = [];
@@ -59,6 +60,17 @@ const judgment: StaticJudgmentLockEntry = {
 };
 
 describe("semantic lock", () => {
+  test("writes and re-reads a validated lock atomically", async () => {
+    const root = await mkdtemp(resolve(tmpdir(), "semantic-lock-write-"));
+    temporaryRoots.push(root);
+    const path = resolve(root, "nested/semantic.lock");
+    const lock = validLock();
+
+    await writeSemanticLock(path, lock);
+
+    expect(await readSemanticLock(path)).toEqual(lock);
+  });
+
   test("replays by semantic inputs independent of provider and model", () => {
     expect(
       findReplayEntry(

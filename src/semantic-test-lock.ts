@@ -1,30 +1,28 @@
-import { randomUUID } from "node:crypto";
-import { rename, rm, writeFile } from "node:fs/promises";
-
+import { atomicWriteText } from "./atomic-file";
+import type { OpenAIResult } from "./openai";
 import {
   fingerprintFor,
   sha256,
   stableJson,
 } from "./semantic-fingerprint";
 import {
+  assertTextByteLength,
+  readBoundedJsonFile,
+  SEMANTIC_LIMITS,
+} from "./semantic-limits";
+import {
   parseRedCertificate,
   type RedCertificate,
 } from "./semantic-red-certificate";
+import {
+  parseSemanticTddSelectionReport,
+  type SemanticTddSelectionReport,
+} from "./semantic-tdd-selection-report";
 import {
   parseSemanticTestPlan,
   SEMANTIC_TEST_COMPILER_VERSION,
   type SemanticTestPlan,
 } from "./semantic-test-ir";
-import {
-  parseSemanticTddSelectionReport,
-  type SemanticTddSelectionReport,
-} from "./semantic-tdd-selection-report";
-import type { OpenAIResult } from "./openai";
-import {
-  assertTextByteLength,
-  readBoundedJsonFile,
-  SEMANTIC_LIMITS,
-} from "./semantic-limits";
 
 export type SemanticTestLockEntry = {
   fingerprint: string;
@@ -96,7 +94,6 @@ export async function writeSemanticTestLock(
   path: string,
   lock: SemanticTestLock,
 ): Promise<void> {
-  const temporary = `${path}.${randomUUID()}.tmp`;
   const serialized = `${JSON.stringify(lock, null, 2)}\n`;
   assertTextByteLength(
     serialized,
@@ -104,12 +101,7 @@ export async function writeSemanticTestLock(
     "semantic-test.lock",
   );
   parseSemanticTestLock(JSON.parse(serialized) as unknown);
-  try {
-    await writeFile(temporary, serialized, "utf8");
-    await rename(temporary, path);
-  } finally {
-    await rm(temporary, { force: true });
-  }
+  await atomicWriteText(path, serialized);
 }
 
 export function findSemanticTestEntry(
