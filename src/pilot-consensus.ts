@@ -1,6 +1,7 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
+import { atomicWriteJson, atomicWriteText } from "./atomic-file";
 import { validatePredicateContext } from "./context-validator";
 import { evaluateExpression } from "./cross-schema-benchmark";
 import {
@@ -17,12 +18,12 @@ import {
 import { type PilotHiddenCase, parsePilotHiddenCaseSet } from "./pilot-runner";
 import { predicateSemanticSignature } from "./predicate-equivalence";
 import { selectConsensusVotes } from "./schema-evolution-consensus";
+import { sha256 } from "./semantic-fingerprint";
 import {
   assertKnownKeys,
   parseBoundedJsonText,
   SEMANTIC_LIMITS,
 } from "./semantic-limits";
-import { sha256 } from "./semantic-fingerprint";
 import { scanSemanticSource } from "./semantic-source";
 
 export type PilotConsensusReport = {
@@ -462,16 +463,6 @@ function parseSampleEntry(
     },
     latencyMs: nonNegativeNumber(value.latencyMs, `${path}.latencyMs`),
   };
-}
-
-async function atomicWriteJson(path: string, value: unknown): Promise<void> {
-  await atomicWriteText(path, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-async function atomicWriteText(path: string, value: string): Promise<void> {
-  const temporary = `${path}.tmp-${crypto.randomUUID()}`;
-  await writeFile(temporary, value, "utf8");
-  await rename(temporary, path);
 }
 
 function recordValue(input: unknown, path: string): Record<string, unknown> {

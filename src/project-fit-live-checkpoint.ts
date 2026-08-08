@@ -1,5 +1,6 @@
-import { access, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
+import { atomicWriteJson, atomicWriteText } from "./atomic-file";
 import type { OpenAIResult } from "./openai";
 import type {
   ProjectFitArm,
@@ -11,6 +12,8 @@ import {
   parseBoundedJsonText,
   SEMANTIC_LIMITS,
 } from "./semantic-limits";
+
+export { atomicWriteJson, atomicWriteText };
 
 export type ProjectFitCheckpointEntry =
   | {
@@ -187,27 +190,6 @@ export function completedProjectFitResponseCount(
 ): number {
   return checkpoint.entries.filter((entry) => entry.status === "completed")
     .length;
-}
-
-export async function atomicWriteJson(
-  path: string,
-  value: unknown,
-): Promise<void> {
-  await atomicWriteText(path, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-export async function atomicWriteText(
-  path: string,
-  value: string,
-): Promise<void> {
-  const temporary = `${path}.tmp-${crypto.randomUUID()}`;
-  try {
-    await writeFile(temporary, value, "utf8");
-    await rename(temporary, path);
-  } catch (error) {
-    await unlinkIfExists(temporary);
-    throw error;
-  }
 }
 
 export async function projectFitFileExists(path: string): Promise<boolean> {
@@ -392,14 +374,6 @@ async function readTextIfExists(path: string): Promise<string | undefined> {
   } catch (error) {
     if (isNotFound(error)) return undefined;
     throw error;
-  }
-}
-
-async function unlinkIfExists(path: string): Promise<void> {
-  try {
-    await unlink(path);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
   }
 }
 

@@ -1,6 +1,7 @@
-import { readFile, realpath, rename, writeFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
+import { atomicWriteJson } from "./atomic-file";
 import { sha256 } from "./semantic-fingerprint";
 import {
   assertKnownKeys,
@@ -465,9 +466,7 @@ export async function writePilotFreeze(input: {
       "Do not change frozen Pilot input after observing model output.",
     files,
   };
-  const temporary = `${freezePath}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(freeze, null, 2)}\n`, "utf8");
-  await rename(temporary, freezePath);
+  await atomicWriteJson(freezePath, freeze);
   return { path: freezePath, files };
 }
 

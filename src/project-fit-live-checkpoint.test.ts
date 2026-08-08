@@ -5,8 +5,8 @@ import { resolve } from "node:path";
 
 import {
   atomicWriteText,
-  projectFitFileExists,
   type ProjectFitLiveCheckpoint,
+  projectFitFileExists,
   validateProjectFitCompletedResponseBudget,
 } from "./project-fit-live-checkpoint";
 import { SEMANTIC_LIMITS } from "./semantic-limits";
@@ -40,7 +40,7 @@ describe("Project Fit live checkpoint persistence", () => {
     await mkdir(target);
 
     await expect(atomicWriteText(target, "value")).rejects.toThrow();
-    expect((await readdir(root)).filter((name) => name.startsWith("target.tmp-")))
+    expect((await readdir(root)).filter((name) => name.includes(".atomic.tmp")))
       .toEqual([]);
   });
 
