@@ -3,10 +3,7 @@ import {
   type OpenAIConnection,
   type OpenAIResult,
 } from "./openai";
-import {
-  SEMANTIC_LIMITS,
-  validateDiagnostics,
-} from "./semantic-limits";
+import { SEMANTIC_LIMITS, validateDiagnostics } from "./semantic-limits";
 
 export type StaticJudgmentResolution =
   | {
@@ -103,7 +100,11 @@ export function parseStaticJudgmentResolution(
   input: unknown,
 ): StaticJudgmentResolution {
   const value = expectRecord(input, "static judgment");
-  expectExactKeys(value, ["outcome", "value", "diagnostics"], "static judgment");
+  expectExactKeys(
+    value,
+    ["outcome", "value", "diagnostics"],
+    "static judgment",
+  );
   const diagnostics = validateDiagnostics(
     value.diagnostics,
     "static judgment.diagnostics",
@@ -140,7 +141,10 @@ function expectExactKeys(
 ): void {
   const actual = Object.keys(value).sort();
   const required = [...expected].sort();
-  if (actual.length !== required.length || actual.some((key, index) => key !== required[index])) {
+  if (
+    actual.length !== required.length ||
+    actual.some((key, index) => key !== required[index])
+  ) {
     throw new Error(`${path} must contain exactly ${required.join(", ")}`);
   }
 }

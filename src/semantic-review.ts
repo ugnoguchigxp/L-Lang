@@ -1,11 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  mkdir,
-  readFile,
-  realpath,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, realpath, unlink, writeFile } from "node:fs/promises";
 import {
   basename,
   dirname,
@@ -17,10 +11,7 @@ import {
 
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
-import {
-  type PredicateExpression,
-  parsePredicateDefinition,
-} from "./ir";
+import { type PredicateExpression, parsePredicateDefinition } from "./ir";
 import { renderSemanticTestModule } from "./judgement-renderer";
 import {
   buildProjectContext,
@@ -96,7 +87,10 @@ export async function createPredicateSemanticReview(input: {
   response: SemanticLockEntry["response"];
   generatedCode: string;
   typeSchema: TypeSchema;
-}): Promise<{ candidate: PredicateReviewCandidate; candidateDirectory: string }> {
+}): Promise<{
+  candidate: PredicateReviewCandidate;
+  candidateDirectory: string;
+}> {
   const id = reviewId();
   const candidate: PredicateReviewCandidate = {
     version: 1,
@@ -200,7 +194,11 @@ export async function createStaticJudgmentSemanticReview(input: {
 export async function readSemanticReviewCandidate(
   candidateId: string,
   options: { workspaceRoot?: string; reviewRoot?: string } = {},
-): Promise<{ candidate: ReviewCandidate; candidateDirectory: string; diff: string }> {
+): Promise<{
+  candidate: ReviewCandidate;
+  candidateDirectory: string;
+  diff: string;
+}> {
   if (!/^review-[0-9]{14}-[a-f0-9]{8}$/.test(candidateId)) {
     throw new Error("review candidate id is invalid");
   }
@@ -246,7 +244,9 @@ export async function approveSemanticReview(
     candidateId,
     {
       workspaceRoot,
-      ...(options.reviewRoot === undefined ? {} : { reviewRoot: options.reviewRoot }),
+      ...(options.reviewRoot === undefined
+        ? {}
+        : { reviewRoot: options.reviewRoot }),
     },
   );
   const reviewer = trimmedString(options.reviewer, "reviewer");
@@ -255,10 +255,14 @@ export async function approveSemanticReview(
     "utf8",
   );
   if (sha256(candidateCode) !== candidate.generatedCodeHash) {
-    throw new Error("review candidate integrity failed: candidate.ts hash changed");
+    throw new Error(
+      "review candidate integrity failed: candidate.ts hash changed",
+    );
   }
 
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const lockPath = resolve(
+    options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
+  );
   const { lock, revision: lockRevision } =
     await readSemanticLockSnapshot(lockPath);
   const executeCommand = options.commandRunner ?? runCommand;
@@ -327,7 +331,9 @@ export async function approveSemanticReview(
       generatedCode !== candidateCode ||
       sha256(generatedCode) !== candidate.generatedCodeHash
     ) {
-      throw new Error("review candidate integrity failed: generated code changed");
+      throw new Error(
+        "review candidate integrity failed: generated code changed",
+      );
     }
     validatePredicateContext(candidate.resolvedIr, source);
 
@@ -336,10 +342,17 @@ export async function approveSemanticReview(
       existing?.promotion?.mode === "reviewed" &&
       existing.promotion.candidateId === candidate.id
     ) {
-      return finishIdempotentApproval(candidate, candidateDirectory, existing, output);
+      return finishIdempotentApproval(
+        candidate,
+        candidateDirectory,
+        existing,
+        output,
+      );
     }
     if (candidate.status === "approved") {
-      throw new Error("approved review candidate is missing reviewed lock provenance");
+      throw new Error(
+        "approved review candidate is missing reviewed lock provenance",
+      );
     }
     assertReviewBaseline(
       candidate,
@@ -379,7 +392,12 @@ export async function approveSemanticReview(
       generatedCodeHash: candidate.generatedCodeHash,
       response: candidate.response,
       createdAt: existing?.createdAt ?? promotedAt,
-      promotion: reviewedPromotion(candidate.id, reviewer, "passed", promotedAt),
+      promotion: reviewedPromotion(
+        candidate.id,
+        reviewer,
+        "passed",
+        promotedAt,
+      ),
     };
     await promoteSemanticArtifact({
       outputPath: resolve(workspaceRoot, candidate.output),
@@ -388,7 +406,8 @@ export async function approveSemanticReview(
       nextLock: lock,
       expectedLockHash: lockRevision,
       command: "approve",
-      runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
+      runFullTest: () =>
+        executeCommand(["bun", "test"], workspaceRoot, "full-test"),
     });
   } else {
     const sourcePath = await resolveReviewSource(
@@ -396,9 +415,7 @@ export async function approveSemanticReview(
       candidate.source,
       "Static Judgment source",
     );
-    const source = await scanStaticJudgmentSource(
-      sourcePath,
-    );
+    const source = await scanStaticJudgmentSource(sourcePath);
     const sourceRelative = workspaceRelativePath(
       workspaceRoot,
       source.absolutePath,
@@ -433,7 +450,9 @@ export async function approveSemanticReview(
       generatedCode !== candidateCode ||
       sha256(generatedCode) !== candidate.generatedCodeHash
     ) {
-      throw new Error("review candidate integrity failed: generated code changed");
+      throw new Error(
+        "review candidate integrity failed: generated code changed",
+      );
     }
 
     const existing = lock.judgments?.[candidate.fingerprint];
@@ -441,10 +460,17 @@ export async function approveSemanticReview(
       existing?.promotion?.mode === "reviewed" &&
       existing.promotion.candidateId === candidate.id
     ) {
-      return finishIdempotentApproval(candidate, candidateDirectory, existing, output);
+      return finishIdempotentApproval(
+        candidate,
+        candidateDirectory,
+        existing,
+        output,
+      );
     }
     if (candidate.status === "approved") {
-      throw new Error("approved review candidate is missing reviewed lock provenance");
+      throw new Error(
+        "approved review candidate is missing reviewed lock provenance",
+      );
     }
     assertReviewBaseline(
       candidate,
@@ -488,7 +514,8 @@ export async function approveSemanticReview(
       nextLock: lock,
       expectedLockHash: lockRevision,
       command: "approve",
-      runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
+      runFullTest: () =>
+        executeCommand(["bun", "test"], workspaceRoot, "full-test"),
     });
   }
 
@@ -500,7 +527,12 @@ export async function approveSemanticReview(
   };
   try {
     await writeJson(resolve(candidateDirectory, "candidate.json"), approved);
-    return { status: "approved", candidate: approved, output: candidate.output, warning: null };
+    return {
+      status: "approved",
+      candidate: approved,
+      output: candidate.output,
+      warning: null,
+    };
   } catch (error) {
     return {
       status: "approved",
@@ -537,13 +569,15 @@ async function finishIdempotentApproval(
   entry: SemanticLockEntry | StaticJudgmentLockEntry,
   output: string,
 ): Promise<ReviewApprovalResult> {
-  const reviewer = entry.promotion?.mode === "reviewed"
-    ? entry.promotion.reviewer
-    : candidate.reviewer;
+  const reviewer =
+    entry.promotion?.mode === "reviewed"
+      ? entry.promotion.reviewer
+      : candidate.reviewer;
   const approved: ReviewCandidate = {
     ...candidate,
     status: "approved",
-    approvedAt: candidate.approvedAt ?? entry.promotion?.promotedAt ?? entry.createdAt,
+    approvedAt:
+      candidate.approvedAt ?? entry.promotion?.promotedAt ?? entry.createdAt,
     reviewer,
   };
   if (candidate.status !== "approved") {
@@ -580,7 +614,9 @@ function assertCandidateIdentity(
     candidate.fingerprint !== current.fingerprint ||
     JSON.stringify(candidate.hashes) !== JSON.stringify(current.hashes)
   ) {
-    throw new Error("review candidate is stale: semantic source changed after build");
+    throw new Error(
+      "review candidate is stale: semantic source changed after build",
+    );
   }
 }
 
@@ -608,8 +644,14 @@ async function validatePredicateCandidate(input: {
     generatedOutputPath(input.sourcePath, input.predicateName),
     ".generated.ts",
   );
-  const candidatePath = resolve(directory, `.${stem}.${input.candidateId}.approve.ts`);
-  const testPath = resolve(directory, `.${stem}.${input.candidateId}.approve.test.ts`);
+  const candidatePath = resolve(
+    directory,
+    `.${stem}.${input.candidateId}.approve.ts`,
+  );
+  const testPath = resolve(
+    directory,
+    `.${stem}.${input.candidateId}.approve.test.ts`,
+  );
   const testModule = renderSemanticTestModule({
     candidateModuleName: basename(candidatePath, ".ts"),
     predicateName: input.predicateName,
@@ -619,11 +661,26 @@ async function validatePredicateCandidate(input: {
   await writeFile(candidatePath, input.generatedCode, "utf8");
   await writeFile(testPath, testModule, "utf8");
   try {
-    await input.commandRunner(candidateTypecheckCommand(candidatePath, testPath), input.workspaceRoot, "candidate-typecheck");
-    await input.commandRunner(["bun", "test", testPath], input.workspaceRoot, "semantic-test");
-    await input.commandRunner(["bun", "run", "typecheck"], input.workspaceRoot, "project-typecheck");
+    await input.commandRunner(
+      candidateTypecheckCommand(candidatePath, testPath),
+      input.workspaceRoot,
+      "candidate-typecheck",
+    );
+    await input.commandRunner(
+      ["bun", "test", testPath],
+      input.workspaceRoot,
+      "semantic-test",
+    );
+    await input.commandRunner(
+      ["bun", "run", "typecheck"],
+      input.workspaceRoot,
+      "project-typecheck",
+    );
   } finally {
-    await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(testPath)]);
+    await Promise.all([
+      unlinkIfExists(candidatePath),
+      unlinkIfExists(testPath),
+    ]);
   }
 }
 
@@ -641,8 +698,16 @@ async function validateStaticJudgmentCandidate(input: {
   );
   await writeFile(candidatePath, input.generatedCode, "utf8");
   try {
-    await input.commandRunner(candidateTypecheckCommand(candidatePath), input.workspaceRoot, "candidate-typecheck");
-    await input.commandRunner(["bun", "run", "typecheck"], input.workspaceRoot, "project-typecheck");
+    await input.commandRunner(
+      candidateTypecheckCommand(candidatePath),
+      input.workspaceRoot,
+      "candidate-typecheck",
+    );
+    await input.commandRunner(
+      ["bun", "run", "typecheck"],
+      input.workspaceRoot,
+      "project-typecheck",
+    );
   } finally {
     await unlinkIfExists(candidatePath);
   }
@@ -683,18 +748,29 @@ async function saveReviewCandidate<T extends ReviewCandidate>(input: {
   await mkdir(candidateDirectory, { recursive: false });
   await Promise.all([
     writeJson(resolve(candidateDirectory, "candidate.json"), input.candidate),
-    writeFile(resolve(candidateDirectory, "candidate.ts"), input.generatedCode, "utf8"),
+    writeFile(
+      resolve(candidateDirectory, "candidate.ts"),
+      input.generatedCode,
+      "utf8",
+    ),
     writeFile(resolve(candidateDirectory, "diff.txt"), input.diff, "utf8"),
   ]);
   return { candidate: input.candidate, candidateDirectory };
 }
 
 function reviewId(): string {
-  const timestamp = new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14);
+  const timestamp = new Date()
+    .toISOString()
+    .replaceAll(/[-:.TZ]/g, "")
+    .slice(0, 14);
   return `review-${timestamp}-${randomUUID().slice(0, 8)}`;
 }
 
-async function runCommand(command: string[], cwd: string, stage: string): Promise<void> {
+async function runCommand(
+  command: string[],
+  cwd: string,
+  stage: string,
+): Promise<void> {
   const child = Bun.spawn(command, {
     cwd,
     stdin: "inherit",
@@ -702,7 +778,8 @@ async function runCommand(command: string[], cwd: string, stage: string): Promis
     stderr: "inherit",
   });
   const exitCode = await child.exited;
-  if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
+  if (exitCode !== 0)
+    throw new Error(`${stage} failed with exit code ${exitCode}`);
 }
 
 async function writeJson(path: string, value: unknown): Promise<void> {

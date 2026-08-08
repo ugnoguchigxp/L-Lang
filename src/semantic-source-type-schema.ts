@@ -83,12 +83,7 @@ export function buildTypeSchema(
       }
       return {
         kind: "array",
-        elementType: buildTypeSchema(
-          elementType,
-          checker,
-          location,
-          depth + 1,
-        ),
+        elementType: buildTypeSchema(elementType, checker, location, depth + 1),
       };
     }
     return {

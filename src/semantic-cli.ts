@@ -7,13 +7,13 @@ import {
   parseOpenAIResponse,
   resolveOpenAIConnection,
 } from "./openai";
-import {
-  parseSemanticArguments,
-  semanticCommands,
-} from "./semantic-arguments";
+import { parseSemanticArguments, semanticCommands } from "./semantic-arguments";
 import { checkSemanticClosure } from "./semantic-closure";
 import { renderSemanticClosure } from "./semantic-closure-renderer";
-import { compileSemanticSource, type SemanticResolution } from "./semantic-compiler";
+import {
+  compileSemanticSource,
+  type SemanticResolution,
+} from "./semantic-compiler";
 import { renderSemanticDiff } from "./semantic-diff";
 import {
   normalizeSemanticError,
@@ -83,12 +83,7 @@ async function main(): Promise<void> {
     );
   }
   const parsedArguments = parseSemanticArguments(rawArguments);
-  const {
-    command,
-    target,
-    fixturePath,
-    testFixturePath,
-  } = parsedArguments;
+  const { command, target, fixturePath, testFixturePath } = parsedArguments;
 
   if (command === "closure") {
     const report = await checkSemanticClosure({
@@ -177,7 +172,9 @@ async function main(): Promise<void> {
         await readSemanticTestReviewCandidate(target);
       console.log(JSON.stringify(candidate.plan, null, 2));
       console.log(`candidate: ${candidate.id}`);
-      console.log(`status: ${approval === null ? "review-required" : "approved"}`);
+      console.log(
+        `status: ${approval === null ? "review-required" : "approved"}`,
+      );
       console.log(`contract: ${candidate.contractHash}`);
       console.log(`test plan: ${candidate.testPlanHash}`);
       console.log(`audit: ${candidateDirectory}`);
@@ -358,9 +355,7 @@ async function main(): Promise<void> {
   let resolver: Parameters<typeof compileSemanticSource>[0]["resolve"];
 
   if (
-    (command === "build" ||
-      command === "check" ||
-      command === "tdd-build") &&
+    (command === "build" || command === "check" || command === "tdd-build") &&
     fixturePath !== undefined
   ) {
     const absoluteFixture = resolve(fixturePath);
@@ -412,7 +407,9 @@ async function main(): Promise<void> {
         connection,
       );
       return {
-        elaboration: parseElaborationResult(JSON.parse(response.outputText) as unknown),
+        elaboration: parseElaborationResult(
+          JSON.parse(response.outputText) as unknown,
+        ),
         response,
         rawOutput: JSON.parse(response.outputText) as unknown,
       };
@@ -448,7 +445,8 @@ async function main(): Promise<void> {
         rawOutput: fixturePayload,
       });
     } else if (command === "tdd-plan" || command === "tdd-build") {
-      const tddModel = model ?? process.env.OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL;
+      const tddModel =
+        model ?? process.env.OPENAI_MODEL ?? DEFAULT_OPENAI_MODEL;
       const connection = resolveOpenAIConnection({
         apiKey: process.env.OPENAI_API_KEY ?? "",
         baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
@@ -572,9 +570,11 @@ async function main(): Promise<void> {
         `candidate: ${result.candidate.id}`,
         `status: ${result.candidate.status}`,
         `api calls: ${result.apiCalls}`,
-        `consensus: ${result.candidate.consensus === null
-          ? "disabled"
-          : `${result.candidate.consensus.supportingSamples.length}/${result.candidate.consensus.samples} (${result.candidate.consensus.reached ? "reached" : "unresolved"})`}`,
+        `consensus: ${
+          result.candidate.consensus === null
+            ? "disabled"
+            : `${result.candidate.consensus.supportingSamples.length}/${result.candidate.consensus.samples} (${result.candidate.consensus.reached ? "reached" : "unresolved"})`
+        }`,
         `audit: ${result.candidateDirectory}`,
         result.candidate.status === "ready"
           ? `approve: bun run semantic approve ${result.candidate.id} --reviewer <id>`

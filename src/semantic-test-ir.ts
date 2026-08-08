@@ -1,7 +1,4 @@
-import {
-  normativeClauseIds,
-  type SemanticContract,
-} from "./semantic-contract";
+import { normativeClauseIds, type SemanticContract } from "./semantic-contract";
 import { sha256, stableJson } from "./semantic-fingerprint";
 import type { TypeSchema } from "./semantic-source";
 
@@ -177,10 +174,7 @@ export function applySemanticTestChanges(
   return cloned;
 }
 
-function parseObligation(
-  input: unknown,
-  path: string,
-): SemanticTestObligation {
+function parseObligation(input: unknown, path: string): SemanticTestObligation {
   const value = recordValue(input, path);
   const common = parseCommon(value, path);
   switch (value.kind) {
@@ -311,7 +305,11 @@ function validateObligationValues(
   schema: TypeSchema,
 ): void {
   if (obligation.kind === "example") {
-    assertValueMatchesSchema(obligation.input, schema, `${obligation.id}.input`);
+    assertValueMatchesSchema(
+      obligation.input,
+      schema,
+      `${obligation.id}.input`,
+    );
     return;
   }
   assertValueMatchesSchema(obligation.base, schema, `${obligation.id}.base`);
@@ -542,17 +540,12 @@ function exactKeys(
   }
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (!isRecord(input)) throw new Error(`${path} must be an object`);
   return input;
 }
 
-function isRecord(
-  input: unknown,
-): input is Record<string, SemanticTestValue> {
+function isRecord(input: unknown): input is Record<string, SemanticTestValue> {
   return typeof input === "object" && input !== null && !Array.isArray(input);
 }
 

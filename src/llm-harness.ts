@@ -80,18 +80,18 @@ async function runHarness(
       });
       provider = connection.provider;
       openAIResult = await callOpenAI(
-          {
-            model,
-            specification,
-            typeScriptSource,
-            target: {
-              functionName: config.target.name,
-              parameterName: config.target.input.parameter,
-              typeName: config.target.input.type,
-            },
+        {
+          model,
+          specification,
+          typeScriptSource,
+          target: {
+            functionName: config.target.name,
+            parameterName: config.target.input.parameter,
+            typeName: config.target.input.type,
           },
-          connection,
-        );
+        },
+        connection,
+      );
     }
 
     const elaboration = parseElaborationResult(
@@ -139,7 +139,9 @@ async function runHarness(
         codeSha256: sha256(codeText),
       },
     });
-    console.log(`LLM verification passed; report: ${relative(process.cwd(), reportPath)}`);
+    console.log(
+      `LLM verification passed; report: ${relative(process.cwd(), reportPath)}`,
+    );
   } catch (error) {
     await writeReport(reportPath, {
       config,
@@ -175,7 +177,10 @@ function parseHarnessConfig(input: unknown): HarnessConfig {
       value.specificationFile,
       "harness.specificationFile",
     ),
-    typeScriptFile: expectString(value.typeScriptFile, "harness.typeScriptFile"),
+    typeScriptFile: expectString(
+      value.typeScriptFile,
+      "harness.typeScriptFile",
+    ),
     target: {
       name: expectString(target.name, "harness.target.name"),
       description: expectString(
@@ -195,7 +200,10 @@ function parseHarnessConfig(input: unknown): HarnessConfig {
     outputs: {
       irFile: expectString(outputs.irFile, "harness.outputs.irFile"),
       codeFile: expectString(outputs.codeFile, "harness.outputs.codeFile"),
-      reportFile: expectString(outputs.reportFile, "harness.outputs.reportFile"),
+      reportFile: expectString(
+        outputs.reportFile,
+        "harness.outputs.reportFile",
+      ),
     },
   };
 }
@@ -255,7 +263,10 @@ async function run(command: string[], label: string): Promise<void> {
   }
 }
 
-function readOptionalOption(options: string[], name: string): string | undefined {
+function readOptionalOption(
+  options: string[],
+  name: string,
+): string | undefined {
   const index = options.indexOf(name);
   if (index === -1) {
     return undefined;

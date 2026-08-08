@@ -14,10 +14,15 @@ const baseline: PredicateExpression = {
 
 describe("semantic diff", () => {
   test("keeps an unchanged predicate compatible after unrelated schema additions", () => {
-    const diff = classifySemanticChange({ previous: baseline, candidate: baseline });
+    const diff = classifySemanticChange({
+      previous: baseline,
+      candidate: baseline,
+    });
     expect(diff.classification).toBe("compatible");
     expect(diff.summary).toBe("The Predicate IR is unchanged.");
-    expect(diff.leafChanges.every((change) => change.changes.length === 0)).toBe(true);
+    expect(
+      diff.leafChanges.every((change) => change.changes.length === 0),
+    ).toBe(true);
   });
 
   test("classifies field renames as representation-compatible", () => {
@@ -32,7 +37,9 @@ describe("semantic diff", () => {
     const diff = classifySemanticChange({ previous: baseline, candidate });
     expect(diff.classification).toBe("compatible");
     expect(diff.logicalShapeChanged).toBe(false);
-    expect(diff.leafChanges.filter((change) => change.changes.includes("property"))).toHaveLength(3);
+    expect(
+      diff.leafChanges.filter((change) => change.changes.includes("property")),
+    ).toHaveLength(3);
   });
 
   test("classifies literal-union to boolean representation changes as compatible", () => {
@@ -46,11 +53,16 @@ describe("semantic diff", () => {
     };
     const diff = classifySemanticChange({ previous: baseline, candidate });
     expect(diff.classification).toBe("compatible");
-    expect(diff.leafChanges.some((change) => change.changes.includes("value"))).toBe(true);
+    expect(
+      diff.leafChanges.some((change) => change.changes.includes("value")),
+    ).toBe(true);
   });
 
   test("keeps present semantics compatible across nullable-to-optional type changes", () => {
-    const diff = classifySemanticChange({ previous: baseline, candidate: baseline });
+    const diff = classifySemanticChange({
+      previous: baseline,
+      candidate: baseline,
+    });
     expect(diff.classification).toBe("compatible");
     expect(diff.logicalShapeChanged).toBe(false);
   });
@@ -58,12 +70,15 @@ describe("semantic diff", () => {
   test("marks a removed semantic condition as breaking", () => {
     const candidate: PredicateExpression = {
       kind: "all",
-      conditions: baseline.kind === "all" ? baseline.conditions.slice(0, 2) : [],
+      conditions:
+        baseline.kind === "all" ? baseline.conditions.slice(0, 2) : [],
     };
     const diff = classifySemanticChange({ previous: baseline, candidate });
     expect(diff.classification).toBe("breaking");
     expect(diff.logicalShapeChanged).toBe(true);
-    expect(diff.leafChanges.some((change) => change.changes.includes("removed"))).toBe(true);
+    expect(
+      diff.leafChanges.some((change) => change.changes.includes("removed")),
+    ).toBe(true);
   });
 
   test("keeps an ambiguous schema unresolved and non-approvable", () => {

@@ -25,10 +25,12 @@ describe("semantic explain CLI read-only integration", () => {
       "benchmarks/schema-evolution/freeze.json",
     ];
     const beforeFiles = await hashFiles(workspaceRoot, protectedPaths);
-    const beforeAudit = await hashTree(
-      resolve(workspaceRoot, ".semantic"),
-      ["test-workspaces", "candidates", "judgments", "test-plan-reviews"],
-    );
+    const beforeAudit = await hashTree(resolve(workspaceRoot, ".semantic"), [
+      "test-workspaces",
+      "candidates",
+      "judgments",
+      "test-plan-reviews",
+    ]);
 
     const predicateText = await runExplain([
       "examples/active-customer/semantic.ts",
@@ -69,7 +71,10 @@ describe("semantic explain CLI read-only integration", () => {
       "--json",
     ]);
     expect(judgmentJson.exitCode).toBe(0);
-    const parsedJudgment = JSON.parse(judgmentJson.stdout) as Record<string, unknown>;
+    const parsedJudgment = JSON.parse(judgmentJson.stdout) as Record<
+      string,
+      unknown
+    >;
     expect(parsedJudgment).toMatchObject({
       version: 1,
       kind: "static-judgment",

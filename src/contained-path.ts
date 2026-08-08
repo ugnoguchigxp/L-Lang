@@ -52,11 +52,7 @@ export function containedRelativePath(
     "\\",
     "/",
   );
-  if (
-    relation === ".." ||
-    relation.startsWith("../") ||
-    isAbsolute(relation)
-  ) {
+  if (relation === ".." || relation.startsWith("../") || isAbsolute(relation)) {
     throw new Error(`${label} must resolve inside the ${containmentLabel}`);
   }
   return relation;

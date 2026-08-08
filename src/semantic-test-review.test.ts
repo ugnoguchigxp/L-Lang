@@ -83,15 +83,12 @@ describe("Semantic Test Plan review", () => {
         ).approval,
       ).toBeNull();
 
-      const approved = await approveSemanticTestReview(
-        created.candidate.id,
-        {
-          reviewer: "staging-user",
-          workspaceRoot,
-          reviewRoot,
-          testLockPath,
-        },
-      );
+      const approved = await approveSemanticTestReview(created.candidate.id, {
+        reviewer: "staging-user",
+        workspaceRoot,
+        reviewRoot,
+        testLockPath,
+      });
       expect(approved.status).toBe("approved");
       const lock = await readSemanticTestLock(testLockPath);
       expect(Object.values(lock.entries)[0]).toMatchObject({
@@ -111,15 +108,12 @@ describe("Semantic Test Plan review", () => {
       });
 
       await rm(testLockPath);
-      const recovered = await approveSemanticTestReview(
-        created.candidate.id,
-        {
-          reviewer: "ignored-on-replay",
-          workspaceRoot,
-          reviewRoot,
-          testLockPath,
-        },
-      );
+      const recovered = await approveSemanticTestReview(created.candidate.id, {
+        reviewer: "ignored-on-replay",
+        workspaceRoot,
+        reviewRoot,
+        testLockPath,
+      });
       expect(recovered.status).toBe("already-approved");
       expect(
         Object.values((await readSemanticTestLock(testLockPath)).entries)[0],

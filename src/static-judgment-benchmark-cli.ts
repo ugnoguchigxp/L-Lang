@@ -19,10 +19,7 @@ export function parseStaticJudgmentBenchmarkCliArguments(
       "usage: static-judgment-benchmark fixture <manifest> [--json]",
     );
   }
-  if (
-    options.length > 1 ||
-    (options.length === 1 && options[0] !== "--json")
-  ) {
+  if (options.length > 1 || (options.length === 1 && options[0] !== "--json")) {
     throw new Error(`fixture does not accept ${options.join(" ")}`);
   }
   return {

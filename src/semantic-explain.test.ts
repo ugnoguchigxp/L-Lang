@@ -30,7 +30,9 @@ import { scanStaticJudgmentSource } from "./static-judgment-source";
 const temporaryRoots: string[] = [];
 
 afterEach(async () => {
-  await Promise.all(temporaryRoots.splice(0).map((path) => rm(path, { recursive: true })));
+  await Promise.all(
+    temporaryRoots.splice(0).map((path) => rm(path, { recursive: true })),
+  );
 });
 
 describe("semantic explain", () => {
@@ -48,7 +50,9 @@ describe("semantic explain", () => {
   });
 
   test("explains a current Predicate from the lock without changing artifacts", async () => {
-    const fixture = await createPredicateFixture({ generated: "export const isReady = () => true;\n" });
+    const fixture = await createPredicateFixture({
+      generated: "export const isReady = () => true;\n",
+    });
     const beforeLock = await readFile(fixture.lockPath, "utf8");
     const beforeGenerated = await readFile(fixture.generatedPath, "utf8");
 
@@ -76,8 +80,14 @@ describe("semantic explain", () => {
   test("reports Predicate hash changes from the latest historical entry", async () => {
     const fixture = await createPredicateFixture();
     const changed = predicateSource()
-      .replace('state: "ready" | "waiting"', 'state: "ready" | "waiting" | "blocked"')
-      .replace('reject: [{ state: "waiting" }]', 'reject: [{ state: "blocked" }]');
+      .replace(
+        'state: "ready" | "waiting"',
+        'state: "ready" | "waiting" | "blocked"',
+      )
+      .replace(
+        'reject: [{ state: "waiting" }]',
+        'reject: [{ state: "blocked" }]',
+      );
     await writeFile(fixture.sourcePath, changed, "utf8");
 
     const explanation = await explainSemanticSource(fixture);
@@ -92,7 +102,9 @@ describe("semantic explain", () => {
 
   test("reports Concept and prompt hash changes without treating provider/model as stale", async () => {
     const fixture = await createPredicateFixture();
-    const lock = JSON.parse(await readFile(fixture.lockPath, "utf8")) as SemanticLock;
+    const lock = JSON.parse(
+      await readFile(fixture.lockPath, "utf8"),
+    ) as SemanticLock;
     const entry = required(Object.values(lock.entries)[0]);
     entry.conceptHash = sha256("older-concept");
     entry.promptHash = sha256("older-prompt");
@@ -109,46 +121,45 @@ describe("semantic explain", () => {
     ]);
   });
 
-  test(
-    "distinguishes unlocked, missing, and mismatched Predicate output",
-    async () => {
-      const unlocked = await createPredicateFixture({ unlocked: true });
-      const unlockedExplanation = await explainSemanticSource(unlocked);
-      expect(unlockedExplanation.status).toBe("unlocked");
-      expect(unlockedExplanation.lock).toBeNull();
-      expect(unlockedExplanation.resolution).toBeNull();
+  test("distinguishes unlocked, missing, and mismatched Predicate output", async () => {
+    const unlocked = await createPredicateFixture({ unlocked: true });
+    const unlockedExplanation = await explainSemanticSource(unlocked);
+    expect(unlockedExplanation.status).toBe("unlocked");
+    expect(unlockedExplanation.lock).toBeNull();
+    expect(unlockedExplanation.resolution).toBeNull();
 
-      const missing = await createPredicateFixture();
-      const missingExplanation = await explainSemanticSource(missing);
-      expect(missingExplanation.status).toBe("integrity-error");
-      expect(missingExplanation.generated?.state).toBe("missing");
-      expect(missingExplanation.generated?.actualHash).toBeNull();
-      expect(renderSemanticExplanation(missingExplanation)).toContain(
-        "generated integrity: ERROR (missing)",
-      );
+    const missing = await createPredicateFixture();
+    const missingExplanation = await explainSemanticSource(missing);
+    expect(missingExplanation.status).toBe("integrity-error");
+    expect(missingExplanation.generated?.state).toBe("missing");
+    expect(missingExplanation.generated?.actualHash).toBeNull();
+    expect(renderSemanticExplanation(missingExplanation)).toContain(
+      "generated integrity: ERROR (missing)",
+    );
 
-      const mismatch = await createPredicateFixture({
-        generated: "changed output\n",
-      });
-      const lock = JSON.parse(
-        await readFile(mismatch.lockPath, "utf8"),
-      ) as SemanticLock;
-      const entry = required(Object.values(lock.entries)[0]);
-      entry.generatedCodeHash = sha256("expected output\n");
-      await writeLock(mismatch.lockPath, lock);
-      const mismatchExplanation = await explainSemanticSource(mismatch);
-      expect(mismatchExplanation.status).toBe("integrity-error");
-      expect(mismatchExplanation.generated?.state).toBe("mismatch");
-    },
-    20_000,
-  );
+    const mismatch = await createPredicateFixture({
+      generated: "changed output\n",
+    });
+    const lock = JSON.parse(
+      await readFile(mismatch.lockPath, "utf8"),
+    ) as SemanticLock;
+    const entry = required(Object.values(lock.entries)[0]);
+    entry.generatedCodeHash = sha256("expected output\n");
+    await writeLock(mismatch.lockPath, lock);
+    const mismatchExplanation = await explainSemanticSource(mismatch);
+    expect(mismatchExplanation.status).toBe("integrity-error");
+    expect(mismatchExplanation.generated?.state).toBe("mismatch");
+  }, 20_000);
 
   test("hashes generated output as bytes", async () => {
     const fixture = await createPredicateFixture();
     const generated = new Uint8Array([0xff, 0x00, 0x80, 0x0a]);
     await writeFile(fixture.generatedPath, generated);
-    const lock = JSON.parse(await readFile(fixture.lockPath, "utf8")) as SemanticLock;
-    required(Object.values(lock.entries)[0]).generatedCodeHash = sha256(generated);
+    const lock = JSON.parse(
+      await readFile(fixture.lockPath, "utf8"),
+    ) as SemanticLock;
+    required(Object.values(lock.entries)[0]).generatedCodeHash =
+      sha256(generated);
     await writeLock(fixture.lockPath, lock);
 
     const explanation = await explainSemanticSource(fixture);
@@ -173,7 +184,10 @@ describe("semantic explain", () => {
 
     await writeFile(
       fixture.sourcePath,
-      staticJudgmentSource().replace("A calico animal that meows.", "A metal sculpture."),
+      staticJudgmentSource().replace(
+        "A calico animal that meows.",
+        "A metal sculpture.",
+      ),
       "utf8",
     );
     const stale = await explainSemanticSource(fixture);
@@ -191,7 +205,11 @@ describe("semantic explain", () => {
     const hashes = predicateSemanticHashes(source);
     const judgment: StaticJudgmentLockEntry = {
       fingerprint: sha256("same-symbol-judgment"),
-      source: workspaceRelativePath(fixture.workspaceRoot, fixture.sourcePath, "source"),
+      source: workspaceRelativePath(
+        fixture.workspaceRoot,
+        fixture.sourcePath,
+        "source",
+      ),
       judgment: source.predicate.name,
       conceptId: source.concept.id,
       conceptHash: hashes.conceptHash,
@@ -280,10 +298,9 @@ type Fixture = {
   generatedPath: string;
 };
 
-async function createPredicateFixture(options: {
-  generated?: string;
-  unlocked?: boolean;
-} = {}): Promise<Fixture> {
+async function createPredicateFixture(
+  options: { generated?: string; unlocked?: boolean } = {},
+): Promise<Fixture> {
   const workspaceRoot = await createWorkspace();
   const sourcePath = resolve(workspaceRoot, "predicate/semantic.ts");
   await mkdir(dirname(sourcePath), { recursive: true });
@@ -319,13 +336,14 @@ async function createPredicateFixture(options: {
     version: 1,
     entries: options.unlocked ? {} : { [entry.fingerprint]: entry },
   });
-  if (generated !== undefined) await writeFile(generatedPath, generated, "utf8");
+  if (generated !== undefined)
+    await writeFile(generatedPath, generated, "utf8");
   return { sourcePath, workspaceRoot, lockPath, generatedPath };
 }
 
-async function createStaticJudgmentFixture(options: {
-  generated?: string;
-} = {}): Promise<Fixture> {
+async function createStaticJudgmentFixture(
+  options: { generated?: string } = {},
+): Promise<Fixture> {
   const workspaceRoot = await createWorkspace();
   const sourcePath = resolve(workspaceRoot, "judgment/semantic.ts");
   await mkdir(dirname(sourcePath), { recursive: true });
@@ -353,7 +371,8 @@ async function createStaticJudgmentFixture(options: {
     entries: {},
     judgments: { [entry.fingerprint]: entry },
   });
-  if (generated !== undefined) await writeFile(generatedPath, generated, "utf8");
+  if (generated !== undefined)
+    await writeFile(generatedPath, generated, "utf8");
   return { sourcePath, workspaceRoot, lockPath, generatedPath };
 }
 

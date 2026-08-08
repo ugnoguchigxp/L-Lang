@@ -1,10 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import {
-  type ProjectContext,
-  parseProjectContext,
-} from "./project-context";
+import { type ProjectContext, parseProjectContext } from "./project-context";
 import {
   type ProjectFitArm,
   type ProjectFitModelInput,
@@ -108,14 +105,12 @@ export async function runProjectFitFixture(
               `Project Fit fixture ${benchmarkCase.id}.${stage}.${arm} is missing trial ${trial + 1}`,
             );
           }
-          const result = options.resolveFixture === undefined
-            ? expected
-            : await options.resolveFixture(resolverInput);
+          const result =
+            options.resolveFixture === undefined
+              ? expected
+              : await options.resolveFixture(resolverInput);
           stageTrials[stage][arm].push(
-            parseTrial(
-              result,
-              `${benchmarkCase.id}.${stage}.${arm}[${trial}]`,
-            ),
+            parseTrial(result, `${benchmarkCase.id}.${stage}.${arm}[${trial}]`),
           );
         }
       }
@@ -154,7 +149,7 @@ export async function runProjectFitFixture(
     schemaChange: summarizeProjectFitStage(stageTrials.schemaChange),
   };
   const allArms = (["initial", "schemaChange"] as const).flatMap((stage) =>
-    Object.values(stages[stage].arms)
+    Object.values(stages[stage].arms),
   );
   const falseResolutions = allArms.reduce(
     (total, arm) => total + arm.falseResolutions,
@@ -237,10 +232,7 @@ function parseFixture(
   };
 }
 
-function parseTrial(
-  input: unknown,
-  path: string,
-): ProjectFitTrialResult {
+function parseTrial(input: unknown, path: string): ProjectFitTrialResult {
   const value = recordValue(input, path);
   assertExactKeys(
     value,
@@ -309,7 +301,10 @@ function enforceBudget(
     ...stages[stage].typeOnly,
     ...stages[stage].projectContext,
   ]);
-  const inputTokens = all.reduce((total, trial) => total + trial.inputTokens, 0);
+  const inputTokens = all.reduce(
+    (total, trial) => total + trial.inputTokens,
+    0,
+  );
   const outputTokens = all.reduce(
     (total, trial) => total + trial.outputTokens,
     0,
@@ -328,10 +323,12 @@ async function snapshotFrozenInputs(
 ): Promise<Record<string, string>> {
   return Object.fromEntries(
     await Promise.all(
-      Object.keys(files).sort().map(async (file) => [
-        file,
-        sha256(await readFile(resolve(directory, file))),
-      ] as const),
+      Object.keys(files)
+        .sort()
+        .map(
+          async (file) =>
+            [file, sha256(await readFile(resolve(directory, file)))] as const,
+        ),
     ),
   );
 }
@@ -340,10 +337,7 @@ function cloneValue<T>(value: T): T {
   return JSON.parse(stableJson(value)) as T;
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }
@@ -361,11 +355,7 @@ function assertExactKeys(
 }
 
 function nonNegativeInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 0
-  ) {
+  if (typeof input !== "number" || !Number.isSafeInteger(input) || input < 0) {
     throw new Error(`${path} must be a non-negative safe integer`);
   }
   return input;

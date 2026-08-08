@@ -73,9 +73,7 @@ export async function runProjectFitLive(
   const protocol = await readProjectFitProtocol(options.manifestPath);
   assertProjectFitFrozen(protocol.freeze);
   validateExecutionControls(options);
-  const tokenRates = validateProjectFitTokenRates(
-    options.costPerMillionTokens,
-  );
+  const tokenRates = validateProjectFitTokenRates(options.costPerMillionTokens);
   const totalOutputTokenBudget = projectFitTotalOutputTokenBudget(
     protocol.manifest,
   );
@@ -130,10 +128,7 @@ export async function runProjectFitLive(
     perCallOutputTokenLimit,
     options,
   });
-  const initialGate = evaluateStageGate(
-    initial,
-    protocol.manifest.thresholds,
-  );
+  const initialGate = evaluateStageGate(initial, protocol.manifest.thresholds);
 
   let schemaChange: StageExecution = {
     summary: emptyProjectFitStageSummary(),
@@ -216,10 +211,7 @@ export async function runProjectFitLive(
   const completed = checkpoint.entries.filter(
     (
       entry,
-    ): entry is Extract<
-      ProjectFitCheckpointEntry,
-      { status: "completed" }
-    > =>
+    ): entry is Extract<ProjectFitCheckpointEntry, { status: "completed" }> =>
       entry.status === "completed",
   );
   await Promise.all([
@@ -299,8 +291,7 @@ async function executeStage(input: {
           checkpointPath: input.checkpointPath,
           checkpoint: input.checkpoint,
           perCallOutputTokenLimit: input.perCallOutputTokenLimit,
-          totalInputTokenBudget:
-            input.protocol.manifest.budget.maxInputTokens,
+          totalInputTokenBudget: input.protocol.manifest.budget.maxInputTokens,
           totalOutputTokenBudget: projectFitTotalOutputTokenBudget(
             input.protocol.manifest,
           ),
@@ -328,10 +319,8 @@ async function executeStage(input: {
           expression !== null &&
           oracle.every(
             (hiddenCase) =>
-              evaluateExpression(
-                expression,
-                hiddenCase.input,
-              ) === hiddenCase.expected,
+              evaluateExpression(expression, hiddenCase.input) ===
+              hiddenCase.expected,
           );
         return {
           outcome: pendingTrial.elaboration.outcome,
@@ -448,9 +437,8 @@ async function resolveWithCheckpoint(input: {
     response,
     latencyMs,
   };
-  input.checkpoint.entries[
-    input.checkpoint.entries.indexOf(pending)
-  ] = completed;
+  input.checkpoint.entries[input.checkpoint.entries.indexOf(pending)] =
+    completed;
   await atomicWriteJson(input.checkpointPath, input.checkpoint);
   await waitForCooldown(input.options, key, "completed");
   await input.options.onCheckpoint?.(
@@ -458,10 +446,7 @@ async function resolveWithCheckpoint(input: {
   );
 
   try {
-    validateProjectFitResponseUsage(
-      response,
-      input.perCallOutputTokenLimit,
-    );
+    validateProjectFitResponseUsage(response, input.perCallOutputTokenLimit);
     validateProjectFitCompletedResponseBudget(
       input.checkpoint,
       input.totalInputTokenBudget,
@@ -473,7 +458,7 @@ async function resolveWithCheckpoint(input: {
       key,
       stage:
         response.usage === null ||
-          response.usage.outputTokens > input.perCallOutputTokenLimit
+        response.usage.outputTokens > input.perCallOutputTokenLimit
           ? "budget-validation"
           : "response-validation",
       completedResponses: completedProjectFitResponseCount(input.checkpoint),
@@ -501,9 +486,7 @@ async function resolveWithRateLimitRetry(
       );
       if (!rateLimited || retries >= maxRetries) throw error;
       retries += 1;
-      options.onProgress?.(
-        `rate-limit retry ${retries}/${maxRetries}`,
-      );
+      options.onProgress?.(`rate-limit retry ${retries}/${maxRetries}`);
     }
   }
 }
@@ -515,9 +498,7 @@ async function waitForCooldown(
 ): Promise<void> {
   const milliseconds = options.cooldownMs ?? 0;
   if (milliseconds === 0) return;
-  options.onProgress?.(
-    `${task} ${outcome}; cooldown ${milliseconds}ms`,
-  );
+  options.onProgress?.(`${task} ${outcome}; cooldown ${milliseconds}ms`);
   await (options.wait ?? defaultWait)(milliseconds);
 }
 
@@ -557,8 +538,7 @@ function evaluateStageGate(
     latencyBudget:
       projectContext.latencyMs - typeOnly.latencyMs <=
       thresholds.maxLatencyDeltaMs,
-    projectContextFalseResolutionSafety:
-      projectContext.falseResolutions === 0,
+    projectContextFalseResolutionSafety: projectContext.falseResolutions === 0,
   };
   return {
     status: Object.values(checks).every(Boolean) ? "passed" : "failed",
@@ -661,8 +641,5 @@ function estimatedCost(
   outputTokens: number,
   rates: { input: number; output: number },
 ): number {
-  return (
-    (inputTokens * rates.input + outputTokens * rates.output) /
-    1_000_000
-  );
+  return (inputTokens * rates.input + outputTokens * rates.output) / 1_000_000;
 }

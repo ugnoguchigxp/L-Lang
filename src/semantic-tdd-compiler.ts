@@ -159,9 +159,7 @@ export async function compileSemanticTddSource(
         plan: newlyValidated.plan,
         preImplementationRed: pre.certificate,
         provider:
-          options.testProvider ??
-          options.provider ??
-          "fixture:semantic-test",
+          options.testProvider ?? options.provider ?? "fixture:semantic-test",
         model: options.testModel ?? options.model ?? "fixture-model",
         response: resolution.response,
         freezeMode: "automatic",

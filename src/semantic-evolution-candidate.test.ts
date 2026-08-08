@@ -15,7 +15,10 @@ describe("Semantic Evolution candidate parser", () => {
   });
 
   test("rejects unknown, missing, malformed, and inconsistent fields", () => {
-    const cases: Array<{ mutate: (candidate: Candidate) => void; message: string }> = [
+    const cases: Array<{
+      mutate: (candidate: Candidate) => void;
+      message: string;
+    }> = [
       {
         mutate: (candidate) => {
           candidate.unexpected = true;

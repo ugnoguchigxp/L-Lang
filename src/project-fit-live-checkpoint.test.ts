@@ -40,8 +40,9 @@ describe("Project Fit live checkpoint persistence", () => {
     await mkdir(target);
 
     await expect(atomicWriteText(target, "value")).rejects.toThrow();
-    expect((await readdir(root)).filter((name) => name.includes(".atomic.tmp")))
-      .toEqual([]);
+    expect(
+      (await readdir(root)).filter((name) => name.includes(".atomic.tmp")),
+    ).toEqual([]);
   });
 
   test("fails closed when a completed response has no usage", () => {

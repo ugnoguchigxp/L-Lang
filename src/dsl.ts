@@ -46,7 +46,9 @@ export type StaticValue = {
 };
 
 function compileTimeOnly(name: string): never {
-  throw new Error(`${name} is a semantic compiler form and cannot run directly`);
+  throw new Error(
+    `${name} is a semantic compiler form and cannot run directly`,
+  );
 }
 
 export function concept<T>(
@@ -58,10 +60,7 @@ export function concept<T>(
 
 export function defineConcept(
   _id: string,
-): (
-  strings: TemplateStringsArray,
-  ...values: never[]
-) => ConceptDefinition {
+): (strings: TemplateStringsArray, ...values: never[]) => ConceptDefinition {
   return (_strings: TemplateStringsArray, ..._values: never[]) =>
     compileTimeOnly("defineConcept");
 }

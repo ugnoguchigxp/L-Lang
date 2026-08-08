@@ -120,8 +120,16 @@ describe("semantic lock", () => {
   });
 
   test("finds the latest historical entry within each namespace", () => {
-    const olderEntry = { ...entry, fingerprint: "older", createdAt: "2026-07-19T00:00:00.000Z" };
-    const newerEntry = { ...entry, fingerprint: "newer", createdAt: "2026-07-21T00:00:00.000Z" };
+    const olderEntry = {
+      ...entry,
+      fingerprint: "older",
+      createdAt: "2026-07-19T00:00:00.000Z",
+    };
+    const newerEntry = {
+      ...entry,
+      fingerprint: "newer",
+      createdAt: "2026-07-21T00:00:00.000Z",
+    };
     const olderJudgment = {
       ...judgment,
       fingerprint: "older-judgment",
@@ -265,7 +273,8 @@ describe("semantic lock", () => {
       {
         label: "auto candidate metadata",
         mutate: (lock) => {
-          recordAt(firstEntry(lock.entries), "promotion").candidateId = "candidate";
+          recordAt(firstEntry(lock.entries), "promotion").candidateId =
+            "candidate";
         },
       },
       {
@@ -291,22 +300,28 @@ describe("semantic lock", () => {
       {
         label: "promotion validation",
         mutate: (lock) => {
-          recordAt(recordAt(firstEntry(lock.entries), "promotion"), "validation")
-            .fullTest = "skipped";
+          recordAt(
+            recordAt(firstEntry(lock.entries), "promotion"),
+            "validation",
+          ).fullTest = "skipped";
         },
       },
       {
         label: "promotion validation unknown field",
         mutate: (lock) => {
-          recordAt(recordAt(firstEntry(lock.entries), "promotion"), "validation")
-            .extra = true;
+          recordAt(
+            recordAt(firstEntry(lock.entries), "promotion"),
+            "validation",
+          ).extra = true;
         },
       },
       {
         label: "Static Judgment Semantic Test",
         mutate: (lock) => {
-          recordAt(recordAt(firstEntry(lock.judgments), "promotion"), "validation")
-            .semanticTest = "passed";
+          recordAt(
+            recordAt(firstEntry(lock.judgments), "promotion"),
+            "validation",
+          ).semanticTest = "passed";
         },
       },
     ];

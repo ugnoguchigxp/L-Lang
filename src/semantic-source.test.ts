@@ -4,10 +4,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
-import {
-  scanBenchmarkSource,
-  scanSemanticSource,
-} from "./semantic-source";
+import { scanBenchmarkSource, scanSemanticSource } from "./semantic-source";
 
 const example = new URL(
   "../examples/active-customer/semantic.ts",
@@ -39,7 +36,9 @@ describe("semantic source scanner", () => {
     expect(source.predicate.name).toBe("isActiveCustomer");
     expect(source.tests.acceptSource).toContain("customer@example.com");
     expect(source.tests.rejectSource).toContain("undefined");
-    expect(source.tests.boundarySource).toContain("empty-email-is-still-present");
+    expect(source.tests.boundarySource).toContain(
+      "empty-email-is-still-present",
+    );
     expect(source.tests.counterfactualSource).toContain(
       "suspension-changes-eligibility",
     );
@@ -85,12 +84,16 @@ describe("semantic source scanner", () => {
     expect(account.concept.hash).toBe(customer.concept.hash);
     expect(account.concept.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(account.concept.specification).toBe(customer.concept.specification);
-    expect(account.concept.definitionPath).toBe(customer.concept.definitionPath);
+    expect(account.concept.definitionPath).toBe(
+      customer.concept.definitionPath,
+    );
     expect(customer.concept.shared).toBe(true);
     expect(account.concept.typeName).toBe("ServiceAccount");
     expect(customer.concept.typeName).toBe("CustomerRecord");
     expect(account.concept.typeDeclaration).toContain("enabled: boolean");
-    expect(customer.concept.typeDeclaration).toContain('status: "active" | "suspended"');
+    expect(customer.concept.typeDeclaration).toContain(
+      'status: "active" | "suspended"',
+    );
   });
 
   test("parses a shared fixed-section Concept into a canonical specification", async () => {
@@ -193,17 +196,19 @@ describe("semantic source scanner", () => {
       {
         name: "empty counterfactual variants",
         cases: `accept: [{ state: "ready" }], reject: [{ state: "waiting" }], counterfactual: [{ name: "change", base: { input: { state: "ready" }, expected: "accepted" }, variants: [] }]`,
-        message: "semanticTest.counterfactual[0].variants must be a non-empty array literal",
+        message:
+          "semanticTest.counterfactual[0].variants must be a non-empty array literal",
       },
       {
         name: "empty invariance inputs",
         cases: `accept: [{ state: "ready" }], reject: [{ state: "waiting" }], invariance: [{ name: "same", expected: "accepted", inputs: [] }]`,
-        message: "semanticTest.invariance[0].inputs must be a non-empty array literal",
+        message:
+          "semanticTest.invariance[0].inputs must be a non-empty array literal",
       },
     ]) {
-      await expect(scanTemporarySource(`semanticTest(isCustomer, { ${invalid.cases} });`)).rejects.toThrow(
-        invalid.message,
-      );
+      await expect(
+        scanTemporarySource(`semanticTest(isCustomer, { ${invalid.cases} });`),
+      ).rejects.toThrow(invalid.message);
     }
   });
 });

@@ -9,7 +9,9 @@ import { createProjectFitTestProtocol } from "./project-fit-test-fixture";
 describe("Project Fit v2 fixture A/B harness", () => {
   test("evaluates initial and schema-change stages without exposing oracles", async () => {
     const fixture = await createProjectFitTestProtocol();
-    const reportRoot = await mkdtemp(resolve(tmpdir(), "l-lang-project-fit-report-"));
+    const reportRoot = await mkdtemp(
+      resolve(tmpdir(), "l-lang-project-fit-report-"),
+    );
     const captured: unknown[] = [];
     try {
       const first = await runProjectFitFixture({
@@ -40,8 +42,9 @@ describe("Project Fit v2 fixture A/B harness", () => {
         safety: { falseResolutions: 0, workspaceMutations: 0 },
       });
       expect(captured).toHaveLength(4);
-      expect(captured.filter((value) => "projectContext" in (value as object)))
-        .toHaveLength(2);
+      expect(
+        captured.filter((value) => "projectContext" in (value as object)),
+      ).toHaveLength(2);
       for (const input of captured) {
         const serialized = JSON.stringify(input);
         expect(serialized).not.toContain("hiddenCases");
@@ -75,7 +78,9 @@ describe("Project Fit v2 fixture A/B harness", () => {
 
   test("detects mutation of a frozen v2 input", async () => {
     const fixture = await createProjectFitTestProtocol();
-    const reportRoot = await mkdtemp(resolve(tmpdir(), "l-lang-project-fit-report-"));
+    const reportRoot = await mkdtemp(
+      resolve(tmpdir(), "l-lang-project-fit-report-"),
+    );
     try {
       await expect(
         runProjectFitFixture({
@@ -100,7 +105,9 @@ describe("Project Fit v2 fixture A/B harness", () => {
 
   test("fails closed when aggregate fixture usage exceeds the budget", async () => {
     const fixture = await createProjectFitTestProtocol();
-    const reportRoot = await mkdtemp(resolve(tmpdir(), "l-lang-project-fit-report-"));
+    const reportRoot = await mkdtemp(
+      resolve(tmpdir(), "l-lang-project-fit-report-"),
+    );
     try {
       await expect(
         runProjectFitFixture({
@@ -122,7 +129,7 @@ describe("Project Fit v2 fixture A/B harness", () => {
 function trialResult(arm: "typeOnly" | "projectContext") {
   const passed = arm === "projectContext";
   return {
-    outcome: passed ? "resolved" as const : "unresolved" as const,
+    outcome: passed ? ("resolved" as const) : ("unresolved" as const),
     projectGatePassed: passed,
     hiddenTestsPassed: passed,
     correctionEffort: passed ? 0 : 1,

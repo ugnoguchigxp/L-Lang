@@ -28,7 +28,10 @@ async function main(): Promise<void> {
   }
 }
 
-async function generate(definitionPath: string, outputPath: string): Promise<void> {
+async function generate(
+  definitionPath: string,
+  outputPath: string,
+): Promise<void> {
   const source = await readFile(resolve(definitionPath), "utf8");
   const input: unknown = JSON.parse(source);
   const definition = parsePredicateDefinition(input);

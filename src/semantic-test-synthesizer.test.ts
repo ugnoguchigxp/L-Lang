@@ -75,12 +75,8 @@ describe("separated Semantic Test synthesis", () => {
       parseSemanticTestSynthesisResult({
         outcome: "unresolved",
         plan: null,
-        diagnostics: [
-          "x".repeat(SEMANTIC_LIMITS.diagnosticCharacters + 1),
-        ],
+        diagnostics: ["x".repeat(SEMANTIC_LIMITS.diagnosticCharacters + 1)],
       }),
-    ).toThrow(
-      `at most ${SEMANTIC_LIMITS.diagnosticCharacters} characters`,
-    );
+    ).toThrow(`at most ${SEMANTIC_LIMITS.diagnosticCharacters} characters`);
   });
 });

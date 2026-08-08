@@ -42,9 +42,10 @@ export function classifySemanticChange(input: {
   const previousForShape = input.typeSchema
     ? normalizePredicateOnType(input.previous, input.typeSchema)
     : { expression: input.previous, rewrites: [] };
-  const candidateForShape = input.candidate !== null && input.typeSchema
-    ? normalizePredicateOnType(input.candidate, input.typeSchema)
-    : { expression: input.candidate, rewrites: [] };
+  const candidateForShape =
+    input.candidate !== null && input.typeSchema
+      ? normalizePredicateOnType(input.candidate, input.typeSchema)
+      : { expression: input.candidate, rewrites: [] };
   const diagnostics = [
     ...(input.diagnostics ?? []),
     ...(input.validationError ? [input.validationError] : []),
@@ -54,7 +55,8 @@ export function classifySemanticChange(input: {
   if (input.candidate === null) {
     return {
       classification: "unresolved",
-      summary: "The changed schema no longer represents every required semantic role unambiguously.",
+      summary:
+        "The changed schema no longer represents every required semantic role unambiguously.",
       previousIr: input.previous,
       candidateIr: null,
       logicalShapeChanged: true,
@@ -81,7 +83,7 @@ export function classifySemanticChange(input: {
       ? "The Predicate IR is unchanged."
       : logicalShapeChanged
         ? "The predicate's logical structure changed and requires explicit review."
-        : "The logical structure is preserved; property or representation mappings changed."
+        : "The logical structure is preserved; property or representation mappings changed.";
 
   return {
     classification,
@@ -159,7 +161,13 @@ function flattenLeaves(expression: PredicateExpression): Leaf[] {
     case "not":
       return flattenLeaves(expression.condition);
     case "equals":
-      return [{ kind: "equals", property: expression.property, value: expression.value }];
+      return [
+        {
+          kind: "equals",
+          property: expression.property,
+          value: expression.value,
+        },
+      ];
     case "present":
       return [{ kind: "present", property: expression.property }];
   }
@@ -199,7 +207,10 @@ function expressionSignature(expression: PredicateExpression): string {
   }
 }
 
-function alignLeaves(before: Leaf[], after: Leaf[]): Array<[Leaf | null, Leaf | null]> {
+function alignLeaves(
+  before: Leaf[],
+  after: Leaf[],
+): Array<[Leaf | null, Leaf | null]> {
   const remainingBefore = before.map((leaf, index) => ({ leaf, index }));
   const remainingAfter = after.map((leaf, index) => ({ leaf, index }));
   const matched: Array<{ before: Leaf; after: Leaf; beforeIndex: number }> = [];
@@ -230,7 +241,9 @@ function alignLeaves(before: Leaf[], after: Leaf[]): Array<[Leaf | null, Leaf | 
   }
   matched.sort((left, right) => left.beforeIndex - right.beforeIndex);
   return [
-    ...matched.map(({ before: left, after: right }) => [left, right] as [Leaf, Leaf]),
+    ...matched.map(
+      ({ before: left, after: right }) => [left, right] as [Leaf, Leaf],
+    ),
     ...remainingBefore
       .sort((left, right) => left.index - right.index)
       .map(({ leaf }) => [leaf, null] as [Leaf, null]),

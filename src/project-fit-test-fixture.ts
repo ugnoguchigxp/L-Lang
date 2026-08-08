@@ -1,8 +1,4 @@
-import {
-  mkdtemp,
-  readFile,
-  writeFile,
-} from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 

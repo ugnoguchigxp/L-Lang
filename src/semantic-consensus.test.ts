@@ -21,7 +21,9 @@ describe("live semantic consensus", () => {
     ];
     let started = 0;
     let release!: () => void;
-    const gate = new Promise<void>((resolveGate) => { release = resolveGate; });
+    const gate = new Promise<void>((resolveGate) => {
+      release = resolveGate;
+    });
     const resultPromise = resolveWithSemanticConsensus({
       source,
       samples: 3,
@@ -67,7 +69,9 @@ describe("live semantic consensus", () => {
     });
     expect(result.reached).toBe(false);
     expect(result.resolution.elaboration.outcome).toBe("unresolved");
-    expect(result.resolution.elaboration.diagnostics[0]).toContain("consensus not reached");
+    expect(result.resolution.elaboration.diagnostics[0]).toContain(
+      "consensus not reached",
+    );
   });
 });
 
@@ -103,7 +107,11 @@ function resolved(body: PredicateExpression): SemanticResolution {
 
 function unresolved(): SemanticResolution {
   return {
-    elaboration: { outcome: "unresolved", body: null, diagnostics: ["ambiguous"] },
+    elaboration: {
+      outcome: "unresolved",
+      body: null,
+      diagnostics: ["ambiguous"],
+    },
     response: null,
     rawOutput: { outcome: "unresolved" },
   };

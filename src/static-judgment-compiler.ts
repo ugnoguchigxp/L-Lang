@@ -1,6 +1,4 @@
-import {
-  writeFile,
-} from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 
 import {
@@ -112,7 +110,9 @@ export async function compileStaticJudgmentSource(
   const requestShape = staticJudgmentRequestShape(source);
   const hashes = staticJudgmentSemanticHashes(source);
 
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const lockPath = resolve(
+    options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
+  );
   const { lock, revision: lockRevision } =
     await readSemanticLockSnapshot(lockPath);
   let provider = options.provider ?? "lock";
@@ -125,14 +125,15 @@ export async function compileStaticJudgmentSource(
     model,
     ...hashes,
   });
-  let entry = options.mode === "replay"
-    ? findStaticJudgmentReplayEntry(lock, {
-        source: sourceRelative,
-        judgment: source.judgment.name,
-        conceptId: source.concept.id,
-        ...hashes,
-      })
-    : lock.judgments?.[fingerprint];
+  let entry =
+    options.mode === "replay"
+      ? findStaticJudgmentReplayEntry(lock, {
+          source: sourceRelative,
+          judgment: source.judgment.name,
+          conceptId: source.concept.id,
+          ...hashes,
+        })
+      : lock.judgments?.[fingerprint];
 
   if (options.mode === "replay" && entry === undefined) {
     throw new Error(
@@ -169,7 +170,9 @@ export async function compileStaticJudgmentSource(
     };
   } else {
     if (options.mode === "replay" || options.resolve === undefined) {
-      throw new Error("Static Judgment build requires a resolver on a lock miss");
+      throw new Error(
+        "Static Judgment build requires a resolver on a lock miss",
+      );
     }
     apiCalls = options.countsAsApiCall === false ? 0 : 1;
     resolution = await options.resolve(requestShape);
@@ -177,20 +180,19 @@ export async function compileStaticJudgmentSource(
 
   const pipeline = await createSemanticPipelineRun({
     workspaceRoot,
-    ...(options.auditRoot === undefined ? {} : { auditRoot: options.auditRoot }),
+    ...(options.auditRoot === undefined
+      ? {}
+      : { auditRoot: options.auditRoot }),
     defaultAuditKind: "judgments",
     ...(options.commandRunner === undefined
       ? {}
       : { commandRunner: options.commandRunner }),
-    ...(options.writeLock === undefined ? {} : { writeLock: options.writeLock }),
+    ...(options.writeLock === undefined
+      ? {}
+      : { writeLock: options.writeLock }),
   });
-  const {
-    runId,
-    auditDirectory,
-    reportPath,
-    executeCommand,
-    persistLock,
-  } = pipeline;
+  const { runId, auditDirectory, reportPath, executeCommand, persistLock } =
+    pipeline;
   await writeSemanticJson(resolve(auditDirectory, "input.json"), {
     version: 1,
     source: sourceRelative,
@@ -216,7 +218,10 @@ export async function compileStaticJudgmentSource(
   );
 
   const sourceDirectory = dirname(source.absolutePath);
-  const finalPath = generatedOutputPath(source.absolutePath, source.judgment.name);
+  const finalPath = generatedOutputPath(
+    source.absolutePath,
+    source.judgment.name,
+  );
   const outputStem = basename(finalPath, ".generated.ts");
   const candidatePath = resolve(
     sourceDirectory,
@@ -272,11 +277,17 @@ export async function compileStaticJudgmentSource(
     await cleanupSemanticFiles([candidatePath]);
 
     const generatedCodeHash = sha256(code);
-    const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
+    const output = workspaceRelativePath(
+      workspaceRoot,
+      finalPath,
+      "generated output",
+    );
     if (promotion === "review") {
       const review = await createStaticJudgmentSemanticReview({
         workspaceRoot,
-        ...(options.reviewRoot === undefined ? {} : { reviewRoot: options.reviewRoot }),
+        ...(options.reviewRoot === undefined
+          ? {}
+          : { reviewRoot: options.reviewRoot }),
         source: sourceRelative,
         output,
         symbol: source.judgment.name,
@@ -323,7 +334,11 @@ export async function compileStaticJudgmentSource(
         promotionMode: "review",
         source: sourceRelative,
         output,
-        report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
+        report: workspaceRelativePath(
+          workspaceRoot,
+          reportPath,
+          "audit report",
+        ),
         fingerprint,
         provider,
         model,
@@ -399,7 +414,11 @@ export async function compileStaticJudgmentSource(
       status: "passed",
       stage: "complete",
       source: sourceRelative,
-      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      output: workspaceRelativePath(
+        workspaceRoot,
+        finalPath,
+        "generated output",
+      ),
       judgment: source.judgment.name,
       resolvedValue: resolution.judgment.value,
       provider,
@@ -417,7 +436,11 @@ export async function compileStaticJudgmentSource(
       status: "passed",
       promotionMode: options.mode === "replay" ? "replay" : "auto",
       source: sourceRelative,
-      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      output: workspaceRelativePath(
+        workspaceRoot,
+        finalPath,
+        "generated output",
+      ),
       report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
       fingerprint,
       provider,

@@ -2,10 +2,7 @@ import { lstat, readFile, realpath } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 
 import { sha256, workspaceRelativePath } from "./semantic-fingerprint";
-import {
-  parseBoundedJsonText,
-  readBoundedJsonFile,
-} from "./semantic-limits";
+import { parseBoundedJsonText, readBoundedJsonFile } from "./semantic-limits";
 import {
   buildStaticJudgmentRequest,
   type StaticJudgmentResolution,
@@ -143,7 +140,9 @@ export async function verifyStaticJudgmentBenchmarkFreeze(
     const bytes = await readFrozenProtocolFile(protocol.directory, path);
     const expectedHash = protocol.freeze.files[path];
     if (expectedHash === undefined || sha256(bytes) !== expectedHash) {
-      throw new Error(`Static Judgment benchmark frozen input changed: ${path}`);
+      throw new Error(
+        `Static Judgment benchmark frozen input changed: ${path}`,
+      );
     }
   }
 }

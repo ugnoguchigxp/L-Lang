@@ -15,7 +15,9 @@ import { scanSemanticSource } from "./semantic-source";
 const roots: string[] = [];
 
 afterEach(async () => {
-  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true })));
+  await Promise.all(
+    roots.splice(0).map((root) => rm(root, { recursive: true })),
+  );
 });
 
 describe("ProjectContext", () => {
@@ -235,9 +237,7 @@ describe("ProjectContext", () => {
         workspaceRoot: fixture.root,
         lock: emptyLock(),
       }),
-    ).rejects.toThrow(
-      "type alias or interface without implementation code",
-    );
+    ).rejects.toThrow("type alias or interface without implementation code");
   });
 });
 
@@ -271,7 +271,7 @@ async function projectFixture(typeFile = "types.ts"): Promise<{
       "declare function concept<T>(parts: TemplateStringsArray): unknown;",
       "declare function generatePredicate(value: unknown): unknown;",
       "declare function semanticTest(value: unknown, cases: { accept: unknown[]; reject: unknown[] }): void;",
-      "type WorkItem = { state: \"ready\" | \"blocked\"; owner: Owner };",
+      'type WorkItem = { state: "ready" | "blocked"; owner: Owner };',
       "const Eligible = concept<WorkItem>`",
       "Definition:",
       "A work item that is ready.",
@@ -298,12 +298,8 @@ function bindingEntry(
     generatedCodeHash: string;
   },
 ): SemanticLockEntry {
-  const {
-    conceptId,
-    conceptHash,
-    generatedCodeHash,
-    ...optionalOverrides
-  } = overrides;
+  const { conceptId, conceptHash, generatedCodeHash, ...optionalOverrides } =
+    overrides;
   return {
     fingerprint: "1".repeat(64),
     source: "prior.semantic.ts",

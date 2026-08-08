@@ -1,11 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  type FileHandle,
-  mkdir,
-  open,
-  rename,
-  unlink,
-} from "node:fs/promises";
+import { type FileHandle, mkdir, open, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
 export type AtomicWriteOptions = {

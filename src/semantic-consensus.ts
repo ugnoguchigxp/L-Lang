@@ -47,19 +47,28 @@ export async function resolveWithSemanticConsensus(input: {
   );
   const groups = new Map<string, SemanticConsensusSample[]>();
   for (const sample of settled) {
-    if (!sample.eligible || sample.signature === null || sample.outcome === "error") continue;
+    if (
+      !sample.eligible ||
+      sample.signature === null ||
+      sample.outcome === "error"
+    )
+      continue;
     const key = `${sample.outcome}:${sample.signature}`;
     groups.set(key, [...(groups.get(key) ?? []), sample]);
   }
-  const ranked = [...groups.values()].sort((left, right) =>
-    right.length - left.length ||
-    (left[0]?.signature ?? "").localeCompare(right[0]?.signature ?? ""),
+  const ranked = [...groups.values()].sort(
+    (left, right) =>
+      right.length - left.length ||
+      (left[0]?.signature ?? "").localeCompare(right[0]?.signature ?? ""),
   );
   const winner = ranked[0];
   const tied = winner !== undefined && ranked[1]?.length === winner.length;
-  const reached = winner !== undefined && winner.length >= input.quorum && !tied;
+  const reached =
+    winner !== undefined && winner.length >= input.quorum && !tied;
   const selected = reached ? winner[0] : undefined;
-  const auditVotes = settled.map(({ resolution: _resolution, ...sample }) => sample);
+  const auditVotes = settled.map(
+    ({ resolution: _resolution, ...sample }) => sample,
+  );
   const rawOutput = {
     method: "type-aware-consensus-v1",
     samples: input.samples,
@@ -77,7 +86,9 @@ export async function resolveWithSemanticConsensus(input: {
   let resolution: SemanticResolution;
   if (selected === undefined || selected.resolution === null) {
     resolution = unresolvedResolution(
-      [`consensus not reached: ${describeGroups(ranked)}; required ${input.quorum}/${input.samples}`],
+      [
+        `consensus not reached: ${describeGroups(ranked)}; required ${input.quorum}/${input.samples}`,
+      ],
       rawOutput,
     );
   } else if (selected.outcome === "unresolved") {
@@ -90,19 +101,25 @@ export async function resolveWithSemanticConsensus(input: {
     samples: input.samples,
     quorum: input.quorum,
     reached,
-    selectedOutcome: selected?.outcome === "error" ? null : selected?.outcome ?? null,
+    selectedOutcome:
+      selected?.outcome === "error" ? null : (selected?.outcome ?? null),
     selectedSignature: selected?.signature ?? null,
     supportingSamples: reached ? winner.map((sample) => sample.sample) : [],
     votes: auditVotes,
   };
 }
 
-export function assertConsensusParameters(samples: number, quorum: number): void {
+export function assertConsensusParameters(
+  samples: number,
+  quorum: number,
+): void {
   if (!Number.isInteger(samples) || samples < 1 || samples > 9) {
     throw new Error("consensus samples must be an integer between 1 and 9");
   }
   if (!Number.isInteger(quorum) || quorum < 1 || quorum > samples) {
-    throw new Error("consensus quorum must be an integer between 1 and samples");
+    throw new Error(
+      "consensus quorum must be an integer between 1 and samples",
+    );
   }
   if (samples > 1 && quorum <= samples / 2) {
     throw new Error("consensus quorum must be a strict majority");

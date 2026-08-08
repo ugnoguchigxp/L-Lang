@@ -22,9 +22,7 @@ describe("predicate generator", () => {
       },
     });
 
-    expect(generatePredicate(definition)).toContain(
-      "account.enabled === true",
-    );
+    expect(generatePredicate(definition)).toContain("account.enabled === true");
   });
 
   test("rejects an unsupported expression before generation", () => {

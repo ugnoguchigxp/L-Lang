@@ -125,6 +125,8 @@ describe("semantic verify", () => {
         manifestPath: "../outside.json",
         workspaceRoot: resolve("examples"),
       }),
-    ).rejects.toThrow("Semantic Closure manifest must be inside the workspace root");
+    ).rejects.toThrow(
+      "Semantic Closure manifest must be inside the workspace root",
+    );
   });
 });

@@ -104,8 +104,6 @@ export function renderSemanticExplanation(
   return lines.join("\n");
 }
 
-function renderIntegrity(
-  state: "verified" | "missing" | "mismatch",
-): string {
+function renderIntegrity(state: "verified" | "missing" | "mismatch"): string {
   return state === "verified" ? "verified" : `ERROR (${state})`;
 }

@@ -43,7 +43,7 @@ describe("Project Fit v2 manifest and freeze", () => {
       parseProjectFitManifest({
         ...validProjectFitManifest(),
         version: 1,
-      })
+      }),
     ).toThrow("version must be 2");
     expect(
       parseProjectFitFreeze({
@@ -63,9 +63,8 @@ describe("Project Fit v2 manifest and freeze", () => {
     );
 
     const impossibleOutput = validProjectFitManifest();
-    (
-      impossibleOutput.budget as Record<string, unknown>
-    ).maxTotalOutputTokens = 799;
+    (impossibleOutput.budget as Record<string, unknown>).maxTotalOutputTokens =
+      799;
     expect(() => parseProjectFitManifest(impossibleOutput)).toThrow(
       "cannot cover 4 calls at 200 tokens per call",
     );
@@ -77,9 +76,8 @@ describe("Project Fit v2 manifest and freeze", () => {
     );
 
     const legacyTokenGate = validProjectFitManifest();
-    (
-      legacyTokenGate.thresholds as Record<string, unknown>
-    ).maxInputTokenDelta = 1_000;
+    (legacyTokenGate.thresholds as Record<string, unknown>).maxInputTokenDelta =
+      1_000;
     expect(() => parseProjectFitManifest(legacyTokenGate)).toThrow(
       "unknown field maxInputTokenDelta",
     );
@@ -107,7 +105,9 @@ describe("Project Fit v2 manifest and freeze", () => {
     );
 
     const missingStage = validProjectFitManifest();
-    const missing = (missingStage.cases as Array<Record<string, unknown>>)[0] as {
+    const missing = (
+      missingStage.cases as Array<Record<string, unknown>>
+    )[0] as {
       stages: Record<string, unknown>;
     };
     delete missing.stages.schemaChange;
@@ -134,7 +134,7 @@ describe("Project Fit v2 manifest and freeze", () => {
         version: 1,
         intent: "old",
         target: {},
-      })
+      }),
     ).toThrow("version must be 2");
     expect(
       parseProjectFitOracle({
@@ -145,7 +145,7 @@ describe("Project Fit v2 manifest and freeze", () => {
       }),
     ).toMatchObject({ version: 2 });
     expect(() =>
-      parseProjectFitOracle({ version: 1, hiddenCases: [] })
+      parseProjectFitOracle({ version: 1, hiddenCases: [] }),
     ).toThrow("version must be 2");
   });
 
@@ -168,9 +168,9 @@ describe("Project Fit v2 manifest and freeze", () => {
         resolve(fixture.directory, "initial.input.json"),
         '{"version":2,"mutated":true}\n',
       );
-      await expect(readProjectFitProtocol(fixture.manifestPath)).rejects.toThrow(
-        "frozen input changed",
-      );
+      await expect(
+        readProjectFitProtocol(fixture.manifestPath),
+      ).rejects.toThrow("frozen input changed");
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }
@@ -185,9 +185,9 @@ describe("Project Fit v2 manifest and freeze", () => {
       };
       delete freeze.files["schema-change.oracle.json"];
       await writeFile(freezePath, `${JSON.stringify(freeze, null, 2)}\n`);
-      await expect(readProjectFitProtocol(fixture.manifestPath)).rejects.toThrow(
-        "must exactly match manifest inputs",
-      );
+      await expect(
+        readProjectFitProtocol(fixture.manifestPath),
+      ).rejects.toThrow("must exactly match manifest inputs");
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }

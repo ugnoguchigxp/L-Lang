@@ -294,12 +294,7 @@ function assertSemanticExpected(
   path: string,
   sourceFile: ts.SourceFile,
 ): void {
-  const expected = stringLiteralProperty(
-    object,
-    "expected",
-    path,
-    sourceFile,
-  );
+  const expected = stringLiteralProperty(object, "expected", path, sourceFile);
   if (expected !== "accepted" && expected !== "rejected") {
     throw sourceError(
       sourceFile,

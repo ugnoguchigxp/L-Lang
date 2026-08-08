@@ -1,7 +1,4 @@
-import type {
-  ProjectFitArm,
-  ProjectFitStage,
-} from "./project-fit-manifest";
+import type { ProjectFitArm, ProjectFitStage } from "./project-fit-manifest";
 
 export type ProjectFitTrialResult = {
   outcome: "resolved" | "unresolved" | "error";
@@ -117,8 +114,7 @@ export function summarizeProjectFitStage(
         rate(projectContext.unresolved, projectContext.trials) -
         rate(typeOnly.unresolved, typeOnly.trials),
       medianCorrectionEffortDelta:
-        projectContext.medianCorrectionEffort -
-        typeOnly.medianCorrectionEffort,
+        projectContext.medianCorrectionEffort - typeOnly.medianCorrectionEffort,
       inputTokenDelta: projectContext.inputTokens - typeOnly.inputTokens,
       latencyDeltaMs: projectContext.latencyMs - typeOnly.latencyMs,
     },

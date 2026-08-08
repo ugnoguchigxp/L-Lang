@@ -20,13 +20,18 @@ describe("semantic polymorphism", () => {
 
     expect(customer.outcome).toBe("resolved");
     expect(account.outcome).toBe("resolved");
-    if (customer.outcome !== "resolved" || account.outcome !== "resolved") return;
+    if (customer.outcome !== "resolved" || account.outcome !== "resolved")
+      return;
 
     validatePredicateContext(customer.body, customerSource);
     validatePredicateContext(account.body, accountSource);
     expect(customerSource.concept.id).toBe("customer.active");
     expect(accountSource.concept.hash).toBe(customerSource.concept.hash);
-    expect(propertyNames(customer.body)).toEqual(["status", "deletedAt", "email"]);
+    expect(propertyNames(customer.body)).toEqual([
+      "status",
+      "deletedAt",
+      "email",
+    ]);
     expect(propertyNames(account.body)).toEqual([
       "enabled",
       "blockedAt",

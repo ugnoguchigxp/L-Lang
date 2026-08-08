@@ -29,12 +29,8 @@ describe("semantic test obligation IR", () => {
     expect(plan.obligations).toHaveLength(4);
     const invariance = plan.obligations[3];
     const changed = applySemanticTestChanges(
-      invariance?.kind === "invariance"
-        ? invariance.base
-        : null,
-      invariance?.kind === "invariance"
-        ? invariance.changes
-        : [],
+      invariance?.kind === "invariance" ? invariance.base : null,
+      invariance?.kind === "invariance" ? invariance.changes : [],
     );
     expect(changed).toMatchObject({ email: "renamed@example.com" });
   });

@@ -46,10 +46,14 @@ export function parseConceptSpecification(
       line === heading ? [index] : [],
     );
     if (heading === "Definition:" && matches.length === 0) {
-      throw new Error(`Concept specification is missing required section ${heading}`);
+      throw new Error(
+        `Concept specification is missing required section ${heading}`,
+      );
     }
     if (matches.length > 1) {
-      throw new Error(`Concept specification contains duplicate section ${heading}`);
+      throw new Error(
+        `Concept specification contains duplicate section ${heading}`,
+      );
     }
     if (matches[0] !== undefined) positions.set(heading, matches[0]);
   }
@@ -164,7 +168,9 @@ function parseTextSection(lines: string[], heading: string): string {
 function parseListSection(lines: string[], heading: string): string[] {
   const body = trimBlankLines(lines);
   if (body.length === 0) {
-    throw new Error(`Concept section ${heading} must contain at least one item`);
+    throw new Error(
+      `Concept section ${heading} must contain at least one item`,
+    );
   }
   return body.map((line, index) => {
     if (!line.startsWith("- ") || line.slice(2).trim() !== line.slice(2)) {
@@ -187,9 +193,7 @@ function trimBlankLines(lines: string[]): string[] {
   return result;
 }
 
-function assertNoDuplicateItems(
-  concept: StructuredConceptSpecification,
-): void {
+function assertNoDuplicateItems(concept: StructuredConceptSpecification): void {
   const sections = [
     ["Requirements", concept.requirements ?? []],
     ["Exclusions", concept.exclusions ?? []],

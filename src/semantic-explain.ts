@@ -330,12 +330,13 @@ function lockProvenance(
     model: entry.model,
     response: entry.response,
     createdAt: entry.createdAt,
-    promotion: entry.promotion === undefined
-      ? {
-          mode: "legacy-auto",
-          promotedAt: entry.createdAt,
-        }
-      : entry.promotion,
+    promotion:
+      entry.promotion === undefined
+        ? {
+            mode: "legacy-auto",
+            promotedAt: entry.createdAt,
+          }
+        : entry.promotion,
   };
 }
 
@@ -373,12 +374,16 @@ function predicateStaleReasons(
   entry: SemanticLockEntry,
 ): PredicateStaleReason[] {
   const reasons: PredicateStaleReason[] = [];
-  if (entry.conceptHash !== current.conceptHash) reasons.push("conceptHash changed");
-  if (entry.sourceHash !== current.sourceHash) reasons.push("sourceHash changed");
+  if (entry.conceptHash !== current.conceptHash)
+    reasons.push("conceptHash changed");
+  if (entry.sourceHash !== current.sourceHash)
+    reasons.push("sourceHash changed");
   if (entry.typeHash !== current.typeHash) reasons.push("typeHash changed");
   if (entry.testHash !== current.testHash) reasons.push("testHash changed");
-  if (entry.promptHash !== current.promptHash) reasons.push("promptHash changed");
-  if (entry.contextHash !== current.contextHash) reasons.push("contextHash changed");
+  if (entry.promptHash !== current.promptHash)
+    reasons.push("promptHash changed");
+  if (entry.contextHash !== current.contextHash)
+    reasons.push("contextHash changed");
   return reasons;
 }
 
@@ -387,9 +392,11 @@ function staticJudgmentStaleReasons(
   entry: StaticJudgmentLockEntry,
 ): StaticJudgmentStaleReason[] {
   const reasons: StaticJudgmentStaleReason[] = [];
-  if (entry.conceptHash !== current.conceptHash) reasons.push("conceptHash changed");
+  if (entry.conceptHash !== current.conceptHash)
+    reasons.push("conceptHash changed");
   if (entry.valueHash !== current.valueHash) reasons.push("valueHash changed");
-  if (entry.promptHash !== current.promptHash) reasons.push("promptHash changed");
+  if (entry.promptHash !== current.promptHash)
+    reasons.push("promptHash changed");
   return reasons;
 }
 

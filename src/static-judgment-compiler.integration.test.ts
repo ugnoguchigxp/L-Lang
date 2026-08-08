@@ -18,119 +18,126 @@ import {
 const workspaceRoot = resolve(import.meta.dir, "..");
 
 describe("Static Judgment compiler transaction", () => {
-  test(
-    "builds true and false constants, replays, rejects stale and unresolved input, and rolls back failures",
-    async () => {
-      const parent = resolve(workspaceRoot, ".semantic/test-workspaces");
-      await mkdir(parent, { recursive: true });
-      const testRoot = await mkdtemp(resolve(parent, "static-compiler-"));
-      const sourcePath = resolve(testRoot, "semantic.ts");
-      const lockPath = resolve(testRoot, "semantic.lock");
-      const auditRoot = resolve(testRoot, "audit");
-      const finalPath = resolve(testRoot, "mike-is-cat.generated.ts");
+  test("builds true and false constants, replays, rejects stale and unresolved input, and rolls back failures", async () => {
+    const parent = resolve(workspaceRoot, ".semantic/test-workspaces");
+    await mkdir(parent, { recursive: true });
+    const testRoot = await mkdtemp(resolve(parent, "static-compiler-"));
+    const sourcePath = resolve(testRoot, "semantic.ts");
+    const lockPath = resolve(testRoot, "semantic.lock");
+    const auditRoot = resolve(testRoot, "audit");
+    const finalPath = resolve(testRoot, "mike-is-cat.generated.ts");
 
-      try {
-        await writeSource(sourcePath, testRoot, "A small calico animal that meows.");
-        const stages: string[] = [];
-        const runner = createRunner(stages);
-        const built = await compileStaticJudgmentSource({
-          sourcePath,
-          workspaceRoot,
-          mode: "build",
-          provider: "fixture:true",
-          model: "gpt-5.4-mini",
-          countsAsApiCall: false,
-          lockPath,
-          auditRoot,
-          commandRunner: runner,
-          resolve: async () => resolved(true),
-        });
-        const trueCode = await readFile(finalPath, "utf8");
-        expect(built.resolvedValue).toBe(true);
-        expect(built.apiCalls).toBe(0);
-        expect(built.cacheHit).toBe(false);
-        expect(trueCode).toContain("mikeIsCat = true as const");
-        expect(trueCode).not.toMatch(/OPENAI|fetch|api-key|calico/);
-        expect(stages).toEqual([
-          "candidate-typecheck",
-          "project-typecheck",
-          "full-test",
-        ]);
+    try {
+      await writeSource(
+        sourcePath,
+        testRoot,
+        "A small calico animal that meows.",
+      );
+      const stages: string[] = [];
+      const runner = createRunner(stages);
+      const built = await compileStaticJudgmentSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "build",
+        provider: "fixture:true",
+        model: "gpt-5.4-mini",
+        countsAsApiCall: false,
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+        resolve: async () => resolved(true),
+      });
+      const trueCode = await readFile(finalPath, "utf8");
+      expect(built.resolvedValue).toBe(true);
+      expect(built.apiCalls).toBe(0);
+      expect(built.cacheHit).toBe(false);
+      expect(trueCode).toContain("mikeIsCat = true as const");
+      expect(trueCode).not.toMatch(/OPENAI|fetch|api-key|calico/);
+      expect(stages).toEqual([
+        "candidate-typecheck",
+        "project-typecheck",
+        "full-test",
+      ]);
 
-        stages.length = 0;
-        const replayedTrue = await compileStaticJudgmentSource({
+      stages.length = 0;
+      const replayedTrue = await compileStaticJudgmentSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "replay",
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+      });
+      expect(replayedTrue.apiCalls).toBe(0);
+      expect(replayedTrue.cacheHit).toBe(true);
+      expect(replayedTrue.generatedCodeHash).toBe(built.generatedCodeHash);
+      expect(await readFile(finalPath, "utf8")).toBe(trueCode);
+
+      await writeSource(
+        sourcePath,
+        testRoot,
+        "A battery-powered mechanical cat-shaped toy.",
+      );
+      const builtFalse = await compileStaticJudgmentSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "build",
+        provider: "fixture:false",
+        model: "gpt-5.4-mini",
+        countsAsApiCall: false,
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+        resolve: async () => resolved(false),
+      });
+      const falseCode = await readFile(finalPath, "utf8");
+      expect(builtFalse.resolvedValue).toBe(false);
+      expect(falseCode).toContain("mikeIsCat = false as const");
+
+      const replayedFalse = await compileStaticJudgmentSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "replay",
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+      });
+      expect(replayedFalse.resolvedValue).toBe(false);
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+
+      const lockBeforeFailures = await readFile(lockPath, "utf8");
+      const parsedLock = JSON.parse(lockBeforeFailures) as {
+        entries: Record<string, unknown>;
+        judgments: Record<string, unknown>;
+      };
+      expect(Object.keys(parsedLock.entries)).toHaveLength(0);
+      expect(Object.keys(parsedLock.judgments)).toHaveLength(2);
+      expect(Object.values(parsedLock.judgments)[0]).toMatchObject({
+        promotion: {
+          mode: "auto",
+          validation: { semanticTest: "not-applicable" },
+        },
+      });
+
+      await writeSource(
+        sourcePath,
+        testRoot,
+        "An animal is visible in the distance.",
+      );
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "replay",
           lockPath,
           auditRoot,
           commandRunner: runner,
-        });
-        expect(replayedTrue.apiCalls).toBe(0);
-        expect(replayedTrue.cacheHit).toBe(true);
-        expect(replayedTrue.generatedCodeHash).toBe(built.generatedCodeHash);
-        expect(await readFile(finalPath, "utf8")).toBe(trueCode);
+        }),
+      ).rejects.toThrow("no lock entry matches");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
 
-        await writeSource(
-          sourcePath,
-          testRoot,
-          "A battery-powered mechanical cat-shaped toy.",
-        );
-        const builtFalse = await compileStaticJudgmentSource({
-          sourcePath,
-          workspaceRoot,
-          mode: "build",
-          provider: "fixture:false",
-          model: "gpt-5.4-mini",
-          countsAsApiCall: false,
-          lockPath,
-          auditRoot,
-          commandRunner: runner,
-          resolve: async () => resolved(false),
-        });
-        const falseCode = await readFile(finalPath, "utf8");
-        expect(builtFalse.resolvedValue).toBe(false);
-        expect(falseCode).toContain("mikeIsCat = false as const");
-
-        const replayedFalse = await compileStaticJudgmentSource({
-          sourcePath,
-          workspaceRoot,
-          mode: "replay",
-          lockPath,
-          auditRoot,
-          commandRunner: runner,
-        });
-        expect(replayedFalse.resolvedValue).toBe(false);
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-
-        const lockBeforeFailures = await readFile(lockPath, "utf8");
-        const parsedLock = JSON.parse(lockBeforeFailures) as {
-          entries: Record<string, unknown>;
-          judgments: Record<string, unknown>;
-        };
-        expect(Object.keys(parsedLock.entries)).toHaveLength(0);
-        expect(Object.keys(parsedLock.judgments)).toHaveLength(2);
-        expect(
-          Object.values(parsedLock.judgments)[0],
-        ).toMatchObject({
-          promotion: {
-            mode: "auto",
-            validation: { semanticTest: "not-applicable" },
-          },
-        });
-
-        await writeSource(sourcePath, testRoot, "An animal is visible in the distance.");
-        await expect(compileStaticJudgmentSource({
-          sourcePath,
-          workspaceRoot,
-          mode: "replay",
-          lockPath,
-          auditRoot,
-          commandRunner: runner,
-        })).rejects.toThrow("no lock entry matches");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-
-        await expect(compileStaticJudgmentSource({
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
@@ -141,11 +148,13 @@ describe("Static Judgment compiler transaction", () => {
           auditRoot,
           commandRunner: runner,
           resolve: async () => unresolved(),
-        })).rejects.toThrow("was unresolved");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+        }),
+      ).rejects.toThrow("was unresolved");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
-        await expect(compileStaticJudgmentSource({
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
@@ -156,11 +165,13 @@ describe("Static Judgment compiler transaction", () => {
           auditRoot,
           commandRunner: createStubFailureRunner("project-typecheck"),
           resolve: async () => resolved(true),
-        })).rejects.toThrow("simulated project-typecheck failure");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+        }),
+      ).rejects.toThrow("simulated project-typecheck failure");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
-        await expect(compileStaticJudgmentSource({
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
@@ -171,11 +182,13 @@ describe("Static Judgment compiler transaction", () => {
           auditRoot,
           commandRunner: createRunner([], "full-test"),
           resolve: async () => resolved(true),
-        })).rejects.toThrow("simulated full-test failure");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+        }),
+      ).rejects.toThrow("simulated full-test failure");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
-        await expect(compileStaticJudgmentSource({
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
@@ -189,11 +202,13 @@ describe("Static Judgment compiler transaction", () => {
             throw new Error("simulated lock write failure");
           },
           resolve: async () => resolved(true),
-        })).rejects.toThrow("simulated lock write failure");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+        }),
+      ).rejects.toThrow("simulated lock write failure");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
-        await expect(compileStaticJudgmentSource({
+      await expect(
+        compileStaticJudgmentSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
@@ -204,19 +219,20 @@ describe("Static Judgment compiler transaction", () => {
           auditRoot,
           commandRunner: createRunner([], "candidate-typecheck"),
           resolve: async () => resolved(true),
-        })).rejects.toThrow("simulated candidate-typecheck failure");
-        expect(await readFile(finalPath, "utf8")).toBe(falseCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
+        }),
+      ).rejects.toThrow("simulated candidate-typecheck failure");
+      expect(await readFile(finalPath, "utf8")).toBe(falseCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeFailures);
 
-        expect(
-          (await readdir(testRoot)).filter((name) => name.includes(".candidate.ts")),
-        ).toEqual([]);
-      } finally {
-        await rm(testRoot, { recursive: true, force: true });
-      }
-    },
-    120_000,
-  );
+      expect(
+        (await readdir(testRoot)).filter((name) =>
+          name.includes(".candidate.ts"),
+        ),
+      ).toEqual([]);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  }, 120_000);
 });
 
 function createRunner(
@@ -238,7 +254,9 @@ function createRunner(
     });
     const exitCode = await child.exited;
     if (exitCode !== 0) {
-      throw new Error(`${stage} failed: ${await new Response(child.stderr).text()}`);
+      throw new Error(
+        `${stage} failed: ${await new Response(child.stderr).text()}`,
+      );
     }
   };
 }
@@ -262,14 +280,18 @@ async function writeSource(
   const dslModule = modulePath(
     relative(testRoot, resolve(workspaceRoot, "src/dsl")),
   );
-  await writeFile(path, [
-    `import { judgeStatic, staticValue } from ${JSON.stringify(dslModule)};`,
-    `import { Cat } from ${JSON.stringify(conceptModule)};`,
-    "",
-    `const mike = staticValue(${JSON.stringify(description)});`,
-    "export const mikeIsCat = judgeStatic(mike, Cat);",
-    "",
-  ].join("\n"), "utf8");
+  await writeFile(
+    path,
+    [
+      `import { judgeStatic, staticValue } from ${JSON.stringify(dslModule)};`,
+      `import { Cat } from ${JSON.stringify(conceptModule)};`,
+      "",
+      `const mike = staticValue(${JSON.stringify(description)});`,
+      "export const mikeIsCat = judgeStatic(mike, Cat);",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
 }
 
 function resolved(value: boolean): StaticJudgmentCompilerResolution {

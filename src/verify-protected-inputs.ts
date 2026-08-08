@@ -3,9 +3,7 @@ import { dirname, resolve } from "node:path";
 
 import { verifyFrozenFileHashes } from "./schema-evolution-evaluator";
 
-const freezePath = resolve(
-  "benchmarks/schema-evolution/freeze.json",
-);
+const freezePath = resolve("benchmarks/schema-evolution/freeze.json");
 const freeze = JSON.parse(await readFile(freezePath, "utf8")) as {
   files?: unknown;
 };

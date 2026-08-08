@@ -1,11 +1,11 @@
 import { basename, extname, resolve } from "node:path";
 
 import { generatePredicate } from "./generator";
+import { parsePredicateDefinition, type PredicateExpression } from "./ir";
 import {
-  parsePredicateDefinition,
-  type PredicateExpression,
-} from "./ir";
-import { checkSemanticClosure, type SemanticClosureReport } from "./semantic-closure";
+  checkSemanticClosure,
+  type SemanticClosureReport,
+} from "./semantic-closure";
 import { explainSemanticSource } from "./semantic-explain";
 import { resolveWorkspacePath, sha256 } from "./semantic-fingerprint";
 import {
@@ -86,7 +86,8 @@ export async function verifySemanticArtifact(options: {
     ...(options.lockPath === undefined ? {} : { lockPath: options.lockPath }),
   });
   const closureCheck = {
-    status: closure.status === "closed" ? "passed" as const : "failed" as const,
+    status:
+      closure.status === "closed" ? ("passed" as const) : ("failed" as const),
     durationMs: Date.now() - closureStartedAt,
   };
 
@@ -109,11 +110,16 @@ export async function verifySemanticArtifact(options: {
       const explanation = await explainSemanticSource({
         sourcePath,
         workspaceRoot,
-        ...(options.lockPath === undefined ? {} : { lockPath: options.lockPath }),
+        ...(options.lockPath === undefined
+          ? {}
+          : { lockPath: options.lockPath }),
       });
       const generated =
         explanation.kind === "predicate"
-          ? await regeneratePredicate(sourcePath, explanation.resolution?.ir ?? null)
+          ? await regeneratePredicate(
+              sourcePath,
+              explanation.resolution?.ir ?? null,
+            )
           : await regenerateStaticJudgment(
               sourcePath,
               explanation.resolution?.value ?? null,
@@ -186,7 +192,10 @@ export async function verifySemanticArtifact(options: {
     workspaceRoot,
   );
   const typecheck = {
-    status: typecheckResult.exitCode === 0 ? "passed" as const : "failed" as const,
+    status:
+      typecheckResult.exitCode === 0
+        ? ("passed" as const)
+        : ("failed" as const),
     diagnostic:
       typecheckResult.exitCode === 0
         ? null
@@ -248,7 +257,9 @@ function buildRemediation(input: {
     );
   }
   if (input.typecheck === "failed") {
-    remediation.push("Run bun run typecheck and fix the reported TypeScript errors.");
+    remediation.push(
+      "Run bun run typecheck and fix the reported TypeScript errors.",
+    );
   }
   return remediation;
 }
@@ -297,11 +308,7 @@ function aggregateNodeChecks(
   const skipped = countChecks(nodes, "skipped");
   return {
     status:
-      failed > 0
-        ? "failed"
-        : skipped === nodes.length
-          ? "skipped"
-          : "passed",
+      failed > 0 ? "failed" : skipped === nodes.length ? "skipped" : "passed",
     total: nodes.length,
     passed,
     failed,

@@ -46,10 +46,15 @@ export async function scanStaticJudgmentSource(
 ): Promise<StaticJudgmentSource> {
   const absolutePath = resolve(sourcePath);
   const sourceText = await readFile(absolutePath, "utf8");
-  const configPath = ts.findConfigFile(dirname(absolutePath), ts.sys.fileExists);
+  const configPath = ts.findConfigFile(
+    dirname(absolutePath),
+    ts.sys.fileExists,
+  );
 
   if (configPath === undefined) {
-    throw new SemanticSourceError(`tsconfig.json was not found for ${absolutePath}`);
+    throw new SemanticSourceError(
+      `tsconfig.json was not found for ${absolutePath}`,
+    );
   }
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -74,7 +79,9 @@ export async function scanStaticJudgmentSource(
 
   const sourceDiagnostics = ts
     .getPreEmitDiagnostics(program, sourceFile)
-    .filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
+    .filter(
+      (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+    );
   if (sourceDiagnostics.length > 0) {
     throw new SemanticSourceError(formatDiagnostics(sourceDiagnostics));
   }
@@ -86,7 +93,10 @@ export async function scanStaticJudgmentSource(
   for (const statement of sourceFile.statements) {
     if (!ts.isVariableStatement(statement)) continue;
     for (const declaration of statement.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || declaration.initializer === undefined) {
+      if (
+        !ts.isIdentifier(declaration.name) ||
+        declaration.initializer === undefined
+      ) {
         continue;
       }
       const initializer = declaration.initializer;
@@ -166,7 +176,9 @@ export async function scanStaticJudgmentSource(
   const [value] = values;
   const [judgment] = judgments;
   if (value === undefined || judgment === undefined) {
-    throw new SemanticSourceError("Static Judgment cardinality validation failed");
+    throw new SemanticSourceError(
+      "Static Judgment cardinality validation failed",
+    );
   }
   if (judgment.valueName !== value.name) {
     throw sourceError(

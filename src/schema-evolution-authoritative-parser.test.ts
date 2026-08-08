@@ -42,10 +42,12 @@ describe("authoritative schema evolution parser", () => {
       },
       {
         mutate: (manifest) => {
-          (manifest.thresholds as Record<string, unknown>).minimumConsensusCaseRate =
-            Number.NaN;
+          (
+            manifest.thresholds as Record<string, unknown>
+          ).minimumConsensusCaseRate = Number.NaN;
         },
-        message: "minimumConsensusCaseRate must be a finite number between 0 and 1",
+        message:
+          "minimumConsensusCaseRate must be a finite number between 0 and 1",
       },
       {
         mutate: (manifest) => {
@@ -55,7 +57,7 @@ describe("authoritative schema evolution parser", () => {
       },
       {
         mutate: (manifest) => {
-          firstField(manifest).path = [".."]; 
+          firstField(manifest).path = [".."];
         },
         message: "path[0] must be a TypeScript identifier",
       },
@@ -94,21 +96,29 @@ describe("authoritative schema evolution parser", () => {
   });
 });
 
-function firstConcept(manifest: Record<string, unknown>): Record<string, unknown> {
+function firstConcept(
+  manifest: Record<string, unknown>,
+): Record<string, unknown> {
   const concept = (manifest.concepts as Array<Record<string, unknown>>)[0];
   if (concept === undefined) throw new Error("fixture concept is missing");
   return concept;
 }
 
-function firstCases(manifest: Record<string, unknown>): Record<string, unknown> {
+function firstCases(
+  manifest: Record<string, unknown>,
+): Record<string, unknown> {
   return firstConcept(manifest).cases as Record<string, unknown>;
 }
 
-function firstBaseline(manifest: Record<string, unknown>): Record<string, unknown> {
+function firstBaseline(
+  manifest: Record<string, unknown>,
+): Record<string, unknown> {
   return firstConcept(manifest).baseline as Record<string, unknown>;
 }
 
-function firstField(manifest: Record<string, unknown>): Record<string, unknown> {
+function firstField(
+  manifest: Record<string, unknown>,
+): Record<string, unknown> {
   const field = (
     firstBaseline(manifest).fields as Array<Record<string, unknown>>
   )[0];

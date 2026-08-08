@@ -155,9 +155,7 @@ export function parseProjectFitOracle(
   };
 }
 
-export function parseProjectFitManifest(
-  input: unknown,
-): ProjectFitManifest {
+export function parseProjectFitManifest(input: unknown): ProjectFitManifest {
   const value = recordValue(input, "project fit manifest");
   assertExactKeys(
     value,
@@ -169,25 +167,14 @@ export function parseProjectFitManifest(
   }
   const name = trimmedString(value.name, "project fit manifest.name");
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)) {
-    throw new Error(
-      "project fit manifest.name must be a portable identifier",
-    );
+    throw new Error("project fit manifest.name must be a portable identifier");
   }
-  const trials = positiveInteger(
-    value.trials,
-    "project fit manifest.trials",
-  );
+  const trials = positiveInteger(value.trials, "project fit manifest.trials");
   if (trials > 10) {
     throw new Error("project fit manifest.trials must be at most 10");
   }
-  const freeze = relativePathValue(
-    value.freeze,
-    "project fit manifest.freeze",
-  );
-  const budgetValue = recordValue(
-    value.budget,
-    "project fit manifest.budget",
-  );
+  const freeze = relativePathValue(value.freeze, "project fit manifest.freeze");
+  const budgetValue = recordValue(value.budget, "project fit manifest.budget");
   const thresholdsValue = recordValue(
     value.thresholds,
     "project fit manifest.thresholds",
@@ -237,7 +224,9 @@ export function parseProjectFitManifest(
   const ids = new Set<string>();
   for (const entry of cases) {
     if (ids.has(entry.id)) {
-      throw new Error(`project fit manifest contains duplicate case ${entry.id}`);
+      throw new Error(
+        `project fit manifest contains duplicate case ${entry.id}`,
+      );
     }
     ids.add(entry.id);
   }
@@ -251,7 +240,7 @@ export function parseProjectFitManifest(
   assertProjectFitApiCallBudget(budget.maxApiCalls, expectedApiCalls);
   if (
     budget.maxOutputTokensPerCall >
-      Math.floor(budget.maxTotalOutputTokens / expectedApiCalls)
+    Math.floor(budget.maxTotalOutputTokens / expectedApiCalls)
   ) {
     throw new Error(
       `project fit manifest aggregate output token budget cannot cover ${expectedApiCalls} calls at ${budget.maxOutputTokensPerCall} tokens per call`,
@@ -333,9 +322,7 @@ export async function readProjectFitProtocol(
     await readBoundedJsonFile(freezePath, "Project Fit freeze"),
   );
   if (freeze.version !== manifest.version) {
-    throw new Error(
-      "project fit manifest and freeze versions must match",
-    );
+    throw new Error("project fit manifest and freeze versions must match");
   }
   const requiredFiles = requiredProtocolFiles(manifest, basename(manifestPath));
   const frozenFiles = Object.keys(freeze.files).sort();
@@ -395,13 +382,9 @@ export async function readProjectFitFrozenJson(
   );
 }
 
-export function assertProjectFitFrozen(
-  freeze: ProjectFitFreeze,
-): void {
+export function assertProjectFitFrozen(freeze: ProjectFitFreeze): void {
   if (freeze.status !== "frozen") {
-    throw new Error(
-      "Project Fit inputs must be frozen before live execution",
-    );
+    throw new Error("Project Fit inputs must be frozen before live execution");
   }
 }
 
@@ -423,7 +406,9 @@ export function requiredProtocolFiles(
         ];
       }),
     ),
-  ].filter((value, index, all) => all.indexOf(value) === index).sort();
+  ]
+    .filter((value, index, all) => all.indexOf(value) === index)
+    .sort();
 }
 
 export function projectFitTotalOutputTokenBudget(
@@ -500,17 +485,10 @@ async function resolveContainedFile(
   return target;
 }
 
-function parseCase(
-  input: unknown,
-  index: number,
-): ProjectFitCase {
+function parseCase(input: unknown, index: number): ProjectFitCase {
   const path = `project fit manifest.cases[${index}]`;
   const value = recordValue(input, path);
-  assertExactKeys(
-    value,
-    ["id", "domain", "stages"],
-    path,
-  );
+  assertExactKeys(value, ["id", "domain", "stages"], path);
   const stagesValue = recordValue(value.stages, `${path}.stages`);
   assertExactKeys(stagesValue, ["initial", "schemaChange"], `${path}.stages`);
   return {
@@ -537,11 +515,7 @@ function parseStageFiles(
     path,
   );
   const fixtures = recordValue(value.fixtures, `${path}.fixtures`);
-  assertExactKeys(
-    fixtures,
-    ["typeOnly", "projectContext"],
-    `${path}.fixtures`,
-  );
+  assertExactKeys(fixtures, ["typeOnly", "projectContext"], `${path}.fixtures`);
   return {
     modelInput: relativePathValue(value.modelInput, `${path}.modelInput`),
     projectContext: relativePathValue(
@@ -574,10 +548,7 @@ function assertExactKeys(
   }
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }
@@ -618,11 +589,7 @@ function positiveInteger(input: unknown, path: string): number {
 }
 
 function nonNegativeInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 0
-  ) {
+  if (typeof input !== "number" || !Number.isSafeInteger(input) || input < 0) {
     throw new Error(`${path} must be a non-negative safe integer`);
   }
   return input;

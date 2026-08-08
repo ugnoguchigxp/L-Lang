@@ -89,7 +89,9 @@ export async function scanSemanticSource(
 ): Promise<SemanticSource> {
   const source = await scanPredicateSource(sourcePath, "semantic-test");
   if (source.sourceForm !== "semantic-test") {
-    throw new SemanticSourceError("internal error: expected a semantic-test source");
+    throw new SemanticSourceError(
+      "internal error: expected a semantic-test source",
+    );
   }
   return source;
 }
@@ -99,7 +101,9 @@ export async function scanBenchmarkSource(
 ): Promise<BenchmarkSemanticSource> {
   const source = await scanPredicateSource(sourcePath, "benchmark-probe");
   if (source.sourceForm !== "benchmark-probe") {
-    throw new SemanticSourceError("internal error: expected a benchmark-probe source");
+    throw new SemanticSourceError(
+      "internal error: expected a benchmark-probe source",
+    );
   }
   return source;
 }
@@ -110,10 +114,15 @@ async function scanPredicateSource(
 ): Promise<SemanticSource | BenchmarkSemanticSource> {
   const absolutePath = resolve(sourcePath);
   const sourceText = await readFile(absolutePath, "utf8");
-  const configPath = ts.findConfigFile(dirname(absolutePath), ts.sys.fileExists);
+  const configPath = ts.findConfigFile(
+    dirname(absolutePath),
+    ts.sys.fileExists,
+  );
 
   if (configPath === undefined) {
-    throw new SemanticSourceError(`tsconfig.json was not found for ${absolutePath}`);
+    throw new SemanticSourceError(
+      `tsconfig.json was not found for ${absolutePath}`,
+    );
   }
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -138,7 +147,9 @@ async function scanPredicateSource(
 
   const sourceDiagnostics = ts
     .getPreEmitDiagnostics(program, sourceFile)
-    .filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error);
+    .filter(
+      (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+    );
   if (sourceDiagnostics.length > 0) {
     throw new SemanticSourceError(formatDiagnostics(sourceDiagnostics));
   }
@@ -152,7 +163,10 @@ async function scanPredicateSource(
   for (const statement of sourceFile.statements) {
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name) || declaration.initializer === undefined) {
+        if (
+          !ts.isIdentifier(declaration.name) ||
+          declaration.initializer === undefined
+        ) {
           continue;
         }
 
@@ -164,18 +178,37 @@ async function scanPredicateSource(
         ) {
           const typeArguments = initializer.typeArguments;
           if (typeArguments === undefined || typeArguments.length !== 1) {
-            throw sourceError(sourceFile, initializer, "concept requires exactly one type argument");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "concept requires exactly one type argument",
+            );
           }
           if (!ts.isNoSubstitutionTemplateLiteral(initializer.template)) {
-            throw sourceError(sourceFile, initializer, "concept template substitutions are not supported");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "concept template substitutions are not supported",
+            );
           }
 
           const [typeNode] = typeArguments;
           if (typeNode === undefined) {
-            throw sourceError(sourceFile, initializer, "concept requires exactly one type argument");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "concept requires exactly one type argument",
+            );
           }
-          if (!ts.isTypeReferenceNode(typeNode) || !ts.isIdentifier(typeNode.typeName)) {
-            throw sourceError(sourceFile, typeNode, "concept input must be a named TypeScript type");
+          if (
+            !ts.isTypeReferenceNode(typeNode) ||
+            !ts.isIdentifier(typeNode.typeName)
+          ) {
+            throw sourceError(
+              sourceFile,
+              typeNode,
+              "concept input must be a named TypeScript type",
+            );
           }
           const inputType = checker.getTypeFromTypeNode(typeNode);
           const typeName = typeNode.typeName.text;
@@ -212,7 +245,11 @@ async function scanPredicateSource(
         ) {
           const typeArguments = initializer.typeArguments;
           if (typeArguments === undefined || typeArguments.length !== 1) {
-            throw sourceError(sourceFile, initializer, "bindConcept requires exactly one type argument");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "bindConcept requires exactly one type argument",
+            );
           }
           const [conceptArgument] = initializer.arguments;
           if (
@@ -220,15 +257,30 @@ async function scanPredicateSource(
             conceptArgument === undefined ||
             !ts.isIdentifier(conceptArgument)
           ) {
-            throw sourceError(sourceFile, initializer, "bindConcept requires one concept definition identifier");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "bindConcept requires one concept definition identifier",
+            );
           }
 
           const [typeNode] = typeArguments;
           if (typeNode === undefined) {
-            throw sourceError(sourceFile, initializer, "bindConcept requires exactly one type argument");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "bindConcept requires exactly one type argument",
+            );
           }
-          if (!ts.isTypeReferenceNode(typeNode) || !ts.isIdentifier(typeNode.typeName)) {
-            throw sourceError(sourceFile, typeNode, "bindConcept input must be a named TypeScript type");
+          if (
+            !ts.isTypeReferenceNode(typeNode) ||
+            !ts.isIdentifier(typeNode.typeName)
+          ) {
+            throw sourceError(
+              sourceFile,
+              typeNode,
+              "bindConcept input must be a named TypeScript type",
+            );
           }
           const definition = resolveConceptDefinition(
             conceptArgument,
@@ -267,12 +319,18 @@ async function scanPredicateSource(
             conceptArgument === undefined ||
             !ts.isIdentifier(conceptArgument)
           ) {
-            throw sourceError(sourceFile, initializer, "generatePredicate requires one concept identifier");
+            throw sourceError(
+              sourceFile,
+              initializer,
+              "generatePredicate requires one concept identifier",
+            );
           }
           predicates.push({
             name: declaration.name.text,
             conceptName: conceptArgument.text,
-            parameterName: lowerFirst(typeNameFromConceptReference(conceptArgument.text, concepts)),
+            parameterName: lowerFirst(
+              typeNameFromConceptReference(conceptArgument.text, concepts),
+            ),
           });
         }
       }
@@ -311,7 +369,11 @@ async function scanPredicateSource(
         !ts.isIdentifier(predicateArgument) ||
         !ts.isObjectLiteralExpression(caseArgument)
       ) {
-        throw sourceError(sourceFile, call, "semanticTest requires a predicate and a case object");
+        throw sourceError(
+          sourceFile,
+          call,
+          "semanticTest requires a predicate and a case object",
+        );
       }
       const caseObject = caseArgument;
       assertObjectPropertyKeys(
@@ -370,11 +432,11 @@ async function scanPredicateSource(
     );
   }
 
-  const formCount = expectedForm === "semantic-test" ? tests.length : probes.length;
+  const formCount =
+    expectedForm === "semantic-test" ? tests.length : probes.length;
   if (concepts.length !== 1 || predicates.length !== 1 || formCount !== 1) {
-    const formName = expectedForm === "semantic-test"
-      ? "semanticTest"
-      : "benchmarkProbe";
+    const formName =
+      expectedForm === "semantic-test" ? "semanticTest" : "benchmarkProbe";
     throw new SemanticSourceError(
       `MVP requires exactly one concept, one generated predicate, and one ${formName}; found ${concepts.length}/${predicates.length}/${formCount}`,
     );
@@ -383,7 +445,9 @@ async function scanPredicateSource(
   const [conceptValue] = concepts;
   const [predicate] = predicates;
   if (conceptValue === undefined || predicate === undefined) {
-    throw new SemanticSourceError("semantic source cardinality validation failed");
+    throw new SemanticSourceError(
+      "semantic source cardinality validation failed",
+    );
   }
   predicate.parameterName = lowerFirst(conceptValue.typeName);
 
@@ -397,9 +461,8 @@ async function scanPredicateSource(
     throw new SemanticSourceError("semantic source form validation failed");
   }
   const formPredicateName = selectedForm.predicateName;
-  const formName = expectedForm === "semantic-test"
-    ? "semanticTest"
-    : "benchmarkProbe";
+  const formName =
+    expectedForm === "semantic-test" ? "semanticTest" : "benchmarkProbe";
   if (formPredicateName !== predicate.name) {
     throw new SemanticSourceError(
       `semantic closure failed: ${formName} references ${formPredicateName}, expected ${predicate.name}`,
@@ -443,11 +506,16 @@ export function resolveConceptDefinition(
 } {
   const referenceSymbol = checker.getSymbolAtLocation(reference);
   if (referenceSymbol === undefined) {
-    throw sourceError(bindingSourceFile, reference, `cannot resolve concept definition ${reference.text}`);
+    throw sourceError(
+      bindingSourceFile,
+      reference,
+      `cannot resolve concept definition ${reference.text}`,
+    );
   }
-  const symbol = referenceSymbol.flags & ts.SymbolFlags.Alias
-    ? checker.getAliasedSymbol(referenceSymbol)
-    : referenceSymbol;
+  const symbol =
+    referenceSymbol.flags & ts.SymbolFlags.Alias
+      ? checker.getAliasedSymbol(referenceSymbol)
+      : referenceSymbol;
   const declaration = symbol.declarations?.find(ts.isVariableDeclaration);
   if (
     declaration === undefined ||
@@ -536,7 +604,10 @@ function typeNameFromConceptReference(
   conceptName: string,
   concepts: SemanticSource["concept"][],
 ): string {
-  return concepts.find((candidate) => candidate.name === conceptName)?.typeName ?? "value";
+  return (
+    concepts.find((candidate) => candidate.name === conceptName)?.typeName ??
+    "value"
+  );
 }
 
 function lowerFirst(value: string): string {

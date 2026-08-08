@@ -97,14 +97,7 @@ function conceptValue(input: unknown, path: string): SchemaEvolutionConcept {
   const value = recordValue(input, path);
   assertExactKeys(
     value,
-    [
-      "id",
-      "exportName",
-      "displayName",
-      "specification",
-      "baseline",
-      "cases",
-    ],
+    ["id", "exportName", "displayName", "specification", "baseline", "cases"],
     [],
     path,
   );
@@ -182,9 +175,10 @@ function fieldValue(input: unknown, path: string): FieldDescriptor {
     value.omitWhenNegative,
     `${path}.omitWhenNegative`,
   );
-  const condition = value.condition === undefined
-    ? undefined
-    : conditionValue(value.condition, `${path}.condition`);
+  const condition =
+    value.condition === undefined
+      ? undefined
+      : conditionValue(value.condition, `${path}.condition`);
   if (condition !== undefined && !("negative" in value)) {
     throw new Error(`${path} condition requires negative`);
   }
@@ -193,9 +187,10 @@ function fieldValue(input: unknown, path: string): FieldDescriptor {
   }
   const state = { nodes: 0 };
   const positive = jsonValue(value.positive, `${path}.positive`, state, 1);
-  const negative = "negative" in value
-    ? jsonValue(value.negative, `${path}.negative`, state, 1)
-    : undefined;
+  const negative =
+    "negative" in value
+      ? jsonValue(value.negative, `${path}.negative`, state, 1)
+      : undefined;
   return {
     path: propertyPath,
     type: boundedString(value.type, `${path}.type`),
@@ -231,7 +226,9 @@ function conditionValue(
   throw new Error(`${path}.kind must be equals or present`);
 }
 
-function thresholdsValue(input: unknown): SchemaEvolutionManifest["thresholds"] {
+function thresholdsValue(
+  input: unknown,
+): SchemaEvolutionManifest["thresholds"] {
   const path = "authoritative schema evolution benchmark.thresholds";
   const value = recordValue(input, path);
   assertExactKeys(

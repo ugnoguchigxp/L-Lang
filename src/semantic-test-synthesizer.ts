@@ -1,9 +1,6 @@
 import type { OpenAIResult } from "./openai";
 import type { SemanticContract } from "./semantic-contract";
-import {
-  SEMANTIC_LIMITS,
-  validateDiagnostics,
-} from "./semantic-limits";
+import { SEMANTIC_LIMITS, validateDiagnostics } from "./semantic-limits";
 import {
   parseSemanticTestPlan,
   type SemanticTestPlan,
@@ -246,11 +243,7 @@ export function parseSemanticTestSynthesisResult(
   input: unknown,
 ): SemanticTestSynthesisResult {
   const value = recordValue(input, "semanticTestSynthesis");
-  exactKeys(
-    value,
-    ["outcome", "plan", "diagnostics"],
-    "semanticTestSynthesis",
-  );
+  exactKeys(value, ["outcome", "plan", "diagnostics"], "semanticTestSynthesis");
   const diagnostics = validateDiagnostics(
     value.diagnostics,
     "semanticTestSynthesis.diagnostics",
@@ -288,15 +281,13 @@ function exactKeys(
 ): void {
   const allowedSet = new Set(allowed);
   const unknown = Object.keys(value).find((key) => !allowedSet.has(key));
-  if (unknown !== undefined) throw new Error(`${path} contains unknown field ${unknown}`);
+  if (unknown !== undefined)
+    throw new Error(`${path} contains unknown field ${unknown}`);
   const missing = allowed.find((key) => !(key in value));
   if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

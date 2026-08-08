@@ -143,9 +143,7 @@ export function parseSemanticTddSelectionReport(
       : candidates.find((candidate) => candidate.id === selectedCandidate);
   if (
     value.outcome === "selected" &&
-    (selected === undefined ||
-      !selected.hardPassed ||
-      !selected.mutationPassed)
+    (selected === undefined || !selected.hardPassed || !selected.mutationPassed)
   ) {
     throw new Error(
       "selectionReport selected candidate must exist and pass all hard gates",
@@ -158,14 +156,8 @@ export function parseSemanticTddSelectionReport(
   }
   return {
     version: 1,
-    contractHash: hashValue(
-      value.contractHash,
-      "selectionReport.contractHash",
-    ),
-    testPlanHash: hashValue(
-      value.testPlanHash,
-      "selectionReport.testPlanHash",
-    ),
+    contractHash: hashValue(value.contractHash, "selectionReport.contractHash"),
+    testPlanHash: hashValue(value.testPlanHash, "selectionReport.testPlanHash"),
     redCertificateHash: hashValue(
       value.redCertificateHash,
       "selectionReport.redCertificateHash",
@@ -176,9 +168,10 @@ export function parseSemanticTddSelectionReport(
   };
 }
 
-function expressionMetrics(
-  expression: PredicateExpression,
-): { nodes: number; depth: number } {
+function expressionMetrics(expression: PredicateExpression): {
+  nodes: number;
+  depth: number;
+} {
   switch (expression.kind) {
     case "all":
     case "any": {
@@ -212,10 +205,7 @@ function exactKeys(
   if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

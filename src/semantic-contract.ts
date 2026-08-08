@@ -63,9 +63,7 @@ export function compileSemanticContract(
   };
 }
 
-export function normativeClauseIds(
-  contract: SemanticContract,
-): string[] {
+export function normativeClauseIds(contract: SemanticContract): string[] {
   return contract.clauses
     .filter((clause) => clause.normative)
     .map((clause) => clause.id);

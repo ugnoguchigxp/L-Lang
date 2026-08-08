@@ -107,10 +107,7 @@ export function validateProjectFitCheckpointEntries(
       );
     }
     if (entry.status === "completed") {
-      validateProjectFitResponseUsage(
-        entry.response,
-        perCallOutputTokenLimit,
-      );
+      validateProjectFitResponseUsage(entry.response, perCallOutputTokenLimit);
     }
   }
   validateProjectFitCompletedResponseBudget(
@@ -145,10 +142,8 @@ export function validateProjectFitCompletedResponseBudget(
     .filter(
       (
         entry,
-      ): entry is Extract<
-        ProjectFitCheckpointEntry,
-        { status: "completed" }
-      > => entry.status === "completed",
+      ): entry is Extract<ProjectFitCheckpointEntry, { status: "completed" }> =>
+        entry.status === "completed",
     )
     .map((entry) => entry.response.usage);
   if (usage.some((value) => value === null)) {
@@ -265,10 +260,7 @@ function parseCheckpoint(input: unknown): ProjectFitLiveCheckpoint {
       "Project Fit checkpoint.manifestHash",
     ),
     model: trimmedString(value.model, "Project Fit checkpoint.model"),
-    provider: trimmedString(
-      value.provider,
-      "Project Fit checkpoint.provider",
-    ),
+    provider: trimmedString(value.provider, "Project Fit checkpoint.provider"),
     costPerMillionTokens: validateProjectFitTokenRates({
       input: rates.input,
       output: rates.output,
@@ -332,11 +324,7 @@ function parseCheckpointEntry(
 
 function parseCheckpointResponse(input: unknown, path: string): OpenAIResult {
   const value = recordValue(input, path);
-  assertExactKeys(
-    value,
-    ["responseId", "model", "outputText", "usage"],
-    path,
-  );
+  assertExactKeys(value, ["responseId", "model", "outputText", "usage"], path);
   const usage = recordValue(value.usage, `${path}.usage`);
   assertExactKeys(
     usage,
@@ -379,7 +367,9 @@ async function readTextIfExists(path: string): Promise<string | undefined> {
 
 function isNotFound(error: unknown): boolean {
   return (
-    typeof error === "object" && error !== null && "code" in error &&
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
     error.code === "ENOENT"
   );
 }
@@ -431,22 +421,14 @@ function hashValue(input: unknown, path: string): string {
 }
 
 function positiveInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 1
-  ) {
+  if (typeof input !== "number" || !Number.isSafeInteger(input) || input < 1) {
     throw new Error(`${path} must be a positive safe integer`);
   }
   return input;
 }
 
 function nonNegativeInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 0
-  ) {
+  if (typeof input !== "number" || !Number.isSafeInteger(input) || input < 0) {
     throw new Error(`${path} must be a non-negative safe integer`);
   }
   return input;

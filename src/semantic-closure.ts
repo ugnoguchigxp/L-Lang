@@ -141,7 +141,10 @@ export async function checkSemanticClosure(
       source: explanation.source,
       symbol: explanation.symbol,
       conceptId: explanation.concept.id,
-      status: intrinsicStatus(explanation.status, projectFitStatus(explanation)),
+      status: intrinsicStatus(
+        explanation.status,
+        projectFitStatus(explanation),
+      ),
       semanticStatus: explanation.status,
       projectFit: projectFitStatus(explanation),
       generated: explanation.generated,
@@ -192,9 +195,8 @@ export async function checkSemanticClosure(
     projectFit: {
       verified: nodes.filter((node) => node.projectFit.satisfied).length,
       required: nodes.filter((node) => !node.projectFit.satisfied).length,
-      legacy: nodes.filter(
-        (node) => node.projectFit.validation === "legacy",
-      ).length,
+      legacy: nodes.filter((node) => node.projectFit.validation === "legacy")
+        .length,
     },
     limitations: [...limitations],
   };
@@ -209,7 +211,9 @@ export function parseSemanticClosureManifest(
     throw new Error("Semantic Closure manifest.version must be 1");
   }
   if (!Array.isArray(value.nodes) || value.nodes.length === 0) {
-    throw new Error("Semantic Closure manifest.nodes must be a non-empty array");
+    throw new Error(
+      "Semantic Closure manifest.nodes must be a non-empty array",
+    );
   }
   return {
     version: 1,
@@ -255,7 +259,9 @@ function normalizeAndValidateGraph(
   const sources = new Set<string>();
   const nodes = manifest.nodes.map((node) => {
     if (ids.has(node.id)) {
-      throw new Error(`Semantic Closure manifest has duplicate node id ${node.id}`);
+      throw new Error(
+        `Semantic Closure manifest has duplicate node id ${node.id}`,
+      );
     }
     ids.add(node.id);
     const source = workspaceRelativePath(
@@ -264,12 +270,16 @@ function normalizeAndValidateGraph(
       `Semantic Closure node ${node.id} source`,
     );
     if (sources.has(source)) {
-      throw new Error(`Semantic Closure manifest has duplicate source ${source}`);
+      throw new Error(
+        `Semantic Closure manifest has duplicate source ${source}`,
+      );
     }
     sources.add(source);
     const dependsOn = [...node.dependsOn].sort();
     if (new Set(dependsOn).size !== dependsOn.length) {
-      throw new Error(`Semantic Closure node ${node.id} has duplicate dependencies`);
+      throw new Error(
+        `Semantic Closure node ${node.id} has duplicate dependencies`,
+      );
     }
     return { ...node, source, dependsOn };
   });
@@ -277,7 +287,9 @@ function normalizeAndValidateGraph(
   for (const node of nodes) {
     for (const dependency of node.dependsOn) {
       if (dependency === node.id) {
-        throw new Error(`Semantic Closure node ${node.id} cannot depend on itself`);
+        throw new Error(
+          `Semantic Closure node ${node.id} cannot depend on itself`,
+        );
       }
       if (!nodeById.has(dependency)) {
         throw new Error(
@@ -301,7 +313,9 @@ function assertAcyclic(
     if (visiting.has(node.id)) {
       const cycleStart = path.indexOf(node.id);
       const cycle = [...path.slice(cycleStart), node.id];
-      throw new Error(`Semantic Closure graph contains a cycle: ${cycle.join(" -> ")}`);
+      throw new Error(
+        `Semantic Closure graph contains a cycle: ${cycle.join(" -> ")}`,
+      );
     }
     visiting.add(node.id);
     path.push(node.id);
@@ -339,8 +353,7 @@ function projectFitStatus(
   return {
     context,
     validation,
-    satisfied:
-      context !== "missing" && validation === "verified",
+    satisfied: context !== "missing" && validation === "verified",
   };
 }
 
@@ -363,7 +376,9 @@ function applyDependencyStatuses(
     const dependencies = node.dependsOn.map((id) => {
       const dependency = byId.get(id);
       if (dependency === undefined) {
-        throw new Error(`Semantic Closure node ${node.id} depends on unknown node ${id}`);
+        throw new Error(
+          `Semantic Closure node ${node.id} depends on unknown node ${id}`,
+        );
       }
       return resolveNode(dependency);
     });
@@ -375,7 +390,7 @@ function applyDependencyStatuses(
       ...node,
       status:
         node.status === "current" && openDependencies.length > 0
-          ? "dependency-open" as const
+          ? ("dependency-open" as const)
           : node.status,
       openDependencies,
     };
@@ -389,8 +404,10 @@ function blockerMessage(
   status: Exclude<SemanticClosureNodeStatus, "current">,
   openDependencies: string[] = [],
 ): string {
-  if (status === "stale") return "semantic inputs differ from the latest lock entry";
-  if (status === "unlocked") return "no lock entry exists for this semantic source";
+  if (status === "stale")
+    return "semantic inputs differ from the latest lock entry";
+  if (status === "unlocked")
+    return "no lock entry exists for this semantic source";
   if (status === "verification-required") {
     return "verified Project Context or machine validation provenance is missing";
   }
@@ -407,7 +424,10 @@ function countStatus(
   return nodes.filter((node) => node.status === status).length;
 }
 
-function compareEdges(left: SemanticClosureEdge, right: SemanticClosureEdge): number {
+function compareEdges(
+  left: SemanticClosureEdge,
+  right: SemanticClosureEdge,
+): number {
   return left.from.localeCompare(right.from) || left.to.localeCompare(right.to);
 }
 

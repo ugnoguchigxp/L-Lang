@@ -32,17 +32,19 @@ describe("blind schema evolution benchmark", () => {
 
   test("refuses execution while the authoritative input is draft", async () => {
     let calls = 0;
-    await expect(runSchemaEvolutionBenchmark({
-      manifestPath,
-      workspaceRoot,
-      outputRoot,
-      provider: "fixture",
-      model: "gpt-5.4-mini-test",
-      resolve: async () => {
-        calls += 1;
-        throw new Error("must not be called");
-      },
-    })).rejects.toThrow("benchmark inputs must be frozen before live execution");
+    await expect(
+      runSchemaEvolutionBenchmark({
+        manifestPath,
+        workspaceRoot,
+        outputRoot,
+        provider: "fixture",
+        model: "gpt-5.4-mini-test",
+        resolve: async () => {
+          calls += 1;
+          throw new Error("must not be called");
+        },
+      }),
+    ).rejects.toThrow("benchmark inputs must be frozen before live execution");
     expect(calls).toBe(0);
   });
 
@@ -124,13 +126,20 @@ describe("blind schema evolution benchmark", () => {
         await Promise.resolve();
         active -= 1;
         const fixture = fixtures.get(input.target.functionName);
-        if (fixture === undefined) throw new Error(`missing fixture: ${input.target.functionName}`);
+        if (fixture === undefined)
+          throw new Error(`missing fixture: ${input.target.functionName}`);
         return {
           responseId: `fixture-${calls}`,
           model: "gpt-5.4-mini-test",
-          outputText: JSON.stringify(fixture.body === null
-            ? { outcome: "unresolved", body: null, diagnostics: ["role is absent or ambiguous"] }
-            : { outcome: "resolved", body: fixture.body, diagnostics: [] }),
+          outputText: JSON.stringify(
+            fixture.body === null
+              ? {
+                  outcome: "unresolved",
+                  body: null,
+                  diagnostics: ["role is absent or ambiguous"],
+                }
+              : { outcome: "resolved", body: fixture.body, diagnostics: [] },
+          ),
           usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
         };
       },
@@ -139,7 +148,12 @@ describe("blind schema evolution benchmark", () => {
     expect(maximumActive).toBe(3);
     expect(report).toMatchObject({
       status: "fixture-gate-passed-input-freeze-pending",
-      evaluation: { primary: "consensus", samples: 3, quorum: 2, parallel: true },
+      evaluation: {
+        primary: "consensus",
+        samples: 3,
+        quorum: 2,
+        parallel: true,
+      },
       protocol: {
         concepts: 4,
         cases: 24,
@@ -165,33 +179,46 @@ async function loadFixtures() {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     concepts: Array<{
       exportName: string;
-      cases: Record<string, {
-        expectedOutcome: "resolved" | "unresolved";
-        fields: Array<{
-          path: string[];
-          condition?:
-            | { kind: "equals"; value: string | number | boolean | null }
-            | { kind: "present" };
-        }>;
-      }>;
+      cases: Record<
+        string,
+        {
+          expectedOutcome: "resolved" | "unresolved";
+          fields: Array<{
+            path: string[];
+            condition?:
+              | { kind: "equals"; value: string | number | boolean | null }
+              | { kind: "present" };
+          }>;
+        }
+      >;
     }>;
   };
   const fixtures = new Map<string, { body: PredicateExpression | null }>();
   for (const concept of manifest.concepts) {
     for (const [change, schema] of Object.entries(concept.cases)) {
-      const suffix = change.split("-")
+      const suffix = change
+        .split("-")
         .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
         .join("");
       const functionName = `is${concept.exportName}${suffix}`;
       const conditions: PredicateExpression[] = [];
       for (const field of schema.fields) {
         if (field.condition === undefined) continue;
-        conditions.push(field.condition.kind === "present"
-          ? { kind: "present", property: field.path }
-          : { kind: "equals", property: field.path, value: field.condition.value });
+        conditions.push(
+          field.condition.kind === "present"
+            ? { kind: "present", property: field.path }
+            : {
+                kind: "equals",
+                property: field.path,
+                value: field.condition.value,
+              },
+        );
       }
       fixtures.set(functionName, {
-        body: schema.expectedOutcome === "resolved" ? { kind: "all", conditions } : null,
+        body:
+          schema.expectedOutcome === "resolved"
+            ? { kind: "all", conditions }
+            : null,
       });
     }
   }

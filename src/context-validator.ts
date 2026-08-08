@@ -66,14 +66,18 @@ function resolveProperty(
       );
     }
     optional ||= Boolean(symbol.flags & ts.SymbolFlags.Optional);
-    currentType = source.checker.getTypeOfSymbolAtLocation(symbol, source.concept.node);
+    currentType = source.checker.getTypeOfSymbolAtLocation(
+      symbol,
+      source.concept.node,
+    );
   }
 
   return { type: currentType, optional };
 }
 
 function acceptsLiteral(type: ts.Type, literal: Literal): boolean {
-  if (type.isUnion()) return type.types.some((part) => acceptsLiteral(part, literal));
+  if (type.isUnion())
+    return type.types.some((part) => acceptsLiteral(part, literal));
   if (literal === null) return Boolean(type.flags & ts.TypeFlags.Null);
   if (typeof literal === "string") {
     return type.flags & ts.TypeFlags.StringLiteral
@@ -86,7 +90,11 @@ function acceptsLiteral(type: ts.Type, literal: Literal): boolean {
       : Boolean(type.flags & ts.TypeFlags.NumberLike);
   }
   if (type.flags & ts.TypeFlags.BooleanLiteral) {
-    return ((type as unknown as { intrinsicName: string }).intrinsicName === "true") === literal;
+    return (
+      ((type as unknown as { intrinsicName: string }).intrinsicName ===
+        "true") ===
+      literal
+    );
   }
   return Boolean(type.flags & ts.TypeFlags.BooleanLike);
 }

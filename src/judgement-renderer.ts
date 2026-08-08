@@ -57,7 +57,7 @@ export function renderSemanticTestModule(input: {
     `const invariance: readonly InvarianceCase[] = ${input.invarianceSource ?? "[]"};`,
     "",
     "function prettyCase(input: {",
-    '  case: string;',
+    "  case: string;",
     "  value: SemanticInput;",
     "  expected: boolean;",
     "  actual: boolean;",

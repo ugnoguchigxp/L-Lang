@@ -1,7 +1,4 @@
-import {
-  type PredicateExpression,
-  parsePredicateExpression,
-} from "./ir";
+import { type PredicateExpression, parsePredicateExpression } from "./ir";
 import type { OpenAIResult } from "./openai";
 import type { ProjectContextSummary } from "./project-context";
 import type {
@@ -138,9 +135,7 @@ export function parseReviewCandidate(input: unknown): ReviewCandidate {
     "review candidate.reviewer",
   );
   if (status === "ready" && (approvedAt !== null || reviewer !== null)) {
-    throw new Error(
-      "ready review candidate must not have approval metadata",
-    );
+    throw new Error("ready review candidate must not have approval metadata");
   }
   if (status === "approved" && (approvedAt === null || reviewer === null)) {
     throw new Error("approved review candidate requires approval metadata");
@@ -155,10 +150,7 @@ export function parseReviewCandidate(input: unknown): ReviewCandidate {
     conceptId: stringValue(value.conceptId, "review candidate.conceptId"),
     provider: stringValue(value.provider, "review candidate.provider"),
     model: stringValue(value.model, "review candidate.model"),
-    fingerprint: hashValue(
-      value.fingerprint,
-      "review candidate.fingerprint",
-    ),
+    fingerprint: hashValue(value.fingerprint, "review candidate.fingerprint"),
     generatedCodeHash: hashValue(
       value.generatedCodeHash,
       "review candidate.generatedCodeHash",
@@ -258,14 +250,8 @@ function predicateHashesValue(input: unknown): PredicateSemanticHashes {
       value.sourceHash,
       "review candidate.hashes.sourceHash",
     ),
-    typeHash: hashValue(
-      value.typeHash,
-      "review candidate.hashes.typeHash",
-    ),
-    testHash: hashValue(
-      value.testHash,
-      "review candidate.hashes.testHash",
-    ),
+    typeHash: hashValue(value.typeHash, "review candidate.hashes.typeHash"),
+    testHash: hashValue(value.testHash, "review candidate.hashes.testHash"),
     promptHash: hashValue(
       value.promptHash,
       "review candidate.hashes.promptHash",
@@ -282,12 +268,7 @@ function contextSummaryValue(input: unknown): ProjectContextSummary {
   const value = objectValue(input, "review candidate.contextSummary");
   assertKeys(
     value,
-    [
-      "version",
-      "targetSource",
-      "relatedTypeSources",
-      "verifiedBindingSources",
-    ],
+    ["version", "targetSource", "relatedTypeSources", "verifiedBindingSources"],
     "review candidate.contextSummary",
   );
   if (value.version !== 1) {
@@ -312,9 +293,7 @@ function contextSummaryValue(input: unknown): ProjectContextSummary {
 
 function stringArrayValue(input: unknown, path: string): string[] {
   if (!Array.isArray(input)) throw new Error(`${path} must be an array`);
-  return input.map((value, index) =>
-    stringValue(value, `${path}[${index}]`),
-  );
+  return input.map((value, index) => stringValue(value, `${path}[${index}]`));
 }
 
 function staticHashesValue(input: unknown): StaticJudgmentSemanticHashes {
@@ -329,10 +308,7 @@ function staticHashesValue(input: unknown): StaticJudgmentSemanticHashes {
       value.conceptHash,
       "review candidate.hashes.conceptHash",
     ),
-    valueHash: hashValue(
-      value.valueHash,
-      "review candidate.hashes.valueHash",
-    ),
+    valueHash: hashValue(value.valueHash, "review candidate.hashes.valueHash"),
     promptHash: hashValue(
       value.promptHash,
       "review candidate.hashes.promptHash",
@@ -403,10 +379,7 @@ function stringValue(input: unknown, path: string): string {
   return input;
 }
 
-function nullableTrimmedString(
-  input: unknown,
-  path: string,
-): string | null {
+function nullableTrimmedString(input: unknown, path: string): string | null {
   return input === null ? null : trimmedString(input, path);
 }
 

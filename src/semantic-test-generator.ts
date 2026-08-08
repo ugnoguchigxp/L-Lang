@@ -98,7 +98,11 @@ export function renderSemanticTestPlanModule(input: {
     "",
     `describe(${JSON.stringify(`${input.predicateName} semantic Test Plan`)}, () => {`,
     "  for (const obligation of plan.obligations) {",
-    "    test(`" + "$" + "{obligation.id} [" + "$" + "{obligation.strength}]`, () => {",
+    "    test(`" +
+      "$" +
+      "{obligation.id} [" +
+      "$" +
+      "{obligation.strength}]`, () => {",
     '      if (obligation.kind === "example") {',
     `        expect(${input.predicateName}(obligation.input as SemanticInput)).toBe(obligation.expected);`,
     "        return;",

@@ -143,7 +143,9 @@ export function workspaceRelativePath(
   absolutePath: string,
   subject: string,
 ): string {
-  const result = normalizePath(relative(resolve(workspaceRoot), resolve(absolutePath)));
+  const result = normalizePath(
+    relative(resolve(workspaceRoot), resolve(absolutePath)),
+  );
   if (result === ".." || result.startsWith("../")) {
     throw new Error(`${subject} must be inside the workspace root`);
   }
@@ -160,7 +162,10 @@ export function resolveWorkspacePath(
   return absolutePath;
 }
 
-export function generatedOutputPath(sourcePath: string, symbol: string): string {
+export function generatedOutputPath(
+  sourcePath: string,
+  symbol: string,
+): string {
   return resolve(dirname(sourcePath), `${kebabCase(symbol)}.generated.ts`);
 }
 

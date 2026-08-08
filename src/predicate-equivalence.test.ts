@@ -22,7 +22,10 @@ describe("type-aware Predicate IR equivalence", () => {
     const result = comparePredicatesOnType(
       equalsNull,
       notPresent,
-      objectProperty(false, { kind: "union", types: [{ kind: "string" }, { kind: "null" }] }),
+      objectProperty(false, {
+        kind: "union",
+        types: [{ kind: "string" }, { kind: "null" }],
+      }),
     );
     expect(result.relation).toBe("equivalent");
     expect(result.rewrites).toEqual([
@@ -70,7 +73,10 @@ describe("type-aware Predicate IR equivalence", () => {
         {
           name: "retiredAt",
           optional: false,
-          type: { kind: "union", types: [{ kind: "string" }, { kind: "null" }] },
+          type: {
+            kind: "union",
+            types: [{ kind: "string" }, { kind: "null" }],
+          },
         },
         { name: "title", optional: false, type: { kind: "string" } },
       ],

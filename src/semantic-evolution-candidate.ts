@@ -101,12 +101,13 @@ export function parseSemanticEvolutionCandidate(
     value.previousIr,
     "evolution candidate.previousIr",
   );
-  const candidateIr = value.candidateIr === null
-    ? null
-    : parsePredicateExpression(
-        value.candidateIr,
-        "evolution candidate.candidateIr",
-      );
+  const candidateIr =
+    value.candidateIr === null
+      ? null
+      : parsePredicateExpression(
+          value.candidateIr,
+          "evolution candidate.candidateIr",
+        );
   const generatedCodeHash = nullableHash(
     value.generatedCodeHash,
     "evolution candidate.generatedCodeHash",
@@ -117,9 +118,10 @@ export function parseSemanticEvolutionCandidate(
     value.createdAt,
     "evolution candidate.createdAt",
   );
-  const approvedAt = value.approvedAt === null
-    ? null
-    : timestampValue(value.approvedAt, "evolution candidate.approvedAt");
+  const approvedAt =
+    value.approvedAt === null
+      ? null
+      : timestampValue(value.approvedAt, "evolution candidate.approvedAt");
 
   assertCandidateState({
     status,
@@ -182,10 +184,14 @@ function assertCandidateState(input: {
   approvedAt: string | null;
 }): void {
   if (stableJson(input.diff.previousIr) !== stableJson(input.previousIr)) {
-    throw new Error("evolution candidate.diff.previousIr must match previousIr");
+    throw new Error(
+      "evolution candidate.diff.previousIr must match previousIr",
+    );
   }
   if (stableJson(input.diff.candidateIr) !== stableJson(input.candidateIr)) {
-    throw new Error("evolution candidate.diff.candidateIr must match candidateIr");
+    throw new Error(
+      "evolution candidate.diff.candidateIr must match candidateIr",
+    );
   }
   if (input.status === "approved") {
     if (input.approvedAt === null) {
@@ -206,7 +212,10 @@ function assertCandidateState(input: {
     }
     return;
   }
-  if (input.candidateIr === null || input.diff.classification === "unresolved") {
+  if (
+    input.candidateIr === null ||
+    input.diff.classification === "unresolved"
+  ) {
     throw new Error("resolved evolution candidate requires candidate IR");
   }
   if (input.status === "ready" || input.status === "approved") {
@@ -215,7 +224,9 @@ function assertCandidateState(input: {
       input.validation.error !== null ||
       input.generatedCodeHash === null
     ) {
-      throw new Error(`${input.status} evolution candidate state is inconsistent`);
+      throw new Error(
+        `${input.status} evolution candidate state is inconsistent`,
+      );
     }
     return;
   }
@@ -281,12 +292,7 @@ function contextSummaryValue(input: unknown): ProjectContextSummary {
   const value = recordValue(input, "evolution candidate.contextSummary");
   assertExactKeys(
     value,
-    [
-      "version",
-      "targetSource",
-      "relatedTypeSources",
-      "verifiedBindingSources",
-    ],
+    ["version", "targetSource", "relatedTypeSources", "verifiedBindingSources"],
     "evolution candidate.contextSummary",
   );
   if (value.version !== 1) {
@@ -309,9 +315,7 @@ function contextSummaryValue(input: unknown): ProjectContextSummary {
   };
 }
 
-function responseValue(
-  input: unknown,
-): SemanticEvolutionCandidate["response"] {
+function responseValue(input: unknown): SemanticEvolutionCandidate["response"] {
   if (input === null) return null;
   const path = "evolution candidate.response";
   const value = recordValue(input, path);
@@ -329,7 +333,10 @@ function usageValue(input: unknown, path: string): OpenAIResult["usage"] {
   assertExactKeys(value, ["inputTokens", "outputTokens", "totalTokens"], path);
   return {
     inputTokens: nonNegativeInteger(value.inputTokens, `${path}.inputTokens`),
-    outputTokens: nonNegativeInteger(value.outputTokens, `${path}.outputTokens`),
+    outputTokens: nonNegativeInteger(
+      value.outputTokens,
+      `${path}.outputTokens`,
+    ),
     totalTokens: nonNegativeInteger(value.totalTokens, `${path}.totalTokens`),
   };
 }
@@ -382,7 +389,10 @@ function consensusValue(
     consensusVoteValue(vote, `${path}.votes[${index}]`),
   );
   const voteSamples = votes.map((vote) => vote.sample);
-  if (new Set(voteSamples).size !== samples || voteSamples.some((sample) => sample > samples)) {
+  if (
+    new Set(voteSamples).size !== samples ||
+    voteSamples.some((sample) => sample > samples)
+  ) {
     throw new Error(`${path}.votes must contain each sample exactly once`);
   }
   if (value.reached) {
@@ -443,8 +453,10 @@ function consensusVoteValue(
   const signature = nullableString(value.signature, `${path}.signature`);
   const error = nullableBoundedString(value.error, `${path}.error`);
   if (
-    (value.outcome === "error" && (value.eligible || signature !== null || error === null)) ||
-    (value.outcome !== "error" && (!value.eligible || signature === null || error !== null))
+    (value.outcome === "error" &&
+      (value.eligible || signature !== null || error === null)) ||
+    (value.outcome !== "error" &&
+      (!value.eligible || signature === null || error !== null))
   ) {
     throw new Error(`${path} state is inconsistent`);
   }
@@ -469,7 +481,11 @@ function selectedOutcomeValue(
   throw new Error(`${path} is invalid`);
 }
 
-function sampleNumbers(input: unknown, samples: number, path: string): number[] {
+function sampleNumbers(
+  input: unknown,
+  samples: number,
+  path: string,
+): number[] {
   if (!Array.isArray(input)) throw new Error(`${path} must be an array`);
   const result = input.map((value, index) =>
     positiveInteger(value, `${path}[${index}]`),
@@ -533,10 +549,14 @@ function diffValue(input: unknown): SemanticDiff {
   return {
     classification: value.classification,
     summary: boundedString(value.summary, `${path}.summary`),
-    previousIr: parsePredicateExpression(value.previousIr, `${path}.previousIr`),
-    candidateIr: value.candidateIr === null
-      ? null
-      : parsePredicateExpression(value.candidateIr, `${path}.candidateIr`),
+    previousIr: parsePredicateExpression(
+      value.previousIr,
+      `${path}.previousIr`,
+    ),
+    candidateIr:
+      value.candidateIr === null
+        ? null
+        : parsePredicateExpression(value.candidateIr, `${path}.candidateIr`),
     logicalShapeChanged: value.logicalShapeChanged,
     leafChanges: value.leafChanges.map((change, index) =>
       leafChangeValue(change, `${path}.leafChanges[${index}]`),
@@ -556,7 +576,13 @@ function leafChangeValue(input: unknown, path: string): SemanticLeafChange {
   if (!Array.isArray(value.changes)) {
     throw new Error(`${path}.changes must be an array`);
   }
-  const allowed = ["operator", "property", "value", "added", "removed"] as const;
+  const allowed = [
+    "operator",
+    "property",
+    "value",
+    "added",
+    "removed",
+  ] as const;
   const changes = value.changes.map((change, index) => {
     if (!allowed.includes(change as (typeof allowed)[number])) {
       throw new Error(`${path}.changes[${index}] is invalid`);
@@ -569,10 +595,7 @@ function leafChangeValue(input: unknown, path: string): SemanticLeafChange {
   return { before, after, changes };
 }
 
-function leafValue(
-  input: unknown,
-  path: string,
-): SemanticLeafChange["before"] {
+function leafValue(input: unknown, path: string): SemanticLeafChange["before"] {
   if (input === null) return null;
   const value = recordValue(input, path);
   if (value.kind === "equals") {

@@ -3,10 +3,7 @@ import { isAbsolute, resolve } from "node:path";
 
 import ts from "typescript";
 
-import {
-  type PredicateExpression,
-  parsePredicateExpression,
-} from "./ir";
+import { type PredicateExpression, parsePredicateExpression } from "./ir";
 import {
   generatedOutputPath,
   sha256,
@@ -143,56 +140,49 @@ export function parseProjectContext(
   if (!Array.isArray(value.verifiedBindings)) {
     throw new Error(`${path}.verifiedBindings must be an array`);
   }
-  if (
-    value.verifiedBindings.length >
-    PROJECT_CONTEXT_LIMITS.verifiedBindings
-  ) {
+  if (value.verifiedBindings.length > PROJECT_CONTEXT_LIMITS.verifiedBindings) {
     throw new Error(
       `${path}.verifiedBindings must contain at most ${PROJECT_CONTEXT_LIMITS.verifiedBindings} items`,
     );
   }
-  const verifiedBindings = value.verifiedBindings.map(
-    (inputBinding, index) => {
-      const itemPath = `${path}.verifiedBindings[${index}]`;
-      const item = recordValue(inputBinding, itemPath);
-      assertExactKeys(
-        item,
-        [
-          "conceptId",
-          "source",
-          "targetTypeName",
-          "typeSchemaHash",
-          "resolvedIr",
-          "generatedCodeHash",
-        ],
-        itemPath,
-      );
-      return {
-        conceptId: trimmedString(item.conceptId, `${itemPath}.conceptId`),
-        source: contextSourcePath(item.source, `${itemPath}.source`),
-        targetTypeName: trimmedString(
-          item.targetTypeName,
-          `${itemPath}.targetTypeName`,
-        ),
-        typeSchemaHash: hashValue(
-          item.typeSchemaHash,
-          `${itemPath}.typeSchemaHash`,
-        ),
-        resolvedIr: parsePredicateExpression(
-          item.resolvedIr,
-          `${itemPath}.resolvedIr`,
-        ),
-        generatedCodeHash: hashValue(
-          item.generatedCodeHash,
-          `${itemPath}.generatedCodeHash`,
-        ),
-      };
-    },
-  );
+  const verifiedBindings = value.verifiedBindings.map((inputBinding, index) => {
+    const itemPath = `${path}.verifiedBindings[${index}]`;
+    const item = recordValue(inputBinding, itemPath);
+    assertExactKeys(
+      item,
+      [
+        "conceptId",
+        "source",
+        "targetTypeName",
+        "typeSchemaHash",
+        "resolvedIr",
+        "generatedCodeHash",
+      ],
+      itemPath,
+    );
+    return {
+      conceptId: trimmedString(item.conceptId, `${itemPath}.conceptId`),
+      source: contextSourcePath(item.source, `${itemPath}.source`),
+      targetTypeName: trimmedString(
+        item.targetTypeName,
+        `${itemPath}.targetTypeName`,
+      ),
+      typeSchemaHash: hashValue(
+        item.typeSchemaHash,
+        `${itemPath}.typeSchemaHash`,
+      ),
+      resolvedIr: parsePredicateExpression(
+        item.resolvedIr,
+        `${itemPath}.resolvedIr`,
+      ),
+      generatedCodeHash: hashValue(
+        item.generatedCodeHash,
+        `${itemPath}.generatedCodeHash`,
+      ),
+    };
+  });
   assertUnique(
-    verifiedBindings.map(
-      (entry) => `${entry.source}\0${entry.targetTypeName}`,
-    ),
+    verifiedBindings.map((entry) => `${entry.source}\0${entry.targetTypeName}`),
     `${path}.verifiedBindings`,
   );
 
@@ -306,8 +296,14 @@ async function collectRelatedTypes(
     source.concept.inputType.getSymbol()?.declarations ??
     [];
 
-  const visit = async (declaration: ts.Declaration, depth: number): Promise<void> => {
-    if (visited.has(declaration) || depth > PROJECT_CONTEXT_LIMITS.referenceDepth) {
+  const visit = async (
+    declaration: ts.Declaration,
+    depth: number,
+  ): Promise<void> => {
+    if (
+      visited.has(declaration) ||
+      depth > PROJECT_CONTEXT_LIMITS.referenceDepth
+    ) {
       return;
     }
     visited.add(declaration);
@@ -328,10 +324,7 @@ async function collectRelatedTypes(
       for (const related of declarations) {
         const file = related.getSourceFile();
         if (file.isDeclarationFile) continue;
-        assertTypeOnlyDeclarations(
-          [related],
-          "Project Context related symbol",
-        );
+        assertTypeOnlyDeclarations([related], "Project Context related symbol");
         const relativeSource = await safeWorkspaceFile(
           workspaceRoot,
           file.fileName,
@@ -389,11 +382,11 @@ async function collectVerifiedBindings(
       latestByBinding.set(key, entry);
     }
   }
-  const candidates = [...latestByBinding.values()]
-    .sort((left, right) =>
+  const candidates = [...latestByBinding.values()].sort(
+    (left, right) =>
       left.source.localeCompare(right.source) ||
-      left.predicate.localeCompare(right.predicate)
-    );
+      left.predicate.localeCompare(right.predicate),
+  );
   if (candidates.length > PROJECT_CONTEXT_LIMITS.verifiedBindings) {
     throw new Error(
       `Project Context exceeds ${PROJECT_CONTEXT_LIMITS.verifiedBindings} verified bindings`,
@@ -488,7 +481,7 @@ function secretPath(path: string): boolean {
     .some((segment) =>
       /(^|[._-])(secret|credential|token|api[-_]?key|private[-_]?key)([._-]|$)/i.test(
         segment,
-      )
+      ),
     );
 }
 
@@ -503,7 +496,10 @@ function excludedSource(path: string): boolean {
 
 function boundedDeclaration(value: string, subject: string): string {
   const normalized = value.trim();
-  if (Buffer.byteLength(normalized, "utf8") > PROJECT_CONTEXT_LIMITS.declarationBytes) {
+  if (
+    Buffer.byteLength(normalized, "utf8") >
+    PROJECT_CONTEXT_LIMITS.declarationBytes
+  ) {
     throw new Error(
       `${subject} exceeds ${PROJECT_CONTEXT_LIMITS.declarationBytes} bytes`,
     );
@@ -587,14 +583,13 @@ function compareContextEntry(
   left: { source: string; typeName: string },
   right: { source: string; typeName: string },
 ): number {
-  return left.source.localeCompare(right.source) ||
-    left.typeName.localeCompare(right.typeName);
+  return (
+    left.source.localeCompare(right.source) ||
+    left.typeName.localeCompare(right.typeName)
+  );
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

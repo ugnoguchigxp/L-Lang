@@ -1,10 +1,6 @@
 import { atomicWriteText } from "./atomic-file";
 import type { OpenAIResult } from "./openai";
-import {
-  fingerprintFor,
-  sha256,
-  stableJson,
-} from "./semantic-fingerprint";
+import { fingerprintFor, sha256, stableJson } from "./semantic-fingerprint";
 import {
   assertTextByteLength,
   readBoundedJsonFile,
@@ -230,14 +226,14 @@ function parseEntry(input: unknown, path: string): SemanticTestLockEntry {
   if (testPlanHash !== expectedTestPlanHash) {
     throw new Error(`${path}.testPlanHash does not match the stored plan`);
   }
-  const preImplementationRed = parseRedCertificate(
-    value.preImplementationRed,
-  );
+  const preImplementationRed = parseRedCertificate(value.preImplementationRed);
   if (
     preImplementationRed.testPlanHash !== testPlanHash ||
     preImplementationRed.implementationSignature !== null
   ) {
-    throw new Error(`${path}.preImplementationRed is not a pre-implementation certificate`);
+    throw new Error(
+      `${path}.preImplementationRed is not a pre-implementation certificate`,
+    );
   }
   const postImplementationRed =
     value.postImplementationRed === null
@@ -256,7 +252,9 @@ function parseEntry(input: unknown, path: string): SemanticTestLockEntry {
       : parseSemanticTddSelectionReport(value.selectionReport);
   const contractHash = hashValue(value.contractHash, `${path}.contractHash`);
   if (plan.contractHash !== contractHash) {
-    throw new Error(`${path}.plan.contractHash does not match entry contractHash`);
+    throw new Error(
+      `${path}.plan.contractHash does not match entry contractHash`,
+    );
   }
   if (
     selectionReport !== null &&
@@ -316,9 +314,7 @@ function responseValue(
     id: stringValue(value.id, `${path}.id`),
     model: stringValue(value.model, `${path}.model`),
     usage:
-      value.usage === null
-        ? null
-        : usageValue(value.usage, `${path}.usage`),
+      value.usage === null ? null : usageValue(value.usage, `${path}.usage`),
   };
 }
 
@@ -327,14 +323,13 @@ function usageValue(
   path: string,
 ): NonNullable<OpenAIResult["usage"]> {
   const value = recordValue(input, path);
-  exactKeys(
-    value,
-    ["inputTokens", "outputTokens", "totalTokens"],
-    path,
-  );
+  exactKeys(value, ["inputTokens", "outputTokens", "totalTokens"], path);
   return {
     inputTokens: nonNegativeInteger(value.inputTokens, `${path}.inputTokens`),
-    outputTokens: nonNegativeInteger(value.outputTokens, `${path}.outputTokens`),
+    outputTokens: nonNegativeInteger(
+      value.outputTokens,
+      `${path}.outputTokens`,
+    ),
     totalTokens: nonNegativeInteger(value.totalTokens, `${path}.totalTokens`),
   };
 }
@@ -346,15 +341,13 @@ function exactKeys(
 ): void {
   const allowedSet = new Set(allowed);
   const unknown = Object.keys(value).find((key) => !allowedSet.has(key));
-  if (unknown !== undefined) throw new Error(`${path} contains unknown field ${unknown}`);
+  if (unknown !== undefined)
+    throw new Error(`${path} contains unknown field ${unknown}`);
   const missing = allowed.find((key) => !(key in value));
   if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

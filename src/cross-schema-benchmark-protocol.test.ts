@@ -64,8 +64,9 @@ describe("cross-schema benchmark protocol", () => {
       },
       {
         mutate: (value) => {
-          (value.blindness as Record<string, unknown>).oracleAndCasesSentToModel =
-            true;
+          (
+            value.blindness as Record<string, unknown>
+          ).oracleAndCasesSentToModel = true;
         },
         message: "oracleAndCasesSentToModel must be false",
       },
@@ -74,7 +75,8 @@ describe("cross-schema benchmark protocol", () => {
           (value.thresholds as Record<string, unknown>).minimumStableCaseRate =
             Number.NaN;
         },
-        message: "minimumStableCaseRate must be a finite number between 0 and 1",
+        message:
+          "minimumStableCaseRate must be a finite number between 0 and 1",
       },
     ];
     for (const testCase of malformed) {
@@ -136,8 +138,9 @@ describe("cross-schema benchmark protocol", () => {
   test("validates protocol shape and v2 file hashes", async () => {
     const manifest = parseCrossSchemaManifest(manifestFixture());
     const manualTimes = parseCrossSchemaManualTimes(manualTimesFixture());
-    expect(() => validateCrossSchemaProtocolInputs(manifest, manualTimes)).not
-      .toThrow();
+    expect(() =>
+      validateCrossSchemaProtocolInputs(manifest, manualTimes),
+    ).not.toThrow();
 
     const root = await temporaryRoot();
     const benchmark = resolve(root, "benchmark.json");
@@ -232,7 +235,9 @@ function hash(value: string): string {
 }
 
 async function temporaryRoot(): Promise<string> {
-  const root = await mkdtemp(resolve(tmpdir(), "l-lang-cross-schema-protocol-"));
+  const root = await mkdtemp(
+    resolve(tmpdir(), "l-lang-cross-schema-protocol-"),
+  );
   roots.push(root);
   return root;
 }

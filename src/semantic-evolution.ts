@@ -1,9 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import {
-  mkdir,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, relative, resolve } from "node:path";
 
 import { resolveContainedFile } from "./contained-path";
@@ -22,10 +18,7 @@ import type {
   SemanticResolution,
 } from "./semantic-compiler";
 import { resolveWithSemanticConsensus } from "./semantic-consensus";
-import {
-  classifySemanticChange,
-  renderSemanticDiff,
-} from "./semantic-diff";
+import { classifySemanticChange, renderSemanticDiff } from "./semantic-diff";
 import {
   parseSemanticEvolutionCandidate,
   type SemanticEvolutionCandidate,
@@ -44,7 +37,10 @@ import {
 import { promoteSemanticArtifact } from "./semantic-promotion";
 import { type SemanticSource, scanSemanticSource } from "./semantic-source";
 
-export type { EvolutionHashes, SemanticEvolutionCandidate } from "./semantic-evolution-candidate";
+export type {
+  EvolutionHashes,
+  SemanticEvolutionCandidate,
+} from "./semantic-evolution-candidate";
 
 export type CheckSemanticEvolutionOptions = {
   sourcePath: string;
@@ -86,7 +82,9 @@ export async function checkSemanticEvolution(
 ): Promise<CheckSemanticEvolutionResult> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const source = await scanSemanticSource(options.sourcePath);
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const lockPath = resolve(
+    options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
+  );
   const lock = await readSemanticLock(lockPath);
   const builtContext = await buildProjectContext({
     source,
@@ -122,7 +120,9 @@ export async function checkSemanticEvolution(
     conceptHash: source.concept.hash,
   });
   if (baseline === undefined) {
-    throw new Error("schema evolution requires an approved baseline; run semantic build first");
+    throw new Error(
+      "schema evolution requires an approved baseline; run semantic build first",
+    );
   }
 
   const request = {
@@ -142,13 +142,19 @@ export async function checkSemanticEvolution(
     resolve: () => options.resolve(request),
   });
   const resolution = consensus.resolution;
-  const id = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}-${randomUUID().slice(0, 8)}`;
+  const id = `${new Date()
+    .toISOString()
+    .replaceAll(/[-:.TZ]/g, "")
+    .slice(0, 14)}-${randomUUID().slice(0, 8)}`;
   const evolutionRoot = resolve(
     options.evolutionRoot ?? resolve(workspaceRoot, ".semantic", "evolution"),
   );
   const candidateDirectory = resolve(evolutionRoot, id);
   await mkdir(candidateDirectory, { recursive: true });
-  await writeJson(resolve(candidateDirectory, "response.output.json"), resolution.rawOutput);
+  await writeJson(
+    resolve(candidateDirectory, "response.output.json"),
+    resolution.rawOutput,
+  );
 
   let candidateIr: PredicateExpression | null = null;
   let generatedCode = "";
@@ -179,11 +185,12 @@ export async function checkSemanticEvolution(
     validationError,
     typeSchema: source.concept.typeSchema,
   });
-  const status = candidateIr === null
-    ? "unresolved"
-    : validationPassed
-      ? "ready"
-      : "invalid";
+  const status =
+    candidateIr === null
+      ? "unresolved"
+      : validationPassed
+        ? "ready"
+        : "invalid";
   const candidate: SemanticEvolutionCandidate = {
     version: 1,
     id,
@@ -203,26 +210,32 @@ export async function checkSemanticEvolution(
     contextSummary: builtContext.summary,
     previousIr: baseline.resolvedIr,
     candidateIr,
-    generatedCodeHash: generatedCode.length === 0 ? null : sha256(generatedCode),
+    generatedCodeHash:
+      generatedCode.length === 0 ? null : sha256(generatedCode),
     response: responseMetadata(resolution.response),
-    consensus: samples === 1
-      ? null
-      : {
-          samples: consensus.samples,
-          quorum: consensus.quorum,
-          reached: consensus.reached,
-          selectedOutcome: consensus.selectedOutcome,
-          selectedSignature: consensus.selectedSignature,
-          supportingSamples: consensus.supportingSamples,
-          votes: consensus.votes,
-        },
+    consensus:
+      samples === 1
+        ? null
+        : {
+            samples: consensus.samples,
+            quorum: consensus.quorum,
+            reached: consensus.reached,
+            selectedOutcome: consensus.selectedOutcome,
+            selectedSignature: consensus.selectedSignature,
+            supportingSamples: consensus.supportingSamples,
+            votes: consensus.votes,
+          },
     validation: { passed: validationPassed, error: validationError },
     diff,
     createdAt: new Date().toISOString(),
     approvedAt: null,
   };
   if (generatedCode.length > 0) {
-    await writeFile(resolve(candidateDirectory, "candidate.ts"), generatedCode, "utf8");
+    await writeFile(
+      resolve(candidateDirectory, "candidate.ts"),
+      generatedCode,
+      "utf8",
+    );
   }
   await writeJson(resolve(candidateDirectory, "candidate.json"), candidate);
   await writeFile(
@@ -241,7 +254,10 @@ export async function checkSemanticEvolution(
 export async function readSemanticEvolutionCandidate(
   candidateId: string,
   options: { workspaceRoot?: string; evolutionRoot?: string } = {},
-): Promise<{ candidate: SemanticEvolutionCandidate; candidateDirectory: string }> {
+): Promise<{
+  candidate: SemanticEvolutionCandidate;
+  candidateDirectory: string;
+}> {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const root = resolve(
     options.evolutionRoot ?? resolve(workspaceRoot, ".semantic", "evolution"),
@@ -256,7 +272,8 @@ export async function readSemanticEvolutionCandidate(
       "semantic evolution candidate",
     ),
   );
-  if (candidate.id !== candidateId) throw new Error("candidate id does not match its directory");
+  if (candidate.id !== candidateId)
+    throw new Error("candidate id does not match its directory");
   return { candidate, candidateDirectory };
 }
 
@@ -270,15 +287,22 @@ export async function approveSemanticEvolution(
     commandRunner?: SemanticCommandRunner;
   },
 ): Promise<{ candidate: SemanticEvolutionCandidate; output: string }> {
-  if (options.reviewer.trim() !== options.reviewer || options.reviewer.length === 0) {
+  if (
+    options.reviewer.trim() !== options.reviewer ||
+    options.reviewer.length === 0
+  ) {
     throw new Error("reviewer must be a non-empty trimmed string");
   }
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const { candidate, candidateDirectory } = await readSemanticEvolutionCandidate(
-    candidateId,
-    { workspaceRoot, ...(options.evolutionRoot ? { evolutionRoot: options.evolutionRoot } : {}) },
-  );
-  if (candidate.status === "approved") throw new Error("candidate is already approved");
+  const { candidate, candidateDirectory } =
+    await readSemanticEvolutionCandidate(candidateId, {
+      workspaceRoot,
+      ...(options.evolutionRoot
+        ? { evolutionRoot: options.evolutionRoot }
+        : {}),
+    });
+  if (candidate.status === "approved")
+    throw new Error("candidate is already approved");
   if (
     candidate.status !== "ready" ||
     !candidate.validation.passed ||
@@ -294,7 +318,9 @@ export async function approveSemanticEvolution(
     "semantic evolution candidate source",
   );
   const source = await scanSemanticSource(sourcePath);
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const lockPath = resolve(
+    options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
+  );
   const { lock, revision: lockRevision } =
     await readSemanticLockSnapshot(lockPath);
   const builtContext = await buildProjectContext({
@@ -334,13 +360,17 @@ export async function approveSemanticEvolution(
     conceptHash: candidate.hashes.conceptHash,
   });
   if (latestBaseline?.fingerprint !== candidate.baselineFingerprint) {
-    throw new Error("candidate baseline is stale: a newer semantic version was approved");
+    throw new Error(
+      "candidate baseline is stale: a newer semantic version was approved",
+    );
   }
   if (stableJson(baseline.resolvedIr) !== stableJson(candidate.previousIr)) {
     throw new Error("candidate baseline integrity failed: previous IR changed");
   }
   if (lock.entries[candidate.proposedFingerprint] !== undefined) {
-    throw new Error("candidate fingerprint is already present in semantic.lock");
+    throw new Error(
+      "candidate fingerprint is already present in semantic.lock",
+    );
   }
 
   validatePredicateContext(candidate.candidateIr, source);
@@ -397,7 +427,8 @@ export async function approveSemanticEvolution(
     nextLock: lock,
     expectedLockHash: lockRevision,
     command: "approve",
-    runFullTest: () => executeCommand(["bun", "test"], workspaceRoot, "full-test"),
+    runFullTest: () =>
+      executeCommand(["bun", "test"], workspaceRoot, "full-test"),
   });
 
   const approved: SemanticEvolutionCandidate = {
@@ -441,10 +472,12 @@ function prepareInput(
     conceptSource,
     hashes,
     fingerprint,
-    output: normalizePath(relative(
-      workspaceRoot,
-      resolve(dirname(source.absolutePath), `${outputStem}.generated.ts`),
-    )),
+    output: normalizePath(
+      relative(
+        workspaceRoot,
+        resolve(dirname(source.absolutePath), `${outputStem}.generated.ts`),
+      ),
+    ),
   };
 }
 
@@ -458,11 +491,12 @@ function findEvolutionBaseline(
   },
 ): SemanticLockEntry | undefined {
   return Object.values(entries)
-    .filter((entry) =>
-      entry.source === match.source &&
-      entry.predicate === match.predicate &&
-      entry.conceptId === match.conceptId &&
-      entry.conceptHash === match.conceptHash
+    .filter(
+      (entry) =>
+        entry.source === match.source &&
+        entry.predicate === match.predicate &&
+        entry.conceptId === match.conceptId &&
+        entry.conceptHash === match.conceptHash,
     )
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
 }
@@ -472,18 +506,20 @@ function generateCode(
   expression: PredicateExpression,
 ): string {
   const importModule = `./${basename(source.absolutePath, extname(source.absolutePath))}`;
-  return generatePredicate(parsePredicateDefinition({
-    version: 1,
-    name: source.predicate.name,
-    description: source.concept.specification,
-    input: {
-      parameter: source.predicate.parameterName,
-      type: source.concept.typeName,
-      module: importModule,
-    },
-    returns: "boolean",
-    body: expression,
-  }));
+  return generatePredicate(
+    parsePredicateDefinition({
+      version: 1,
+      name: source.predicate.name,
+      description: source.concept.specification,
+      input: {
+        parameter: source.predicate.parameterName,
+        type: source.concept.typeName,
+        module: importModule,
+      },
+      returns: "boolean",
+      body: expression,
+    }),
+  );
 }
 
 async function validateCandidate(input: {
@@ -496,8 +532,14 @@ async function validateCandidate(input: {
 }): Promise<void> {
   const sourceDirectory = dirname(input.source.absolutePath);
   const outputStem = kebabCase(input.source.predicate.name);
-  const candidatePath = resolve(sourceDirectory, `.${outputStem}.${input.id}.candidate.ts`);
-  const testPath = resolve(sourceDirectory, `.${outputStem}.${input.id}.candidate.test.ts`);
+  const candidatePath = resolve(
+    sourceDirectory,
+    `.${outputStem}.${input.id}.candidate.ts`,
+  );
+  const testPath = resolve(
+    sourceDirectory,
+    `.${outputStem}.${input.id}.candidate.test.ts`,
+  );
   const candidateTest = renderSemanticTestModule({
     candidateModuleName: basename(candidatePath, ".ts"),
     predicateName: input.source.predicate.name,
@@ -507,7 +549,11 @@ async function validateCandidate(input: {
     counterfactualSource: input.source.tests.counterfactualSource,
     invarianceSource: input.source.tests.invarianceSource,
   });
-  await writeFile(resolve(input.candidateDirectory, "candidate.test.ts"), candidateTest, "utf8");
+  await writeFile(
+    resolve(input.candidateDirectory, "candidate.test.ts"),
+    candidateTest,
+    "utf8",
+  );
   await writeFile(candidatePath, input.code, "utf8");
   await writeFile(testPath, candidateTest, "utf8");
   try {
@@ -544,11 +590,18 @@ async function validateCandidate(input: {
       "project-typecheck",
     );
   } finally {
-    await Promise.all([unlinkIfExists(candidatePath), unlinkIfExists(testPath)]);
+    await Promise.all([
+      unlinkIfExists(candidatePath),
+      unlinkIfExists(testPath),
+    ]);
   }
 }
 
-async function runCommand(command: string[], cwd: string, stage: string): Promise<void> {
+async function runCommand(
+  command: string[],
+  cwd: string,
+  stage: string,
+): Promise<void> {
   const child = Bun.spawn(command, {
     cwd,
     stdin: "inherit",
@@ -556,7 +609,8 @@ async function runCommand(command: string[], cwd: string, stage: string): Promis
     stderr: "inherit",
   });
   const exitCode = await child.exited;
-  if (exitCode !== 0) throw new Error(`${stage} failed with exit code ${exitCode}`);
+  if (exitCode !== 0)
+    throw new Error(`${stage} failed with exit code ${exitCode}`);
 }
 
 async function unlinkIfExists(path: string): Promise<void> {
@@ -582,9 +636,14 @@ function responseMetadata(response: OpenAIResult | null) {
       };
 }
 
-function insideWorkspace(workspaceRoot: string, path: string, label: string): string {
+function insideWorkspace(
+  workspaceRoot: string,
+  path: string,
+  label: string,
+): string {
   const result = normalizePath(relative(workspaceRoot, path));
-  if (result.startsWith("../")) throw new Error(`${label} must be inside the workspace root`);
+  if (result.startsWith("../"))
+    throw new Error(`${label} must be inside the workspace root`);
   return result;
 }
 

@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  mkdir,
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  stat,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -35,11 +28,9 @@ describe("atomic file writer", () => {
     await atomicWriteText(textPath, "value\n");
     await atomicWriteJson(jsonPath, { version: 1 });
 
-    expect([...await readFile(bytesPath)]).toEqual([0xff, 0x00, 0x80]);
+    expect([...(await readFile(bytesPath))]).toEqual([0xff, 0x00, 0x80]);
     expect(await readFile(textPath, "utf8")).toBe("value\n");
-    expect(await readFile(jsonPath, "utf8")).toBe(
-      '{\n  "version": 1\n}\n',
-    );
+    expect(await readFile(jsonPath, "utf8")).toBe('{\n  "version": 1\n}\n');
     if (process.platform !== "win32") {
       expect((await stat(textPath)).mode & 0o777).toBe(0o600);
     }

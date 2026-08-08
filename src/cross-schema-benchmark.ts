@@ -125,13 +125,14 @@ export async function runCrossSchemaBenchmark(
     resolveProtocolFile,
   );
   const prepared = await Promise.all(
-    manifest.cases.map((entry) =>
-      prepareCase(entry, resolveProtocolFile),
-    ),
+    manifest.cases.map((entry) => prepareCase(entry, resolveProtocolFile)),
   );
   validateProtocol(manifest, freeze, prepared);
 
-  const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}`;
+  const runId = `${new Date()
+    .toISOString()
+    .replaceAll(/[-:.TZ]/g, "")
+    .slice(0, 14)}`;
   const runDirectory = resolve(options.outputRoot, `${runId}-${manifest.name}`);
   await mkdir(runDirectory, { recursive: true });
   const startedAt = Date.now();
@@ -206,7 +207,8 @@ export async function runCrossSchemaBenchmark(
     resolvedExpected.length,
   );
   const resolvedClosureRate = ratio(
-    resolvedExpected.filter((trial) => trial.actualOutcome === "resolved").length,
+    resolvedExpected.filter((trial) => trial.actualOutcome === "resolved")
+      .length,
     resolvedExpected.length,
   );
   const totalUsage = sumUsage(allTrials);
@@ -258,7 +260,10 @@ export async function runCrossSchemaBenchmark(
       falseResolutionRate,
       hiddenTestPassRate,
       exactIrRate,
-      totalLatencyMs: allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0),
+      totalLatencyMs: allTrials.reduce(
+        (sum, trial) => sum + trial.latencyMs,
+        0,
+      ),
       averageLatencyMs: Math.round(
         allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0) /
           allTrials.length,
@@ -407,13 +412,16 @@ async function runTrial(
         passed: actual === hiddenCase.expected,
       };
     });
-    const hiddenTestsPassed = hiddenTestResults.every((result) => result.passed);
+    const hiddenTestsPassed = hiddenTestResults.every(
+      (result) => result.passed,
+    );
     const exactIrMatch =
       benchmarkCase.oracle.expectedOutcome === "resolved"
         ? expressionSignature(elaboration.body) ===
           expressionSignature(benchmarkCase.oracle.body)
         : null;
-    const falseResolution = benchmarkCase.oracle.expectedOutcome === "unresolved";
+    const falseResolution =
+      benchmarkCase.oracle.expectedOutcome === "unresolved";
     return {
       ...base,
       actualOutcome: "resolved",
@@ -473,7 +481,10 @@ export function evaluateExpression(
     case "not":
       return !evaluateExpression(expression.condition, input);
     case "equals":
-      return Object.is(readProperty(input, expression.property), expression.value);
+      return Object.is(
+        readProperty(input, expression.property),
+        expression.value,
+      );
     case "present": {
       const value = readProperty(input, expression.property);
       return value !== null && value !== undefined;
@@ -485,7 +496,9 @@ export function expressionSignature(expression: PredicateExpression): string {
   return stableJson(normalizeExpression(expression));
 }
 
-function normalizeExpression(expression: PredicateExpression): PredicateExpression {
+function normalizeExpression(
+  expression: PredicateExpression,
+): PredicateExpression {
   switch (expression.kind) {
     case "all":
     case "any":
@@ -493,10 +506,15 @@ function normalizeExpression(expression: PredicateExpression): PredicateExpressi
         kind: expression.kind,
         conditions: expression.conditions
           .map(normalizeExpression)
-          .sort((left, right) => stableJson(left).localeCompare(stableJson(right))),
+          .sort((left, right) =>
+            stableJson(left).localeCompare(stableJson(right)),
+          ),
       };
     case "not":
-      return { kind: "not", condition: normalizeExpression(expression.condition) };
+      return {
+        kind: "not",
+        condition: normalizeExpression(expression.condition),
+      };
     case "equals":
       return {
         kind: "equals",
@@ -531,7 +549,9 @@ function validateProtocol(
     (entry) => entry.oracle.expectedOutcome === "resolved",
   );
   if (resolved.length !== 6 || cases.length - resolved.length !== 3) {
-    throw new Error("benchmark protocol requires exactly 6 resolved and 3 ambiguous cases");
+    throw new Error(
+      "benchmark protocol requires exactly 6 resolved and 3 ambiguous cases",
+    );
   }
   const conceptIds = new Set(cases.map((entry) => entry.source.concept.id));
   if (conceptIds.size !== 3) {
@@ -541,7 +561,9 @@ function validateProtocol(
     if (
       freeze.concepts[entry.source.concept.id] !== entry.source.concept.hash
     ) {
-      throw new Error(`frozen concept hash mismatch: ${entry.source.concept.id}`);
+      throw new Error(
+        `frozen concept hash mismatch: ${entry.source.concept.id}`,
+      );
     }
     if (
       entry.oracle.expectedOutcome === "resolved" &&
@@ -579,7 +601,8 @@ function compareHumanTimes(
         semanticTotalMs: null,
         reduction: null,
         targetReduction: thresholds.targetManualTimeReduction,
-        reason: "Human manual and semantic authoring/review times have not been measured; null values are never estimated.",
+        reason:
+          "Human manual and semantic authoring/review times have not been measured; null values are never estimated.",
       };
     }
     manualTotalMs += manualAuthoringMs + manualReviewMs;
@@ -703,6 +726,9 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export function relativeReportPath(workspaceRoot: string, path: string): string {
+export function relativeReportPath(
+  workspaceRoot: string,
+  path: string,
+): string {
   return relative(workspaceRoot, path).replaceAll("\\", "/");
 }

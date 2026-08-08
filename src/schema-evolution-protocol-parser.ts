@@ -166,9 +166,14 @@ export function parseSchemaEvolutionFreezeManifest(
   for (const [rawPath, rawHash] of Object.entries(rawFiles)) {
     const path = relativePathValue(rawPath, "freeze file path");
     if (path in files) {
-      throw new Error(`freeze.files contains duplicate normalized path ${path}`);
+      throw new Error(
+        `freeze.files contains duplicate normalized path ${path}`,
+      );
     }
-    files[path] = hashValue(rawHash, `freeze.files[${JSON.stringify(rawPath)}]`);
+    files[path] = hashValue(
+      rawHash,
+      `freeze.files[${JSON.stringify(rawPath)}]`,
+    );
   }
   return {
     version: 1,
@@ -287,7 +292,9 @@ function parseEvaluation(
     value.quorum !== 2 ||
     typeof value.parallel !== "boolean"
   ) {
-    throw new Error(`${path} requires 3 samples, quorum 2, and parallel boolean`);
+    throw new Error(
+      `${path} requires 3 samples, quorum 2, and parallel boolean`,
+    );
   }
   return {
     primary: value.primary,
@@ -460,18 +467,19 @@ function positiveInteger(input: unknown, path: string): number {
 }
 
 function nonNegativeInteger(input: unknown, path: string): number {
-  if (
-    typeof input !== "number" ||
-    !Number.isSafeInteger(input) ||
-    input < 0
-  ) {
+  if (typeof input !== "number" || !Number.isSafeInteger(input) || input < 0) {
     throw new Error(`${path} must be a non-negative safe integer`);
   }
   return input;
 }
 
 function unitInterval(input: unknown, path: string): number {
-  if (typeof input !== "number" || !Number.isFinite(input) || input < 0 || input > 1) {
+  if (
+    typeof input !== "number" ||
+    !Number.isFinite(input) ||
+    input < 0 ||
+    input > 1
+  ) {
     throw new Error(`${path} must be a finite number between 0 and 1`);
   }
   return input;

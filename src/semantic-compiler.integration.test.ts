@@ -31,13 +31,16 @@ describe("semantic compiler transaction", () => {
     {
       name: "a research benchmarkProbe",
       source: renderBenchmarkProbeSource(),
-      expectedError: "benchmarkProbe is restricted to research benchmark runners",
+      expectedError:
+        "benchmarkProbe is restricted to research benchmark runners",
     },
   ]) {
     test(`rejects ${invalidSource.name} before resolution without changing artifacts`, async () => {
       const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
       await mkdir(parent, { recursive: true });
-      const testRoot = await mkdtemp(resolve(parent, "invalid-semantic-source-"));
+      const testRoot = await mkdtemp(
+        resolve(parent, "invalid-semantic-source-"),
+      );
       const sourcePath = resolve(testRoot, "semantic.ts");
       const lockPath = resolve(testRoot, "semantic.lock");
       const finalPath = resolve(testRoot, "is-customer.generated.ts");
@@ -131,143 +134,143 @@ describe("semantic compiler transaction", () => {
     }
   });
 
-  test(
-    "builds, replays without resolution, rolls back, and records unresolved input",
-    async () => {
-      const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
-      await mkdir(parent, { recursive: true });
-      const testRoot = await mkdtemp(resolve(parent, "compiler-"));
-      const sourcePath = resolve(testRoot, "semantic.ts");
-      const lockPath = resolve(testRoot, "semantic.lock");
-      const auditRoot = resolve(testRoot, "audit");
-      const finalPath = resolve(testRoot, "is-integration-customer.generated.ts");
+  test("builds, replays without resolution, rolls back, and records unresolved input", async () => {
+    const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+    await mkdir(parent, { recursive: true });
+    const testRoot = await mkdtemp(resolve(parent, "compiler-"));
+    const sourcePath = resolve(testRoot, "semantic.ts");
+    const lockPath = resolve(testRoot, "semantic.lock");
+    const auditRoot = resolve(testRoot, "audit");
+    const finalPath = resolve(testRoot, "is-integration-customer.generated.ts");
 
-      try {
-        await writeFile(sourcePath, renderIntegrationSource(testRoot), "utf8");
-        const stages: string[] = [];
-        const runner = createIntegrationRunner(stages);
-        const resolution = resolvedCustomer();
-        let capturedContextVersion: number | undefined;
+    try {
+      await writeFile(sourcePath, renderIntegrationSource(testRoot), "utf8");
+      const stages: string[] = [];
+      const runner = createIntegrationRunner(stages);
+      const resolution = resolvedCustomer();
+      let capturedContextVersion: number | undefined;
 
-        const built = await compileSemanticSource({
+      const built = await compileSemanticSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "build",
+        provider: "fixture:integration-success",
+        model: "gpt-5.4-mini",
+        countsAsApiCall: false,
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+        resolve: async (input) => {
+          capturedContextVersion = input.projectContext?.version;
+          return resolution;
+        },
+      });
+      const firstCode = await readFile(finalPath, "utf8");
+      expect(built.cacheHit).toBe(false);
+      expect(built.apiCalls).toBe(0);
+      expect(capturedContextVersion).toBe(1);
+      expect(firstCode).toContain('integrationCustomer.status === "active"');
+      expect(stages).toEqual([
+        "candidate-typecheck",
+        "semantic-test",
+        "project-typecheck",
+        "full-test",
+      ]);
+
+      stages.length = 0;
+      const replayed = await compileSemanticSource({
+        sourcePath,
+        workspaceRoot,
+        mode: "replay",
+        lockPath,
+        auditRoot,
+        commandRunner: runner,
+      });
+      expect(replayed.apiCalls).toBe(0);
+      expect(replayed.cacheHit).toBe(true);
+      expect(await readFile(finalPath, "utf8")).toBe(firstCode);
+
+      const lockBeforeLockFailure = await readFile(lockPath, "utf8");
+      await expect(
+        compileSemanticSource({
           sourcePath,
           workspaceRoot,
           mode: "build",
-          provider: "fixture:integration-success",
+          provider: "fixture:integration-lock-failure",
           model: "gpt-5.4-mini",
           countsAsApiCall: false,
           lockPath,
           auditRoot,
           commandRunner: runner,
-          resolve: async (input) => {
-            capturedContextVersion = input.projectContext?.version;
-            return resolution;
+          writeLock: async () => {
+            throw new Error("simulated lock write failure");
           },
-        });
-        const firstCode = await readFile(finalPath, "utf8");
-        expect(built.cacheHit).toBe(false);
-        expect(built.apiCalls).toBe(0);
-        expect(capturedContextVersion).toBe(1);
-        expect(firstCode).toContain('integrationCustomer.status === "active"');
-        expect(stages).toEqual([
-          "candidate-typecheck",
-          "semantic-test",
-          "project-typecheck",
-          "full-test",
-        ]);
+          resolve: async () => resolution,
+        }),
+      ).rejects.toThrow("simulated lock write failure");
+      expect(await readFile(finalPath, "utf8")).toBe(firstCode);
+      expect(await readFile(lockPath, "utf8")).toBe(lockBeforeLockFailure);
 
-        stages.length = 0;
-        const replayed = await compileSemanticSource({
+      for (const failureStage of [
+        "candidate-typecheck",
+        "semantic-test",
+        "project-typecheck",
+      ]) {
+        await expect(
+          compileSemanticSource({
+            sourcePath,
+            workspaceRoot,
+            mode: "build",
+            provider: `fixture:integration-${failureStage}-failure`,
+            model: "gpt-5.4-mini",
+            countsAsApiCall: false,
+            lockPath,
+            auditRoot,
+            commandRunner: createStubFailureRunner(failureStage),
+            resolve: async () => resolution,
+          }),
+        ).rejects.toThrow(`simulated ${failureStage} failure`);
+        expect(await readFile(finalPath, "utf8")).toBe(firstCode);
+        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeLockFailure);
+      }
+
+      const rollbackRunner = createIntegrationRunner([], "full-test");
+      await expect(
+        compileSemanticSource({
           sourcePath,
           workspaceRoot,
-          mode: "replay",
+          mode: "build",
+          provider: "fixture:integration-rollback",
+          model: "gpt-5.4-mini",
+          countsAsApiCall: false,
+          lockPath,
+          auditRoot,
+          commandRunner: rollbackRunner,
+          resolve: async () => resolution,
+        }),
+      ).rejects.toThrow("simulated full-test failure");
+      expect(await readFile(finalPath, "utf8")).toBe(firstCode);
+
+      await expect(
+        compileSemanticSource({
+          sourcePath,
+          workspaceRoot,
+          mode: "build",
+          provider: "fixture:integration-unresolved",
+          model: "gpt-5.4-mini",
+          countsAsApiCall: false,
           lockPath,
           auditRoot,
           commandRunner: runner,
-        });
-        expect(replayed.apiCalls).toBe(0);
-        expect(replayed.cacheHit).toBe(true);
-        expect(await readFile(finalPath, "utf8")).toBe(firstCode);
+          resolve: async () => unresolvedCustomer(),
+        }),
+      ).rejects.toThrow("specification was unresolved");
+      expect(await readFile(finalPath, "utf8")).toBe(firstCode);
 
-        const lockBeforeLockFailure = await readFile(lockPath, "utf8");
-        await expect(
-          compileSemanticSource({
-            sourcePath,
-            workspaceRoot,
-            mode: "build",
-            provider: "fixture:integration-lock-failure",
-            model: "gpt-5.4-mini",
-            countsAsApiCall: false,
-            lockPath,
-            auditRoot,
-            commandRunner: runner,
-            writeLock: async () => {
-              throw new Error("simulated lock write failure");
-            },
-            resolve: async () => resolution,
-          }),
-        ).rejects.toThrow("simulated lock write failure");
-        expect(await readFile(finalPath, "utf8")).toBe(firstCode);
-        expect(await readFile(lockPath, "utf8")).toBe(lockBeforeLockFailure);
-
-        for (const failureStage of [
-          "candidate-typecheck",
-          "semantic-test",
-          "project-typecheck",
-        ]) {
-          await expect(
-            compileSemanticSource({
-              sourcePath,
-              workspaceRoot,
-              mode: "build",
-              provider: `fixture:integration-${failureStage}-failure`,
-              model: "gpt-5.4-mini",
-              countsAsApiCall: false,
-              lockPath,
-              auditRoot,
-              commandRunner: createStubFailureRunner(failureStage),
-              resolve: async () => resolution,
-            }),
-          ).rejects.toThrow(`simulated ${failureStage} failure`);
-          expect(await readFile(finalPath, "utf8")).toBe(firstCode);
-          expect(await readFile(lockPath, "utf8")).toBe(lockBeforeLockFailure);
-        }
-
-        const rollbackRunner = createIntegrationRunner([], "full-test");
-        await expect(
-          compileSemanticSource({
-            sourcePath,
-            workspaceRoot,
-            mode: "build",
-            provider: "fixture:integration-rollback",
-            model: "gpt-5.4-mini",
-            countsAsApiCall: false,
-            lockPath,
-            auditRoot,
-            commandRunner: rollbackRunner,
-            resolve: async () => resolution,
-          }),
-        ).rejects.toThrow("simulated full-test failure");
-        expect(await readFile(finalPath, "utf8")).toBe(firstCode);
-
-        await expect(
-          compileSemanticSource({
-            sourcePath,
-            workspaceRoot,
-            mode: "build",
-            provider: "fixture:integration-unresolved",
-            model: "gpt-5.4-mini",
-            countsAsApiCall: false,
-            lockPath,
-            auditRoot,
-            commandRunner: runner,
-            resolve: async () => unresolvedCustomer(),
-          }),
-        ).rejects.toThrow("specification was unresolved");
-        expect(await readFile(finalPath, "utf8")).toBe(firstCode);
-
-        const lock = JSON.parse(await readFile(lockPath, "utf8")) as {
-          entries: Record<string, {
+      const lock = JSON.parse(await readFile(lockPath, "utf8")) as {
+        entries: Record<
+          string,
+          {
             conceptId: string;
             conceptHash: string;
             targetTypeName: string;
@@ -275,28 +278,27 @@ describe("semantic compiler transaction", () => {
             contextHash: string;
             contextSummary: { targetSource: string };
             promotion: { mode: string; validation: { semanticTest: string } };
-          }>;
-        };
-        const entries = Object.values(lock.entries);
-        expect(entries).toHaveLength(1);
-        expect(entries[0]?.conceptId).toBe("customer.active");
-        expect(entries[0]?.conceptHash).toMatch(/^[a-f0-9]{64}$/);
-        expect(entries[0]).toMatchObject({
-          targetTypeName: "IntegrationCustomer",
-          contextVersion: 1,
-          contextSummary: { targetSource: expect.any(String) },
-        });
-        expect(entries[0]?.contextHash).toMatch(/^[a-f0-9]{64}$/);
-        expect(entries[0]?.promotion).toMatchObject({
-          mode: "auto",
-          validation: { semanticTest: "passed" },
-        });
-      } finally {
-        await rm(testRoot, { recursive: true, force: true });
-      }
-    },
-    120_000,
-  );
+          }
+        >;
+      };
+      const entries = Object.values(lock.entries);
+      expect(entries).toHaveLength(1);
+      expect(entries[0]?.conceptId).toBe("customer.active");
+      expect(entries[0]?.conceptHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(entries[0]).toMatchObject({
+        targetTypeName: "IntegrationCustomer",
+        contextVersion: 1,
+        contextSummary: { targetSource: expect.any(String) },
+      });
+      expect(entries[0]?.contextHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(entries[0]?.promotion).toMatchObject({
+        mode: "auto",
+        validation: { semanticTest: "passed" },
+      });
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  }, 120_000);
 });
 
 function createIntegrationRunner(
@@ -318,7 +320,9 @@ function createIntegrationRunner(
     });
     const exitCode = await child.exited;
     if (exitCode !== 0) {
-      throw new Error(`${stage} failed: ${await new Response(child.stderr).text()}`);
+      throw new Error(
+        `${stage} failed: ${await new Response(child.stderr).text()}`,
+      );
     }
   };
 }

@@ -59,10 +59,7 @@ export function generatePredicateMutants(
 
 type ExpressionMutation = {
   id: string;
-  kind:
-    | "junction-replacement"
-    | "condition-deletion"
-    | "condition-negation";
+  kind: "junction-replacement" | "condition-deletion" | "condition-negation";
   expression: PredicateExpression;
 };
 
@@ -119,7 +116,10 @@ function mutateExpression(
       return mutations;
     }
     case "not":
-      for (const child of mutateExpression(expression.condition, `${path}.not`)) {
+      for (const child of mutateExpression(
+        expression.condition,
+        `${path}.not`,
+      )) {
         mutations.push({
           ...child,
           expression: { kind: "not", condition: child.expression },
@@ -152,9 +152,7 @@ function constantMutant(value: boolean): PredicateMutant {
   };
 }
 
-function cloneExpression(
-  expression: PredicateExpression,
-): PredicateExpression {
+function cloneExpression(expression: PredicateExpression): PredicateExpression {
   switch (expression.kind) {
     case "all":
     case "any":

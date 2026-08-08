@@ -1,18 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import {
-  mkdir,
-  mkdtemp,
-  rm,
-  symlink,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
-import {
-  containedRelativePath,
-  resolveContainedFile,
-} from "./contained-path";
+import { containedRelativePath, resolveContainedFile } from "./contained-path";
 
 const roots: string[] = [];
 
@@ -79,8 +70,9 @@ describe("contained file paths", () => {
       resolveContainedFile(root, directory, "fixture"),
     ).rejects.toThrow("fixture must be a regular file");
     expect(containedRelativePath(root, directory, "fixture")).toBe("nested");
-    expect(() => containedRelativePath(root, resolve(root, "../outside"), "fixture"))
-      .toThrow("fixture must resolve inside the workspace root");
+    expect(() =>
+      containedRelativePath(root, resolve(root, "../outside"), "fixture"),
+    ).toThrow("fixture must resolve inside the workspace root");
   });
 });
 

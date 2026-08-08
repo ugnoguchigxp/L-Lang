@@ -273,7 +273,9 @@ export function validateCrossSchemaProtocolInputs(
   manualTimes: CrossSchemaManualTimes,
 ): void {
   if (manifest.trials !== 3 || manifest.cases.length !== 9) {
-    throw new Error("cross-schema protocol requires exactly 9 cases and 3 trials");
+    throw new Error(
+      "cross-schema protocol requires exactly 9 cases and 3 trials",
+    );
   }
   if (!manifest.blindness.conceptsFrozenBeforeFirstModelCall) {
     throw new Error("cross-schema concepts must be frozen before model calls");
@@ -322,7 +324,9 @@ export async function verifyCrossSchemaFileFreeze(
       path,
       `cross-schema frozen input ${path}`,
     );
-    const actual = createHash("sha256").update(await readFile(absolute)).digest("hex");
+    const actual = createHash("sha256")
+      .update(await readFile(absolute))
+      .digest("hex");
     if (actual !== freeze.files[path]) {
       throw new Error(`cross-schema frozen input changed: ${path}`);
     }
@@ -461,7 +465,12 @@ function nullableDuration(input: unknown, path: string): number | null {
 }
 
 function unitInterval(input: unknown, path: string): number {
-  if (typeof input !== "number" || !Number.isFinite(input) || input < 0 || input > 1) {
+  if (
+    typeof input !== "number" ||
+    !Number.isFinite(input) ||
+    input < 0 ||
+    input > 1
+  ) {
     throw new Error(`${path} must be a finite number between 0 and 1`);
   }
   return input;
@@ -509,7 +518,8 @@ function hashValue(input: unknown, path: string): string {
 
 function dateString(input: unknown, path: string): string {
   const value = trimmedString(input, path);
-  if (Number.isNaN(Date.parse(value))) throw new Error(`${path} must be an ISO date`);
+  if (Number.isNaN(Date.parse(value)))
+    throw new Error(`${path} must be an ISO date`);
   return value;
 }
 

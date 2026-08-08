@@ -22,11 +22,26 @@ export function comparePredicatesOnType(
   typeSchema: TypeSchema,
 ): PredicateEquivalence {
   const exactLeft = normalizeExpression(left, typeSchema, false, []).expression;
-  const exactRight = normalizeExpression(right, typeSchema, false, []).expression;
+  const exactRight = normalizeExpression(
+    right,
+    typeSchema,
+    false,
+    [],
+  ).expression;
   const leftRewrites: string[] = [];
   const rightRewrites: string[] = [];
-  const semanticLeft = normalizeExpression(left, typeSchema, true, leftRewrites).expression;
-  const semanticRight = normalizeExpression(right, typeSchema, true, rightRewrites).expression;
+  const semanticLeft = normalizeExpression(
+    left,
+    typeSchema,
+    true,
+    leftRewrites,
+  ).expression;
+  const semanticRight = normalizeExpression(
+    right,
+    typeSchema,
+    true,
+    rightRewrites,
+  ).expression;
   const exactSignature = {
     left: stableJson(exactLeft),
     right: stableJson(exactRight),
@@ -53,7 +68,12 @@ export function predicateSemanticSignature(
   typeSchema: TypeSchema,
 ): { signature: string; rewrites: string[] } {
   const rewrites: string[] = [];
-  const normalized = normalizeExpression(expression, typeSchema, true, rewrites);
+  const normalized = normalizeExpression(
+    expression,
+    typeSchema,
+    true,
+    rewrites,
+  );
   return { signature: stableJson(normalized.expression), rewrites };
 }
 
@@ -62,7 +82,12 @@ export function normalizePredicateOnType(
   typeSchema: TypeSchema,
 ): { expression: PredicateExpression; rewrites: string[] } {
   const rewrites: string[] = [];
-  const normalized = normalizeExpression(expression, typeSchema, true, rewrites);
+  const normalized = normalizeExpression(
+    expression,
+    typeSchema,
+    true,
+    rewrites,
+  );
   return { expression: normalized.expression, rewrites };
 }
 
@@ -166,7 +191,9 @@ function resolveProperty(
   let optional = false;
   for (const part of path) {
     if (current.kind !== "object") return null;
-    const property = current.properties.find((candidate) => candidate.name === part);
+    const property = current.properties.find(
+      (candidate) => candidate.name === part,
+    );
     if (property === undefined) return null;
     optional ||= property.optional;
     current = property.type;

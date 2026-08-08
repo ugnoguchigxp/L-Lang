@@ -74,8 +74,9 @@ describe("semantic review candidate", () => {
       "candidate.ts",
       "diff.txt",
     ]);
-    expect(await readFile(resolve(created.candidateDirectory, "diff.txt"), "utf8"))
-      .toContain("NEW PREDICATE");
+    expect(
+      await readFile(resolve(created.candidateDirectory, "diff.txt"), "utf8"),
+    ).toContain("NEW PREDICATE");
     const read = await readSemanticReviewCandidate(created.candidate.id, {
       workspaceRoot,
     });
@@ -102,20 +103,31 @@ describe("semantic review candidate", () => {
 
     expect(created.candidate.kind).toBe("static-judgment");
     expect(created.candidate.validation.semanticTest).toBe("not-applicable");
-    expect(await readFile(resolve(created.candidateDirectory, "diff.txt"), "utf8"))
-      .toContain("NEW STATIC JUDGMENT");
+    expect(
+      await readFile(resolve(created.candidateDirectory, "diff.txt"), "utf8"),
+    ).toContain("NEW STATIC JUDGMENT");
   });
 
   test("rejects unknown fields, invalid timestamps, status metadata, and wrong-kind validation", () => {
     const cases: Array<(candidate: Record<string, unknown>) => void> = [
-      (candidate) => { candidate.extra = true; },
-      (candidate) => { candidate.createdAt = "yesterday"; },
-      (candidate) => { candidate.reviewer = "alice"; },
+      (candidate) => {
+        candidate.extra = true;
+      },
+      (candidate) => {
+        candidate.createdAt = "yesterday";
+      },
+      (candidate) => {
+        candidate.reviewer = "alice";
+      },
       (candidate) => {
         recordAt(candidate, "validation").semanticTest = "not-applicable";
       },
-      (candidate) => { candidate.generatedCodeHash = "not-a-hash"; },
-      (candidate) => { candidate.kind = "unknown"; },
+      (candidate) => {
+        candidate.generatedCodeHash = "not-a-hash";
+      },
+      (candidate) => {
+        candidate.kind = "unknown";
+      },
     ];
 
     for (const mutate of cases) {
@@ -191,28 +203,31 @@ describe("semantic review candidate", () => {
   });
 
   test("renders stable Predicate and Static Judgment diffs", () => {
-    expect(renderPredicateReviewDiff({
-      previous: { kind: "equals", property: ["state"], value: "waiting" },
-      candidate: { kind: "equals", property: ["state"], value: "ready" },
-      typeSchema: {
-        kind: "object",
-        properties: [
-          {
-            name: "state",
-            optional: false,
-            type: {
-              kind: "union",
-              types: [
-                { kind: "literal", value: "ready" },
-                { kind: "literal", value: "waiting" },
-              ],
+    expect(
+      renderPredicateReviewDiff({
+        previous: { kind: "equals", property: ["state"], value: "waiting" },
+        candidate: { kind: "equals", property: ["state"], value: "ready" },
+        typeSchema: {
+          kind: "object",
+          properties: [
+            {
+              name: "state",
+              optional: false,
+              type: {
+                kind: "union",
+                types: [
+                  { kind: "literal", value: "ready" },
+                  { kind: "literal", value: "waiting" },
+                ],
+              },
             },
-          },
-        ],
-      },
-    })).toContain("Semantic change:");
-    expect(renderStaticJudgmentReviewDiff({ previous: false, candidate: true }))
-      .toBe("before: false\nafter: true\n");
+          ],
+        },
+      }),
+    ).toContain("Semantic change:");
+    expect(
+      renderStaticJudgmentReviewDiff({ previous: false, candidate: true }),
+    ).toBe("before: false\nafter: true\n");
   });
 });
 

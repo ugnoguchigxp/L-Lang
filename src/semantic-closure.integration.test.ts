@@ -18,10 +18,12 @@ describe("semantic closure CLI read-only integration", () => {
       "benchmarks/schema-evolution/freeze.json",
     ];
     const beforeFiles = await hashFiles(workspaceRoot, protectedPaths);
-    const beforeAudit = await hashTree(
-      resolve(workspaceRoot, ".semantic"),
-      ["test-workspaces", "candidates", "judgments", "test-plan-reviews"],
-    );
+    const beforeAudit = await hashTree(resolve(workspaceRoot, ".semantic"), [
+      "test-workspaces",
+      "candidates",
+      "judgments",
+      "test-plan-reviews",
+    ]);
 
     const text = await runClosure(["semantic-closure.json"]);
     expect([0, 2]).toContain(text.exitCode);
@@ -48,7 +50,10 @@ describe("semantic closure CLI read-only integration", () => {
     expect(json.exitCode).toBe(parsedRoot.status === "closed" ? 0 : 2);
     expect(text.stdout).toContain(`status: ${parsedRoot.status}`);
 
-    const open = await runClosure(["examples/semantic-closure/open.json", "--json"]);
+    const open = await runClosure([
+      "examples/semantic-closure/open.json",
+      "--json",
+    ]);
     expect(open.exitCode).toBe(2);
     expect(JSON.parse(open.stdout)).toMatchObject({
       status: "open",

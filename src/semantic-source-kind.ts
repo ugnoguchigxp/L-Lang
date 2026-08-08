@@ -21,10 +21,7 @@ export async function detectSemanticSourceKind(
   let judgments = 0;
 
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isCallExpression(node) &&
-      ts.isIdentifier(node.expression)
-    ) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
       if (node.expression.text === "generatePredicate") predicates += 1;
       if (node.expression.text === "judgeStatic") judgments += 1;
     }

@@ -100,7 +100,9 @@ export async function readSemanticLockSnapshot(path: string): Promise<{
   try {
     const data = await readFile(path);
     if (data.byteLength > SEMANTIC_LIMITS.lockBytes) {
-      throw new Error(`semantic.lock exceeds ${SEMANTIC_LIMITS.lockBytes} bytes`);
+      throw new Error(
+        `semantic.lock exceeds ${SEMANTIC_LIMITS.lockBytes} bytes`,
+      );
     }
     return {
       lock: parseSemanticLock(
@@ -125,11 +127,7 @@ export async function writeSemanticLock(
   lock: SemanticLock,
 ): Promise<void> {
   const serialized = serializeSemanticLock(lock);
-  assertTextByteLength(
-    serialized,
-    SEMANTIC_LIMITS.lockBytes,
-    "semantic.lock",
-  );
+  assertTextByteLength(serialized, SEMANTIC_LIMITS.lockBytes, "semantic.lock");
   await atomicWriteText(path, serialized);
 }
 
@@ -145,7 +143,12 @@ export function findReplayEntry(
   lock: SemanticLock,
   match: Pick<
     SemanticLockEntry,
-    "source" | "predicate" | "sourceHash" | "typeHash" | "testHash" | "promptHash"
+    | "source"
+    | "predicate"
+    | "sourceHash"
+    | "typeHash"
+    | "testHash"
+    | "promptHash"
   > & { conceptId: string; conceptHash: string; contextHash?: string },
 ): SemanticLockEntry | undefined {
   return Object.values(lock.entries)
@@ -214,7 +217,9 @@ export function findLatestStaticJudgmentEntry(
   );
 }
 
-function newestEntry<T extends { createdAt: string }>(entries: T[]): T | undefined {
+function newestEntry<T extends { createdAt: string }>(
+  entries: T[],
+): T | undefined {
   return entries.sort((left, right) =>
     right.createdAt.localeCompare(left.createdAt),
   )[0];
@@ -222,11 +227,7 @@ function newestEntry<T extends { createdAt: string }>(entries: T[]): T | undefin
 
 function parseSemanticLock(input: unknown): SemanticLock {
   const value = objectValue(input, "semantic.lock");
-  assertKnownKeys(
-    value,
-    ["version", "entries", "judgments"],
-    "semantic.lock",
-  );
+  assertKnownKeys(value, ["version", "entries", "judgments"], "semantic.lock");
   if (value.version !== 1) {
     throw new Error("semantic.lock.version must be 1");
   }
@@ -306,7 +307,10 @@ function parsePredicateEntry(input: unknown, path: string): SemanticLockEntry {
   const presentContextFields = contextFields.filter(
     (field) => field !== undefined,
   ).length;
-  if (presentContextFields !== 0 && presentContextFields !== contextFields.length) {
+  if (
+    presentContextFields !== 0 &&
+    presentContextFields !== contextFields.length
+  ) {
     throw new Error(
       `${path} must include all Project Context metadata or none for a legacy entry`,
     );
@@ -375,7 +379,13 @@ function parsePredicateEntry(input: unknown, path: string): SemanticLockEntry {
     createdAt: dateValue(value.createdAt, `${path}.createdAt`),
     ...(value.promotion === undefined
       ? {}
-      : { promotion: promotionValue(value.promotion, `${path}.promotion`, "predicate") }),
+      : {
+          promotion: promotionValue(
+            value.promotion,
+            `${path}.promotion`,
+            "predicate",
+          ),
+        }),
   };
 }
 
@@ -459,7 +469,9 @@ function promotionValue(
 
   if (value.mode === "auto") {
     if (value.candidateId !== undefined || value.reviewer !== undefined) {
-      throw new Error(`${path} auto promotion must not include candidateId or reviewer`);
+      throw new Error(
+        `${path} auto promotion must not include candidateId or reviewer`,
+      );
     }
     return { mode: "auto", promotedAt, validation };
   }
@@ -481,12 +493,7 @@ function promotionValidationValue(
   const value = objectValue(input, path);
   assertKnownKeys(
     value,
-    [
-      "candidateTypecheck",
-      "projectTypecheck",
-      "semanticTest",
-      "fullTest",
-    ],
+    ["candidateTypecheck", "projectTypecheck", "semanticTest", "fullTest"],
     path,
   );
   if (value.candidateTypecheck !== "passed") {
@@ -499,7 +506,9 @@ function promotionValidationValue(
     throw new Error(`${path}.fullTest must be passed`);
   }
   if (kind === "predicate" && value.semanticTest !== "passed") {
-    throw new Error(`${path}.semanticTest must be passed for Predicate entries`);
+    throw new Error(
+      `${path}.semanticTest must be passed for Predicate entries`,
+    );
   }
   if (kind === "static-judgment" && value.semanticTest !== "not-applicable") {
     throw new Error(
@@ -525,9 +534,7 @@ function responseValue(
     id: stringValue(value.id, `${path}.id`),
     model: stringValue(value.model, `${path}.model`),
     usage:
-      value.usage === null
-        ? null
-        : usageValue(value.usage, `${path}.usage`),
+      value.usage === null ? null : usageValue(value.usage, `${path}.usage`),
   };
 }
 
@@ -536,14 +543,13 @@ function usageValue(
   path: string,
 ): NonNullable<OpenAIResult["usage"]> {
   const value = objectValue(input, path);
-  assertKnownKeys(
-    value,
-    ["inputTokens", "outputTokens", "totalTokens"],
-    path,
-  );
+  assertKnownKeys(value, ["inputTokens", "outputTokens", "totalTokens"], path);
   return {
     inputTokens: nonNegativeInteger(value.inputTokens, `${path}.inputTokens`),
-    outputTokens: nonNegativeInteger(value.outputTokens, `${path}.outputTokens`),
+    outputTokens: nonNegativeInteger(
+      value.outputTokens,
+      `${path}.outputTokens`,
+    ),
     totalTokens: nonNegativeInteger(value.totalTokens, `${path}.totalTokens`),
   };
 }
@@ -590,12 +596,7 @@ function projectContextSummaryValue(
   const value = objectValue(input, path);
   assertKnownKeys(
     value,
-    [
-      "version",
-      "targetSource",
-      "relatedTypeSources",
-      "verifiedBindingSources",
-    ],
+    ["version", "targetSource", "relatedTypeSources", "verifiedBindingSources"],
     path,
   );
   return {
@@ -614,9 +615,7 @@ function projectContextSummaryValue(
 
 function stringArray(input: unknown, path: string): string[] {
   if (!Array.isArray(input)) throw new Error(`${path} must be an array`);
-  return input.map((value, index) =>
-    stringValue(value, `${path}[${index}]`)
-  );
+  return input.map((value, index) => stringValue(value, `${path}[${index}]`));
 }
 
 function dateValue(input: unknown, path: string): string {
@@ -626,7 +625,10 @@ function dateValue(input: unknown, path: string): string {
   }
   const timestamp = Date.parse(value);
   const canonical = value.includes(".") ? value : value.replace("Z", ".000Z");
-  if (Number.isNaN(timestamp) || new Date(timestamp).toISOString() !== canonical) {
+  if (
+    Number.isNaN(timestamp) ||
+    new Date(timestamp).toISOString() !== canonical
+  ) {
     throw new Error(`${path} must be a valid timestamp`);
   }
   return value;

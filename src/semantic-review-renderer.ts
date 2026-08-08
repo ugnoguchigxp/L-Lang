@@ -1,8 +1,5 @@
 import type { PredicateExpression } from "./ir";
-import {
-  classifySemanticChange,
-  renderSemanticDiff,
-} from "./semantic-diff";
+import { classifySemanticChange, renderSemanticDiff } from "./semantic-diff";
 import type { TypeSchema } from "./semantic-source";
 
 export function renderPredicateReviewDiff(input: {

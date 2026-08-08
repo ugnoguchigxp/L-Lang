@@ -6,7 +6,12 @@ describe("schema evolution consensus", () => {
   test("selects a two-of-three resolved semantic group", () => {
     const result = selectConsensusVotes([
       { trial: 1, outcome: "resolved", eligible: true, signature: "same" },
-      { trial: 2, outcome: "unresolved", eligible: true, signature: "unresolved" },
+      {
+        trial: 2,
+        outcome: "unresolved",
+        eligible: true,
+        signature: "unresolved",
+      },
       { trial: 3, outcome: "resolved", eligible: true, signature: "same" },
     ]);
     expect(result).toMatchObject({
@@ -19,9 +24,19 @@ describe("schema evolution consensus", () => {
 
   test("selects unresolved only when it has quorum", () => {
     const result = selectConsensusVotes([
-      { trial: 1, outcome: "unresolved", eligible: true, signature: "unresolved" },
+      {
+        trial: 1,
+        outcome: "unresolved",
+        eligible: true,
+        signature: "unresolved",
+      },
       { trial: 2, outcome: "resolved", eligible: true, signature: "candidate" },
-      { trial: 3, outcome: "unresolved", eligible: true, signature: "unresolved" },
+      {
+        trial: 3,
+        outcome: "unresolved",
+        eligible: true,
+        signature: "unresolved",
+      },
     ]);
     expect(result.selectedOutcome).toBe("unresolved");
     expect(result.supportingTrials).toEqual([1, 3]);
@@ -41,7 +56,12 @@ describe("schema evolution consensus", () => {
     const result = selectConsensusVotes([
       { trial: 1, outcome: "resolved", eligible: false, signature: "same" },
       { trial: 2, outcome: "resolved", eligible: true, signature: "same" },
-      { trial: 3, outcome: "unresolved", eligible: true, signature: "unresolved" },
+      {
+        trial: 3,
+        outcome: "unresolved",
+        eligible: true,
+        signature: "unresolved",
+      },
     ]);
     expect(result.reached).toBe(false);
   });

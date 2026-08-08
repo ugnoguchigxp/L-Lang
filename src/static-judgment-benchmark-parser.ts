@@ -130,7 +130,8 @@ export function parseStaticJudgmentBenchmarkManifest(
     const item = recordValue(inputCase, casePath);
     assertExactKeys(item, ["id", "modelInput", "oracle", "fixture"], casePath);
     const id = portableId(item.id, `${casePath}.id`);
-    if (ids.has(id)) throw new Error(`${path} contains duplicate case id ${id}`);
+    if (ids.has(id))
+      throw new Error(`${path} contains duplicate case id ${id}`);
     ids.add(id);
     const result = {
       id,
@@ -228,7 +229,9 @@ export function parseStaticJudgmentBenchmarkFixture(
   assertExactKeys(value, ["version", "results"], path);
   if (value.version !== 1) throw new Error(`${path}.version must be 1`);
   if (!Array.isArray(value.results) || value.results.length !== repetitions) {
-    throw new Error(`${path}.results must contain exactly ${repetitions} items`);
+    throw new Error(
+      `${path}.results must contain exactly ${repetitions} items`,
+    );
   }
   return {
     version: 1,
@@ -292,7 +295,9 @@ function assertExactKeys(
     actual.length !== sortedExpected.length ||
     actual.some((key, index) => key !== sortedExpected[index])
   ) {
-    throw new Error(`${path} must contain exactly ${sortedExpected.join(", ")}`);
+    throw new Error(
+      `${path} must contain exactly ${sortedExpected.join(", ")}`,
+    );
   }
 }
 
@@ -337,7 +342,9 @@ function isIsoTimestamp(input: unknown): input is string {
     return false;
   }
   const timestamp = Date.parse(input);
-  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === input;
+  return (
+    Number.isFinite(timestamp) && new Date(timestamp).toISOString() === input
+  );
 }
 
 function boundedInteger(

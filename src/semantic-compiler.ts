@@ -1,12 +1,5 @@
-import {
-  writeFile,
-} from "node:fs/promises";
-import {
-  basename,
-  dirname,
-  extname,
-  resolve,
-} from "node:path";
+import { writeFile } from "node:fs/promises";
+import { basename, dirname, extname, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
 import { generatePredicate } from "./generator";
@@ -141,7 +134,9 @@ export async function compileSemanticSource(
     source.concept.definitionPath,
     "concept definition",
   );
-  const lockPath = resolve(options.lockPath ?? resolve(workspaceRoot, "semantic.lock"));
+  const lockPath = resolve(
+    options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
+  );
   const { lock, revision: lockRevision } =
     await readSemanticLockSnapshot(lockPath);
   const requestShape = predicateRequestShape(source);
@@ -150,13 +145,12 @@ export async function compileSemanticSource(
       ? undefined
       : await buildProjectContext({ source, workspaceRoot, lock });
   const hashes = predicateSemanticHashes(source, builtContext);
-  const contextSummary: ProjectContextSummary =
-    builtContext?.summary ?? {
-      version: 1,
-      targetSource: sourceRelative,
-      relatedTypeSources: [],
-      verifiedBindingSources: [],
-    };
+  const contextSummary: ProjectContextSummary = builtContext?.summary ?? {
+    version: 1,
+    targetSource: sourceRelative,
+    relatedTypeSources: [],
+    verifiedBindingSources: [],
+  };
   let provider = options.provider ?? "lock";
   let model = options.model ?? "lock";
   let fingerprint = fingerprintFor({
@@ -178,7 +172,9 @@ export async function compileSemanticSource(
       : lock.entries[fingerprint];
 
   if (options.mode === "replay" && entry === undefined) {
-    throw new Error("replay failed: no lock entry matches the current source, type, tests, and prompt");
+    throw new Error(
+      "replay failed: no lock entry matches the current source, type, tests, and prompt",
+    );
   }
 
   let resolution: SemanticResolution;
@@ -192,7 +188,10 @@ export async function compileSemanticSource(
     resolution = {
       elaboration: {
         outcome: "resolved",
-        body: parsePredicateExpression(entry.resolvedIr, "semantic.lock.resolvedIr"),
+        body: parsePredicateExpression(
+          entry.resolvedIr,
+          "semantic.lock.resolvedIr",
+        ),
         diagnostics: [],
       },
       response: entry.response
@@ -211,7 +210,9 @@ export async function compileSemanticSource(
     };
   } else {
     if (options.mode === "replay" || options.resolve === undefined) {
-      throw new Error("build requires an LLM or fixture resolver on a lock miss");
+      throw new Error(
+        "build requires an LLM or fixture resolver on a lock miss",
+      );
     }
     apiCalls = options.countsAsApiCall === false ? 0 : 1;
     resolution = await options.resolve({
@@ -226,20 +227,19 @@ export async function compileSemanticSource(
 
   const pipeline = await createSemanticPipelineRun({
     workspaceRoot,
-    ...(options.auditRoot === undefined ? {} : { auditRoot: options.auditRoot }),
+    ...(options.auditRoot === undefined
+      ? {}
+      : { auditRoot: options.auditRoot }),
     defaultAuditKind: "candidates",
     ...(options.commandRunner === undefined
       ? {}
       : { commandRunner: options.commandRunner }),
-    ...(options.writeLock === undefined ? {} : { writeLock: options.writeLock }),
+    ...(options.writeLock === undefined
+      ? {}
+      : { writeLock: options.writeLock }),
   });
-  const {
-    runId,
-    auditDirectory,
-    reportPath,
-    executeCommand,
-    persistLock,
-  } = pipeline;
+  const { runId, auditDirectory, reportPath, executeCommand, persistLock } =
+    pipeline;
   await writeSemanticJson(resolve(auditDirectory, "input.json"), {
     version: 1,
     source: sourceRelative,
@@ -274,8 +274,14 @@ export async function compileSemanticSource(
     generatedOutputPath(source.absolutePath, source.predicate.name),
     ".generated.ts",
   );
-  const finalPath = generatedOutputPath(source.absolutePath, source.predicate.name);
-  const candidatePath = resolve(sourceDirectory, `.${outputStem}.${runId}.candidate.ts`);
+  const finalPath = generatedOutputPath(
+    source.absolutePath,
+    source.predicate.name,
+  );
+  const candidatePath = resolve(
+    sourceDirectory,
+    `.${outputStem}.${runId}.candidate.ts`,
+  );
   const candidateTestPath = resolve(
     sourceDirectory,
     `.${outputStem}.${runId}.candidate.test.ts`,
@@ -334,7 +340,11 @@ export async function compileSemanticSource(
       definition,
     );
     await writeFile(resolve(auditDirectory, "candidate.ts"), code, "utf8");
-    await writeFile(resolve(auditDirectory, "candidate.test.ts"), candidateTest, "utf8");
+    await writeFile(
+      resolve(auditDirectory, "candidate.test.ts"),
+      candidateTest,
+      "utf8",
+    );
     await writeFile(candidatePath, code, "utf8");
     await writeFile(candidateTestPath, candidateTest, "utf8");
 
@@ -362,7 +372,11 @@ export async function compileSemanticSource(
       stage,
     );
     stage = "semantic-test";
-    await executeCommand(["bun", "test", candidateTestPath], workspaceRoot, stage);
+    await executeCommand(
+      ["bun", "test", candidateTestPath],
+      workspaceRoot,
+      stage,
+    );
     if (options.validateCandidate !== undefined) {
       stage = "additional-candidate-validation";
       await options.validateCandidate({
@@ -378,11 +392,17 @@ export async function compileSemanticSource(
     await cleanupSemanticFiles([candidatePath, candidateTestPath]);
 
     const generatedCodeHash = sha256(code);
-    const output = workspaceRelativePath(workspaceRoot, finalPath, "generated output");
+    const output = workspaceRelativePath(
+      workspaceRoot,
+      finalPath,
+      "generated output",
+    );
     if (promotion === "review") {
       const review = await createPredicateSemanticReview({
         workspaceRoot,
-        ...(options.reviewRoot === undefined ? {} : { reviewRoot: options.reviewRoot }),
+        ...(options.reviewRoot === undefined
+          ? {}
+          : { reviewRoot: options.reviewRoot }),
         source: sourceRelative,
         output,
         symbol: source.predicate.name,
@@ -430,7 +450,11 @@ export async function compileSemanticSource(
         promotionMode: "review",
         source: sourceRelative,
         output,
-        report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
+        report: workspaceRelativePath(
+          workspaceRoot,
+          reportPath,
+          "audit report",
+        ),
         fingerprint,
         provider,
         model,
@@ -508,7 +532,11 @@ export async function compileSemanticSource(
       promotionMode: options.mode === "replay" ? "replay" : "auto",
       stage: "complete",
       source: sourceRelative,
-      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      output: workspaceRelativePath(
+        workspaceRoot,
+        finalPath,
+        "generated output",
+      ),
       provider,
       model,
       response: semanticResponseMetadata(resolution.response),
@@ -524,7 +552,11 @@ export async function compileSemanticSource(
       status: "passed",
       promotionMode: options.mode === "replay" ? "replay" : "auto",
       source: sourceRelative,
-      output: workspaceRelativePath(workspaceRoot, finalPath, "generated output"),
+      output: workspaceRelativePath(
+        workspaceRoot,
+        finalPath,
+        "generated output",
+      ),
       report: workspaceRelativePath(workspaceRoot, reportPath, "audit report"),
       fingerprint,
       provider,

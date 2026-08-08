@@ -8,7 +8,9 @@ import { scanSemanticSource } from "./semantic-source";
 const roots: string[] = [];
 
 afterEach(async () => {
-  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true })));
+  await Promise.all(
+    roots.splice(0).map((root) => rm(root, { recursive: true })),
+  );
 });
 
 describe("extended Semantic Test source", () => {

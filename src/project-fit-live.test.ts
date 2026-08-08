@@ -39,9 +39,12 @@ describe("Project Fit v2 live A/B runner", () => {
         },
       });
       expect(captured).toHaveLength(4);
-      expect(captured.every((input) => input.maxOutputTokens === 200)).toBeTrue();
-      expect(captured.filter((input) => input.projectContext !== undefined))
-        .toHaveLength(2);
+      expect(
+        captured.every((input) => input.maxOutputTokens === 200),
+      ).toBeTrue();
+      expect(
+        captured.filter((input) => input.projectContext !== undefined),
+      ).toHaveLength(2);
       expect(JSON.stringify(captured)).not.toContain("HIDDEN_SENTINEL");
       expect(result.report.gateC?.stages.initial.checks).not.toHaveProperty(
         "inputTokenBudget",
@@ -52,8 +55,9 @@ describe("Project Fit v2 live A/B runner", () => {
       expect(result.report.gateC?.checks).not.toHaveProperty(
         "totalOutputTokenBudget",
       );
-      expect(result.report.stages.initial.arms.projectContext.inputTokens)
-        .toBeGreaterThan(0);
+      expect(
+        result.report.stages.initial.arms.projectContext.inputTokens,
+      ).toBeGreaterThan(0);
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }
@@ -183,13 +187,7 @@ describe("Project Fit v2 live A/B runner", () => {
 
       expect(result.report.status).toBe("passed");
       expect(attempts).toBe(5);
-      expect(waits).toEqual([
-        60_000,
-        60_000,
-        60_000,
-        60_000,
-        60_000,
-      ]);
+      expect(waits).toEqual([60_000, 60_000, 60_000, 60_000, 60_000]);
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }
@@ -228,11 +226,14 @@ describe("Project Fit v2 live A/B runner", () => {
       });
       expect(resumed.report.status).toBe("passed");
       expect(calls).toBe(4);
-      expect(resumed.report.stages.initial.arms.typeOnly.latencyMs).toBeGreaterThan(
-        0,
-      );
+      expect(
+        resumed.report.stages.initial.arms.typeOnly.latencyMs,
+      ).toBeGreaterThan(0);
       const responses = JSON.parse(
-        await readFile(resolve(resumed.reportDirectory, "responses.json"), "utf8"),
+        await readFile(
+          resolve(resumed.reportDirectory, "responses.json"),
+          "utf8",
+        ),
       ) as unknown[];
       expect(responses).toHaveLength(4);
     } finally {
@@ -341,10 +342,7 @@ async function freezeProtocol(directory: string): Promise<void> {
   await writeFile(freezePath, `${JSON.stringify(freeze, null, 2)}\n`);
 }
 
-function responseFor(
-  input: OpenAIRequestInput,
-  index: number,
-): OpenAIResult {
+function responseFor(input: OpenAIRequestInput, index: number): OpenAIResult {
   if (input.projectContext === undefined) return unresolvedResponse(index);
   const typeSource = input.typeScriptSource;
   const body = typeSource.includes("state:")

@@ -8,10 +8,7 @@ import {
   evaluatePredicateExpression,
   evaluateSemanticTestPlan,
 } from "./semantic-test-generator";
-import type {
-  SemanticTestPlan,
-  SemanticTestValue,
-} from "./semantic-test-ir";
+import type { SemanticTestPlan, SemanticTestValue } from "./semantic-test-ir";
 import type { TypeSchema } from "./semantic-source";
 
 export const RED_CERTIFICATE_VERSION = 1;
@@ -49,9 +46,7 @@ export function createRedCertificate(input: {
     input.implementation ?? null,
     input.typeSchema,
   );
-  const results = mutants.map((mutant) =>
-    evaluateMutant(mutant, input.plan),
-  );
+  const results = mutants.map((mutant) => evaluateMutant(mutant, input.plan));
   const scored = results.filter(
     (result) =>
       result.classification === "killed" ||
@@ -77,9 +72,7 @@ export function createRedCertificate(input: {
   };
 }
 
-export function assertPreImplementationRed(
-  certificate: RedCertificate,
-): void {
+export function assertPreImplementationRed(certificate: RedCertificate): void {
   for (const id of ["constant-false", "constant-true"]) {
     const result = certificate.mutants.find((mutant) => mutant.id === id);
     if (result?.classification !== "killed") {
@@ -160,10 +153,7 @@ export function parseRedCertificate(input: unknown): RedCertificate {
   });
   return {
     version: 1,
-    testPlanHash: hashValue(
-      value.testPlanHash,
-      "redCertificate.testPlanHash",
-    ),
+    testPlanHash: hashValue(value.testPlanHash, "redCertificate.testPlanHash"),
     implementationSignature,
     mutants,
     hardClauseCoverage: unitNumber(
@@ -224,15 +214,13 @@ function exactKeys(
 ): void {
   const allowedSet = new Set(allowed);
   const unknown = Object.keys(value).find((key) => !allowedSet.has(key));
-  if (unknown !== undefined) throw new Error(`${path} contains unknown field ${unknown}`);
+  if (unknown !== undefined)
+    throw new Error(`${path} contains unknown field ${unknown}`);
   const missing = allowed.find((key) => !(key in value));
   if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

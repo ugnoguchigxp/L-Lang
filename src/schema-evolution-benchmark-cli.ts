@@ -1,8 +1,6 @@
 import { resolve } from "node:path";
 
-import {
-  relativeSchemaEvolutionReportPath,
-} from "./schema-evolution-evaluator";
+import { relativeSchemaEvolutionReportPath } from "./schema-evolution-evaluator";
 import { runSchemaEvolutionBenchmark } from "./schema-evolution-benchmark";
 import {
   callOpenAI,
@@ -24,29 +22,35 @@ async function main(): Promise<void> {
     await runSchemaEvolutionBenchmark({
       manifestPath,
       workspaceRoot,
-      outputRoot: resolve(workspaceRoot, ".semantic/benchmarks/schema-evolution"),
+      outputRoot: resolve(
+        workspaceRoot,
+        ".semantic/benchmarks/schema-evolution",
+      ),
       provider: connection.provider,
       model,
       resolve: async (input) => {
-        if (connection.apiKey.length === 0) throw new Error("OPENAI_API_KEY is required");
+        if (connection.apiKey.length === 0)
+          throw new Error("OPENAI_API_KEY is required");
         return callOpenAI(input, connection);
       },
       requireFrozenInputs: true,
       onProgress: (message) => console.log(message),
     });
-  console.log([
-    "schema evolution benchmark completed",
-    `status: ${report.status}`,
-    `provider/model: ${report.provider}/${report.model}`,
-    `single first-pass: ${percent(report.summary.firstPassCaseRate)}`,
-    `consensus pass: ${percent(report.summary.consensusCasePassRate)}`,
-    `consensus quorum: ${percent(report.summary.consensusQuorumRate)}`,
-    `consensus false-resolution: ${percent(report.summary.consensusFalseResolutionRate)}`,
-    `workspace mutations: ${report.summary.workspaceMutationCount}`,
-    `frozen manifest sha256: ${authoritativeManifestSha256}`,
-    `report: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.md"))}`,
-    `json: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.json"))}`,
-  ].join("\n"));
+  console.log(
+    [
+      "schema evolution benchmark completed",
+      `status: ${report.status}`,
+      `provider/model: ${report.provider}/${report.model}`,
+      `single first-pass: ${percent(report.summary.firstPassCaseRate)}`,
+      `consensus pass: ${percent(report.summary.consensusCasePassRate)}`,
+      `consensus quorum: ${percent(report.summary.consensusQuorumRate)}`,
+      `consensus false-resolution: ${percent(report.summary.consensusFalseResolutionRate)}`,
+      `workspace mutations: ${report.summary.workspaceMutationCount}`,
+      `frozen manifest sha256: ${authoritativeManifestSha256}`,
+      `report: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.md"))}`,
+      `json: ${relativeSchemaEvolutionReportPath(workspaceRoot, resolve(runDirectory, "report.json"))}`,
+    ].join("\n"),
+  );
 }
 
 function percent(value: number): string {

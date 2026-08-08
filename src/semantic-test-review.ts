@@ -177,7 +177,9 @@ export async function readSemanticTestReviewCandidate(
     ),
   );
   if (candidate.id !== id) {
-    throw new Error("Semantic Test review candidate ID does not match its directory");
+    throw new Error(
+      "Semantic Test review candidate ID does not match its directory",
+    );
   }
   const approval = await readApproval(candidateDirectory);
   if (approval !== null && approval.candidateId !== candidate.id) {
@@ -245,9 +247,7 @@ export async function approveSemanticTestReview(
     stableJson(currentPreRed.certificate) !==
     stableJson(candidate.preImplementationRed)
   ) {
-    throw new Error(
-      "Semantic Test review candidate Red Certificate is stale",
-    );
+    throw new Error("Semantic Test review candidate Red Certificate is stale");
   }
 
   await mkdir(dirname(testLockPath), { recursive: true });
@@ -288,13 +288,15 @@ export async function approveSemanticTestReview(
         assertFrozenEntryMatchesCandidate(existingEntry, entry);
       }
 
-      const nextApproval = currentApproval ?? {
-        version: 1,
-        candidateId: candidate.id,
-        reviewer,
-        fingerprint: entry.fingerprint,
-        approvedAt,
-      } satisfies SemanticTestReviewApproval;
+      const nextApproval =
+        currentApproval ??
+        ({
+          version: 1,
+          candidateId: candidate.id,
+          reviewer,
+          fingerprint: entry.fingerprint,
+          approvedAt,
+        } satisfies SemanticTestReviewApproval);
 
       const approvalPath = resolve(candidateDirectory, "approval.json");
       let createdApproval = false;
@@ -324,9 +326,7 @@ export async function approveSemanticTestReview(
     },
   );
   return {
-    status: approvalResult.alreadyApproved
-      ? "already-approved"
-      : "approved",
+    status: approvalResult.alreadyApproved ? "already-approved" : "approved",
     candidate,
     approval: approvalResult.approval,
     testLockPath,
@@ -415,9 +415,7 @@ function parseCandidate(input: unknown): SemanticTestReviewCandidate {
   if (value.testCompilerVersion !== SEMANTIC_TEST_COMPILER_VERSION) {
     throw new Error("candidate.testCompilerVersion is unsupported");
   }
-  const preImplementationRed = parseRedCertificate(
-    value.preImplementationRed,
-  );
+  const preImplementationRed = parseRedCertificate(value.preImplementationRed);
   if (
     preImplementationRed.testPlanHash !== testPlanHash ||
     preImplementationRed.implementationSignature !== null
@@ -474,9 +472,7 @@ async function readApproval(
   }
 }
 
-function responseValue(
-  input: unknown,
-): SemanticTestLockEntry["response"] {
+function responseValue(input: unknown): SemanticTestLockEntry["response"] {
   if (input === null) return null;
   const value = recordValue(input, "candidate.response");
   exactKeys(value, ["id", "model", "usage"], "candidate.response");
@@ -495,24 +491,14 @@ function usageValue(
   path: string,
 ): NonNullable<OpenAIResult["usage"]> {
   const usage = recordValue(input, path);
-  exactKeys(
-    usage,
-    ["inputTokens", "outputTokens", "totalTokens"],
-    path,
-  );
+  exactKeys(usage, ["inputTokens", "outputTokens", "totalTokens"], path);
   return {
-    inputTokens: nonNegativeInteger(
-      usage.inputTokens,
-      `${path}.inputTokens`,
-    ),
+    inputTokens: nonNegativeInteger(usage.inputTokens, `${path}.inputTokens`),
     outputTokens: nonNegativeInteger(
       usage.outputTokens,
       `${path}.outputTokens`,
     ),
-    totalTokens: nonNegativeInteger(
-      usage.totalTokens,
-      `${path}.totalTokens`,
-    ),
+    totalTokens: nonNegativeInteger(usage.totalTokens, `${path}.totalTokens`),
   };
 }
 
@@ -555,15 +541,13 @@ function exactKeys(
 ): void {
   const expected = new Set(keys);
   const unknown = Object.keys(value).find((key) => !expected.has(key));
-  if (unknown !== undefined) throw new Error(`${path} contains unknown field ${unknown}`);
+  if (unknown !== undefined)
+    throw new Error(`${path} contains unknown field ${unknown}`);
   const missing = keys.find((key) => !(key in value));
   if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
-function recordValue(
-  input: unknown,
-  path: string,
-): Record<string, unknown> {
+function recordValue(input: unknown, path: string): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new Error(`${path} must be an object`);
   }

@@ -3,10 +3,7 @@ import { readFile, realpath } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
-import {
-  parsePredicateExpression,
-  type PredicateExpression,
-} from "./ir";
+import { parsePredicateExpression, type PredicateExpression } from "./ir";
 import { readBoundedJsonFile } from "./semantic-limits";
 import {
   scanBenchmarkSource,
@@ -102,9 +99,7 @@ export async function prepareSchemaEvolutionCases(
       concept.baselineOracle,
       `${concept.id}.baselineOracle`,
     );
-    const source = await scanBenchmarkSource(
-      baselineSourcePath,
-    );
+    const source = await scanBenchmarkSource(baselineSourcePath);
     const body = parseBaseline(
       await readJson(baselineOraclePath, `${concept.id} baseline oracle`),
     );
@@ -132,13 +127,9 @@ export async function prepareSchemaEvolutionCases(
         entry.tests,
         `${entry.id}.tests`,
       );
-      const source = await scanBenchmarkSource(
-        sourcePath,
-      );
+      const source = await scanBenchmarkSource(sourcePath);
       if (source.concept.id !== entry.conceptId) {
-        throw new Error(
-          `${entry.id}: source Concept does not match manifest`,
-        );
+        throw new Error(`${entry.id}: source Concept does not match manifest`);
       }
       return {
         id: entry.id,
@@ -146,9 +137,7 @@ export async function prepareSchemaEvolutionCases(
         changeType: entry.changeType,
         source,
         baselineIr: baseline.body,
-        oracle: parseOracle(
-          await readJson(oraclePath, `${entry.id} oracle`),
-        ),
+        oracle: parseOracle(await readJson(oraclePath, `${entry.id} oracle`)),
         hiddenCases: parseHiddenCases(
           await readJson(testsPath, `${entry.id} hidden cases`),
         ),
@@ -248,9 +237,7 @@ export async function verifySchemaEvolutionFreeze(
   ]);
   const frozen = new Set(Object.keys(freeze.files));
   if (stableJson([...required].sort()) !== stableJson([...frozen].sort())) {
-    throw new Error(
-      "freeze file set does not exactly match benchmark inputs",
-    );
+    throw new Error("freeze file set does not exactly match benchmark inputs");
   }
   await verifyFrozenFileHashes(directory, freeze.files);
 }
@@ -369,10 +356,7 @@ function stableJson(value: unknown): string {
     const object = value as Record<string, unknown>;
     return `{${Object.keys(object)
       .sort()
-      .map(
-        (key) =>
-          `${JSON.stringify(key)}:${stableJson(object[key])}`,
-      )
+      .map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`)
       .join(",")}}`;
   }
   return JSON.stringify(value);

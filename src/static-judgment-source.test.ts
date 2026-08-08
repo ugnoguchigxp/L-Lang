@@ -77,7 +77,7 @@ describe("static judgment source scanner", () => {
       'import { defineConcept, judgeStatic, staticValue } from "__DSL__";',
       validConceptDeclaration(),
       'const first = staticValue("a cat");',
-      'const second = first;',
+      "const second = first;",
       "export const result = judgeStatic(second, Cat);",
       "",
     ]);
@@ -134,7 +134,9 @@ async function writeFixture(lines: string[]): Promise<string> {
   await mkdir(parent, { recursive: true });
   const directory = await mkdtemp(resolve(parent, "static-source-"));
   const path = resolve(directory, "semantic.ts");
-  const dslModule = modulePath(relative(directory, resolve(workspaceRoot, "src/dsl")));
+  const dslModule = modulePath(
+    relative(directory, resolve(workspaceRoot, "src/dsl")),
+  );
   await writeFile(path, lines.join("\n").replace("__DSL__", dslModule), "utf8");
   return path;
 }

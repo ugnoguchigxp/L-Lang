@@ -151,7 +151,10 @@ describe("Static Judgment blind benchmark", () => {
     ).rejects.toThrow("freeze must not use a symbolic link");
 
     const linkedManifest = await createBenchmark();
-    const manifestLink = resolve(linkedManifest.directory, "manifest-link.json");
+    const manifestLink = resolve(
+      linkedManifest.directory,
+      "manifest-link.json",
+    );
     await symlink(linkedManifest.manifestPath, manifestLink);
     await expect(loadStaticJudgmentBenchmark(manifestLink)).rejects.toThrow(
       "manifest must not use a symbolic link",
@@ -287,7 +290,10 @@ async function createBenchmark(
     "fixtures/ambiguous.json",
   ];
   await Promise.all([
-    writeJson(resolve(directory, "inputs/cat.json"), modelInput("A calico cat.")),
+    writeJson(
+      resolve(directory, "inputs/cat.json"),
+      modelInput("A calico cat."),
+    ),
     writeJson(
       resolve(directory, "inputs/ambiguous.json"),
       modelInput("Mike is mentioned without any description."),

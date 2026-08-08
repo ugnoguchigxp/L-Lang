@@ -3,7 +3,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 import { validatePredicateContext } from "./context-validator";
-import { evaluateExpression, expressionSignature } from "./cross-schema-benchmark";
+import {
+  evaluateExpression,
+  expressionSignature,
+} from "./cross-schema-benchmark";
 import type { PredicateExpression } from "./ir";
 import {
   parseElaborationResult,
@@ -20,7 +23,10 @@ import {
   predicateSemanticSignature,
   type PredicateEquivalenceRelation,
 } from "./predicate-equivalence";
-import { selectConsensusVotes, type ConsensusSelection } from "./schema-evolution-consensus";
+import {
+  selectConsensusVotes,
+  type ConsensusSelection,
+} from "./schema-evolution-consensus";
 import {
   assertFrozenInputs,
   prepareSchemaEvolutionCases,
@@ -105,15 +111,19 @@ export async function evaluateMaterializedSchemaEvolution(
   options: MaterializedSchemaEvolutionOptions,
 ) {
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
-  const { directory, manifest, freeze } =
-    await readSchemaEvolutionProtocol(options.manifestPath);
+  const { directory, manifest, freeze } = await readSchemaEvolutionProtocol(
+    options.manifestPath,
+  );
   await verifySchemaEvolutionFreeze(directory, manifest, freeze);
   if (options.requireFrozenInputs ?? true) assertFrozenInputs(freeze);
 
   const prepared = await prepareSchemaEvolutionCases(manifest, directory);
   validateSchemaEvolutionProtocol(manifest, prepared);
   const beforeArtifacts = await snapshotWorkspaceArtifacts(workspaceRoot);
-  const runId = `${new Date().toISOString().replaceAll(/[-:.TZ]/g, "").slice(0, 14)}`;
+  const runId = `${new Date()
+    .toISOString()
+    .replaceAll(/[-:.TZ]/g, "")
+    .slice(0, 14)}`;
   const runDirectory = resolve(options.outputRoot, `${runId}-${manifest.name}`);
   await mkdir(runDirectory, { recursive: true });
   const startedAt = Date.now();
@@ -134,18 +144,32 @@ export async function evaluateMaterializedSchemaEvolution(
       options.onProgress?.(
         `[${caseIndex + 1}/${prepared.length}] ${benchmarkCase.id} trial ${trial}/${manifest.trials}`,
       );
-      const result = await runTrial(benchmarkCase, trial, options.model, options.resolve);
+      const result = await runTrial(
+        benchmarkCase,
+        trial,
+        options.model,
+        options.resolve,
+      );
       await writeJson(
         resolve(runDirectory, "trials", benchmarkCase.id, `${trial}.json`),
         result,
       );
       return result;
     };
-    const parallel = options.parallelTrials ?? manifest.evaluation?.parallel ?? false;
+    const parallel =
+      options.parallelTrials ?? manifest.evaluation?.parallel ?? false;
     const trials = parallel
-      ? await Promise.all(Array.from({ length: manifest.trials }, (_, index) => runOne(index + 1)))
+      ? await Promise.all(
+          Array.from({ length: manifest.trials }, (_, index) =>
+            runOne(index + 1),
+          ),
+        )
       : await runSequentially(manifest.trials, runOne);
-    const consensus = evaluateCaseConsensus(benchmarkCase, trials, manifest.evaluation?.quorum ?? 2);
+    const consensus = evaluateCaseConsensus(
+      benchmarkCase,
+      trials,
+      manifest.evaluation?.quorum ?? 2,
+    );
     caseReports.push({
       id: benchmarkCase.id,
       conceptId: benchmarkCase.conceptId,
@@ -169,7 +193,10 @@ export async function evaluateMaterializedSchemaEvolution(
     (trial) => trial.expectedOutcome === "unresolved",
   );
   const summary = {
-    trialPassRate: ratio(allTrials.filter((trial) => trial.passed).length, allTrials.length),
+    trialPassRate: ratio(
+      allTrials.filter((trial) => trial.passed).length,
+      allTrials.length,
+    ),
     firstPassCaseRate: ratio(
       caseReports.filter((entry) => entry.firstPass).length,
       caseReports.length,
@@ -191,7 +218,8 @@ export async function evaluateMaterializedSchemaEvolution(
       resolvedExpected.length,
     ),
     hiddenTestPassRate: ratio(
-      resolvedExpected.filter((trial) => trial.hiddenTestsPassed === true).length,
+      resolvedExpected.filter((trial) => trial.hiddenTestsPassed === true)
+        .length,
       resolvedExpected.length,
     ),
     falseResolutionRate: ratio(
@@ -208,28 +236,39 @@ export async function evaluateMaterializedSchemaEvolution(
     ),
     consensusFalseResolutionRate: ratio(
       caseReports.filter((entry) => entry.consensus.falseResolution).length,
-      caseReports.filter((entry) => entry.expectedOutcome === "unresolved").length,
+      caseReports.filter((entry) => entry.expectedOutcome === "unresolved")
+        .length,
     ),
     workspaceMutationCount: workspaceMutations.length,
     workspaceMutations,
     totalLatencyMs: allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0),
     averageLatencyMs: Math.round(
-      allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0) / allTrials.length,
+      allTrials.reduce((sum, trial) => sum + trial.latencyMs, 0) /
+        allTrials.length,
     ),
     usage: sumUsage(allTrials),
   };
   const consensusPrimary = manifest.evaluation?.primary === "consensus";
   const modelGatePassed = consensusPrimary
-    ? summary.consensusCasePassRate >= (manifest.thresholds.minimumConsensusCaseRate ?? 1) &&
-      summary.consensusQuorumRate >= (manifest.thresholds.minimumConsensusQuorumRate ?? 1) &&
-      summary.consensusFalseResolutionRate <= manifest.thresholds.maximumFalseResolutionRate &&
-      summary.workspaceMutationCount <= manifest.thresholds.maximumWorkspaceMutationCount
-    : summary.firstPassCaseRate >= manifest.thresholds.minimumFirstPassCaseRate &&
+    ? summary.consensusCasePassRate >=
+        (manifest.thresholds.minimumConsensusCaseRate ?? 1) &&
+      summary.consensusQuorumRate >=
+        (manifest.thresholds.minimumConsensusQuorumRate ?? 1) &&
+      summary.consensusFalseResolutionRate <=
+        manifest.thresholds.maximumFalseResolutionRate &&
+      summary.workspaceMutationCount <=
+        manifest.thresholds.maximumWorkspaceMutationCount
+    : summary.firstPassCaseRate >=
+        manifest.thresholds.minimumFirstPassCaseRate &&
       summary.stableCaseRate >= manifest.thresholds.minimumStableCaseRate &&
-      summary.classificationAccuracy >= manifest.thresholds.minimumClassificationAccuracy &&
-      summary.hiddenTestPassRate >= manifest.thresholds.minimumHiddenTestPassRate &&
-      summary.falseResolutionRate <= manifest.thresholds.maximumFalseResolutionRate &&
-      summary.workspaceMutationCount <= manifest.thresholds.maximumWorkspaceMutationCount;
+      summary.classificationAccuracy >=
+        manifest.thresholds.minimumClassificationAccuracy &&
+      summary.hiddenTestPassRate >=
+        manifest.thresholds.minimumHiddenTestPassRate &&
+      summary.falseResolutionRate <=
+        manifest.thresholds.maximumFalseResolutionRate &&
+      summary.workspaceMutationCount <=
+        manifest.thresholds.maximumWorkspaceMutationCount;
   const report = {
     version: 1,
     benchmark: manifest.name,
@@ -241,7 +280,9 @@ export async function evaluateMaterializedSchemaEvolution(
     provider: options.provider,
     model: options.model,
     lockUsed: false,
-    generatedCodeMutated: workspaceMutations.some((path) => path !== "semantic.lock"),
+    generatedCodeMutated: workspaceMutations.some(
+      (path) => path !== "semantic.lock",
+    ),
     oracleAndCasesSentToModel: false,
     evaluation: manifest.evaluation ?? {
       primary: "trials",
@@ -257,8 +298,12 @@ export async function evaluateMaterializedSchemaEvolution(
       concepts: manifest.concepts.length,
       changeTypes: 6,
       cases: prepared.length,
-      resolvedCases: prepared.filter((entry) => entry.oracle.expectedOutcome === "resolved").length,
-      unresolvedCases: prepared.filter((entry) => entry.oracle.expectedOutcome === "unresolved").length,
+      resolvedCases: prepared.filter(
+        (entry) => entry.oracle.expectedOutcome === "resolved",
+      ).length,
+      unresolvedCases: prepared.filter(
+        (entry) => entry.oracle.expectedOutcome === "unresolved",
+      ).length,
       trialsPerCase: manifest.trials,
       totalTrials: allTrials.length,
     },
@@ -269,7 +314,11 @@ export async function evaluateMaterializedSchemaEvolution(
     completedAt: new Date().toISOString(),
   };
   await writeJson(resolve(runDirectory, "report.json"), report);
-  await writeFile(resolve(runDirectory, "report.md"), renderReport(report), "utf8");
+  await writeFile(
+    resolve(runDirectory, "report.md"),
+    renderReport(report),
+    "utf8",
+  );
   return { report, runDirectory };
 }
 
@@ -292,7 +341,9 @@ async function runTrial(
   const startedAt = performance.now();
   try {
     const response = await resolver(modelInput);
-    const elaboration = parseElaborationResult(JSON.parse(response.outputText) as unknown);
+    const elaboration = parseElaborationResult(
+      JSON.parse(response.outputText) as unknown,
+    );
     const responseAudit = {
       id: response.responseId,
       model: response.model,
@@ -304,10 +355,11 @@ async function runTrial(
         previous: benchmarkCase.baselineIr,
         candidate: null,
         diagnostics: elaboration.diagnostics,
-      validationPassed: false,
-      typeSchema: benchmarkCase.source.concept.typeSchema,
+        validationPassed: false,
+        typeSchema: benchmarkCase.source.concept.typeSchema,
       });
-      const outcomeCorrect = benchmarkCase.oracle.expectedOutcome === "unresolved";
+      const outcomeCorrect =
+        benchmarkCase.oracle.expectedOutcome === "unresolved";
       const classificationCorrect =
         diff.classification === benchmarkCase.oracle.expectedClassification;
       return {
@@ -352,10 +404,13 @@ async function runTrial(
         passed: actual === hiddenCase.expected,
       };
     });
-    const hiddenTestsPassed = hiddenTestResults.every((result) => result.passed);
+    const hiddenTestsPassed = hiddenTestResults.every(
+      (result) => result.passed,
+    );
     const exactIrMatch =
       benchmarkCase.oracle.expectedOutcome === "resolved" &&
-      expressionSignature(elaboration.body) === expressionSignature(benchmarkCase.oracle.body);
+      expressionSignature(elaboration.body) ===
+        expressionSignature(benchmarkCase.oracle.body);
     const diff = classifySemanticChange({
       previous: benchmarkCase.baselineIr,
       candidate: elaboration.body,
@@ -392,7 +447,10 @@ async function runTrial(
         ? [...elaboration.diagnostics, contextError]
         : elaboration.diagnostics,
       error: null,
-      signature: stableJson({ outcome: "resolved", body: expressionSignature(elaboration.body) }),
+      signature: stableJson({
+        outcome: "resolved",
+        body: expressionSignature(elaboration.body),
+      }),
       latencyMs: Math.round(performance.now() - startedAt),
       modelInput,
       response: responseAudit,
@@ -462,18 +520,20 @@ function evaluateCaseConsensus(
     };
   });
   const selection = selectConsensusVotes(votes, quorum);
-  const representative = selection.selectedOutcome === "resolved"
-    ? trials.find((trial) =>
-        trial.actualOutcome === "resolved" &&
-        trial.actualBody !== null &&
-        predicateSemanticSignature(
-          trial.actualBody,
-          benchmarkCase.source.concept.typeSchema,
-        ).signature === selection.selectedSignature
-      )
-    : selection.selectedOutcome === "unresolved"
-      ? trials.find((trial) => trial.actualOutcome === "unresolved")
-      : undefined;
+  const representative =
+    selection.selectedOutcome === "resolved"
+      ? trials.find(
+          (trial) =>
+            trial.actualOutcome === "resolved" &&
+            trial.actualBody !== null &&
+            predicateSemanticSignature(
+              trial.actualBody,
+              benchmarkCase.source.concept.typeSchema,
+            ).signature === selection.selectedSignature,
+        )
+      : selection.selectedOutcome === "unresolved"
+        ? trials.find((trial) => trial.actualOutcome === "unresolved")
+        : undefined;
   const relationToOracle =
     representative?.actualBody !== null &&
     representative?.actualBody !== undefined &&
@@ -485,10 +545,12 @@ function evaluateCaseConsensus(
         ).relation
       : null;
   const outcomeCorrect =
-    selection.reached && selection.selectedOutcome === benchmarkCase.oracle.expectedOutcome;
-  const semanticMatch = benchmarkCase.oracle.expectedOutcome === "unresolved"
-    ? selection.selectedOutcome === "unresolved"
-    : relationToOracle === "exact" || relationToOracle === "equivalent";
+    selection.reached &&
+    selection.selectedOutcome === benchmarkCase.oracle.expectedOutcome;
+  const semanticMatch =
+    benchmarkCase.oracle.expectedOutcome === "unresolved"
+      ? selection.selectedOutcome === "unresolved"
+      : relationToOracle === "exact" || relationToOracle === "equivalent";
   const hiddenTestsPassed = representative?.hiddenTestsPassed ?? null;
   const falseResolution =
     benchmarkCase.oracle.expectedOutcome === "unresolved" &&
@@ -505,7 +567,8 @@ function evaluateCaseConsensus(
     passed:
       outcomeCorrect &&
       semanticMatch &&
-      (benchmarkCase.oracle.expectedOutcome === "unresolved" || hiddenTestsPassed === true),
+      (benchmarkCase.oracle.expectedOutcome === "unresolved" ||
+        hiddenTestsPassed === true),
   };
 }
 
@@ -514,7 +577,8 @@ async function runSequentially<T>(
   run: (index: number) => Promise<T>,
 ): Promise<T[]> {
   const results: T[] = [];
-  for (let index = 1; index <= count; index += 1) results.push(await run(index));
+  for (let index = 1; index <= count; index += 1)
+    results.push(await run(index));
   return results;
 }
 
@@ -523,7 +587,11 @@ async function snapshotWorkspaceArtifacts(workspaceRoot: string) {
   const lockPath = resolve(workspaceRoot, "semantic.lock");
   snapshot["semantic.lock"] = await hashOptional(lockPath);
   const glob = new Bun.Glob("**/*.generated.ts");
-  for await (const path of glob.scan({ cwd: workspaceRoot, dot: false, onlyFiles: true })) {
+  for await (const path of glob.scan({
+    cwd: workspaceRoot,
+    dot: false,
+    onlyFiles: true,
+  })) {
     snapshot[path] = sha256(await readFile(resolve(workspaceRoot, path)));
   }
   return snapshot;
@@ -615,15 +683,18 @@ function renderReport(report: {
     "",
     "| Case | Change | Expected | First pass | Consensus | Stable | Outcomes |",
     "| --- | --- | --- | --- | --- | --- | --- |",
-    ...report.cases.map((entry) =>
-      `| ${entry.id} | ${entry.changeType} | ${entry.expectedOutcome} | ${entry.firstPass ? "PASS" : "FAIL"} | ${entry.consensus.passed ? "PASS" : "FAIL"} (${entry.consensus.selection.supportingTrials.join(",") || "no quorum"}) | ${entry.stable ? "yes" : "no"} | ${entry.trials.map((trial) => `${trial.actualOutcome}/${trial.actualClassification}:${trial.passed ? "pass" : "fail"}`).join(", ")} |`,
+    ...report.cases.map(
+      (entry) =>
+        `| ${entry.id} | ${entry.changeType} | ${entry.expectedOutcome} | ${entry.firstPass ? "PASS" : "FAIL"} | ${entry.consensus.passed ? "PASS" : "FAIL"} (${entry.consensus.selection.supportingTrials.join(",") || "no quorum"}) | ${entry.stable ? "yes" : "no"} | ${entry.trials.map((trial) => `${trial.actualOutcome}/${trial.actualClassification}:${trial.passed ? "pass" : "fail"}`).join(", ")} |`,
     ),
     "",
   ].join("\n");
 }
 
 function sumUsage(trials: TrialResult[]) {
-  const usage = trials.flatMap((trial) => trial.response?.usage ? [trial.response.usage] : []);
+  const usage = trials.flatMap((trial) =>
+    trial.response?.usage ? [trial.response.usage] : [],
+  );
   return {
     inputTokens: usage.reduce((sum, entry) => sum + entry.inputTokens, 0),
     outputTokens: usage.reduce((sum, entry) => sum + entry.outputTokens, 0),
@@ -644,7 +715,10 @@ function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
   if (typeof value === "object" && value !== null) {
     const object = value as Record<string, unknown>;
-    return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`).join(",")}}`;
+    return `{${Object.keys(object)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`)
+      .join(",")}}`;
   }
   return JSON.stringify(value);
 }
@@ -658,6 +732,10 @@ function percent(value: number): string {
 }
 
 function isNotFound(error: unknown): boolean {
-  return typeof error === "object" && error !== null && "code" in error &&
-    (error as { code?: string }).code === "ENOENT";
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "ENOENT"
+  );
 }

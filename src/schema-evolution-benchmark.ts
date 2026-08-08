@@ -67,14 +67,19 @@ export async function runSchemaEvolutionBenchmark(
       "authoritative schema evolution freeze",
     ),
   );
-  if (Object.keys(freeze.files).length !== 1 || freeze.files["benchmark.json"] === undefined) {
+  if (
+    Object.keys(freeze.files).length !== 1 ||
+    freeze.files["benchmark.json"] === undefined
+  ) {
     throw new Error("freeze must contain exactly benchmark.json");
   }
   await verifyFrozenFileHashes(directory, freeze.files);
   if (options.requireFrozenInputs ?? true) assertFrozenInputs(freeze);
   validateProtocol(manifest);
 
-  const materializedRoot = await mkdtemp(resolve(tmpdir(), "l-lang-schema-evolution-"));
+  const materializedRoot = await mkdtemp(
+    resolve(tmpdir(), "l-lang-schema-evolution-"),
+  );
   try {
     const generatedManifestPath = await materializeBenchmark(
       materializedRoot,
@@ -132,36 +137,59 @@ function validateProtocol(manifest: SchemaEvolutionManifest): void {
     "ambiguity",
   ] as const;
   for (const concept of manifest.concepts) {
-    if (ids.has(concept.id)) throw new Error(`duplicate Concept id: ${concept.id}`);
+    if (ids.has(concept.id))
+      throw new Error(`duplicate Concept id: ${concept.id}`);
     ids.add(concept.id);
     validateSchema(concept.baseline, `${concept.id}.baseline`, true);
     for (const change of expectedChanges) {
       validateSchema(concept.cases[change], `${concept.id}.${change}`, false);
-      const expected = change === "remove-role" || change === "ambiguity"
-        ? "unresolved"
-        : "resolved";
+      const expected =
+        change === "remove-role" || change === "ambiguity"
+          ? "unresolved"
+          : "resolved";
       if (concept.cases[change].expectedOutcome !== expected) {
-        throw new Error(`${concept.id}.${change}: expectedOutcome must be ${expected}`);
+        throw new Error(
+          `${concept.id}.${change}: expectedOutcome must be ${expected}`,
+        );
       }
     }
   }
 }
 
-function validateSchema(schema: SchemaDescriptor, path: string, baseline: boolean): void {
-  if (schema.fields.length < 2) throw new Error(`${path}: at least two fields are required`);
-  const conditionFields = schema.fields.filter((field) => field.condition !== undefined);
-  if ((baseline || schema.expectedOutcome === "resolved") && conditionFields.length !== 3) {
-    throw new Error(`${path}: resolved schemas require exactly three frozen conditions`);
+function validateSchema(
+  schema: SchemaDescriptor,
+  path: string,
+  baseline: boolean,
+): void {
+  if (schema.fields.length < 2)
+    throw new Error(`${path}: at least two fields are required`);
+  const conditionFields = schema.fields.filter(
+    (field) => field.condition !== undefined,
+  );
+  if (
+    (baseline || schema.expectedOutcome === "resolved") &&
+    conditionFields.length !== 3
+  ) {
+    throw new Error(
+      `${path}: resolved schemas require exactly three frozen conditions`,
+    );
   }
   if (schema.expectedOutcome === "unresolved" && conditionFields.length !== 0) {
-    throw new Error(`${path}: unresolved schemas must not encode an oracle condition`);
+    throw new Error(
+      `${path}: unresolved schemas must not encode an oracle condition`,
+    );
   }
   for (const [index, field] of schema.fields.entries()) {
-    if (field.path.length === 0 || field.path.some((part) => !/^[$A-Z_a-z][$\w]*$/.test(part))) {
+    if (
+      field.path.length === 0 ||
+      field.path.some((part) => !/^[$A-Z_a-z][$\w]*$/.test(part))
+    ) {
       throw new Error(`${path}.fields[${index}]: invalid property path`);
     }
     if (field.condition !== undefined && !("negative" in field)) {
-      throw new Error(`${path}.fields[${index}]: condition fields require a negative value`);
+      throw new Error(
+        `${path}.fields[${index}]: condition fields require a negative value`,
+      );
     }
   }
 }
@@ -180,13 +208,45 @@ async function materializeBenchmark(
     const definition = `concepts/${slug}.ts`;
     const baselineSource = `baselines/${slug}.semantic.ts`;
     const baselineOracle = `baselines/${slug}.oracle.json`;
-    files.set(definition, renderConcept(concept, modulePath(relative(resolve(root, "concepts"), resolve(workspaceRoot, "src/dsl")))));
+    files.set(
+      definition,
+      renderConcept(
+        concept,
+        modulePath(
+          relative(
+            resolve(root, "concepts"),
+            resolve(workspaceRoot, "src/dsl"),
+          ),
+        ),
+      ),
+    );
     files.set(
       baselineSource,
-      renderSource(concept, concept.baseline, "Baseline", modulePath(relative(resolve(root, "baselines"), resolve(root, "concepts", slug))), modulePath(relative(resolve(root, "baselines"), resolve(workspaceRoot, "src/dsl")))),
+      renderSource(
+        concept,
+        concept.baseline,
+        "Baseline",
+        modulePath(
+          relative(resolve(root, "baselines"), resolve(root, "concepts", slug)),
+        ),
+        modulePath(
+          relative(
+            resolve(root, "baselines"),
+            resolve(workspaceRoot, "src/dsl"),
+          ),
+        ),
+      ),
     );
-    files.set(baselineOracle, json({ version: 1, body: bodyFor(concept.baseline) }));
-    concepts.push({ id: concept.id, definition, baselineSource, baselineOracle });
+    files.set(
+      baselineOracle,
+      json({ version: 1, body: bodyFor(concept.baseline) }),
+    );
+    concepts.push({
+      id: concept.id,
+      definition,
+      baselineSource,
+      baselineOracle,
+    });
 
     for (const [changeType, schema] of Object.entries(concept.cases)) {
       const id = `${slug}-${changeType}`;
@@ -195,26 +255,51 @@ async function materializeBenchmark(
       const tests = `cases/${id}.cases.json`;
       files.set(
         source,
-        renderSource(concept, schema, pascalCase(changeType), modulePath(relative(resolve(root, "changes", slug), resolve(root, "concepts", slug))), modulePath(relative(resolve(root, "changes", slug), resolve(workspaceRoot, "src/dsl")))),
+        renderSource(
+          concept,
+          schema,
+          pascalCase(changeType),
+          modulePath(
+            relative(
+              resolve(root, "changes", slug),
+              resolve(root, "concepts", slug),
+            ),
+          ),
+          modulePath(
+            relative(
+              resolve(root, "changes", slug),
+              resolve(workspaceRoot, "src/dsl"),
+            ),
+          ),
+        ),
       );
       files.set(
         oracle,
-        json(schema.expectedOutcome === "resolved"
-          ? {
-              version: 1,
-              expectedOutcome: "resolved",
-              expectedClassification: "compatible",
-              body: bodyFor(schema),
-            }
-          : {
-              version: 1,
-              expectedOutcome: "unresolved",
-              expectedClassification: "unresolved",
-              body: null,
-            }),
+        json(
+          schema.expectedOutcome === "resolved"
+            ? {
+                version: 1,
+                expectedOutcome: "resolved",
+                expectedClassification: "compatible",
+                body: bodyFor(schema),
+              }
+            : {
+                version: 1,
+                expectedOutcome: "unresolved",
+                expectedClassification: "unresolved",
+                body: null,
+              },
+        ),
       );
       files.set(tests, json({ version: 1, tests: hiddenCasesFor(schema) }));
-      cases.push({ id, conceptId: concept.id, changeType, source, oracle, tests });
+      cases.push({
+        id,
+        conceptId: concept.id,
+        changeType,
+        source,
+        oracle,
+        tests,
+      });
     }
   }
   const generatedManifest = {
@@ -241,10 +326,13 @@ async function materializeBenchmark(
       minimumStableCaseRate: 0,
       minimumClassificationAccuracy: 0,
       minimumHiddenTestPassRate: 0,
-      maximumFalseResolutionRate: manifest.thresholds.maximumFalseResolutionRate,
-      maximumWorkspaceMutationCount: manifest.thresholds.maximumWorkspaceMutationCount,
+      maximumFalseResolutionRate:
+        manifest.thresholds.maximumFalseResolutionRate,
+      maximumWorkspaceMutationCount:
+        manifest.thresholds.maximumWorkspaceMutationCount,
       minimumConsensusCaseRate: manifest.thresholds.minimumConsensusCaseRate,
-      minimumConsensusQuorumRate: manifest.thresholds.minimumConsensusQuorumRate,
+      minimumConsensusQuorumRate:
+        manifest.thresholds.minimumConsensusQuorumRate,
     },
     concepts,
     cases,
@@ -253,26 +341,34 @@ async function materializeBenchmark(
   const hashes = Object.fromEntries(
     [...files.entries()].map(([path, content]) => [path, sha256(content)]),
   );
-  files.set("freeze.json", json({
-    version: 1,
-    status: freeze.status,
-    instructions: freeze.instructions,
-    files: hashes,
-  }));
+  files.set(
+    "freeze.json",
+    json({
+      version: 1,
+      status: freeze.status,
+      instructions: freeze.instructions,
+      files: hashes,
+    }),
+  );
   await writeFile(
     resolve(root, "tsconfig.json"),
     json({ extends: resolve(workspaceRoot, "tsconfig.json") }),
     "utf8",
   );
-  await Promise.all([...files.entries()].map(async ([path, content]) => {
-    const absolute = resolve(root, path);
-    await mkdir(dirname(absolute), { recursive: true });
-    await writeFile(absolute, content, "utf8");
-  }));
+  await Promise.all(
+    [...files.entries()].map(async ([path, content]) => {
+      const absolute = resolve(root, path);
+      await mkdir(dirname(absolute), { recursive: true });
+      await writeFile(absolute, content, "utf8");
+    }),
+  );
   return resolve(root, "benchmark.json");
 }
 
-function renderConcept(concept: SchemaEvolutionConcept, dslModule: string): string {
+function renderConcept(
+  concept: SchemaEvolutionConcept,
+  dslModule: string,
+): string {
   return [
     `import { defineConcept } from ${JSON.stringify(dslModule)};`,
     "",
@@ -327,8 +423,9 @@ function renderObject(node: FieldTree, depth: number): string {
   const childIndent = "  ".repeat(depth + 1);
   return [
     "{",
-    ...[...node.children.entries()].map(([name, child]) =>
-      `${childIndent}${name}${child.field?.optional ? "?" : ""}: ${child.field ? child.field.type : renderObject(child, depth + 1)};`,
+    ...[...node.children.entries()].map(
+      ([name, child]) =>
+        `${childIndent}${name}${child.field?.optional ? "?" : ""}: ${child.field ? child.field.type : renderObject(child, depth + 1)};`,
     ),
     `${indent}}`,
   ].join("\n");
@@ -338,9 +435,15 @@ function bodyFor(schema: SchemaDescriptor): PredicateExpression {
   const conditions: PredicateExpression[] = [];
   for (const field of schema.fields) {
     if (field.condition === undefined) continue;
-    conditions.push(field.condition.kind === "present"
-      ? { kind: "present", property: field.path }
-      : { kind: "equals", property: field.path, value: field.condition.value });
+    conditions.push(
+      field.condition.kind === "present"
+        ? { kind: "present", property: field.path }
+        : {
+            kind: "equals",
+            property: field.path,
+            value: field.condition.value,
+          },
+    );
   }
   return { kind: "all", conditions };
 }
@@ -350,30 +453,49 @@ function hiddenCasesFor(schema: SchemaDescriptor) {
   const positive = fixtureFor(schema.fields, null);
   return [
     { name: "eligible", input: positive, expected: true },
-    ...schema.fields.flatMap((field) => field.condition === undefined
-      ? []
-      : [{
-          name: `rejects-${field.path.join("-")}`,
-          input: fixtureFor(schema.fields, field),
-          expected: false,
-        }]),
+    ...schema.fields.flatMap((field) =>
+      field.condition === undefined
+        ? []
+        : [
+            {
+              name: `rejects-${field.path.join("-")}`,
+              input: fixtureFor(schema.fields, field),
+              expected: false,
+            },
+          ],
+    ),
   ];
 }
 
-function fixtureFor(fields: FieldDescriptor[], negativeField: FieldDescriptor | null) {
+function fixtureFor(
+  fields: FieldDescriptor[],
+  negativeField: FieldDescriptor | null,
+) {
   const result: Record<string, unknown> = {};
   for (const field of fields) {
     if (field === negativeField && field.omitWhenNegative) continue;
-    setPath(result, field.path, field === negativeField ? field.negative : field.positive);
+    setPath(
+      result,
+      field.path,
+      field === negativeField ? field.negative : field.positive,
+    );
   }
   return result;
 }
 
-function setPath(target: Record<string, unknown>, path: string[], value: unknown): void {
+function setPath(
+  target: Record<string, unknown>,
+  path: string[],
+  value: unknown,
+): void {
   let current = target;
   for (const part of path.slice(0, -1)) {
     const existing = current[part];
-    if (typeof existing === "object" && existing !== null && !Array.isArray(existing)) {
+    if (
+      typeof existing === "object" &&
+      existing !== null &&
+      !Array.isArray(existing)
+    ) {
       current = existing as Record<string, unknown>;
     } else {
       const child: Record<string, unknown> = {};
@@ -392,11 +514,18 @@ function modulePath(value: string): string {
 }
 
 function slugify(value: string): string {
-  return value.trim().toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "");
+  return value
+    .trim()
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-|-$/g, "");
 }
 
 function pascalCase(value: string): string {
-  return value.split("-").map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("");
+  return value
+    .split("-")
+    .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+    .join("");
 }
 
 function json(value: unknown): string {

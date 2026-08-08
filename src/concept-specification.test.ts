@@ -17,7 +17,9 @@ describe("fixed-section Concept specification", () => {
       outOfScope: ["Inventory availability."],
       unresolvedWhen: ["The payment role cannot be mapped uniquely."],
     });
-    expect(parsed.specification).toContain("Requirements:\n- Payment is confirmed.");
+    expect(parsed.specification).toContain(
+      "Requirements:\n- Payment is confirmed.",
+    );
     expect(parsed.specification).toContain("Leave unresolved when:");
   });
 
@@ -69,7 +71,7 @@ describe("fixed-section Concept specification", () => {
     const cases = [
       'format = "l-lang-concept-v1"\n\n[definition]\ntext = "Legacy TOML"',
       validConcept().replace("Definition:", "Description:"),
-      validConcept().replace("Leave unresolved when:", "Unknown:") ,
+      validConcept().replace("Leave unresolved when:", "Unknown:"),
       validConcept().replace("- Cancelled orders.", ""),
       validConcept().replace(
         "- Cancelled orders.",
@@ -79,16 +81,10 @@ describe("fixed-section Concept specification", () => {
         "- Inventory availability.",
         "- Payment is confirmed.",
       ),
-      validConcept().replace(
-        "Requirements:",
-        "Temporary:",
-      ).replace(
-        "Exclusions:",
-        "Requirements:",
-      ).replace(
-        "Temporary:",
-        "Exclusions:",
-      ),
+      validConcept()
+        .replace("Requirements:", "Temporary:")
+        .replace("Exclusions:", "Requirements:")
+        .replace("Temporary:", "Exclusions:"),
     ];
 
     for (const input of cases) {
@@ -99,7 +95,10 @@ describe("fixed-section Concept specification", () => {
   test("requires every list line to be an explicit one-line item", () => {
     expect(() =>
       parseConceptSpecification(
-        validConcept().replace("- A destination is present.", "A destination is present."),
+        validConcept().replace(
+          "- A destination is present.",
+          "A destination is present.",
+        ),
       ),
     ).toThrow('must be a one-line "- item"');
   });

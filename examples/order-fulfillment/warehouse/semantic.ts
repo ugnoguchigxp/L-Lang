@@ -1,9 +1,5 @@
 import { FulfillableOrder } from "../../../concepts/fulfillable-order";
-import {
-  bindConcept,
-  generatePredicate,
-  semanticTest,
-} from "../../../src/dsl";
+import { bindConcept, generatePredicate, semanticTest } from "../../../src/dsl";
 
 export type WarehouseRequest = {
   paymentConfirmed: boolean;
