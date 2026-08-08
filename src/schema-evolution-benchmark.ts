@@ -1,65 +1,28 @@
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, relative, resolve } from "node:path";
+import { basename, dirname, relative, resolve } from "node:path";
 
+import { resolveContainedFile } from "./contained-path";
 import type { PredicateExpression } from "./ir";
+import {
+  type FieldDescriptor,
+  parseSchemaEvolutionAuthoritativeManifest,
+  type SchemaDescriptor,
+  type SchemaEvolutionConcept,
+  type SchemaEvolutionManifest,
+} from "./schema-evolution-authoritative-parser";
 import {
   assertFrozenInputs,
   evaluateMaterializedSchemaEvolution,
-  verifyFrozenFileHashes,
   type MaterializedSchemaEvolutionOptions,
+  verifyFrozenFileHashes,
 } from "./schema-evolution-evaluator";
-
-type FieldDescriptor = {
-  path: string[];
-  type: string;
-  optional?: boolean;
-  omitWhenNegative?: boolean;
-  positive: unknown;
-  condition?:
-    | { kind: "equals"; value: string | number | boolean | null }
-    | { kind: "present" };
-  negative?: unknown;
-};
-
-type SchemaDescriptor = {
-  typeName: string;
-  expectedOutcome: "resolved" | "unresolved";
-  fields: FieldDescriptor[];
-};
-
-type SchemaEvolutionConcept = {
-  id: string;
-  exportName: string;
-  displayName: string;
-  specification: string;
-  baseline: SchemaDescriptor;
-  cases: Record<
-    "add-property" | "rename" | "representation" | "optionality" | "remove-role" | "ambiguity",
-    SchemaDescriptor
-  >;
-};
-
-type SchemaEvolutionManifest = {
-  version: 2;
-  name: string;
-  trials: 3;
-  concepts: SchemaEvolutionConcept[];
-  thresholds: {
-    minimumConsensusCaseRate: number;
-    minimumConsensusQuorumRate: number;
-    maximumFalseResolutionRate: number;
-    maximumWorkspaceMutationCount: number;
-  };
-};
-
-type SchemaEvolutionFreeze = {
-  version: 1;
-  status: "draft" | "frozen";
-  instructions: string;
-  files: Record<string, string>;
-};
+import {
+  parseSchemaEvolutionFreezeManifest,
+  type SchemaEvolutionFreezeManifest,
+} from "./schema-evolution-protocol-parser";
+import { readBoundedJsonFile } from "./semantic-limits";
 
 export type SchemaEvolutionBenchmarkOptions = Omit<
   MaterializedSchemaEvolutionOptions,
@@ -72,13 +35,37 @@ export type SchemaEvolutionBenchmarkOptions = Omit<
 export async function runSchemaEvolutionBenchmark(
   options: SchemaEvolutionBenchmarkOptions,
 ) {
-  const manifestPath = resolve(options.manifestPath);
-  const directory = dirname(manifestPath);
-  const manifest = parseManifest(
-    JSON.parse(await readFile(manifestPath, "utf8")) as unknown,
+  const requestedManifestPath = resolve(options.manifestPath);
+  const manifestPath = await resolveContainedFile(
+    dirname(requestedManifestPath),
+    basename(requestedManifestPath),
+    "authoritative schema evolution manifest",
+    {
+      containmentLabel: "benchmark directory",
+      rejectSymbolicLinks: true,
+    },
   );
-  const freeze = parseFreeze(
-    JSON.parse(await readFile(resolve(directory, "freeze.json"), "utf8")) as unknown,
+  const directory = dirname(manifestPath);
+  const manifest = parseSchemaEvolutionAuthoritativeManifest(
+    await readBoundedJsonFile(
+      manifestPath,
+      "authoritative schema evolution manifest",
+    ),
+  );
+  const freezePath = await resolveContainedFile(
+    directory,
+    "freeze.json",
+    "authoritative schema evolution freeze",
+    {
+      containmentLabel: "benchmark directory",
+      rejectSymbolicLinks: true,
+    },
+  );
+  const freeze = parseSchemaEvolutionFreezeManifest(
+    await readBoundedJsonFile(
+      freezePath,
+      "authoritative schema evolution freeze",
+    ),
   );
   if (Object.keys(freeze.files).length !== 1 || freeze.files["benchmark.json"] === undefined) {
     throw new Error("freeze must contain exactly benchmark.json");
@@ -183,7 +170,7 @@ async function materializeBenchmark(
   root: string,
   workspaceRoot: string,
   manifest: SchemaEvolutionManifest,
-  freeze: SchemaEvolutionFreeze,
+  freeze: SchemaEvolutionFreezeManifest,
 ): Promise<string> {
   const files = new Map<string, string>();
   const concepts = [];
@@ -397,34 +384,6 @@ function setPath(target: Record<string, unknown>, path: string[], value: unknown
   const leaf = path.at(-1);
   if (leaf === undefined) throw new Error("fixture path must not be empty");
   current[leaf] = value;
-}
-
-function parseManifest(input: unknown): SchemaEvolutionManifest {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error("benchmark manifest must be an object");
-  }
-  const value = input as Record<string, unknown>;
-  if (value.version !== 2 || value.trials !== 3 || !Array.isArray(value.concepts)) {
-    throw new Error("benchmark manifest is invalid");
-  }
-  return input as SchemaEvolutionManifest;
-}
-
-function parseFreeze(input: unknown): SchemaEvolutionFreeze {
-  if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    throw new Error("freeze must be an object");
-  }
-  const value = input as Record<string, unknown>;
-  if (
-    value.version !== 1 ||
-    (value.status !== "draft" && value.status !== "frozen") ||
-    typeof value.instructions !== "string" ||
-    typeof value.files !== "object" ||
-    value.files === null
-  ) {
-    throw new Error("freeze is invalid");
-  }
-  return input as SchemaEvolutionFreeze;
 }
 
 function modulePath(value: string): string {

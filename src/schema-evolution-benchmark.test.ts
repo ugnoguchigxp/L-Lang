@@ -1,5 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import {
+  copyFile,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -37,6 +44,65 @@ describe("blind schema evolution benchmark", () => {
       },
     })).rejects.toThrow("benchmark inputs must be frozen before live execution");
     expect(calls).toBe(0);
+  });
+
+  test("rejects malformed manifests and freeze symlinks before resolver calls", async () => {
+    const root = await mkdtemp(join(tmpdir(), "schema-evolution-boundary-"));
+    const copiedManifest = resolve(root, "benchmark.json");
+    const copiedFreeze = resolve(root, "freeze.json");
+    await Promise.all([
+      copyFile(manifestPath, copiedManifest),
+      copyFile(
+        resolve(workspaceRoot, "benchmarks/schema-evolution/freeze.json"),
+        copiedFreeze,
+      ),
+    ]);
+    const originalManifest = JSON.parse(
+      await readFile(copiedManifest, "utf8"),
+    ) as Record<string, unknown>;
+    let calls = 0;
+    const run = () =>
+      runSchemaEvolutionBenchmark({
+        manifestPath: copiedManifest,
+        workspaceRoot,
+        outputRoot,
+        provider: "fixture",
+        model: "never-called",
+        requireFrozenInputs: false,
+        resolve: async () => {
+          calls += 1;
+          throw new Error("resolver must not be called");
+        },
+      });
+
+    try {
+      const malformed = structuredClone(originalManifest);
+      delete (malformed.thresholds as Record<string, unknown>)
+        .minimumConsensusCaseRate;
+      await writeFile(
+        copiedManifest,
+        `${JSON.stringify(malformed, null, 2)}\n`,
+        "utf8",
+      );
+      await expect(run()).rejects.toThrow(
+        "thresholds is missing minimumConsensusCaseRate",
+      );
+      expect(calls).toBe(0);
+
+      await writeFile(
+        copiedManifest,
+        `${JSON.stringify(originalManifest, null, 2)}\n`,
+        "utf8",
+      );
+      const freezeTarget = resolve(root, "freeze-target.json");
+      await copyFile(copiedFreeze, freezeTarget);
+      await rm(copiedFreeze);
+      await symlink(freezeTarget, copiedFreeze);
+      await expect(run()).rejects.toThrow("must not use a symbolic link");
+      expect(calls).toBe(0);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   test("materializes 24 held-out cases and compares single with consensus", async () => {
