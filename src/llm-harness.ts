@@ -1,18 +1,24 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 
+import { atomicWriteText } from "./atomic-file";
 import { generatePredicate } from "./generator";
-import { parsePredicateDefinition, type PredicateDefinition } from "./ir";
+import { type PredicateDefinition, parsePredicateDefinition } from "./ir";
 import {
   callOpenAI,
   DEFAULT_OPENAI_MODEL,
+  type OpenAIConnection,
+  type OpenAIResult,
   parseElaborationResult,
   parseOpenAIResponse,
   resolveOpenAIConnection,
-  type OpenAIConnection,
-  type OpenAIResult,
 } from "./openai";
+import {
+  assertKnownKeys,
+  parseBoundedJsonText,
+  readBoundedJsonFile,
+} from "./semantic-limits";
 
 type HarnessConfig = {
   version: 1;
@@ -48,7 +54,7 @@ async function runHarness(
 ): Promise<void> {
   const configDirectory = dirname(configPath);
   const config = parseHarnessConfig(
-    JSON.parse(await readFile(configPath, "utf8")) as unknown,
+    await readBoundedJsonFile(configPath, "LLM harness config"),
   );
   const specification = await readFile(
     resolve(configDirectory, config.specificationFile),
@@ -71,7 +77,7 @@ async function runHarness(
 
     if (fixturePath) {
       openAIResult = parseOpenAIResponse(
-        JSON.parse(await readFile(fixturePath, "utf8")) as unknown,
+        await readBoundedJsonFile(fixturePath, "LLM harness fixture"),
       );
     } else {
       const connection = resolveOpenAIConnection({
@@ -95,7 +101,7 @@ async function runHarness(
     }
 
     const elaboration = parseElaborationResult(
-      JSON.parse(openAIResult.outputText) as unknown,
+      parseBoundedJsonText(openAIResult.outputText, "LLM harness output"),
     );
 
     if (elaboration.outcome === "unresolved") {
@@ -158,6 +164,18 @@ async function runHarness(
 
 function parseHarnessConfig(input: unknown): HarnessConfig {
   const value = expectRecord(input, "harness");
+  assertExactKeys(
+    value,
+    [
+      "version",
+      "caseName",
+      "specificationFile",
+      "typeScriptFile",
+      "target",
+      "outputs",
+    ],
+    "harness",
+  );
   if (value.version !== 1) {
     throw new Error("harness.version must be 1");
   }
@@ -165,6 +183,21 @@ function parseHarnessConfig(input: unknown): HarnessConfig {
   const target = expectRecord(value.target, "harness.target");
   const targetInput = expectRecord(target.input, "harness.target.input");
   const outputs = expectRecord(value.outputs, "harness.outputs");
+  assertExactKeys(
+    target,
+    ["name", "description", "input", "returns"],
+    "harness.target",
+  );
+  assertExactKeys(
+    targetInput,
+    ["parameter", "type", "module"],
+    "harness.target.input",
+  );
+  assertExactKeys(
+    outputs,
+    ["irFile", "codeFile", "reportFile"],
+    "harness.outputs",
+  );
 
   if (target.returns !== "boolean") {
     throw new Error('harness.target.returns must be "boolean"');
@@ -244,8 +277,7 @@ async function writeReport(
 }
 
 async function writeText(path: string, value: string): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, value, "utf8");
+  await atomicWriteText(path, value);
 }
 
 async function run(command: string[], label: string): Promise<void> {
@@ -301,6 +333,16 @@ function expectRecord(value: unknown, path: string): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>;
+}
+
+function assertExactKeys(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+  path: string,
+): void {
+  assertKnownKeys(value, keys, path);
+  const missing = keys.find((key) => !(key in value));
+  if (missing !== undefined) throw new Error(`${path} is missing ${missing}`);
 }
 
 function expectString(value: unknown, path: string): string {

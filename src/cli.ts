@@ -1,8 +1,9 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, relative, resolve } from "node:path";
+import { relative, resolve } from "node:path";
 
+import { atomicWriteText } from "./atomic-file";
 import { generatePredicate } from "./generator";
 import { parsePredicateDefinition } from "./ir";
+import { readBoundedJsonFile } from "./semantic-limits";
 
 const usage = `Usage:
   bun run semantic generate <definition.json> --out <generated.ts>
@@ -32,14 +33,15 @@ async function generate(
   definitionPath: string,
   outputPath: string,
 ): Promise<void> {
-  const source = await readFile(resolve(definitionPath), "utf8");
-  const input: unknown = JSON.parse(source);
+  const input = await readBoundedJsonFile(
+    resolve(definitionPath),
+    "Predicate definition",
+  );
   const definition = parsePredicateDefinition(input);
   const generated = generatePredicate(definition);
   const absoluteOutputPath = resolve(outputPath);
 
-  await mkdir(dirname(absoluteOutputPath), { recursive: true });
-  await writeFile(absoluteOutputPath, generated, "utf8");
+  await atomicWriteText(absoluteOutputPath, generated);
   console.log(`generated ${relative(process.cwd(), absoluteOutputPath)}`);
 }
 
