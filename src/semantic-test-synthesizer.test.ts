@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 
 import { compileSemanticContract } from "./semantic-contract";
 import { SEMANTIC_LIMITS } from "./semantic-limits";
@@ -8,10 +9,9 @@ import {
   parseSemanticTestSynthesisResult,
 } from "./semantic-test-synthesizer";
 
-const example = new URL(
-  "../examples/active-customer/semantic.ts",
-  import.meta.url,
-).pathname;
+const example = fileURLToPath(
+  new URL("../examples/active-customer/semantic.ts", import.meta.url),
+);
 
 describe("separated Semantic Test synthesis", () => {
   test("builds a request from contract and type without implementation artifacts", async () => {

@@ -2,30 +2,38 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { validatePredicateContext } from "./context-validator";
 import { scanBenchmarkSource, scanSemanticSource } from "./semantic-source";
 
-const example = new URL(
-  "../examples/active-customer/semantic.ts",
-  import.meta.url,
-).pathname;
-const polymorphicCustomer = new URL(
-  "../examples/semantic-polymorphism/customer/semantic.ts",
-  import.meta.url,
-).pathname;
-const polymorphicAccount = new URL(
-  "../examples/semantic-polymorphism/account/semantic.ts",
-  import.meta.url,
-).pathname;
-const structuredFulfillment = new URL(
-  "../examples/order-fulfillment/storefront/semantic.ts",
-  import.meta.url,
-).pathname;
-const benchmarkProbe = new URL(
-  "../benchmarks/cross-schema/bindings/active-customer-record.semantic.ts",
-  import.meta.url,
-).pathname;
+const example = fileURLToPath(
+  new URL("../examples/active-customer/semantic.ts", import.meta.url),
+);
+const polymorphicCustomer = fileURLToPath(
+  new URL(
+    "../examples/semantic-polymorphism/customer/semantic.ts",
+    import.meta.url,
+  ),
+);
+const polymorphicAccount = fileURLToPath(
+  new URL(
+    "../examples/semantic-polymorphism/account/semantic.ts",
+    import.meta.url,
+  ),
+);
+const structuredFulfillment = fileURLToPath(
+  new URL(
+    "../examples/order-fulfillment/storefront/semantic.ts",
+    import.meta.url,
+  ),
+);
+const benchmarkProbe = fileURLToPath(
+  new URL(
+    "../benchmarks/cross-schema/bindings/active-customer-record.semantic.ts",
+    import.meta.url,
+  ),
+);
 
 describe("semantic source scanner", () => {
   test("extracts a closed concept, predicate, type, and tests", async () => {
@@ -210,7 +218,7 @@ describe("semantic source scanner", () => {
         scanTemporarySource(`semanticTest(isCustomer, { ${invalid.cases} });`),
       ).rejects.toThrow(invalid.message);
     }
-  });
+  }, 20_000);
 });
 
 async function scanTemporarySource(cases: string) {

@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 
 import { compileSemanticContract } from "./semantic-contract";
 import { scanSemanticSource } from "./semantic-source";
 
-const example = new URL(
-  "../examples/active-customer/semantic.ts",
-  import.meta.url,
-).pathname;
+const example = fileURLToPath(
+  new URL("../examples/active-customer/semantic.ts", import.meta.url),
+);
 
 describe("semantic contract", () => {
   test("assigns deterministic traceable clause ids and a stable hash", async () => {

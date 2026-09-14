@@ -57,7 +57,7 @@ describe("semantic verify CLI read-only integration", () => {
 
     expect(await hashFiles(protectedPaths)).toEqual(before);
     expect(await temporarySemanticTests()).toEqual(beforeTemporary);
-  }, 60_000);
+  }, 120_000);
 });
 
 async function runVerify(arguments_: string[]): Promise<{

@@ -24,7 +24,7 @@ enforceCoverage(coverage, /^All files\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)/m, {
 });
 enforceCoverage(
   coverage,
-  /^\s*src\/semantic-transaction\.ts\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)/m,
+  /^\s*src[\\/]semantic-transaction\.ts\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)/m,
   {
     label: "semantic-transaction.ts",
     minimumFunctions: 95,

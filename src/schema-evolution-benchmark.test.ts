@@ -224,3 +224,14 @@ async function loadFixtures() {
   }
   return fixtures;
 }
+
+test("generated imports preserve absolute Windows paths across drives", async () => {
+  const { win32 } = await import("node:path");
+  const { modulePath } = await import("./schema-evolution-benchmark");
+  expect(
+    modulePath(win32.relative("C:\\Temp\\case", "D:\\repo\\src\\dsl")),
+  ).toBe("D:/repo/src/dsl");
+  expect(modulePath("local/module")).toBe("./local/module");
+  expect(modulePath("../src/dsl")).toBe("../src/dsl");
+  expect(modulePath("/repo/src/dsl")).toBe("/repo/src/dsl");
+});

@@ -508,9 +508,13 @@ function setPath(
   current[leaf] = value;
 }
 
-function modulePath(value: string): string {
+export function modulePath(value: string): string {
   const normalized = value.replaceAll("\\", "/");
-  return normalized.startsWith(".") ? normalized : `./${normalized}`;
+  return normalized.startsWith(".") ||
+    normalized.startsWith("/") ||
+    /^[A-Za-z]:\//.test(normalized)
+    ? normalized
+    : `./${normalized}`;
 }
 
 function slugify(value: string): string {

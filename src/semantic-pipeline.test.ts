@@ -30,7 +30,9 @@ describe("shared semantic compiler pipeline", () => {
       defaultAuditKind: "candidates",
       commandRunner: async () => {},
     });
-    expect(run.auditDirectory).toContain(".semantic/candidates/");
+    expect(run.auditDirectory.replaceAll("\\", "/")).toContain(
+      ".semantic/candidates/",
+    );
 
     const jsonPath = resolve(run.auditDirectory, "input.json");
     await writeSemanticJson(jsonPath, { version: 1 });

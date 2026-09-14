@@ -67,3 +67,38 @@ async function temporaryRoot(): Promise<string> {
   roots.push(root);
   return root;
 }
+
+test("Windows replacement retries transient contention without removing the old file", async () => {
+  const { rename } = await import("node:fs/promises");
+  const { renameWithRetry } = await import("./atomic-file");
+  const root = await temporaryRoot();
+  const source = resolve(root, "new.txt");
+  const target = resolve(root, "old.txt");
+  await atomicWriteText(source, "new");
+  await atomicWriteText(target, "old");
+  let attempts = 0;
+  await renameWithRetry(
+    source,
+    target,
+    async (from, to) => {
+      attempts++;
+      expect(await readFile(target, "utf8")).toBe("old");
+      if (attempts < 3)
+        throw Object.assign(new Error("busy"), { code: "EPERM" });
+      await rename(from, to);
+    },
+    "win32",
+  );
+  expect(attempts).toBe(3);
+  expect(await readFile(target, "utf8")).toBe("new");
+  await expect(
+    renameWithRetry(
+      source,
+      target,
+      async () => {
+        throw Object.assign(new Error("not found"), { code: "ENOENT" });
+      },
+      "win32",
+    ),
+  ).rejects.toThrow("not found");
+});

@@ -121,7 +121,7 @@ describe("extended Semantic Test source", () => {
       const path = await writeSource(item.source);
       await expect(scanSemanticSource(path)).rejects.toThrow(item.message);
     }
-  });
+  }, 20_000);
 });
 
 async function writeSource(cases: string): Promise<string> {

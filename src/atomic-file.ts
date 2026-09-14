@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { type FileHandle, mkdir, open, rename, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 export type AtomicWriteOptions = {
   mode?: number;
@@ -24,7 +25,7 @@ export async function atomicWriteFile(
     } finally {
       await handle.close();
     }
-    await rename(temporary, path);
+    await renameWithRetry(temporary, path);
     renamed = true;
     if (options.syncDirectory ?? true) {
       await syncParentDirectory(directory);
@@ -93,4 +94,28 @@ function hasErrorCode(error: unknown, codes: readonly string[]): boolean {
     "code" in error &&
     codes.includes(String(error.code))
   );
+}
+
+// Windows may temporarily deny replacement while another rename/reader holds a
+// handle. Retry the atomic operation only; never unlink the existing target.
+export async function renameWithRetry(
+  source: string,
+  target: string,
+  move = rename,
+  platform: string = process.platform,
+): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await move(source, target);
+      return;
+    } catch (error) {
+      if (
+        platform !== "win32" ||
+        attempt >= 8 ||
+        !hasErrorCode(error, ["EPERM", "EACCES", "EBUSY"])
+      )
+        throw error;
+      await delay(10 * 2 ** attempt);
+    }
+  }
 }

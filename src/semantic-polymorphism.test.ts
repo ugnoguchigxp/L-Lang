@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { fileURLToPath } from "node:url";
 
 import { validatePredicateContext } from "./context-validator";
 import type { PredicateExpression } from "./ir";
@@ -54,8 +55,8 @@ function example(name: string): { source: string; fixture: string } {
     import.meta.url,
   );
   return {
-    source: new URL("semantic.ts", directory).pathname,
-    fixture: new URL("openai-response.fixture.json", directory).pathname,
+    source: fileURLToPath(new URL("semantic.ts", directory)),
+    fixture: fileURLToPath(new URL("openai-response.fixture.json", directory)),
   };
 }
 

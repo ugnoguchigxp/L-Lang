@@ -17,3 +17,15 @@
 ## 次へ進む際のblocker
 
 実モデル精度と開発作業時間の比較には、独立したdatasetレビュー、provider/modelと予算・停止条件、必要なら人間参加者と計測条件が不足している。[具体的な不足条件](../benchmarks/prompt-source/BLOCKER.md)を記録した。今回の実装では実モデルの評価値を作らず、draftを独立評価済みと認定していない。
+
+## Windows CIで判明した既存経路の問題と修正
+
+`303267e`の[CI](https://github.com/ugnoguchigxp/L-Lang/actions/runs/34864654787)はmacOS・Ubuntuで全Gate成功。WindowsはPrompt Source・評価runnerのテストに成功したが、既存経路で失敗した。
+
+- `URL.pathname`をOSのファイルパスとして渡していたテストを`fileURLToPath`へ変更した。Windowsのドライブ名重複とURLエンコードを正しく扱う。
+- 一時領域とrepositoryが別ドライブの場合、相対化の結果が絶対パスになる。benchmarkのimport生成で、そのパスへ`./`を付けないようにした。
+- パスを比較するテストとcoverage集計をWindowsの区切り文字に対応させた。
+- Windowsで同時renameが一時的にEPERM等を返す場合に限り、atomicなrenameを最大8回再試行する。既存targetを削除するfallbackは行わない。
+- 複数回のTypeScript scan/CLI実行を行う3テストは、実際に超過した5秒/60秒から20秒/120秒へtimeoutを変更した。assertion・coverage閾値は維持した。
+
+該当する局所28テスト、format・lint・typecheckは成功。ログは`artifacts/windows-portability/`へ保存した。修正後の全体coverageと3 OS CIを再実行する。
