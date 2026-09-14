@@ -44,11 +44,13 @@
     "ci:docs": "bun run src/verify-markdown-links.ts",
     "verify": "bun run src/cli.ts verify examples/active-customer/predicate.ir.json --out artifacts/active-customer/predicate.generated.ts",
     "llm:verify": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json",
-    "llm:verify:fixture": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json --fixture examples/active-customer/openai-response.fixture.json"
+    "llm:verify:fixture": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json --fixture examples/active-customer/openai-response.fixture.json",
+    "wasm": "bun run src/wasm-cli.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
     "@types/bun": "^1.3.14",
+    "binaryen": "132.0.0",
     "typescript": "5.9.3"
   }
 }

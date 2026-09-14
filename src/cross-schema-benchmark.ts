@@ -481,10 +481,7 @@ export function evaluateExpression(
     case "not":
       return !evaluateExpression(expression.condition, input);
     case "equals":
-      return Object.is(
-        readProperty(input, expression.property),
-        expression.value,
-      );
+      return readProperty(input, expression.property) === expression.value;
     case "present": {
       const value = readProperty(input, expression.property);
       return value !== null && value !== undefined;
