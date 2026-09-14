@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "kind": "predicate",
+  "id": "active-customer",
+  "intent": "連絡可能な有効顧客を判定する。",
+  "requirements": [
+    {
+      "id": "active",
+      "level": "must",
+      "text": "statusがactiveであること。"
+    },
+    {
+      "id": "not-deleted",
+      "level": "must",
+      "text": "deletedAtがnullであること。"
+    },
+    {
+      "id": "has-email",
+      "level": "must",
+      "text": "emailがnullでもundefinedでもないこと。空文字列は存在する値として扱う。"
+    }
+  ],
+  "unresolvedWhen": [
+    "入力契約のフィールドだけでは要求を表現できない場合。"
+  ],
+  "profile": "predicate-i32-v1",
+  "contract": {
+    "version": 1,
+    "fields": [
+      {
+        "name": "deletedAt",
+        "kind": "string",
+        "values": [],
+        "nullable": true,
+        "undefinable": false,
+        "optional": false
+      },
+      {
+        "name": "email",
+        "kind": "string",
+        "values": [],
+        "nullable": true,
+        "undefinable": true,
+        "optional": false
+      },
+      {
+        "name": "status",
+        "kind": "enum",
+        "values": [
+          "active",
+          "suspended"
+        ],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "id": "eligible",
+      "input": {
+        "status": "active",
+        "deletedAt": null,
+        "email": "x@example.test"
+      },
+      "undefinedFields": [],
+      "expected": true
+    },
+    {
+      "id": "empty-email",
+      "input": {
+        "status": "active",
+        "deletedAt": null,
+        "email": ""
+      },
+      "undefinedFields": [],
+      "expected": true
+    },
+    {
+      "id": "suspended",
+      "input": {
+        "status": "suspended",
+        "deletedAt": null,
+        "email": "x@example.test"
+      },
+      "undefinedFields": [],
+      "expected": false
+    },
+    {
+      "id": "deleted",
+      "input": {
+        "status": "active",
+        "deletedAt": "2026-01-01",
+        "email": "x@example.test"
+      },
+      "undefinedFields": [],
+      "expected": false
+    },
+    {
+      "id": "null-email",
+      "input": {
+        "status": "active",
+        "deletedAt": null,
+        "email": null
+      },
+      "undefinedFields": [],
+      "expected": false
+    },
+    {
+      "id": "undefined-email",
+      "input": {
+        "status": "active",
+        "deletedAt": null
+      },
+      "undefinedFields": [
+        "email"
+      ],
+      "expected": false
+    }
+  ]
+}

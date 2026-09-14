@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "protocol": "prompt-predicate-v1",
+  "sourceHash": "f66e8c61dc7a5a73773e6b28bffad70f1eee426c583f5033be819d845738125e",
+  "irHash": "d8fe6d62a4bc543c178b071f222792babd9a603d286cdbffc03c4b33a31b059f",
+  "body": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "equals",
+        "property": [
+          "status"
+        ],
+        "value": "active"
+      },
+      {
+        "kind": "equals",
+        "property": [
+          "deletedAt"
+        ],
+        "value": null
+      },
+      {
+        "kind": "present",
+        "property": [
+          "email"
+        ]
+      }
+    ]
+  },
+  "resolver": {
+    "provider": "fixture",
+    "model": "fixture",
+    "responseId": "fixture",
+    "usage": null
+  },
+  "diagnostics": [],
+  "checksum": "db8c6db65619bbb32d4ae319c620e354bf23cd33fe3d8645b24dc01f34b92544"
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "fields": [
+    {
+      "name": "deletedAt",
+      "kind": "string",
+      "values": [],
+      "nullable": true,
+      "undefinable": false,
+      "optional": false
+    },
+    {
+      "name": "email",
+      "kind": "string",
+      "values": [],
+      "nullable": true,
+      "undefinable": true,
+      "optional": false
+    },
+    {
+      "name": "status",
+      "kind": "enum",
+      "values": [
+        "active",
+        "suspended"
+      ],
+      "nullable": false,
+      "undefinable": false,
+      "optional": false
+    }
+  ]
+}

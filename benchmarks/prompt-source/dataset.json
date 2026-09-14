@@ -1,0 +1,332 @@
+{
+  "version": 1,
+  "status": "draft",
+  "cases": [
+    {
+      "id": "suspension-update",
+      "source": {
+        "version": 1,
+        "kind": "predicate",
+        "id": "access",
+        "intent": "以下の条件をすべて満たす対象を受け入れる。",
+        "requirements": [
+          {
+            "id": "enabled",
+            "level": "must",
+            "text": "enabledがtrueであること。"
+          }
+        ],
+        "unresolvedWhen": [
+          "要求が矛盾する、または入力契約と現行Predicate IRで表現できない場合。"
+        ],
+        "profile": "predicate-i32-v1",
+        "contract": {
+          "version": 1,
+          "fields": [
+            {
+              "name": "enabled",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            },
+            {
+              "name": "suspended",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            }
+          ]
+        },
+        "examples": [
+          {
+            "id": "accepted",
+            "input": {
+              "enabled": true,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": true
+          },
+          {
+            "id": "disabled",
+            "input": {
+              "enabled": false,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": false
+          }
+        ]
+      },
+      "request": "suspendedがtrueなら受け入れない条件を追加する。",
+      "allowedIds": [
+        "suspension"
+      ],
+      "expectedOutcome": "resolved",
+      "probes": [
+        {
+          "id": "blocked-enabled",
+          "input": {
+            "enabled": true,
+            "suspended": true
+          },
+          "undefinedFields": [],
+          "expected": false
+        },
+        {
+          "id": "allowed-enabled",
+          "input": {
+            "enabled": true,
+            "suspended": false
+          },
+          "undefinedFields": [],
+          "expected": true
+        },
+        {
+          "id": "blocked-disabled",
+          "input": {
+            "enabled": false,
+            "suspended": true
+          },
+          "undefinedFields": [],
+          "expected": false
+        }
+      ]
+    },
+    {
+      "id": "tier-update",
+      "source": {
+        "version": 1,
+        "kind": "predicate",
+        "id": "contact",
+        "intent": "以下の条件をすべて満たす対象を受け入れる。",
+        "requirements": [
+          {
+            "id": "email",
+            "level": "must",
+            "text": "emailが存在すること。nullとundefinedは存在しない。空文字列は存在する。"
+          }
+        ],
+        "unresolvedWhen": [
+          "要求が矛盾する、または入力契約と現行Predicate IRで表現できない場合。"
+        ],
+        "profile": "predicate-i32-v1",
+        "contract": {
+          "version": 1,
+          "fields": [
+            {
+              "name": "email",
+              "kind": "string",
+              "values": [],
+              "nullable": true,
+              "undefinable": true,
+              "optional": true
+            },
+            {
+              "name": "tier",
+              "kind": "enum",
+              "values": [
+                "basic",
+                "premium"
+              ],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            }
+          ]
+        },
+        "examples": [
+          {
+            "id": "premium-contact",
+            "input": {
+              "email": "x",
+              "tier": "premium"
+            },
+            "undefinedFields": [],
+            "expected": true
+          },
+          {
+            "id": "no-contact",
+            "input": {
+              "email": null,
+              "tier": "premium"
+            },
+            "undefinedFields": [],
+            "expected": false
+          }
+        ]
+      },
+      "request": "premium tierのみ受け入れる条件を追加する。",
+      "allowedIds": [
+        "tier"
+      ],
+      "expectedOutcome": "resolved",
+      "probes": [
+        {
+          "id": "basic-email",
+          "input": {
+            "email": "x",
+            "tier": "basic"
+          },
+          "undefinedFields": [],
+          "expected": false
+        },
+        {
+          "id": "premium-empty",
+          "input": {
+            "email": "",
+            "tier": "premium"
+          },
+          "undefinedFields": [],
+          "expected": true
+        },
+        {
+          "id": "premium-omitted",
+          "input": {
+            "tier": "premium"
+          },
+          "undefinedFields": [],
+          "expected": false
+        }
+      ]
+    },
+    {
+      "id": "contradiction",
+      "source": {
+        "version": 1,
+        "kind": "predicate",
+        "id": "access",
+        "intent": "以下の条件をすべて満たす対象を受け入れる。",
+        "requirements": [
+          {
+            "id": "enabled",
+            "level": "must",
+            "text": "enabledがtrueであること。"
+          }
+        ],
+        "unresolvedWhen": [
+          "要求が矛盾する、または入力契約と現行Predicate IRで表現できない場合。"
+        ],
+        "profile": "predicate-i32-v1",
+        "contract": {
+          "version": 1,
+          "fields": [
+            {
+              "name": "enabled",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            },
+            {
+              "name": "suspended",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            }
+          ]
+        },
+        "examples": [
+          {
+            "id": "accepted",
+            "input": {
+              "enabled": true,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": true
+          },
+          {
+            "id": "disabled",
+            "input": {
+              "enabled": false,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": false
+          }
+        ]
+      },
+      "request": "enabledがfalseであることも必須にする。既存enabled要件は維持する。",
+      "allowedIds": [
+        "disabled"
+      ],
+      "expectedOutcome": "unresolved",
+      "probes": []
+    },
+    {
+      "id": "unsupported-clock",
+      "source": {
+        "version": 1,
+        "kind": "predicate",
+        "id": "access",
+        "intent": "以下の条件をすべて満たす対象を受け入れる。",
+        "requirements": [
+          {
+            "id": "enabled",
+            "level": "must",
+            "text": "enabledがtrueであること。"
+          }
+        ],
+        "unresolvedWhen": [
+          "要求が矛盾する、または入力契約と現行Predicate IRで表現できない場合。"
+        ],
+        "profile": "predicate-i32-v1",
+        "contract": {
+          "version": 1,
+          "fields": [
+            {
+              "name": "enabled",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            },
+            {
+              "name": "suspended",
+              "kind": "boolean",
+              "values": [],
+              "nullable": false,
+              "undefinable": false,
+              "optional": false
+            }
+          ]
+        },
+        "examples": [
+          {
+            "id": "accepted",
+            "input": {
+              "enabled": true,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": true
+          },
+          {
+            "id": "disabled",
+            "input": {
+              "enabled": false,
+              "suspended": false
+            },
+            "undefinedFields": [],
+            "expected": false
+          }
+        ]
+      },
+      "request": "現在時刻が午前中の場合のみ受け入れる。現在時刻は入力に含まれない。",
+      "allowedIds": [
+        "morning"
+      ],
+      "expectedOutcome": "unresolved",
+      "probes": []
+    }
+  ]
+}

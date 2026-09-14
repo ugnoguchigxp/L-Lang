@@ -1,0 +1,63 @@
+[
+  {
+    "id": "eligible",
+    "input": {
+      "status": "active",
+      "deletedAt": null,
+      "email": "x@example.test"
+    },
+    "undefinedFields": [],
+    "expected": true
+  },
+  {
+    "id": "empty-email",
+    "input": {
+      "status": "active",
+      "deletedAt": null,
+      "email": ""
+    },
+    "undefinedFields": [],
+    "expected": true
+  },
+  {
+    "id": "suspended",
+    "input": {
+      "status": "suspended",
+      "deletedAt": null,
+      "email": "x@example.test"
+    },
+    "undefinedFields": [],
+    "expected": false
+  },
+  {
+    "id": "deleted",
+    "input": {
+      "status": "active",
+      "deletedAt": "2026-01-01",
+      "email": "x@example.test"
+    },
+    "undefinedFields": [],
+    "expected": false
+  },
+  {
+    "id": "null-email",
+    "input": {
+      "status": "active",
+      "deletedAt": null,
+      "email": null
+    },
+    "undefinedFields": [],
+    "expected": false
+  },
+  {
+    "id": "undefined-email",
+    "input": {
+      "status": "active",
+      "deletedAt": null
+    },
+    "undefinedFields": [
+      "email"
+    ],
+    "expected": false
+  }
+]

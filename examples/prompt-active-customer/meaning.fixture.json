@@ -1,0 +1,23 @@
+{
+  "intent": "連絡可能な有効顧客を判定する。",
+  "requirements": [
+    {
+      "id": "active",
+      "level": "must",
+      "text": "statusがactiveであること。"
+    },
+    {
+      "id": "not-deleted",
+      "level": "must",
+      "text": "deletedAtがnullであること。"
+    },
+    {
+      "id": "has-email",
+      "level": "must",
+      "text": "emailがnullでもundefinedでもないこと。空文字列は存在する値として扱う。"
+    }
+  ],
+  "unresolvedWhen": [
+    "入力契約のフィールドだけでは要求を表現できない場合。"
+  ]
+}

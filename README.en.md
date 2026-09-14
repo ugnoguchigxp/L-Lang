@@ -10,6 +10,8 @@ L-Lang is a research compiler and TypeScript DSL that turns natural-language Con
 
 The LLM does not generate unrestricted code. At compile time it returns a restricted Semantic IR. L-Lang validates that IR against the type context, semantic tests, and the full project test suite before deterministically converting it into ordinary TypeScript. Generated runtime code does not require an LLM, the L-Lang DSL, or an API key.
 
+An experimental path also compiles a limited predicate from JSON Prompt Source to WebAssembly without a TypeScript DSL. It supports source creation, updates scoped to requirement IDs, resolution into a separate Lock, and offline build/test/inspect. See the [usage guide](./examples/prompt-active-customer/README.md) and [results and limitations](./docs/PROMPT_SOURCE_RESULTS.md) (Japanese).
+
 > [!IMPORTANT]
 > This project is a research MVP. `semantic build` **automatically promotes** the generated artifact and `semantic.lock` after restricted-IR validation, type-context validation, Semantic Tests, and full-project regression checks pass. Semantic TDD mechanically validates Test Plan traceability, the Red Certificate, and mutation detection. The trust boundary is machine-checked project fit.
 > Semantic TDD also automatically freezes its Test Plan after trace, type, and Red validation and before implementation synthesis.

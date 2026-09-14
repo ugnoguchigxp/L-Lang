@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "id": "suspension-update",
+      "patch": {
+        "changes": [
+          {
+            "id": "suspension",
+            "replacement": {
+              "id": "suspension",
+              "level": "must",
+              "text": "suspendedがfalseであること。"
+            }
+          }
+        ]
+      },
+      "resolution": {
+        "outcome": "resolved",
+        "body": {
+          "kind": "all",
+          "conditions": [
+            {
+              "kind": "equals",
+              "property": [
+                "enabled"
+              ],
+              "value": true
+            },
+            {
+              "kind": "equals",
+              "property": [
+                "suspended"
+              ],
+              "value": false
+            }
+          ]
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "tier-update",
+      "patch": {
+        "changes": [
+          {
+            "id": "tier",
+            "replacement": {
+              "id": "tier",
+              "level": "must",
+              "text": "tierがpremiumであること。"
+            }
+          }
+        ]
+      },
+      "resolution": {
+        "outcome": "resolved",
+        "body": {
+          "kind": "all",
+          "conditions": [
+            {
+              "kind": "present",
+              "property": [
+                "email"
+              ]
+            },
+            {
+              "kind": "equals",
+              "property": [
+                "tier"
+              ],
+              "value": "premium"
+            }
+          ]
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "contradiction",
+      "patch": {
+        "changes": [
+          {
+            "id": "disabled",
+            "replacement": {
+              "id": "disabled",
+              "level": "must",
+              "text": "enabledがfalseであることも必須。"
+            }
+          }
+        ]
+      },
+      "resolution": {
+        "outcome": "unresolved",
+        "body": null,
+        "diagnostics": [
+          "enabledにtrueとfalseを同時に要求している。"
+        ]
+      }
+    },
+    {
+      "id": "unsupported-clock",
+      "patch": {
+        "changes": [
+          {
+            "id": "morning",
+            "replacement": {
+              "id": "morning",
+              "level": "must",
+              "text": "現在時刻が午前中の場合のみ受け入れる。"
+            }
+          }
+        ]
+      },
+      "resolution": {
+        "outcome": "unresolved",
+        "body": null,
+        "diagnostics": [
+          "現在時刻は入力契約に存在せず、外部時計の参照はprofileで禁止されている。"
+        ]
+      }
+    }
+  ]
+}

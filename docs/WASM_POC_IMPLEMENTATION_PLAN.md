@@ -223,3 +223,7 @@ smokeは既存方針どおりAPIキーを空にして実行する。Ubuntu・mac
 実装開始時はP0だけを最初の単位として、baselineの採取、equality調査・回帰例、初期truth tableの固定を行う。その後P1の読み取り境界へ進む。大きなフォルダ再編やPromptSourceの実装からは始めない。
 
 P3でWasmを生成・実行できた時点を中間確認とし、P5の保存物利用まで完成させて初期縦断を評価する。ここで問題が出た場合はABI・対象型・Lock接続を見直し、別バックエンドの追加で問題を迂回しない。
+
+## 8. 後続計画
+
+初期P0〜P6に続く段階C・Dは[Prompt Source実装計画](./PROMPT_SOURCE_IMPLEMENTATION_PLAN.md)へ分離した。実装・検証と現時点の所感は[Prompt Source実装結果](./PROMPT_SOURCE_RESULTS.md)を参照。

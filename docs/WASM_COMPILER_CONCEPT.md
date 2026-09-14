@@ -201,7 +201,7 @@ PromptSourceのAgent API、一般的なownership checker、LRU cache、AOTは、
 
 段階A・Bの具体的な着手順序は[初期Wasm PoC実装計画](./WASM_POC_IMPLEMENTATION_PLAN.md)にまとめる。初期実装の結果は[PoC実装結果](./WASM_POC_RESULTS.md)にまとめ、以下のコンセプトとともに更新する。
 
-次の計画では、段階A・Bを具体的な変更単位へ分解する。CLI/API、最小Core IR、ABI版とtag、保存先、既存Lockとの接続、emitterの版、検証コマンド、性能測定方法、完了条件を定める。
+段階A・Bの初期縦断に続く段階C・Dは[Prompt Source実装計画](./PROMPT_SOURCE_IMPLEMENTATION_PLAN.md)で具体化し、[実装結果と更新評価](./PROMPT_SOURCE_RESULTS.md)へ証拠を記録した。段階Eは、実利用で必要性が確認された場合の条件付き拡張として維持する。
 
 実装中にすべてのIRやディレクトリを一括再編成することは避け、動く縦断に必要な責務分離から行う。現在の品質Gateは[QUALITY_GATES.md](../QUALITY_GATES.md)を参照する。
 
@@ -290,3 +290,9 @@ PromptSourceのAgent API、一般的なownership checker、LRU cache、AOTは、
 | 2026-09-14・初期PoC実装（基点c7ab950に未コミット変更） | 限定PredicateのWasm生成・利用 | [結果文書](./WASM_POC_RESULTS.md)：別プロセス再生成、12状態の判定、runtimeのcompiler依存排除 | 初期範囲で実装・検証済み。性能優位は確認できず | Prompt Source更新精度・他OS・実利用価値は未確認。標準backend化は保留 |
 
 実測の記録には対象commit、テスト・benchmark条件、結果の保存先を含める。コードが書けたこと、例が一つ動いたこと、比較評価を通ったことを別々の到達点として扱う。
+
+### 16.7 Prompt Source接続後の更新（2026-09-14）
+
+段階C・Dの限定経路を実装した。JSON Sourceの作成・ID指定更新、独立LockへのIR保存、TS DSL/renderer不要のWasm build/test/inspectが動き、158 bytesの成果物と6例の一致、別プロセスでの再現性を確認した。詳細は[Prompt Source実装結果](./PROMPT_SOURCE_RESULTS.md)を参照する。
+
+固定した意味を再現して使う仕組みは検証できた。一方、モデルの意味解決・文章更新の精度はfixtureでは測れない。自然言語の意味保守についての確度は中程度に据え置き、独立課題でのlive評価を次の判断材料とする。memory/Native拡張や性能優位が確認されたという評価には変更しない。

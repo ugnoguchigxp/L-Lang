@@ -1,24 +1,15 @@
-import { type PredicateExpression, parsePredicateExpression } from "./ir";
+export {
+  type ElaborationResult,
+  parseElaborationResult,
+} from "./elaboration-result";
+
 import type { ProjectContext } from "./project-context";
 import {
   assertKnownKeys,
   parseBoundedJsonText,
   readBoundedResponseText,
   SEMANTIC_LIMITS,
-  validateDiagnostics,
 } from "./semantic-limits";
-
-export type ElaborationResult =
-  | {
-      outcome: "resolved";
-      body: PredicateExpression;
-      diagnostics: string[];
-    }
-  | {
-      outcome: "unresolved";
-      body: null;
-      diagnostics: string[];
-    };
 
 export type OpenAIResult = {
   responseId: string;
@@ -321,37 +312,6 @@ export function parseOpenAIResponse(input: unknown): OpenAIResult {
     outputText,
     usage: parseUsage(response.usage),
   };
-}
-
-export function parseElaborationResult(input: unknown): ElaborationResult {
-  const value = expectRecord(input, "elaboration");
-  assertKnownKeys(value, ["outcome", "body", "diagnostics"], "elaboration");
-  const diagnostics = validateDiagnostics(
-    value.diagnostics,
-    "elaboration.diagnostics",
-  );
-
-  if (value.outcome === "unresolved") {
-    if (value.body !== null) {
-      throw new Error("unresolved elaboration must have a null body");
-    }
-
-    return { outcome: "unresolved", body: null, diagnostics };
-  }
-
-  if (value.outcome === "resolved") {
-    if (value.body === null) {
-      throw new Error("resolved elaboration must have a body");
-    }
-
-    return {
-      outcome: "resolved",
-      body: parsePredicateExpression(value.body, "elaboration.body"),
-      diagnostics,
-    };
-  }
-
-  throw new Error("elaboration.outcome must be resolved or unresolved");
 }
 
 function parseUsage(value: unknown): OpenAIResult["usage"] {

@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "id": "active",
+      "replacement": {
+        "id": "active",
+        "level": "must",
+        "text": "statusがactiveの場合にのみ有効とする。suspendedは無効。"
+      }
+    }
+  ]
+}

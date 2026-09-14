@@ -118,3 +118,7 @@ bun run src/wasm-runtime-benchmark.ts wasm artifacts/wasm/active-customer/manife
 ```
 
 再実行には有効なLockを使う。fixtureの準備と保証範囲は利用手順を参照する。全品質Gateの定義は[QUALITY_GATES.md](../QUALITY_GATES.md)を引き続き正とする。
+
+## 追記：後続実装とCIの確定結果
+
+初期PoCは`9fffe3b`としてcommit・push済み。[CI run](https://github.com/ugnoguchigxp/L-Lang/actions/runs/34796333803)はmacOS成功、Ubuntuは既存テストのtimeout、WindowsはCRLFによるformat失敗だった。後続で改行設定と該当timeoutを修正した。段階C・Dの実装と最新の検証状況は[Prompt Source実装結果](./PROMPT_SOURCE_RESULTS.md)を参照する。上記の未push・CI未実行という記述は初期検証時点の記録である。

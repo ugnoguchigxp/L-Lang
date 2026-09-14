@@ -1,0 +1,1 @@
+連絡可能な有効顧客を判定する。statusはactive、deletedAtはnull、emailはnullでもundefinedでもないこと。空のemailは存在する値として扱う。
