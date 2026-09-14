@@ -29,3 +29,9 @@
 - 複数回のTypeScript scan/CLI実行を行う3テストは、実際に超過した5秒/60秒から20秒/120秒へtimeoutを変更した。assertion・coverage閾値は維持した。
 
 該当する局所28テスト、format・lint・typecheckは成功。ログは`artifacts/windows-portability/`へ保存した。修正後の全体coverageと3 OS CIを再実行する。
+
+### 再CIでの追加修正
+
+`55286fc`の[再CI](https://github.com/ugnoguchigxp/L-Lang/actions/runs/34866739213)では、Windowsのパス・rename問題が解消した。一方、macOSでは不正benchmark入力の検査が30秒を超え、Windowsでは6障害点をまとめたrollback検査が5秒を超えた。
+
+benchmarkは、全protocolファイルの検査を完了してからTypeScript解析を始める構成へ変更した。これにより、不正入力を拒否した後も他ケースの重い解析が走り続ける問題を解消する。rollback検査は6つの独立したテストへ分割し、各障害点の復旧確認とcleanupを分離した。検証内容は維持している。対象25テスト・型チェックは成功し、ログは`artifacts/cross-schema-preflight/`へ保存した。

@@ -56,17 +56,16 @@ describe("crash-consistent semantic transaction", () => {
     ).toBeFalse();
   });
 
-  test("rolls back every ordinary failure boundary", async () => {
-    const points: SemanticTransactionFailurePoint[] = [
-      "workspace-lock-acquired",
-      "journal-created",
-      "output-applied",
-      "full-test-passed",
-      "lock-applied",
-      "committed",
-    ];
-
-    for (const point of points) {
+  test.each([
+    "workspace-lock-acquired",
+    "journal-created",
+    "output-applied",
+    "full-test-passed",
+    "lock-applied",
+    "committed",
+  ] satisfies SemanticTransactionFailurePoint[])(
+    "rolls back ordinary failure at %s",
+    async (point) => {
       const fixture = await createFixture();
       await expect(
         executeSemanticTransaction({
@@ -87,8 +86,8 @@ describe("crash-consistent semantic transaction", () => {
           resolve(fixture.transactionRoot, ".semantic/workspace.lock"),
         ),
       ).toBeFalse();
-    }
-  });
+    },
+  );
 
   test("recovers an interrupted output application to the previous state", async () => {
     const fixture = await createFixture();

@@ -124,8 +124,16 @@ export async function runCrossSchemaBenchmark(
     requiredCrossSchemaFreezeFiles(manifestPath, manifest),
     resolveProtocolFile,
   );
+  // Reject malformed/escaping protocol inputs before starting any expensive
+  // TypeScript scans. Otherwise a rejected Promise.all leaves scans running.
+  const inputs = await Promise.all(
+    manifest.cases.map((entry) => readCaseInputs(entry, resolveProtocolFile)),
+  );
   const prepared = await Promise.all(
-    manifest.cases.map((entry) => prepareCase(entry, resolveProtocolFile)),
+    inputs.map(async (entry) => ({
+      ...entry,
+      source: await scanBenchmarkSource(entry.sourcePath),
+    })),
   );
   validateProtocol(manifest, freeze, prepared);
 
@@ -297,15 +305,14 @@ export async function runCrossSchemaBenchmark(
   return { report, runDirectory };
 }
 
-async function prepareCase(
+async function readCaseInputs(
   entry: BenchmarkManifest["cases"][number],
   resolveProtocolFile: (path: string, label: string) => Promise<string>,
-): Promise<PreparedCase> {
+): Promise<Omit<PreparedCase, "source">> {
   const sourcePath = await resolveProtocolFile(
     entry.source,
     `cross-schema source ${entry.id}`,
   );
-  const source = await scanBenchmarkSource(sourcePath);
   const oraclePath = await resolveProtocolFile(
     entry.oracle,
     `cross-schema oracle ${entry.id}`,
@@ -332,7 +339,6 @@ async function prepareCase(
   return {
     id: entry.id,
     sourcePath,
-    source,
     oracle,
     hiddenCases,
     manualPath,
