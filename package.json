@@ -47,7 +47,8 @@
     "llm:verify:fixture": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json --fixture examples/active-customer/openai-response.fixture.json",
     "wasm": "bun run src/wasm-cli.ts",
     "prompt": "bun run src/prompt-cli.ts",
-    "prompt:evaluate": "bun run src/prompt-evaluation.ts"
+    "prompt:evaluate": "bun run src/prompt-evaluation.ts",
+    "capability": "bun run src/capability-cli.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",

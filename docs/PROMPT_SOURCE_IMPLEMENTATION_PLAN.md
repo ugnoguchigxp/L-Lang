@@ -1,5 +1,7 @@
 # Prompt Source接続・再現可能な運用の実装計画
 
+> 2026-09-15更新：今後の拡張順序と検証の責務分担は[エージェント能力拡張コンセプト](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md)を基準とする。本書の実装履歴は保持し、人間の都度レビューや研究評価の完了を後続開発の前提にはしない。
+
 2026-09-14。基点は`9fffe3b`（`wasm-compiler`）。[初期PoC](./WASM_POC_IMPLEMENTATION_PLAN.md)のP0〜P6に続き、[コンセプト](./WASM_COMPILER_CONCEPT.md)の段階C・Dを実装する。結果と未検証事項は[実装結果](./PROMPT_SOURCE_RESULTS.md)を参照する。
 
 ## 対象と完了条件

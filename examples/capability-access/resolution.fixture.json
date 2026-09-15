@@ -1,0 +1,23 @@
+{
+  "outcome": "resolved",
+  "body": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "equals",
+        "property": [
+          "enabled"
+        ],
+        "value": true
+      },
+      {
+        "kind": "equals",
+        "property": [
+          "suspended"
+        ],
+        "value": false
+      }
+    ]
+  },
+  "diagnostics": []
+}

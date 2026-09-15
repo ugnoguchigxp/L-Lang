@@ -1,4 +1,4 @@
-import { readArtifact } from "./wasm-artifact";
+import { readArtifact, type WasmManifest } from "./wasm-artifact";
 import { contractSlots, digest, encodeInput, WasmError } from "./wasm-contract";
 
 export async function loadWasmPredicate(
@@ -13,6 +13,18 @@ export async function loadWasmPredicate(
     throw new WasmError(
       "ARTIFACT_MISMATCH",
       "manifest changed after validation",
+    );
+  return instantiateWasmPredicate(manifest, bytes);
+}
+
+export async function instantiateWasmPredicate(
+  manifest: WasmManifest,
+  bytes: Uint8Array,
+) {
+  if (digest(bytes) !== manifest.wasmHash)
+    throw new WasmError(
+      "ARTIFACT_MISMATCH",
+      "Wasm digest differs from manifest",
     );
   const module = await WebAssembly.compile(bytes);
   const bindings = WebAssembly.Module.customSections(module, "llang.contract");

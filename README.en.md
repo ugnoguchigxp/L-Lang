@@ -12,6 +12,8 @@ The LLM does not generate unrestricted code. At compile time it returns a restri
 
 An experimental path also compiles a limited predicate from JSON Prompt Source to WebAssembly without a TypeScript DSL. It supports source creation, updates scoped to requirement IDs, resolution into a separate Lock, and offline build/test/inspect. See the [usage guide](./examples/prompt-active-customer/README.md) and [results and limitations](./docs/PROMPT_SOURCE_RESULTS.md) (Japanese).
 
+The [capability candidate workflow](./examples/capability-access/README.md) (Japanese) packages Wasm with its source and separate tests for offline verification in another process. SAAA acceptance and deployment remain future work.
+
 > [!IMPORTANT]
 > This project is a research MVP. `semantic build` **automatically promotes** the generated artifact and `semantic.lock` after restricted-IR validation, type-context validation, Semantic Tests, and full-project regression checks pass. Semantic TDD mechanically validates Test Plan traceability, the Red Certificate, and mutation detection. The trust boundary is machine-checked project fit.
 > Semantic TDD also automatically freezes its Test Plan after trace, type, and Red validation and before implementation synthesis.

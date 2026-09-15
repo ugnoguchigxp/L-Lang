@@ -1,0 +1,11 @@
+{
+  "outcome": "resolved",
+  "body": {
+    "kind": "equals",
+    "property": [
+      "enabled"
+    ],
+    "value": true
+  },
+  "diagnostics": []
+}

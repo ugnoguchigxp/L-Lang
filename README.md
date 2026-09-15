@@ -12,6 +12,8 @@ LLMは自由なコードを生成しません。コンパイル時に制限さ�
 
 追加の実験経路として、TS DSLを使わずJSONのPrompt Sourceから限定PredicateをWebAssemblyへ生成できます。Sourceの作成・要求ID単位の更新、独立Lockへの意味解決、オフラインのbuild/test/inspectを備えています。[利用手順](./examples/prompt-active-customer/README.md)と[実装結果・制限](./docs/PROMPT_SOURCE_RESULTS.md)を参照してください。
 
+生成したWasmをSource・独立テストと同梱し、別プロセスで部品検証できる[能力パッケージ](./examples/capability-access/README.md)も利用できます。SAAAの受け入れ・配備は後続の実装対象です。
+
 > [!IMPORTANT]
 > 現在は研究・検証段階のMVPです。`semantic build`は、制限IR、型文脈、Semantic Test、Project全体の回帰検証に成功すると、生成物と`semantic.lock`を**自動昇格**します。Semantic TDDでもTest Planのtrace、Red Certificate、Mutation検出を機械的に検証します。信頼境界は、Project contextへの適合を検査するGateです。
 > Semantic TDDのTest Planも、trace・型・Red検証後にImplementation生成前の自動freezeを行います。
