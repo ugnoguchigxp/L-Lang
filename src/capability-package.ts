@@ -269,7 +269,7 @@ export async function packageCapability(
     throw error;
   }
 }
-async function runIsolated(
+export async function runIsolatedCapability(
   snapshot: Awaited<ReturnType<typeof readCapability>>,
 ): Promise<CaseResult[]> {
   return new Promise((resolveResult, reject) => {
@@ -341,7 +341,7 @@ export async function verifyCapability(
         .filter((r) => !r.caseIds.length)
         .map((r) => `requirement:${r.id}`),
     );
-    report.results = await runIsolated(snapshot);
+    report.results = await runIsolatedCapability(snapshot);
     // Detect changes after the snapshot was executed. A report never authorizes deployment.
     if ((await readCapability(path)).packageHash !== snapshot.packageHash)
       invalid("package changed during verification");
@@ -378,6 +378,18 @@ export async function writeCapabilityReport(
   manifestPath: string,
 ) {
   parseCapabilityReport(report);
+  if (
+    report.status !== "error" &&
+    (await readCapability(manifestPath)).packageHash !== report.packageHash
+  )
+    invalid("report belongs to a different candidate");
+  await writeCapabilityJsonReport(path, report, manifestPath);
+}
+export async function writeCapabilityJsonReport(
+  path: string,
+  value: unknown,
+  manifestPath: string,
+) {
   const destination = resolve(
     await realpath(dirname(resolve(path))),
     basename(resolve(path)),
@@ -386,17 +398,12 @@ export async function writeCapabilityReport(
   const rel = relative(root, destination).replaceAll("\\", "/");
   if (rel !== ".." && !rel.startsWith("../") && !isAbsolute(rel))
     invalid("report must be outside the candidate directory");
-  if (
-    report.status !== "error" &&
-    (await readCapability(manifestPath)).packageHash !== report.packageHash
-  )
-    invalid("report belongs to a different candidate");
   const pending = resolve(
     dirname(destination),
     `.capability-report-${randomUUID()}.tmp`,
   );
   try {
-    await writeFile(pending, `${JSON.stringify(report, null, 2)}\n`, {
+    await writeFile(pending, `${JSON.stringify(value, null, 2)}\n`, {
       flag: "wx",
     });
     await link(pending, destination);

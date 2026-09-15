@@ -14,6 +14,8 @@ An experimental path also compiles a limited predicate from JSON Prompt Source t
 
 The [capability candidate workflow](./examples/capability-access/README.md) (Japanese) packages Wasm with its source and separate tests for offline verification in another process. SAAA acceptance and deployment remain future work.
 
+The [development and repair workflow](./examples/capability-development/README.md) (Japanese) independently generates tests and implementation, checks mutants, and replays one repair without SAAA.
+
 > [!IMPORTANT]
 > This project is a research MVP. `semantic build` **automatically promotes** the generated artifact and `semantic.lock` after restricted-IR validation, type-context validation, Semantic Tests, and full-project regression checks pass. Semantic TDD mechanically validates Test Plan traceability, the Red Certificate, and mutation detection. The trust boundary is machine-checked project fit.
 > Semantic TDD also automatically freezes its Test Plan after trace, type, and Red validation and before implementation synthesis.

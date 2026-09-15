@@ -225,12 +225,15 @@ export async function callOpenAI(
 export async function callResponsesApi(
   request: object,
   connection: OpenAIConnection,
+  signal?: AbortSignal,
 ): Promise<OpenAIResult> {
   const response = await fetch(`${connection.baseUrl}/responses`, {
     method: "POST",
     headers: buildAuthenticationHeaders(connection),
     body: JSON.stringify(request),
-    signal: AbortSignal.timeout(120_000),
+    signal: signal
+      ? AbortSignal.any([AbortSignal.timeout(120_000), signal])
+      : AbortSignal.timeout(120_000),
   });
 
   const body = await readBoundedResponseText(response, "OpenAI response");

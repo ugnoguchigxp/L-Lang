@@ -8,6 +8,12 @@ import { invalid } from "./capability-tests";
 import { readJson } from "./prompt-source";
 
 export async function runCapabilityCli(args: string[]) {
+  if (
+    ["develop", "mutation-check", "replay-development"].includes(args[0] ?? "")
+  ) {
+    const { runDevelopmentCli } = await import("./capability-development-cli");
+    return runDevelopmentCli(args);
+  }
   const [command, path, ...rest] = args;
   if (!path) invalid("expected capability package|verify|inspect <path>");
   const allowed =

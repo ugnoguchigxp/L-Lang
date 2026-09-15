@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "stage": "tests",
+      "reply": {
+        "result": {
+          "outcome": "generated",
+          "suiteJson": "{\"version\":1,\"sourceRevision\":\"388c65ab7760c4e7604f3402ff88a792f8c6febdd905412316078dc96242cc99\",\"cases\":[{\"id\":\"premium-empty\",\"requirementIds\":[\"email\",\"tier\"],\"input\":{\"email\":\"\",\"tier\":\"premium\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":true}},{\"id\":\"basic\",\"requirementIds\":[\"tier\"],\"input\":{\"email\":\"x\",\"tier\":\"basic\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}},{\"id\":\"null\",\"requirementIds\":[\"email\"],\"input\":{\"email\":null,\"tier\":\"premium\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}},{\"id\":\"undefined\",\"requirementIds\":[\"email\"],\"input\":{\"tier\":\"premium\"},\"undefinedFields\":[\"email\"],\"expected\":{\"kind\":\"value\",\"value\":false}},{\"id\":\"omitted\",\"requirementIds\":[\"email\"],\"input\":{\"tier\":\"premium\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}}]}",
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "implementation",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "present",
+            "property": [
+              "email"
+            ]
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "repair",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "all",
+            "conditions": [
+              {
+                "kind": "present",
+                "property": [
+                  "email"
+                ]
+              },
+              {
+                "kind": "equals",
+                "property": [
+                  "tier"
+                ],
+                "value": "premium"
+              }
+            ]
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    }
+  ]
+}

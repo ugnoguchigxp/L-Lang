@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "stage": "tests",
+      "reply": {
+        "result": {
+          "outcome": "generated",
+          "suiteJson": "{\"version\":1,\"sourceRevision\":\"53aa67d85ac9406ef5d208e296d301ac79578b0fe1164515e17e4178ec2329d3\",\"cases\":[{\"id\":\"allowed\",\"requirementIds\":[\"enabled\",\"suspension\"],\"input\":{\"enabled\":true,\"suspended\":false},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":true}},{\"id\":\"stopped\",\"requirementIds\":[\"suspension\"],\"input\":{\"enabled\":true,\"suspended\":true},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}}]}",
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "implementation",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "equals",
+            "property": [
+              "enabled"
+            ],
+            "value": true
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "repair",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "all",
+            "conditions": [
+              {
+                "kind": "equals",
+                "property": [
+                  "enabled"
+                ],
+                "value": true
+              },
+              {
+                "kind": "equals",
+                "property": [
+                  "suspended"
+                ],
+                "value": false
+              }
+            ]
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    }
+  ]
+}
