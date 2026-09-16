@@ -21,6 +21,7 @@ export async function runDevelopmentCli(args: string[]) {
           "--fixtures",
           "--out-dir",
           "--model",
+          "--agent",
           "--max-output-tokens",
           "--max-total-tokens",
           "--max-wall-ms",
@@ -76,41 +77,54 @@ export async function runDevelopmentCli(args: string[]) {
   if (options["--fixtures"]) {
     if (
       Object.keys(options).some(
-        (k) => k === "--model" || k.startsWith("--max-"),
+        (k) => k === "--model" || k === "--agent" || k.startsWith("--max-"),
       )
     )
       invalid("fixture and live settings cannot be combined");
     agent = fixtureDevelopmentAgent(await readJson(options["--fixtures"]));
   } else {
+    const codex = options["--agent"] === "codex-sdk";
+    if (options["--agent"] && !codex) invalid("unknown development agent");
     config = parseDevelopmentConfig({
       version: 1,
       mode: "live",
-      model: required("--model"),
+      model: codex
+        ? (options["--model"] ?? "gpt-5.6-terra")
+        : required("--model"),
+      ...(codex ? { agent: "codex-sdk" } : {}),
       maxCalls: Number(options["--max-calls"] ?? 3),
       maxOutputTokens: Number(required("--max-output-tokens")),
       maxTotalTokens: Number(required("--max-total-tokens")),
       maxWallMs: Number(required("--max-wall-ms")),
     });
-    const key = process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
-    if (!key) invalid("API credentials are required for live development");
-    const { makeOpenAIAgent } = await import("./prompt-agent");
-    const { resolveOpenAIConnection, callResponsesApi } = await import(
-      "./openai"
-    );
-    const connection = resolveOpenAIConnection({
-      apiKey: key,
-      baseUrl:
-        process.env.OPENAI_BASE_URL ||
-        process.env.AZURE_OPENAI_BASE_URL ||
-        "https://api.openai.com/v1",
-    });
-    agent = async (request, signal) =>
-      makeOpenAIAgent(
-        config.model,
-        config.maxOutputTokens,
-        connection,
-        (body, conn) => callResponsesApi(body, conn, signal),
-      )(request.instruction, request.input, request.schema);
+    if (codex) {
+      const { makeCodexDevelopmentAgent } = await import(
+        "./codex-development-agent"
+      );
+      agent = makeCodexDevelopmentAgent();
+    } else {
+      const key =
+        process.env.OPENAI_API_KEY || process.env.AZURE_OPENAI_API_KEY;
+      if (!key) invalid("API credentials are required for live development");
+      const { makeOpenAIAgent } = await import("./prompt-agent");
+      const { resolveOpenAIConnection, callResponsesApi } = await import(
+        "./openai"
+      );
+      const connection = resolveOpenAIConnection({
+        apiKey: key,
+        baseUrl:
+          process.env.OPENAI_BASE_URL ||
+          process.env.AZURE_OPENAI_BASE_URL ||
+          "https://api.openai.com/v1",
+      });
+      agent = async (request, signal) =>
+        makeOpenAIAgent(
+          config.model,
+          config.maxOutputTokens,
+          connection,
+          (body, conn) => callResponsesApi(body, conn, signal),
+        )(request.instruction, request.input, request.schema);
+    }
   }
   const result = await developCapability(
     source,

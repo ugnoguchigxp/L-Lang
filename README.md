@@ -14,7 +14,7 @@ LLMは自由なコードを生成しません。コンパイル時に制限さ�
 
 生成したWasmをSource・独立テストと同梱し、別プロセスで部品検証できる[能力パッケージ](./examples/capability-access/README.md)も利用できます。SAAAの受け入れ・配備は後続の実装対象です。
 
-SAAA接続前の[実装・テスト製造と1回の修正](./examples/capability-development/README.md)も、fixtureで実行・再検証できます。
+SAAA接続前の[実装・テスト製造と1回の修正](./examples/capability-development/README.md)は、fixtureまたはCodex SDK（Terra・medium）で実行できます。モデル不要の[単発Wasm実行キット](./examples/saaa-host/README.md)と、[SDK・piの比較](./docs/CODEX_SDK_PI_EVALUATION.md)も参照してください。
 
 > [!IMPORTANT]
 > 現在は研究・検証段階のMVPです。`semantic build`は、制限IR、型文脈、Semantic Test、Project全体の回帰検証に成功すると、生成物と`semantic.lock`を**自動昇格**します。Semantic TDDでもTest Planのtrace、Red Certificate、Mutation検出を機械的に検証します。信頼境界は、Project contextへの適合を検査するGateです。

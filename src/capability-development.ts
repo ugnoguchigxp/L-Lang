@@ -36,6 +36,7 @@ export type DevelopmentConfig = {
   maxOutputTokens: number;
   maxTotalTokens: number;
   maxWallMs: number;
+  agent?: "codex-sdk";
 };
 export function parseDevelopmentConfig(input: unknown): DevelopmentConfig {
   const c = record(input, [
@@ -46,6 +47,7 @@ export function parseDevelopmentConfig(input: unknown): DevelopmentConfig {
     "maxOutputTokens",
     "maxTotalTokens",
     "maxWallMs",
+    "agent",
   ]);
   if (
     c.version !== 1 ||
@@ -66,6 +68,11 @@ export function parseDevelopmentConfig(input: unknown): DevelopmentConfig {
       Number(c[key]) > max
     )
       invalid(`invalid ${key}`);
+  if (
+    c.agent !== undefined &&
+    (c.agent !== "codex-sdk" || c.model !== "gpt-5.6-terra")
+  )
+    invalid("Codex SDK requires gpt-5.6-terra with medium reasoning");
   return { ...c } as DevelopmentConfig;
 }
 export const fixtureConfig: DevelopmentConfig = {
@@ -186,8 +193,11 @@ export async function developCapability(
     if (run.logicalCalls >= config.maxCalls)
       throw new WasmError("DEVELOPMENT_LIMIT", "call limit reached");
     // UTF-8 bytes plus conservative framing allowance reserve input before dispatch.
-    const inputReservation = Buffer.byteLength(JSON.stringify(request)) + 4096;
-    if (inputReservation > 64 * 1024)
+    const requestBytes = Buffer.byteLength(JSON.stringify(request));
+    // Codex includes its own system prompt. This is a reservation, not a provider hard cap.
+    const inputReservation =
+      config.agent === "codex-sdk" ? 64 * 1024 : requestBytes + 4096;
+    if (requestBytes > 60 * 1024 || inputReservation > 64 * 1024)
       throw new WasmError(
         "DEVELOPMENT_LIMIT",
         "input reservation exceeds limit",

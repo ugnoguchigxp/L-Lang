@@ -59,3 +59,20 @@ bun run capability develop examples/capability-development/access/source.json --
 このtoken予約は保守的な見積もりであり、providerの課金額を保証するものではない。料金換算は実装していない。モデル待機は総時間の残量で中断し、既存通信timeoutも維持する。ローカルの製造・検証は段階の前後で期限を確認し、Wasm実行は既存Workerの10秒上限を使う。
 
 SAAAによる利用目的の検証と配備は、この検証結果を確認した後の別段階とする。
+
+## Codex SDK：Terra・mediumで実製造する
+
+既存のCodexログインを使う経路を追加した。APIキーの設定を必須にせず、SDKが利用するCodex認証を使う。モデルは`gpt-5.6-terra`、reasoningは`medium`に固定し、利用できなければ別モデルへ自動変更しない。
+
+```sh
+bun run capability develop examples/capability-development/access/source.json --metadata examples/capability-development/access/metadata.json --agent codex-sdk --out-dir artifacts/terra-access --max-output-tokens 16384 --max-total-tokens 250000 --max-wall-ms 180000
+bun run capability replay-development artifacts/terra-access --out-dir artifacts/terra-access-replay
+```
+
+各段階で新しいSDK threadを作り、空の一時作業ディレクトリ、read-only、承認なし、web検索なし、shell/MCP/pluginを抑制する設定で、schema付きのJSON応答を要求する。想定外のツール利用を含む結果は拒否する。これは任意の外部Coding AgentのOSレベル隔離を保証するものではない。ユーザーや管理環境のCodex設定・認証の影響は残る。
+
+Codexは独自のsystem promptを持つため、1turnの入力予約は64 Ki tokensとする。上記は最大3turn、各出力16384、全体250000 tokens、180秒。SDKはmax-output-tokensをproviderへhard capとして渡せないため、出力・usageの上限はturn完了後に検査し、超過時は次のturnへ進まない。過大な最終応答も拒否する。厳密な課金上限とは扱わない。
+
+run.config.agentにcodex-sdk、reply.providerにcodex-sdk/medium、reply.modelに指定モデル、responseIdに新規thread IDを保存する。apiCallsはSDK turnの数であり、SDK内部の通信再試行を数えた物理HTTP数ではない。usage不明は既存と同じく停止する。通常呼び出し時にはSDKもLLMも不要で、[単発実行キット](../saaa-host/README.md)を使える。
+
+[SDKとpiの比較・今回の実測](../../docs/CODEX_SDK_PI_EVALUATION.md)を参照。SAAA用の受け入れ失敗から元suiteを引き継ぐ修正adapterは、引き続き別の実装対象である。
