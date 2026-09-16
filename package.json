@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.14",
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "semantic": "bun run src/semantic-cli.ts",
     "semantic:test": "bun run semantic test examples/active-customer/semantic.ts",
@@ -47,7 +47,7 @@
     "llm:verify:fixture": "bun run src/llm-harness.ts examples/active-customer/llm-harness.json --fixture examples/active-customer/openai-response.fixture.json"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.7",
+    "@biomejs/biome": "2.5.13",
     "@types/bun": "^1.4.2",
     "typescript": "5.9.3"
   }
