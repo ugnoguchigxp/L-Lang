@@ -10,6 +10,8 @@ L-Langは、自然言語で記述したConceptを、Project固有のTypeScript�
 
 LLMは自由なコードを生成しません。コンパイル時に制限されたSemantic IRを返し、L-Langが型文脈、Semantic Test、プロジェクト全体のテストで検証した後、通常のTypeScriptへ決定的に変換します。生成コードはruntimeでLLM、L-Lang DSL、API keyを必要としません。
 
+既存のTypeScript型と制限Predicateを静的に取り込み、再現可能なWasm artifactへ変換する[7段階のHybrid Compilerデモ](./examples/hybrid-wasm-scenarios/README.md)も実行できます。booleanからnullable、複合業務ルール、Unicode enumまでを30ケースで検証します。
+
 追加の実験経路として、TS DSLを使わずJSONのPrompt Sourceから限定PredicateをWebAssemblyへ生成できます。Sourceの作成・要求ID単位の更新、独立Lockへの意味解決、オフラインのbuild/test/inspectを備えています。[利用手順](./examples/prompt-active-customer/README.md)と[実装結果・制限](./docs/PROMPT_SOURCE_RESULTS.md)を参照してください。
 
 生成したWasmをSource・独立テストと同梱し、別プロセスで部品検証できる[能力パッケージ](./examples/capability-access/README.md)も利用できます。SAAAの受け入れ・配備は後続の実装対象です。

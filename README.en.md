@@ -10,6 +10,8 @@ L-Lang is a research compiler and TypeScript DSL that turns natural-language Con
 
 The LLM does not generate unrestricted code. At compile time it returns a restricted Semantic IR. L-Lang validates that IR against the type context, semantic tests, and the full project test suite before deterministically converting it into ordinary TypeScript. Generated runtime code does not require an LLM, the L-Lang DSL, or an API key.
 
+The [seven-stage Hybrid Compiler demo](./examples/hybrid-wasm-scenarios/README.md) (Japanese) also imports existing TypeScript types and restricted predicates statically and produces reproducible Wasm artifacts. Its 30 cases progress from booleans through nullable values and composite business rules to Unicode enums.
+
 An experimental path also compiles a limited predicate from JSON Prompt Source to WebAssembly without a TypeScript DSL. It supports source creation, updates scoped to requirement IDs, resolution into a separate Lock, and offline build/test/inspect. See the [usage guide](./examples/prompt-active-customer/README.md) and [results and limitations](./docs/PROMPT_SOURCE_RESULTS.md) (Japanese).
 
 The [capability candidate workflow](./examples/capability-access/README.md) (Japanese) packages Wasm with its source and separate tests for offline verification in another process. SAAA acceptance and deployment remain future work.
