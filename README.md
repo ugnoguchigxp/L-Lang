@@ -1,5 +1,7 @@
 # L-Lang — Staged Semantic TypeScript
 
+> **2026-09-17・主言語：** Codex/pi等が編集する実行可能なJSONCを主ソースとする。[言語仕様](./docs/LLANG_JSONC_SPEC.md)と[実装計画・完了記録](./docs/LLANG_JSONC_IMPLEMENTATION_PLAN.md)に基づき、parser、lint、format、直接Wasm build、独立suite、Capability Package v2、製造・1回修正・replay、旧Prompt Source移行を実装済み。[最小例](./examples/jsonc-enabled-user/README.md)を参照。
+
 [English](./README.en.md) · [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) · [品質Gate](./QUALITY_GATES.md) · [Post-MVP実装計画](./POST_MVP_IMPLEMENTATION_PLAN.md) · [セキュリティ](./SECURITY.md) · [Contributing](./CONTRIBUTING.md) · [MIT License](./LICENSE)
 
 > **抽象的な意図を、Projectの型・テスト・履歴にフィットする決定的なTypeScriptへ変換する。**

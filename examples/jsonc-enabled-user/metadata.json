@@ -1,0 +1,7 @@
+{
+  "id": "enabled-user",
+  "release": "v2",
+  "purpose": "利用者の受付可否を返す。",
+  "useWhen": "enabled と suspended が確定している受付時。",
+  "doNotUseWhen": "外部状態や現在時刻の確認が必要な場合。"
+}

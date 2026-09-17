@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llang-program-v1.schema.json",
+  "title": "L-Lang JSONC Predicate Program v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "language": { "const": "l-lang" },
+    "version": { "const": 1 },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+    },
+    "profile": { "const": "predicate-i32-v1" },
+    "description": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "contract": { "$ref": "#/$defs/contract" },
+    "body": { "$ref": "#/$defs/expression" }
+  },
+  "required": ["language", "version", "id", "profile", "contract", "body"],
+  "$defs": {
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$",
+          "maxLength": 256
+        },
+        "kind": { "enum": ["boolean", "enum", "string"] },
+        "values": {
+          "type": "array",
+          "maxItems": 256,
+          "items": { "type": "string", "maxLength": 4096 },
+          "uniqueItems": true
+        },
+        "nullable": { "type": "boolean" },
+        "undefinable": { "type": "boolean" },
+        "optional": { "type": "boolean" }
+      },
+      "required": [
+        "name",
+        "kind",
+        "values",
+        "nullable",
+        "undefinable",
+        "optional"
+      ],
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "enum" } } },
+          "then": {
+            "properties": { "values": { "type": "array", "minItems": 1 } }
+          },
+          "else": {
+            "properties": { "values": { "type": "array", "maxItems": 0 } }
+          }
+        }
+      ]
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "const": 1 },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/field" }
+        }
+      },
+      "required": ["version", "fields"]
+    },
+    "path": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$",
+        "maxLength": 128
+      }
+    },
+    "literal": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "enum": ["all", "any"] },
+            "conditions": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 64,
+              "items": { "$ref": "#/$defs/expression" }
+            }
+          },
+          "required": ["kind", "conditions"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "not" },
+            "condition": { "$ref": "#/$defs/expression" }
+          },
+          "required": ["kind", "condition"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "equals" },
+            "property": { "$ref": "#/$defs/path" },
+            "value": { "$ref": "#/$defs/literal" }
+          },
+          "required": ["kind", "property", "value"]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "present" },
+            "property": { "$ref": "#/$defs/path" }
+          },
+          "required": ["kind", "property"]
+        }
+      ]
+    }
+  }
+}
