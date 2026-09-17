@@ -1,5 +1,7 @@
 # Hybrid Compiler Third Implementation Plan
 
+> 分類：実装時の設計・作業記録。本文の予定表現やチェックリストは当時の計画です。完了範囲は対応する結果文書、現在の実行方法は[例の一覧](../examples/README.md)、実行環境・CI対象OSは[品質Gate](../QUALITY_GATES.md)を参照してください。
+
 ## Status
 
 - 作成日：2026-09-17

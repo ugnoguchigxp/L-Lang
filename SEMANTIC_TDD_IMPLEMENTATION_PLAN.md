@@ -1,5 +1,7 @@
 # L-Lang Semantic TDD 残作業計画
 
+> 適用範囲（2026-09-17整理）：Semantic TypeScriptの研究・製品化計画です。未完了Gateは残りますが、全経路の現在の実装状況やJSONCの廃止・移行方針を定める文書ではありません。現在地は[ロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)、実行方法は[TypeScriptガイド](./docs/guides/semantic-typescript.md)、文書分類は[一覧](./docs/README.md)を参照してください。本文の将来のpackage・CLI・CI構成は提供済み仕様ではありません。
+
 作成日: 2026-07-23  
 最終更新: 2026-07-25  
 状態: Predicate縦断POC完了、Phase 6〜7未着手
@@ -8,7 +10,7 @@
 
 本書は、実装済みのSemantic TDDを説明する履歴文書ではなく、今後の未実装作業だけを管理する。
 
-実装済みの挙動はコード、テスト、[`README.md`](./README.md)、[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)を正とする。製品化の順序は[`POST_MVP_IMPLEMENTATION_PLAN.md`](./POST_MVP_IMPLEMENTATION_PLAN.md)を正とする。
+実装済みの挙動はコード、テスト、[TypeScript利用ガイド](./docs/guides/semantic-typescript.md)、[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)を正とする。製品化の順序は[`POST_MVP_IMPLEMENTATION_PLAN.md`](./POST_MVP_IMPLEMENTATION_PLAN.md)を正とする。
 
 ## 2. 現在の実装済み範囲
 

@@ -1,5 +1,7 @@
 # Prompt Source実装結果と現時点の評価
 
+> 分類：本文の日付・基点revision・実行条件に対する結果記録です。過去の数値・未完了事項を現在の全経路へ一般化しません。現在の対応範囲は[ロードマップ](../PROJECT_STATUS_AND_ROADMAP.md)、利用方法は[例の一覧](../examples/README.md)を参照してください。
+
 評価日：2026-09-14。対象は`wasm-compiler`の`9fffe3b`を基点とする追加実装。対応する[実装計画](./PROMPT_SOURCE_IMPLEMENTATION_PLAN.md)は段階C・D。検証ログはローカルの`artifacts/prompt-source/`へ保存する。
 
 ## 実装で確認できたこと

@@ -6,7 +6,9 @@ import Ajv2020 from "ajv/dist/2020";
 import { buildLlangProgram, readLlangArtifact } from "./llang-build";
 import { runLlangCli } from "./llang-cli";
 import {
+  decodeUtf8,
   formatLlangJsonc,
+  LLANG_SOURCE_BYTES,
   parseLlangJsonc,
   parseStrictJsonObject,
 } from "./llang-jsonc";
@@ -84,6 +86,25 @@ describe("L-Lang JSONC parser and linter", () => {
     expect(parsed.document).toBeDefined();
     expect(validate(parsed.document?.value)).toBe(true);
     expect(validate.errors).toBeNull();
+    const structuralVariants = [
+      {
+        kind: "any",
+        conditions: [{ kind: "equals", property: ["enabled"], value: true }],
+      },
+      {
+        kind: "not",
+        condition: { kind: "equals", property: ["enabled"], value: false },
+      },
+      { kind: "present", property: ["status"] },
+      { kind: "equals", property: ["status"], value: null },
+    ];
+    for (const body of structuralVariants) {
+      const variant = structuredClone(parsed.document?.value) as {
+        body: unknown;
+      };
+      variant.body = body;
+      expect(validate(variant), JSON.stringify(body)).toBe(true);
+    }
     const numeric = structuredClone(parsed.document?.value) as {
       body: { conditions: { property: string[]; value: unknown }[] };
     };
@@ -94,6 +115,16 @@ describe("L-Lang JSONC parser and linter", () => {
     firstCondition.value = true;
     firstCondition.property = ["enabled", "nested"];
     expect(validate(numeric)).toBe(false);
+    const unknownExpression = structuredClone(parsed.document?.value) as {
+      body: Record<string, unknown>;
+    };
+    unknownExpression.body.extra = true;
+    expect(validate(unknownExpression)).toBe(false);
+    const empty = structuredClone(parsed.document?.value) as {
+      body: { conditions: unknown[] };
+    };
+    empty.body.conditions = [];
+    expect(validate(empty)).toBe(false);
   });
 
   test("rejects duplicate decoded keys with both locations", () => {
@@ -135,6 +166,35 @@ describe("L-Lang JSONC parser and linter", () => {
       expect(result.report.ok).toBe(false);
       expect(result.report.diagnostics.length).toBeGreaterThan(0);
     }
+  });
+
+  test("enforces the exact byte limit and rejects invalid UTF-8", () => {
+    const atLimit = `{/*${"x".repeat(LLANG_SOURCE_BYTES - 7)}*/}\n`;
+    expect(Buffer.byteLength(atLimit)).toBe(LLANG_SOURCE_BYTES);
+    expect(parseLlangJsonc(atLimit).report.ok).toBe(true);
+    const overLimit = atLimit.replace("*/}", "x*/}");
+    expect(Buffer.byteLength(overLimit)).toBe(LLANG_SOURCE_BYTES + 1);
+    expect(parseLlangJsonc(overLimit).report.diagnostics).toMatchObject([
+      { code: "LLJ003" },
+    ]);
+    expect(() =>
+      decodeUtf8(new Uint8Array([0xc3, 0x28]), "invalid.llang.jsonc"),
+    ).toThrow("valid UTF-8");
+  });
+
+  test("reports CRLF and astral text locations in UTF-16 columns", () => {
+    const result = parseLlangJsonc(
+      '{\r\n  "emoji😀": 1, "emoji\\ud83d\\ude00": 2\r\n}',
+      "position.llang.jsonc",
+    );
+    const duplicate = result.report.diagnostics.find(
+      (item) => item.code === "LLJ002",
+    );
+    expect(duplicate?.range.start).toMatchObject({ line: 2, column: 17 });
+    expect(duplicate?.related[0]?.range.start).toMatchObject({
+      line: 2,
+      column: 3,
+    });
   });
 
   test("reports schema and semantic errors at useful paths", () => {
@@ -193,6 +253,30 @@ describe("L-Lang JSONC parser and linter", () => {
     expect(checkLlangProgram(once).checked?.programHash).toBe(
       checkLlangProgram(valid).checked?.programHash,
     );
+  });
+
+  test("format preserves block comments, string markers and trailing commas", () => {
+    const source = `{
+/* before */ "url":"https://example.test//literal",
+"items":[1,/* between */2,],
+}`;
+    const formatted = formatLlangJsonc(source).text;
+    expect(formatted).toContain("/* before */");
+    expect(formatted).toContain("/* between */");
+    expect(formatted).toContain('"https://example.test//literal"');
+    expect(formatted).toMatch(/2,\s*\]/);
+    expect(formatted).toMatch(/\],\s*\}/);
+    expect(formatLlangJsonc(formatted).text).toBe(formatted);
+  });
+
+  test("format refuses invalid input without changing the file", async () => {
+    const root = await mkdtemp(resolve(tmpdir(), "llang-invalid-format-"));
+    roots.push(root);
+    const path = resolve(root, "invalid.llang.jsonc");
+    const source = '{"id": 1, "id": 2}\n';
+    await writeFile(path, source);
+    expect((await runLlangCli(["format", path, "--write"])).exitCode).toBe(1);
+    expect(await readFile(path, "utf8")).toBe(source);
   });
 
   test("CLI lint and format use deterministic exit codes", async () => {

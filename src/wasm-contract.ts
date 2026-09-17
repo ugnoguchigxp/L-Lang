@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { unicodeScalarLength } from "./unicode-length";
 
 export class WasmError extends Error {
   constructor(
@@ -72,7 +73,9 @@ export function parseContract(input: unknown): WasmContract {
       typeof f.optional !== "boolean" ||
       !Array.isArray(f.values) ||
       f.values.length > WASM_LIMITS.values ||
-      f.values.some((v) => typeof v !== "string" || v.length > 4096)
+      f.values.some(
+        (v) => typeof v !== "string" || unicodeScalarLength(v) > 4096,
+      )
     ) {
       throw new WasmError("UNSUPPORTED_TYPE", "invalid field contract");
     }

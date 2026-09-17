@@ -1,0 +1,66 @@
+{
+  "forward-none": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "reverse-O3": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "reverse-O2": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "forward-O2": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "forward-O3": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "reverse-legacy": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "forward-legacy": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  },
+  "reverse-none": {
+    "run.ts": "1b21734d3225b0bdfdf3ebb2ea95fbd8f32732c3337e61c9f872940b1938ba27",
+    "compiler.ts": "2e220258657010ca7dcca1fd24cee3394eaac7136cbd47362522c1dacc4a3b17",
+    "runtime.ts": "fd36781b506c301a7677e4b264a4da4ed29633657a13b2b17a00b9fdca3f08fe",
+    "data.ts": "5db8822b0ca07e7e898a379c6cebace509fd205b31178eb1c8925cd91eb1b92f",
+    "algorithms.ts": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+    "sort.wat": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6"
+  }
+}

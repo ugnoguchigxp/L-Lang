@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "profile", "entry", "sourceSetHash", "programHash", "interfaceHash", "sources", "dependencies", "targets", "artifacts", "toolchain"],
+  "properties": {
+    "format": { "const": "llang-module-build" }, "version": { "const": 1 }, "profile": { "const": "module-bool-v1" }, "entry": { "type": "string" },
+    "sourceSetHash": { "$ref": "#/$defs/hash" }, "programHash": { "$ref": "#/$defs/hash" }, "interfaceHash": { "$ref": "#/$defs/hash" },
+    "sources": { "type": "array" }, "dependencies": { "type": "array" },
+    "targets": { "type": "array", "uniqueItems": true, "items": { "enum": ["typescript", "jsonc", "wasm"] } },
+    "artifacts": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["path", "hash", "bytes"], "properties": { "path": { "type": "string" }, "hash": { "$ref": "#/$defs/hash" }, "bytes": { "type": "integer", "minimum": 0 } } } },
+    "wasm": { "type": "object" }, "toolchain": { "type": "object" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}

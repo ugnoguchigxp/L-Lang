@@ -1,5 +1,7 @@
 # Wasm能力製造に使うCodex SDKとpi CLIの評価
 
+> 分類：2026-09-16時点の接続比較・実測記録です。モデル・SDK・外部SAAAの現在の利用可否を保証しません。JSONC v2の操作は[CLIリファレンス](./LLANG_CLI_REFERENCE.md)、Prompt Source v1の操作は[製造例](../examples/capability-development/README.md)を参照してください。
+
 2026-09-16。対象はL-Langの制限Predicate製造と、SAAAからのジョブ接続。Codex SDK 0.154.0、ローカルpi CLI 0.85.1、SAAA `68af784`のコードを確認した。SAAA側の設定・コードは変更していない。
 
 ## 推奨

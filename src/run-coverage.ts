@@ -1,19 +1,21 @@
 export {};
 
-const child = Bun.spawn(["bun", "test", "--coverage", "--timeout", "30000"], {
-  cwd: process.cwd(),
-  env: process.env,
-  stdin: "inherit",
-  stdout: "pipe",
-  stderr: "pipe",
-});
+const child = Bun.spawn(
+  [process.execPath, "test", "--coverage", "--timeout", "30000"],
+  {
+    cwd: process.cwd(),
+    env: process.env,
+    stdin: "inherit",
+    stdout: "pipe",
+    stderr: "pipe",
+  },
+);
 const [stdout, stderr, exitCode] = await Promise.all([
-  new Response(child.stdout).text(),
-  new Response(child.stderr).text(),
+  capture(child.stdout, process.stdout),
+  capture(child.stderr, process.stderr),
   child.exited,
 ]);
-process.stdout.write(stdout);
-process.stderr.write(stderr);
+
 if (exitCode !== 0) process.exit(exitCode);
 
 const coverage = `${stdout}\n${stderr}`;
@@ -58,4 +60,17 @@ function enforceCoverage(
       `${input.label} coverage is ${functions}% functions / ${lines}% lines; required ${input.minimumFunctions}% / ${input.minimumLines}%`,
     );
   }
+}
+
+async function capture(
+  stream: ReadableStream<Uint8Array>,
+  output: NodeJS.WriteStream,
+): Promise<string> {
+  const decoder = new TextDecoder();
+  let text = "";
+  for await (const chunk of stream) {
+    output.write(chunk);
+    text += decoder.decode(chunk, { stream: true });
+  }
+  return text + decoder.decode();
 }

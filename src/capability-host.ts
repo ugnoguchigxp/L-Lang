@@ -1,4 +1,7 @@
-import { readCapability, verifyCapability } from "./capability-package";
+import {
+  readCapabilitySnapshot,
+  verifyCapabilityPackage,
+} from "./capability-snapshot";
 import { caseInput } from "./capability-tests";
 import { encodeInput, record, WasmError } from "./wasm-contract";
 
@@ -54,7 +57,7 @@ export function parseHostRequest(raw: unknown): HostRequest {
   return r as HostRequest;
 }
 export async function invokeSnapshot(
-  snapshot: Awaited<ReturnType<typeof readCapability>>,
+  snapshot: Awaited<ReturnType<typeof readCapabilitySnapshot>>,
   input: Record<string, unknown>,
   timeoutMs: number,
 ): Promise<boolean> {
@@ -100,7 +103,7 @@ export async function runHostRequest(manifestPath: string, raw: unknown) {
     return { ...base(), status: "error", error: "invalid-request" };
   }
   try {
-    const snapshot = await readCapability(manifestPath);
+    const snapshot = await readCapabilitySnapshot(manifestPath);
     packageHash = snapshot.packageHash;
     if (packageHash !== request.packageHash)
       return { ...base(), status: "error", error: "package-mismatch" };
@@ -119,7 +122,7 @@ export async function runHostRequest(manifestPath: string, raw: unknown) {
         ),
       };
     } else if (request.operation === "verify") {
-      const report = await verifyCapability(manifestPath);
+      const report = await verifyCapabilityPackage(manifestPath);
       if (report.packageHash !== packageHash)
         return { ...base(), status: "error", error: "package-mismatch" };
       result = report;
@@ -132,7 +135,9 @@ export async function runHostRequest(manifestPath: string, raw: unknown) {
         acceptance: "not-run",
       };
     }
-    if ((await readCapability(manifestPath)).packageHash !== packageHash)
+    if (
+      (await readCapabilitySnapshot(manifestPath)).packageHash !== packageHash
+    )
       return { ...base(), status: "error", error: "package-mismatch" };
     return { ...base(), status: "ok", result };
   } catch (error) {

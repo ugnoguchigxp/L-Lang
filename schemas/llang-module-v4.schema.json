@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llang-module-v4.schema.json",
+  "title": "L-Lang collection module source v4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["language", "version", "kind", "profile", "imports", "types", "functions"],
+  "properties": {
+    "language": { "const": "l-lang" },
+    "version": { "const": 4 },
+    "kind": { "const": "module" },
+    "profile": { "const": "module-collection-v1" },
+    "description": { "type": "string" },
+    "imports": { "type": "array", "maxItems": 256 },
+    "types": { "type": "array", "maxItems": 64 },
+    "functions": { "type": "array", "minItems": 1, "maxItems": 64 }
+  }
+}

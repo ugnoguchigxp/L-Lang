@@ -1,0 +1,85 @@
+{
+  "stage": "optimization",
+  "protocol": [
+    "--samples",
+    "15",
+    "--warmup",
+    "30",
+    "--iterations",
+    "10"
+  ],
+  "experiments": [
+    {
+      "id": "forward-none",
+      "args": [
+        "--optimization",
+        "none",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-legacy",
+      "args": [
+        "--optimization",
+        "legacy",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O2",
+      "args": [
+        "--optimization",
+        "O2",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O3",
+      "args": [
+        "--optimization",
+        "O3",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "reverse-O3",
+      "args": [
+        "--optimization",
+        "O3",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-O2",
+      "args": [
+        "--optimization",
+        "O2",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-legacy",
+      "args": [
+        "--optimization",
+        "legacy",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-none",
+      "args": [
+        "--optimization",
+        "none",
+        "--job-order",
+        "reverse"
+      ]
+    }
+  ]
+}

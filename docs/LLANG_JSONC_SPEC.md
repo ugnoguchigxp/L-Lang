@@ -1,8 +1,8 @@
-# L-Lang主言語仕様：JSONC Predicate v1
+# L-Lang JSONC言語仕様：Predicate v1
 
-2026-09-17。採用し、P0〜P6を実装した主言語仕様。parser、lint、format、直接Wasm build、独立suite、Capability Package v2、製造・修正・replay、旧Prompt Source移行を含む。[実装計画・完了記録](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を参照する。
+2026-09-17。JSONC経路の言語仕様。主要な縦断機能を実装済みだが、仕様適合の残項目は後述の実装状況に分けて記録する。parser、lint、format、直接Wasm build、独立suite、Capability Package v2、製造・修正・replay、旧Prompt Source移行を含む。[実装計画・完了記録](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を参照する。
 
-今後のソース形式・コンパイル責務について本書を正本とする。旧Prompt Source、TS DSL、Hybrid importerの実装・再現経路は移行期間中に残す。旧「自然言語Markdownを正本とし解釈JSONをLockにする」提案は採用しない。
+JSONCのソース形式・コンパイル責務について本書を正本とする。TypeScript DSL、JSONC、Hybrid importerは併存する経路であり、TypeScriptを廃止する方針ではない。入力・出力の対応は[経路ガイド](./guides/language-routes.md)を参照する。Prompt Sourceの実装・再現経路も維持する。旧「自然言語Markdownを正本とし解釈JSONをLockにする」提案は採用しない。
 
 ## 1. 言語の役割
 
@@ -159,4 +159,14 @@ bun run llang migrate legacy.prompt.json --out source.llang.jsonc
 
 この仕様は限定Predicate言語であり、汎用能力製造の完成を意味しない。Canonical Type統合、演算追加、module/dependency、effect、memoryは別profile/versionで設計する。将来の依存固定にLockが必要になっても、現在のSourceをLLM解釈JSONへ置き換える理由にはしない。
 
-パーサー候補は[Microsoft jsonc-parser](https://github.com/microsoft/node-jsonc-parser)。コメントと末尾カンマを明示設定し、回復結果のerrorsを必ず検査する。位置情報を利用し、重複キー等は独自検査する。採用versionは実装開始時にAPI・license・Bun互換性を確認して固定する。
+パーサーは[Microsoft jsonc-parser](https://github.com/microsoft/node-jsonc-parser) 3.3.1を採用している。コメントと末尾カンマを明示設定し、回復結果のerrorsを必ず検査する。位置情報を利用し、重複キー等は独自検査する。採用versionは`package.json`と`bun.lock`で固定する。
+
+
+## 9. 現行実装との対応
+
+この仕様の要求と現行CLIの挙動を区別する。詳細な引数・出力・終了値は[CLIリファレンス](./LLANG_CLI_REFERENCE.md)を参照。
+
+- `llang test`と`llang verify`は共通の5種類の追跡hashを返す。testは取り込んだSource snapshotを検査・コンパイル・実行し、元パスの再読による別Programへの差替えを避ける。
+- `llang develop`は既存の固定suiteを受け取る。テスト生成は同コマンドに含まれない。
+- JSONC Capability v2はpackage/verifyと専用Workerで検証する。hostはv1/v2を判別し、`capability:host-kit --jsonc`でv2キットを生成できる。
+- CLIはhelp、JSON例外出力、formatの協調writer排他を備える。ロックに参加しない外部writerとの完全排他は保証しない。

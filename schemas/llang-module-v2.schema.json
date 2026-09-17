@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schema/module-v2.json",
+  "title": "L-Lang boolean module v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["language", "version", "kind", "profile", "imports", "types", "functions"],
+  "properties": {
+    "language": { "const": "l-lang" },
+    "version": { "const": 2 },
+    "kind": { "const": "module" },
+    "profile": { "const": "module-bool-v1" },
+    "description": { "type": "string", "maxLength": 4096 },
+    "imports": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/import" } },
+    "types": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/type" } },
+    "functions": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/function" } }
+  },
+  "$defs": {
+    "name": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$" },
+    "binding": { "type": "object", "additionalProperties": false, "required": ["kind", "name", "as"], "properties": { "kind": { "enum": ["type", "function"] }, "name": { "$ref": "#/$defs/name" }, "as": { "$ref": "#/$defs/name" } } },
+    "import": { "type": "object", "additionalProperties": false, "required": ["from", "bindings"], "properties": { "from": { "type": "string", "pattern": "^\\.\\.?/.*(\\.ts|\\.llang\\.jsonc)$" }, "bindings": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/binding" } } } },
+    "field": { "type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": { "name": { "$ref": "#/$defs/name" }, "type": { "const": "boolean" } } },
+    "type": { "type": "object", "additionalProperties": false, "required": ["name", "export", "kind", "fields"], "properties": { "name": { "$ref": "#/$defs/name" }, "export": { "type": "boolean" }, "kind": { "const": "record" }, "fields": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/field" } } } },
+    "typeUse": { "oneOf": [{ "const": "boolean" }, { "type": "object", "additionalProperties": false, "required": ["ref"], "properties": { "ref": { "$ref": "#/$defs/name" } } }] },
+    "parameter": { "type": "object", "additionalProperties": false, "required": ["name", "type"], "properties": { "name": { "$ref": "#/$defs/name" }, "type": { "$ref": "#/$defs/typeUse" } } },
+    "function": { "type": "object", "additionalProperties": false, "required": ["name", "export", "parameters", "returns", "body"], "properties": { "name": { "$ref": "#/$defs/name" }, "export": { "type": "boolean" }, "parameters": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/parameter" } }, "returns": { "const": "boolean" }, "body": { "$ref": "#/$defs/expression" } } },
+    "expression": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "value"], "properties": { "kind": { "const": "literal" }, "value": { "type": "boolean" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "name"], "properties": { "kind": { "const": "param" }, "name": { "$ref": "#/$defs/name" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "base", "name"], "properties": { "kind": { "const": "field" }, "base": { "type": "object", "additionalProperties": false, "required": ["kind", "name"], "properties": { "kind": { "const": "param" }, "name": { "$ref": "#/$defs/name" } } }, "name": { "$ref": "#/$defs/name" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "condition"], "properties": { "kind": { "const": "not" }, "condition": { "$ref": "#/$defs/expression" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "conditions"], "properties": { "kind": { "enum": ["all", "any"] }, "conditions": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/expression" } } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "left", "right"], "properties": { "kind": { "const": "equals" }, "left": { "$ref": "#/$defs/expression" }, "right": { "$ref": "#/$defs/expression" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "callee", "arguments"], "properties": { "kind": { "const": "call" }, "callee": { "$ref": "#/$defs/name" }, "arguments": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/expression" } } } }
+      ]
+    }
+  }
+}

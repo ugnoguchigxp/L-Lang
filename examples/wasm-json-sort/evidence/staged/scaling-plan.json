@@ -1,0 +1,475 @@
+{
+  "stage": "scaling",
+  "protocol": [
+    "--samples",
+    "9",
+    "--warmup",
+    "10",
+    "--iterations",
+    "3"
+  ],
+  "experiments": [
+    {
+      "id": "forward-710-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-710-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-710-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-710-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-710-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-3550-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-3550-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-3550-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-3550-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-3550-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-7100-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-7100-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-7100-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-7100-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-7100-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "reverse-7100-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-7100-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-7100-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-7100-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-7100-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "7100",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-3550-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-3550-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-3550-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-3550-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-3550-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "3550",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-710-heap-O3",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "O3",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-710-heap-none",
+      "args": [
+        "--algorithm",
+        "heap",
+        "--optimization",
+        "none",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-710-selection-O3-branch",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-710-selection-O3",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "O3",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-710-selection-none",
+      "args": [
+        "--algorithm",
+        "selection",
+        "--optimization",
+        "none",
+        "--records",
+        "710",
+        "--key",
+        "age",
+        "--job-order",
+        "reverse"
+      ]
+    }
+  ]
+}

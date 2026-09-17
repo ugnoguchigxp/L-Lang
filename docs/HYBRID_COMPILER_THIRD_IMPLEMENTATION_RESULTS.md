@@ -1,5 +1,7 @@
 # Hybrid Compiler Third Implementation Results
 
+> 分類：本文の日付・基点revision・実行条件に対する結果記録です。過去の数値・未完了事項を現在の全経路へ一般化しません。現在の対応範囲は[ロードマップ](../PROJECT_STATUS_AND_ROADMAP.md)、利用方法は[例の一覧](../examples/README.md)を参照してください。
+
 ## Status
 
 - 実装日：2026-09-17

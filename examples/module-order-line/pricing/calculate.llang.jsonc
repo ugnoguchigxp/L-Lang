@@ -1,0 +1,27 @@
+{
+  "language": "l-lang",
+  "version": 3,
+  "kind": "module",
+  "profile": "module-value-v1",
+  "imports": [
+    {
+      "from": "../domain/order.llang.jsonc",
+      "bindings": [{ "kind": "type", "name": "OrderLine", "as": "OrderLine" }]
+    }
+  ],
+  "types": [],
+  "functions": [
+    {
+      "name": "calculate",
+      "export": true,
+      "parameters": [{ "name": "line", "type": { "ref": "OrderLine" } }],
+      "returns": "i32",
+      "body": {
+        "kind": "binary",
+        "op": "*",
+        "left": { "kind": "field", "base": { "kind": "param", "name": "line" }, "name": "unitPrice" },
+        "right": { "kind": "field", "base": { "kind": "param", "name": "line" }, "name": "quantity" }
+      }
+    }
+  ]
+}

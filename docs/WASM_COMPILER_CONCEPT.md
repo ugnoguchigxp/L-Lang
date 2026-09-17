@@ -1,6 +1,6 @@
 # L-Langの将来コンセプト：Prompt SourceからWasmへ
 
-> 2026-09-17：今後の主ソース形式は[JSONC主言語仕様](./LLANG_JSONC_SPEC.md)、実装順序は[JSONC実装計画](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を優先する。本書のPrompt Source/意味解決Lock中心の構想は履歴として保持する。JSONCのparse・lint・format・直接Wasm buildは実装済みで、Capability Package v2と製造経路は未実装。
+> 2026-09-17時点の位置付け：TypeScriptとJSONCは併存する経路です。JSONCのparser・lint・format・Wasm build、Capability Package v2、固定suiteを使う製造・修正は実装済みです。[経路ガイド](./guides/language-routes.md)と[現行仕様](./LLANG_JSONC_SPEC.md)を参照してください。以下は構想・実装順序の履歴であり、SAAAの受け入れ・配備の完了を示しません。
 
 > 2026-09-15更新：今後の拡張順序と検証の責務分担は[エージェント能力拡張コンセプト](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md)を基準とする。本書の実装履歴は保持し、人間の都度レビューや研究評価の完了を後続開発の前提にはしない。
 

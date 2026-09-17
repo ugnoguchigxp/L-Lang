@@ -46,7 +46,7 @@ CLI終了コードは、develop/replayで0=pass、1=部品検証fail、2=未解�
 
 ## 実モデル接続
 
-実装には既存のOpenAI/Azure接続を利用するadapterもある。外部APIによる実行は今回の検証では行っていない。設定例のMODEL_IDは利用者が選ぶモデルIDに置き換える。
+実装には既存のOpenAI/Azure接続を利用するadapterもある。この節のOpenAI/Azure直接接続例の実モデル評価は示していない。後述のCodex SDK接続の実測とは分けて扱う。設定例のMODEL_IDは利用者が選ぶモデルIDに置き換える。
 
 ```sh
 bun run capability develop examples/capability-development/access/source.json --metadata examples/capability-development/access/metadata.json --out-dir artifacts/development-live --model MODEL_ID --max-output-tokens 4096 --max-total-tokens 200000 --max-wall-ms 120000

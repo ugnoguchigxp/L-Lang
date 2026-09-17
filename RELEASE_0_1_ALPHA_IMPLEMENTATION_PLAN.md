@@ -1,12 +1,14 @@
 # L-Lang 0.1 Alpha 残作業計画
 
+> 適用範囲（2026-09-17整理）：Semantic TypeScriptの研究・製品化計画です。未完了Gateは残りますが、全経路の現在の実装状況やJSONCの廃止・移行方針を定める文書ではありません。現在地は[ロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)、実行方法は[TypeScriptガイド](./docs/guides/semantic-typescript.md)、文書分類は[一覧](./docs/README.md)を参照してください。本文の将来のpackage・CLI・CI構成は提供済み仕様ではありません。
+
 作成日: 2026-07-22
 最終更新: 2026-07-25
 状態: M1〜M4完了、M5評価基盤実装済み・dataset/live未完了、M6未完了
 
 ## 1. この文書の役割
 
-本書は0.1 Alphaまでに残る実装とrelease Gateだけを管理する。完了済みM1〜M4の設計・手順は削除し、実装済み仕様はコード、テスト、[`README.md`](./README.md)、[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)を正とする。
+本書は0.1 Alphaまでに残る実装とrelease Gateだけを管理する。完了済みM1〜M4の設計・手順は削除し、実装済み仕様はコード、テスト、[TypeScript利用ガイド](./docs/guides/semantic-typescript.md)、[`PROJECT_STATUS_AND_ROADMAP.md`](./PROJECT_STATUS_AND_ROADMAP.md)を正とする。
 
 現在の基準:
 

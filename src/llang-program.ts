@@ -1,4 +1,9 @@
-import { type PredicateExpression, parsePredicateExpression } from "./ir";
+import {
+  type PredicateExpression,
+  parsePredicateExpression,
+  PredicateProfileError,
+  PredicateStructureError,
+} from "./ir";
 import {
   LLANG_DIAGNOSTIC_LIMIT,
   type LlangDiagnostic,
@@ -13,6 +18,7 @@ import {
 import { fingerprintFor } from "./stable-hash";
 import { lowerPredicate } from "./wasm-core";
 import { parseContract, type WasmContract } from "./wasm-contract";
+import { unicodeScalarLength } from "./unicode-length";
 
 export type LlangProgram = {
   language: "l-lang";
@@ -233,7 +239,7 @@ export function checkLlangProgram(text: string, file = "<input>") {
     Object.hasOwn(root, "description") &&
     (typeof root.description !== "string" ||
       !root.description.length ||
-      root.description.length > 4096)
+      unicodeScalarLength(root.description) > 4096)
   )
     diagnostics.push(
       makeDiagnostic(
@@ -263,9 +269,11 @@ export function checkLlangProgram(text: string, file = "<input>") {
     diagnostics.push(
       makeDiagnostic(
         document,
-        "LLS001",
+        error instanceof PredicateProfileError ? "LLP001" : "LLS001",
         error instanceof Error ? error.message : String(error),
-        ["body"],
+        error instanceof PredicateStructureError
+          ? error.diagnosticPath
+          : ["body"],
       ),
     );
   }

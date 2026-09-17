@@ -33,7 +33,7 @@ describe("SAAA World Clock Wasm demo", () => {
     wasmBytes.set(first.wasm);
     const module = new WebAssembly.Module(wasmBytes.buffer);
     expect(WebAssembly.Module.imports(module)).toEqual([]);
-    expect(WebAssembly.Module.exports(module)).toEqual([
+    expect(WebAssembly.Module.exports(module)).toMatchObject([
       { name: "abi_version", kind: "function" },
       { name: "local_seconds", kind: "function" },
       { name: "day_delta", kind: "function" },

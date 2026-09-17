@@ -1,9 +1,11 @@
 # Hybrid Compiler 第一実装計画
 
+> 分類：実装時の設計・作業記録。本文の予定表現やチェックリストは当時の計画です。完了範囲は対応する結果文書、現在の実行方法は[例の一覧](../examples/README.md)、実行環境・CI対象OSは[品質Gate](../QUALITY_GATES.md)を参照してください。
+
 - 作成日：2026-09-16
 - ブランチ：`hybrid-compiler`
 - 基点：`5e160c7`
-- 状態：計画。未実装
+- 状態：機能実装済み。[実装結果](./HYBRID_COMPILER_FIRST_IMPLEMENTATION_RESULTS.md)を参照。以下は設計時点の手順・受け入れ条件。
 - 上位文書：[Hybrid Compiler Concept](./HYBRID_COMPILER_CONCEPT.md)
 - 対象：H1 `Restricted TypeScript Predicate Import`
 

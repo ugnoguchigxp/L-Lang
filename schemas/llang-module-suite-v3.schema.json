@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llang-module-suite-v3.schema.json",
+  "title": "L-Lang collection module suite v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "profile", "interfaceHash", "cases"],
+  "properties": {
+    "format": { "const": "llang-module-suite" },
+    "version": { "const": 3 },
+    "profile": { "const": "module-collection-v1" },
+    "interfaceHash": { "$ref": "#/$defs/hash" },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "input", "expected"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "input": true,
+        "expected": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "value"],
+              "properties": { "kind": { "const": "value" }, "value": true }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind"],
+              "properties": { "kind": { "const": "invalid-input" } }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "code"],
+              "properties": {
+                "kind": { "const": "fault" },
+                "code": {
+                  "enum": [
+                    "ARITHMETIC_OVERFLOW",
+                    "DIVISION_BY_ZERO",
+                    "RESOURCE_LIMIT",
+                    "INDEX_OUT_OF_BOUNDS",
+                    "INVALID_ARTIFACT"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

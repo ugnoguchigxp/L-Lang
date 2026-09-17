@@ -1,0 +1,23 @@
+{
+  "format": "llang-module-suite",
+  "version": 3,
+  "profile": "module-collection-v1",
+  "interfaceHash": "bad890696ffdcf7c342250ccae5fbb1ca82a4262c6d7e0e7e4b06c40089d282a",
+  "cases": [
+    {
+      "id": "empty",
+      "input": { "values": [], "threshold": 10 },
+      "expected": { "kind": "value", "value": { "values": [], "total": 0 } }
+    },
+    {
+      "id": "stable-duplicates",
+      "input": { "values": [500, 200, 500, 100, 300], "threshold": 200 },
+      "expected": { "kind": "value", "value": { "values": [200, 300, 500, 500], "total": 1500 } }
+    },
+    {
+      "id": "one",
+      "input": { "values": [300], "threshold": 200 },
+      "expected": { "kind": "value", "value": { "values": [300], "total": 300 } }
+    }
+  ]
+}

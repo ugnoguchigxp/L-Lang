@@ -34,6 +34,16 @@ export type PredicateDefinition = {
   body: PredicateExpression;
 };
 
+export class PredicateProfileError extends Error {}
+export class PredicateStructureError extends Error {
+  constructor(
+    message: string,
+    public readonly diagnosticPath: (string | number)[],
+  ) {
+    super(message);
+  }
+}
+
 const identifierPattern = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 export function parsePredicateDefinition(input: unknown): PredicateDefinition {
@@ -88,7 +98,7 @@ export function parsePredicateExpression(
   input: unknown,
   path = "expression",
 ): PredicateExpression {
-  return parseExpression(input, path, { nodes: 0 }, 1);
+  return parseExpression(input, path, { nodes: 0 }, 1, [path]);
 }
 
 function parseExpression(
@@ -96,15 +106,16 @@ function parseExpression(
   path: string,
   state: { nodes: number },
   depth: number,
+  diagnosticPath: (string | number)[],
 ): PredicateExpression {
   state.nodes += 1;
   if (state.nodes > SEMANTIC_LIMITS.predicateExpressionNodes) {
-    throw new Error(
+    throw new PredicateProfileError(
       `${path} exceeds the ${SEMANTIC_LIMITS.predicateExpressionNodes} node limit`,
     );
   }
   if (depth > SEMANTIC_LIMITS.predicateExpressionDepth) {
-    throw new Error(
+    throw new PredicateProfileError(
       `${path} exceeds the ${SEMANTIC_LIMITS.predicateExpressionDepth} level depth limit`,
     );
   }
@@ -115,12 +126,12 @@ function parseExpression(
   switch (kind) {
     case "all":
     case "any": {
-      assertKnownKeys(value, ["kind", "conditions"], path);
+      assertExpressionKeys(value, ["kind", "conditions"], path, diagnosticPath);
       if (!Array.isArray(value.conditions) || value.conditions.length === 0) {
         throw new Error(`${path}.conditions must be a non-empty array`);
       }
       if (value.conditions.length > SEMANTIC_LIMITS.predicateConditions) {
-        throw new Error(
+        throw new PredicateProfileError(
           `${path}.conditions must contain at most ${SEMANTIC_LIMITS.predicateConditions} items`,
         );
       }
@@ -133,12 +144,13 @@ function parseExpression(
             `${path}.conditions[${index}]`,
             state,
             depth + 1,
+            [...diagnosticPath, "conditions", index],
           ),
         ),
       };
     }
     case "not":
-      assertKnownKeys(value, ["kind", "condition"], path);
+      assertExpressionKeys(value, ["kind", "condition"], path, diagnosticPath);
       return {
         kind,
         condition: parseExpression(
@@ -146,17 +158,23 @@ function parseExpression(
           `${path}.condition`,
           state,
           depth + 1,
+          [...diagnosticPath, "condition"],
         ),
       };
     case "equals":
-      assertKnownKeys(value, ["kind", "property", "value"], path);
+      assertExpressionKeys(
+        value,
+        ["kind", "property", "value"],
+        path,
+        diagnosticPath,
+      );
       return {
         kind,
         property: expectPropertyPath(value.property, `${path}.property`),
         value: expectLiteral(value.value, `${path}.value`),
       };
     case "present":
-      assertKnownKeys(value, ["kind", "property"], path);
+      assertExpressionKeys(value, ["kind", "property"], path, diagnosticPath);
       return {
         kind,
         property: expectPropertyPath(value.property, `${path}.property`),
@@ -164,6 +182,21 @@ function parseExpression(
     default:
       throw new Error(`${path}.kind is not supported: ${kind}`);
   }
+}
+
+function assertExpressionKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  path: string,
+  diagnosticPath: (string | number)[],
+): void {
+  const allowedSet = new Set(allowed);
+  const unknown = Object.keys(value).find((key) => !allowedSet.has(key));
+  if (unknown !== undefined)
+    throw new PredicateStructureError(
+      `${path} contains unknown field ${unknown}`,
+      [...diagnosticPath, unknown],
+    );
 }
 
 function expectRecord(value: unknown, path: string): Record<string, unknown> {

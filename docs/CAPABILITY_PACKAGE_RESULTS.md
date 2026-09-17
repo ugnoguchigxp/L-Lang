@@ -1,5 +1,7 @@
 # 検証付きWasm能力パッケージ：実装結果
 
+> 分類：本文の日付・基点revision・実行条件に対する結果記録です。過去の数値・未完了事項を現在の全経路へ一般化しません。現在の対応範囲は[ロードマップ](../PROJECT_STATUS_AND_ROADMAP.md)、利用方法は[例の一覧](../examples/README.md)を参照してください。
+
 2026-09-15。基点`0d30e1a`、`wasm-compiler`上の変更。[計画](./CAPABILITY_PACKAGE_IMPLEMENTATION_PLAN.md)のP1〜P5を対象とする。検証状況は下記に区別して記録する。
 
 ## 実装したもの

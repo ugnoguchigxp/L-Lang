@@ -1,6 +1,6 @@
 # 自然言語Sourceと単一Resolution Lockへの改修案
 
-> **2026-09-17：本案は不採用・後継仕様へ置換。** ユーザーとの検討により、主言語はエージェントが編集する実行可能なJSONCソースとする。[JSONC主言語仕様](./LLANG_JSONC_SPEC.md)と[実装計画](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を優先する。以下は設計検討の履歴であり、Markdown Sourceや単一Resolution Lockを実装する指示ではない。
+> **2026-09-17：本案は不採用・後継仕様へ置換。** ユーザーとの検討により、このMarkdown Source提案に代えて、エージェントが編集する実行可能なJSONC経路を採用した。TypeScript経路も併存する。[JSONC言語仕様](./LLANG_JSONC_SPEC.md)と[実装計画](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を優先する。以下は設計検討の履歴であり、Markdown Sourceや単一Resolution Lockを実装する指示ではない。
 
 2026-09-17。状態：設計案、未実装。現行Prompt系、Capability製造・検証・実行、評価runnerを読み合わせた提案。
 

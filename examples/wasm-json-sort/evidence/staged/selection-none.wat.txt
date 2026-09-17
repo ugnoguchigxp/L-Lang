@@ -1,0 +1,70 @@
+(func $selection (param $n i32)
+  (local $i i32)
+  (local $j i32)
+  (local $min i32)
+  (block $done
+   (loop $outer
+    (br_if $done
+     (i32.ge_s
+      (local.get $i)
+      (i32.sub
+       (local.get $n)
+       (i32.const 1)
+      )
+     )
+    )
+    (local.set $min
+     (local.get $i)
+    )
+    (local.set $j
+     (i32.add
+      (local.get $i)
+      (i32.const 1)
+     )
+    )
+    (block $scanned
+     (loop $inner
+      (br_if $scanned
+       (i32.ge_s
+        (local.get $j)
+        (local.get $n)
+       )
+      )
+      (if
+       (i32.lt_s
+        (call $get
+         (local.get $j)
+        )
+        (call $get
+         (local.get $min)
+        )
+       )
+       (then
+        (local.set $min
+         (local.get $j)
+        )
+       )
+      )
+      (local.set $j
+       (i32.add
+        (local.get $j)
+        (i32.const 1)
+       )
+      )
+      (br $inner)
+     )
+    )
+    (call $swap
+     (local.get $i)
+     (local.get $min)
+    )
+    (local.set $i
+     (i32.add
+      (local.get $i)
+      (i32.const 1)
+     )
+    )
+    (br $outer)
+   )
+  )
+ )

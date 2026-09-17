@@ -1,6 +1,6 @@
 # S-LANG：エージェントが能力を製造・検証・配備する実装コンセプト
 
-> 2026-09-17：SAAAとCoding Agentの責務分担を維持し、主たる実装ソースを[JSONCプログラム](./LLANG_JSONC_SPEC.md)へ変更する。[実装計画](./LLANG_JSONC_IMPLEMENTATION_PLAN.md)を優先する。以下の自然言語Source/Lockを前提とする箇所は旧構成の説明。JSONCのparse・lint・format・直接Wasm buildは実装済みで、Capability Package v2と製造経路は未実装。
+> 2026-09-17時点の位置付け：TypeScriptとJSONCは併存する経路です。JSONCのparser・lint・format・Wasm build、Capability Package v2、固定suiteを使う製造・修正は実装済みです。[経路ガイド](./guides/language-routes.md)と[現行仕様](./LLANG_JSONC_SPEC.md)を参照してください。以下は構想・実装順序の履歴であり、SAAAの受け入れ・配備の完了を示しません。
 
 2026-09-15。ユーザーとの責務分担の合意を基にした今後の設計方針。以下の新機能は未実装であり、実装済み仕様とは区別する。
 

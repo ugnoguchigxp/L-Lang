@@ -1,0 +1,6212 @@
+[
+  {
+    "id": "forward-710-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 3.570959000000002,
+      "binaryenImportMs": 365.754584,
+      "generationMs": 18.913665999999978,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.0122499999999945,
+      "wasmCompileMs": 0.09850000000000136,
+      "wasmInstantiateMs": 0.04783300000002555
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.11876366666664732,
+            "minMs": 0.1167083333333494,
+            "maxMs": 0.12765266666667685,
+            "samplesMs": [
+              0.12765266666667685,
+              0.11876366666664732,
+              0.11701400000000224,
+              0.12334733333331845,
+              0.1167083333333494,
+              0.12126366666668294,
+              0.11977766666666412,
+              0.11869466666666995,
+              0.1167919999999943
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.15148633333334752,
+            "minMs": 0.14844466666668646,
+            "maxMs": 0.18875033333334082,
+            "samplesMs": [
+              0.15125033333333704,
+              0.14940266666667412,
+              0.15515233333335723,
+              0.1499309999999999,
+              0.15148633333334752,
+              0.1542223333333368,
+              0.1548613333333151,
+              0.18875033333334082,
+              0.14844466666668646
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.42761066666666164,
+            "minMs": 0.4143333333333506,
+            "maxMs": 0.46227799999998825,
+            "samplesMs": [
+              0.4278473333333371,
+              0.4143333333333506,
+              0.42079166666667334,
+              0.43508333333331467,
+              0.420944666666666,
+              0.46227799999998825,
+              0.42761066666666164,
+              0.4355693333333382,
+              0.4223746666666746
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.479819333333334,
+            "minMs": 0.4560833333333297,
+            "maxMs": 0.4995136666666629,
+            "samplesMs": [
+              0.45672233333332696,
+              0.46852799999999206,
+              0.4995136666666629,
+              0.4844586666666828,
+              0.4751946666666716,
+              0.479819333333334,
+              0.485305333333334,
+              0.490805666666688,
+              0.4560833333333297
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "forward-710-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.8606249999999989,
+      "binaryenImportMs": 238.98658299999997,
+      "generationMs": 98.79541600000005,
+      "optimizationMs": 67.25633399999998,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.9586249999999836,
+      "wasmCompileMs": 0.23224999999996498,
+      "wasmInstantiateMs": 0.06450000000000955
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.12634733333334225,
+            "minMs": 0.12011099999998957,
+            "maxMs": 0.1384726666666817,
+            "samplesMs": [
+              0.1384726666666817,
+              0.1349999999999909,
+              0.12011099999998957,
+              0.12634733333334225,
+              0.12655600000001263,
+              0.1257360000000176,
+              0.1253193333333608,
+              0.1291943333333355,
+              0.12584700000002158
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.5150416666666615,
+            "minMs": 0.5051943333333687,
+            "maxMs": 0.5865140000000224,
+            "samplesMs": [
+              0.5259583333333353,
+              0.5621806666666581,
+              0.5099859999999884,
+              0.5150416666666615,
+              0.532653000000001,
+              0.5865140000000224,
+              0.5135556666666806,
+              0.5145969999999807,
+              0.5051943333333687
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.4804166666666371,
+            "minMs": 0.44234699999998384,
+            "maxMs": 0.5043329999999931,
+            "samplesMs": [
+              0.47986099999999016,
+              0.4804166666666371,
+              0.44234699999998384,
+              0.4847773333333218,
+              0.4564720000000004,
+              0.4816110000000056,
+              0.45501366666665416,
+              0.4982219999999984,
+              0.5043329999999931
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.8834579999999997,
+            "minMs": 0.8444029999999998,
+            "maxMs": 0.9864443333333384,
+            "samplesMs": [
+              0.8799306666666856,
+              0.8987083333333507,
+              0.9158049999999965,
+              0.8766806666666866,
+              0.8834579999999997,
+              0.9864443333333384,
+              0.8952776666666485,
+              0.8444029999999998,
+              0.8709723333333272
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "forward-710-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.8574160000000006,
+      "binaryenImportMs": 209.637208,
+      "generationMs": 92.36558400000001,
+      "optimizationMs": 62.86154099999996,
+      "selectionBranchMs": 7.56958400000002,
+      "generatedTypescriptImportMs": 1.8435829999999669,
+      "wasmCompileMs": 0.11445900000001075,
+      "wasmInstantiateMs": 0.10904199999998809
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.11984733333332542,
+            "minMs": 0.11794433333333625,
+            "maxMs": 0.15511099999999564,
+            "samplesMs": [
+              0.15511099999999564,
+              0.11852800000000722,
+              0.1181113333333504,
+              0.12448566666667678,
+              0.11984733333332542,
+              0.11933333333335365,
+              0.11994466666667829,
+              0.11794433333333625,
+              0.12797199999999975
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.1534443333333305,
+            "minMs": 0.15091633333332766,
+            "maxMs": 0.1684863333333245,
+            "samplesMs": [
+              0.1616110000000314,
+              0.15129166666664182,
+              0.15349999999998923,
+              0.1540139999999989,
+              0.1534443333333305,
+              0.15179166666666788,
+              0.15181899999998905,
+              0.15091633333332766,
+              0.1684863333333245
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.43374933333331,
+            "minMs": 0.4257780000000177,
+            "maxMs": 0.46408333333333,
+            "samplesMs": [
+              0.46408333333333,
+              0.44704199999999145,
+              0.43374933333331,
+              0.4257780000000177,
+              0.4289583333333364,
+              0.42794466666665204,
+              0.4355553333333357,
+              0.432611333333341,
+              0.447513666666661
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.4743053333333099,
+            "minMs": 0.4520833333333485,
+            "maxMs": 0.5330836666666793,
+            "samplesMs": [
+              0.48408299999999826,
+              0.4520833333333485,
+              0.481375000000033,
+              0.4801249999999868,
+              0.46173599999999243,
+              0.4743053333333099,
+              0.4589023333333557,
+              0.46636100000000624,
+              0.5330836666666793
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "forward-710-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 1.4172499999999957,
+      "binaryenImportMs": 210.433417,
+      "generationMs": 21.09854100000001,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.0738749999999868,
+      "wasmCompileMs": 0.10266699999999673,
+      "wasmInstantiateMs": 0.09341699999998809
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.023888333333350904,
+            "minMs": 0.013430666666674066,
+            "maxMs": 0.04244433333332154,
+            "samplesMs": [
+              0.04244433333332154,
+              0.028291999999983847,
+              0.025819333333345185,
+              0.023888333333350904,
+              0.015180333333338089,
+              0.017013333333314524,
+              0.01480500000000499,
+              0.013430666666674066,
+              0.025971999999986412
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.014125333333330067,
+            "minMs": 0.008735999999980018,
+            "maxMs": 0.019819666666649027,
+            "samplesMs": [
+              0.019819666666649027,
+              0.0109723333333136,
+              0.009083333333308019,
+              0.010208666666680225,
+              0.015375000000005912,
+              0.008735999999980018,
+              0.015958333333325452,
+              0.019527999999979784,
+              0.014125333333330067
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.3497503333333422,
+            "minMs": 0.33702800000001315,
+            "maxMs": 0.4024583333333567,
+            "samplesMs": [
+              0.3968613333333148,
+              0.3486113333333378,
+              0.3679169999999961,
+              0.3497503333333422,
+              0.3449580000000007,
+              0.33702800000001315,
+              0.3403606666666595,
+              0.4024583333333567,
+              0.3780833333333362
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.34622266666665763,
+            "minMs": 0.32670866666666143,
+            "maxMs": 0.516111333333337,
+            "samplesMs": [
+              0.357041666666665,
+              0.36462500000000847,
+              0.334541999999999,
+              0.34622266666665763,
+              0.34038866666668355,
+              0.3299860000000005,
+              0.4082779999999957,
+              0.516111333333337,
+              0.32670866666666143
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "forward-710-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.9527499999999982,
+      "binaryenImportMs": 235.448916,
+      "generationMs": 94.18150000000003,
+      "optimizationMs": 71.62004099999996,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.8382080000000087,
+      "wasmCompileMs": 0.16187499999995225,
+      "wasmInstantiateMs": 0.11912499999999682
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.01570833333335031,
+            "minMs": 0.013208000000001144,
+            "maxMs": 0.08506966666667874,
+            "samplesMs": [
+              0.08506966666667874,
+              0.02369433333331017,
+              0.016555666666685436,
+              0.014625000000004698,
+              0.01570833333335031,
+              0.013596999999985352,
+              0.013236000000006243,
+              0.021569666666683435,
+              0.013208000000001144
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.011125333333325216,
+            "minMs": 0.007819666666667521,
+            "maxMs": 0.024402333333322684,
+            "samplesMs": [
+              0.024402333333322684,
+              0.008930666666647843,
+              0.01180566666668407,
+              0.009180666666660878,
+              0.011583666666657185,
+              0.008472333333334822,
+              0.015861000000010488,
+              0.007819666666667521,
+              0.011125333333325216
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.3387083333333483,
+            "minMs": 0.325916333333339,
+            "maxMs": 0.8052359999999984,
+            "samplesMs": [
+              0.5494166666666729,
+              0.3641113333333313,
+              0.3387083333333483,
+              0.3390413333333413,
+              0.33034733333335,
+              0.8052359999999984,
+              0.325916333333339,
+              0.3353053333333378,
+              0.33452799999999644
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.323569333333315,
+            "minMs": 0.3099163333333384,
+            "maxMs": 0.3552916666666685,
+            "samplesMs": [
+              0.34623599999999516,
+              0.32980533333331624,
+              0.31413866666666007,
+              0.323569333333315,
+              0.33181966666666085,
+              0.31873600000000124,
+              0.3552916666666685,
+              0.31387500000001484,
+              0.3099163333333384
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "forward-3550-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.9531670000000005,
+      "binaryenImportMs": 207.097333,
+      "generationMs": 22.391333000000003,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.055582999999956,
+      "wasmCompileMs": 0.20325000000002547,
+      "wasmInstantiateMs": 0.06795799999997598
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 2.8522083333332753,
+            "minMs": 2.830028000000046,
+            "maxMs": 3.1352503333333366,
+            "samplesMs": [
+              2.9725553333333323,
+              3.1352503333333366,
+              2.830028000000046,
+              2.862735999999965,
+              2.83138866666665,
+              2.8522083333332753,
+              2.8788609999999912,
+              2.8388749999999923,
+              2.83625033333332
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.423319666666657,
+            "minMs": 3.3872636666666645,
+            "maxMs": 3.823805666666677,
+            "samplesMs": [
+              3.823805666666677,
+              3.798763666666673,
+              3.3872636666666645,
+              3.4228749999999764,
+              3.4149306666666916,
+              3.392180333333348,
+              3.423319666666657,
+              3.4279166666666847,
+              3.5030000000000427
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.487416666666604,
+            "minMs": 4.412944333333333,
+            "maxMs": 4.932388666666611,
+            "samplesMs": [
+              4.837763666666679,
+              4.699444666666655,
+              4.412944333333333,
+              4.523361333333317,
+              4.487416666666604,
+              4.468805999999972,
+              4.443639000000037,
+              4.422472333333379,
+              4.932388666666611
+            ]
+          },
+          "wasm": {
+            "medianMs": 5.086041333333317,
+            "minMs": 4.916124999999965,
+            "maxMs": 5.2661526666666605,
+            "samplesMs": [
+              5.03901399999999,
+              5.143208333333348,
+              5.086041333333317,
+              5.014611333333353,
+              5.151666666666642,
+              5.201305666666674,
+              4.916124999999965,
+              4.950499666666701,
+              5.2661526666666605
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "forward-3550-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.8916249999999977,
+      "binaryenImportMs": 202.64891699999998,
+      "generationMs": 86.78620899999999,
+      "optimizationMs": 59.996208000000024,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.097167000000013,
+      "wasmCompileMs": 0.11170899999996209,
+      "wasmInstantiateMs": 0.060875000000010004
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 2.860569666666644,
+            "minMs": 2.8312219999999493,
+            "maxMs": 3.1432780000000093,
+            "samplesMs": [
+              2.905763666666644,
+              2.851611333333343,
+              2.860569666666644,
+              3.1432780000000093,
+              2.8312219999999493,
+              2.8707639999999324,
+              2.8849860000000263,
+              2.847763999999946,
+              2.8599303333332955
+            ]
+          },
+          "wasm": {
+            "medianMs": 9.790444333333388,
+            "minMs": 9.634944333333388,
+            "maxMs": 10.091458333333321,
+            "samplesMs": [
+              9.790444333333388,
+              9.634944333333388,
+              10.091458333333321,
+              9.658847333333332,
+              9.752875333333312,
+              9.824542000000065,
+              9.88836099999988,
+              9.790805333333234,
+              9.768388999999994
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.608513666666643,
+            "minMs": 4.400250000000028,
+            "maxMs": 5.352971999999984,
+            "samplesMs": [
+              4.858541666666649,
+              4.400250000000028,
+              5.352971999999984,
+              4.5489310000000005,
+              4.425638666666676,
+              4.619958333333368,
+              4.720291666666678,
+              4.441514333333241,
+              4.608513666666643
+            ]
+          },
+          "wasm": {
+            "medianMs": 11.350624999999999,
+            "minMs": 11.143694333333391,
+            "maxMs": 11.560944666666728,
+            "samplesMs": [
+              11.275694333333377,
+              11.350624999999999,
+              11.283889333333377,
+              11.426055333333315,
+              11.466333333333333,
+              11.24706933333342,
+              11.560944666666728,
+              11.143694333333391,
+              11.524360999999999
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "forward-3550-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.991334000000002,
+      "binaryenImportMs": 200.055542,
+      "generationMs": 93.513125,
+      "optimizationMs": 62.386459,
+      "selectionBranchMs": 9.185667000000024,
+      "generatedTypescriptImportMs": 3.543666999999971,
+      "wasmCompileMs": 0.10620899999997846,
+      "wasmInstantiateMs": 0.07845800000001191
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 2.927417000000029,
+            "minMs": 2.838458000000022,
+            "maxMs": 3.508305666666691,
+            "samplesMs": [
+              2.9602636666666817,
+              2.8605000000000396,
+              3.0495833333333544,
+              2.927417000000029,
+              2.8989446666666936,
+              2.8844726666667007,
+              3.508305666666691,
+              2.838458000000022,
+              2.9600829999999783
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.574430666666634,
+            "minMs": 3.3857773333332943,
+            "maxMs": 4.067222333333348,
+            "samplesMs": [
+              3.4983746666666398,
+              4.067222333333348,
+              3.643444666666672,
+              3.574430666666634,
+              3.3972643333333203,
+              3.3857773333332943,
+              3.659458333333305,
+              3.517305333333335,
+              3.5821946666666995
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.641332999999993,
+            "minMs": 4.337472333333305,
+            "maxMs": 5.493097666666699,
+            "samplesMs": [
+              4.969041333333337,
+              4.647458000000029,
+              4.944374999999961,
+              4.533791666666654,
+              5.493097666666699,
+              4.641332999999993,
+              4.41736099999999,
+              4.337472333333305,
+              4.522139
+            ]
+          },
+          "wasm": {
+            "medianMs": 5.184888666666666,
+            "minMs": 4.9520416666667115,
+            "maxMs": 5.6650413333333445,
+            "samplesMs": [
+              5.114069333333343,
+              5.6650413333333445,
+              5.528694333333344,
+              5.391222333333341,
+              5.138708333333322,
+              4.9520416666667115,
+              5.184888666666666,
+              5.618166666666677,
+              5.0145136666666685
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "forward-3550-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 3.3110420000000005,
+      "binaryenImportMs": 206.220542,
+      "generationMs": 26.96562499999999,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.015583000000049,
+      "wasmCompileMs": 0.101333000000011,
+      "wasmInstantiateMs": 0.06508300000001555
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.12968066666667255,
+            "minMs": 0.08536099999999654,
+            "maxMs": 0.19622199999999643,
+            "samplesMs": [
+              0.18709700000001325,
+              0.16134733333332937,
+              0.09995866666666113,
+              0.19622199999999643,
+              0.12374999999999166,
+              0.17918066666667679,
+              0.12819466666665372,
+              0.12968066666667255,
+              0.08536099999999654
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.09413866666667066,
+            "minMs": 0.05809700000001309,
+            "maxMs": 0.1526666666666756,
+            "samplesMs": [
+              0.1526666666666756,
+              0.05809700000001309,
+              0.09413866666667066,
+              0.05811099999999669,
+              0.12943033333334597,
+              0.063777666666662,
+              0.12172233333332845,
+              0.06209733333332679,
+              0.11172233333333755
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 1.5834030000000137,
+            "minMs": 1.461166999999989,
+            "maxMs": 1.9152780000000007,
+            "samplesMs": [
+              1.8688333333333464,
+              1.608139000000013,
+              1.5030553333333312,
+              1.9152780000000007,
+              1.5834030000000137,
+              1.8675970000000082,
+              1.5139859999999885,
+              1.5773196666666724,
+              1.461166999999989
+            ]
+          },
+          "wasm": {
+            "medianMs": 1.5228053333333378,
+            "minMs": 1.4219446666666424,
+            "maxMs": 1.6596943333333343,
+            "samplesMs": [
+              1.5228053333333378,
+              1.4219446666666424,
+              1.5147499999999923,
+              1.5949580000000008,
+              1.6596943333333343,
+              1.5638333333333208,
+              1.5859440000000025,
+              1.467041333333346,
+              1.4797223333333325
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "forward-3550-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.8388750000000016,
+      "binaryenImportMs": 209.95775,
+      "generationMs": 116.05254100000002,
+      "optimizationMs": 82.56358300000005,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.849375000000009,
+      "wasmCompileMs": 0.18266699999998082,
+      "wasmInstantiateMs": 0.1304169999999658
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.16209733333334952,
+            "minMs": 0.07593066666667407,
+            "maxMs": 0.19070833333330484,
+            "samplesMs": [
+              0.17841700000000552,
+              0.19070833333330484,
+              0.12747233333334407,
+              0.16301399999997557,
+              0.16538899999996678,
+              0.13234733333331405,
+              0.16209733333334952,
+              0.10140333333333729,
+              0.07593066666667407
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.07279166666671699,
+            "minMs": 0.05763833333332968,
+            "maxMs": 0.09565266666667564,
+            "samplesMs": [
+              0.09450033333331476,
+              0.06095799999998993,
+              0.09565266666667564,
+              0.07672233333335043,
+              0.0747639999999592,
+              0.05763833333332968,
+              0.07279166666671699,
+              0.06049966666663901,
+              0.06997233333333952
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 1.6674026666667032,
+            "minMs": 1.496624666666662,
+            "maxMs": 1.833958333333328,
+            "samplesMs": [
+              1.7636803333333357,
+              1.833958333333328,
+              1.6698053333333671,
+              1.7553890000000365,
+              1.6674026666667032,
+              1.496624666666662,
+              1.613264000000034,
+              1.5524443333333313,
+              1.6306803333333164
+            ]
+          },
+          "wasm": {
+            "medianMs": 1.5734996666666727,
+            "minMs": 1.4910836666666683,
+            "maxMs": 2.6180556666666916,
+            "samplesMs": [
+              1.8820416666666613,
+              1.5699026666666593,
+              2.6180556666666916,
+              2.467917000000019,
+              1.5734996666666727,
+              1.7072776666666034,
+              1.5548476666666602,
+              1.5359163333333374,
+              1.4910836666666683
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "forward-7100-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 5.909749999999999,
+      "binaryenImportMs": 220.145083,
+      "generationMs": 27.19466600000004,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.638500000000022,
+      "wasmCompileMs": 0.21808300000003555,
+      "wasmInstantiateMs": 0.14116699999999582
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 11.385222333333331,
+            "minMs": 11.089889000000008,
+            "maxMs": 22.88894433333333,
+            "samplesMs": [
+              11.662514000000025,
+              12.132666333333342,
+              11.354819666666723,
+              11.23511099999996,
+              11.089889000000008,
+              22.88894433333333,
+              18.347750000000058,
+              11.385222333333331,
+              11.361333333333278
+            ]
+          },
+          "wasm": {
+            "medianMs": 13.463013666666635,
+            "minMs": 13.223763999999997,
+            "maxMs": 14.6885976666667,
+            "samplesMs": [
+              14.6885976666667,
+              13.837611,
+              13.43083333333334,
+              13.223763999999997,
+              13.579472000000047,
+              13.3650973333334,
+              13.342472666666708,
+              13.669486333333376,
+              13.463013666666635
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 14.981153000000177,
+            "minMs": 13.994208333333367,
+            "maxMs": 25.557999999999993,
+            "samplesMs": [
+              16.406805666666628,
+              15.9944443333333,
+              14.458791666666608,
+              14.297763999999916,
+              13.994208333333367,
+              25.557999999999993,
+              20.640999999999924,
+              14.910430666666647,
+              14.981153000000177
+            ]
+          },
+          "wasm": {
+            "medianMs": 16.61176400000022,
+            "minMs": 16.35898566666674,
+            "maxMs": 18.735666666666663,
+            "samplesMs": [
+              18.735666666666663,
+              18.47413933333337,
+              16.48704166666668,
+              16.384499999999964,
+              16.35898566666674,
+              16.570528000000042,
+              16.96852766666666,
+              16.61176400000022,
+              16.643346999999874
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "forward-7100-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.918458000000001,
+      "binaryenImportMs": 214.752959,
+      "generationMs": 84.40058399999998,
+      "optimizationMs": 61.53762499999999,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.3687499999999773,
+      "wasmCompileMs": 0.1642500000000382,
+      "wasmInstantiateMs": 0.09241700000001174
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 11.29383333333332,
+            "minMs": 11.2017779999998,
+            "maxMs": 11.469375000000051,
+            "samplesMs": [
+              11.347375000000019,
+              11.469375000000051,
+              11.38411066666663,
+              11.245027666666752,
+              11.333138666666704,
+              11.2017779999998,
+              11.244166999999834,
+              11.2822499999999,
+              11.29383333333332
+            ]
+          },
+          "wasm": {
+            "medianMs": 28.57136099999995,
+            "minMs": 28.30905500000017,
+            "maxMs": 31.754541666666643,
+            "samplesMs": [
+              31.754541666666643,
+              29.395402666666616,
+              31.73538833333335,
+              28.501055333333323,
+              28.30905500000017,
+              28.718972333333415,
+              28.411569000000025,
+              28.57136099999995,
+              28.458041666666606
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 14.411624999999958,
+            "minMs": 14.007735999999872,
+            "maxMs": 15.209721999999905,
+            "samplesMs": [
+              14.939027666666638,
+              14.695152999999967,
+              15.209721999999905,
+              14.411624999999958,
+              14.58166666666663,
+              14.007735999999872,
+              14.301666666666884,
+              14.282639333333313,
+              14.345819333333415
+            ]
+          },
+          "wasm": {
+            "medianMs": 32.31062533333337,
+            "minMs": 30.89612499999991,
+            "maxMs": 33.52898633333325,
+            "samplesMs": [
+              32.910361333333334,
+              33.04034700000011,
+              33.52898633333325,
+              32.31062533333337,
+              31.701819666666626,
+              31.752014333333136,
+              31.45034733333341,
+              33.20656933333324,
+              30.89612499999991
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "forward-7100-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.761165999999999,
+      "binaryenImportMs": 199.917625,
+      "generationMs": 93.684875,
+      "optimizationMs": 61.27933300000001,
+      "selectionBranchMs": 11.266999999999996,
+      "generatedTypescriptImportMs": 2.350416999999993,
+      "wasmCompileMs": 0.18274999999999864,
+      "wasmInstantiateMs": 0.1599170000000072
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 11.172333000000132,
+            "minMs": 11.129180333333428,
+            "maxMs": 11.41387466666663,
+            "samplesMs": [
+              11.41387466666663,
+              11.147819000000027,
+              11.20409699999997,
+              11.172333000000132,
+              11.211569666666643,
+              11.279694333333358,
+              11.158180666666643,
+              11.129180333333428,
+              11.130055333333226
+            ]
+          },
+          "wasm": {
+            "medianMs": 13.177250000000035,
+            "minMs": 13.110319333333413,
+            "maxMs": 13.520416333333364,
+            "samplesMs": [
+              13.186389333333372,
+              13.520416333333364,
+              13.156305666666716,
+              13.139111333333327,
+              13.192360999999892,
+              13.177250000000035,
+              13.128014000000045,
+              13.110319333333413,
+              13.29187499999989
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 14.297791666666702,
+            "minMs": 13.954166666666652,
+            "maxMs": 15.377597333333293,
+            "samplesMs": [
+              14.615569333333346,
+              14.340986333333225,
+              14.299889000000045,
+              14.171555666666714,
+              14.297791666666702,
+              14.179277666666698,
+              13.954166666666652,
+              14.061069333333307,
+              15.377597333333293
+            ]
+          },
+          "wasm": {
+            "medianMs": 16.478971999999885,
+            "minMs": 16.062110666666666,
+            "maxMs": 17.96668066666666,
+            "samplesMs": [
+              17.175236333333334,
+              17.181208333333302,
+              16.347416666666806,
+              16.246430666666736,
+              17.96668066666666,
+              16.917180333333363,
+              16.062110666666666,
+              16.160249666666687,
+              16.478971999999885
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "forward-7100-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 5.013541,
+      "binaryenImportMs": 207.757958,
+      "generationMs": 22.045165999999995,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.647833999999989,
+      "wasmCompileMs": 0.23208299999998871,
+      "wasmInstantiateMs": 0.17424999999997226
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.37330566666673803,
+            "minMs": 0.24972199999994396,
+            "maxMs": 0.41980566666668057,
+            "samplesMs": [
+              0.41980566666668057,
+              0.41688866666665564,
+              0.41858333333330694,
+              0.33630599999999805,
+              0.24972199999994396,
+              0.3640973333333477,
+              0.3823196666666793,
+              0.3414026666666435,
+              0.37330566666673803
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.2950139999999995,
+            "minMs": 0.2309306666666847,
+            "maxMs": 0.3088196666666363,
+            "samplesMs": [
+              0.3025696666666704,
+              0.2950139999999995,
+              0.29752799999998086,
+              0.2309306666666847,
+              0.29099966666672117,
+              0.23179166666667092,
+              0.3088196666666363,
+              0.27638899999995675,
+              0.3051386666666455
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 3.393139,
+            "minMs": 2.9708330000000083,
+            "maxMs": 4.922152666666686,
+            "samplesMs": [
+              3.216625000000022,
+              3.393139,
+              3.5053610000000313,
+              3.0747916666667074,
+              2.9708330000000083,
+              3.351513666666657,
+              3.457388666666702,
+              3.5452220000000048,
+              4.922152666666686
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.2425973333333027,
+            "minMs": 3.0458333333333862,
+            "maxMs": 3.7999439999999822,
+            "samplesMs": [
+              3.1132776666666473,
+              3.297653000000006,
+              3.7999439999999822,
+              3.0458333333333862,
+              3.4530969999999948,
+              3.2425973333333027,
+              3.2300276666666528,
+              3.185569333333395,
+              3.765096999999969
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "forward-7100-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "forward",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 5.2243330000000014,
+      "binaryenImportMs": 203.266625,
+      "generationMs": 75.27533299999999,
+      "optimizationMs": 52.454875000000015,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.6383329999999887,
+      "wasmCompileMs": 0.099125000000015,
+      "wasmInstantiateMs": 0.08741600000001881
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.3397223333333083,
+            "minMs": 0.24852766666667017,
+            "maxMs": 0.3838473333333165,
+            "samplesMs": [
+              0.3838473333333165,
+              0.3542780000000221,
+              0.3397223333333083,
+              0.3506110000000338,
+              0.25218033333336126,
+              0.3457223333333559,
+              0.24852766666667017,
+              0.26848599999997685,
+              0.3035136666666555
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.16041666666668183,
+            "minMs": 0.14209733333336771,
+            "maxMs": 0.17777733333336224,
+            "samplesMs": [
+              0.1629726666666708,
+              0.14370833333335517,
+              0.17777733333336224,
+              0.15145833333334244,
+              0.14209733333336771,
+              0.1421386666666725,
+              0.1668333333333294,
+              0.16041666666668183,
+              0.16290266666662015
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 3.130694333333319,
+            "minMs": 2.905249666666615,
+            "maxMs": 3.3587916666666615,
+            "samplesMs": [
+              3.239639000000011,
+              3.130694333333319,
+              3.257305333333344,
+              3.2088196666666895,
+              2.905249666666615,
+              3.06747199999999,
+              3.1084443333333716,
+              2.9671670000000177,
+              3.3587916666666615
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.0374863333333146,
+            "minMs": 2.9383333333333135,
+            "maxMs": 3.2915969999999866,
+            "samplesMs": [
+              2.9910836666666683,
+              2.962972333333331,
+              3.2915969999999866,
+              3.0727776666666764,
+              2.994611333333296,
+              3.0374863333333146,
+              2.9383333333333135,
+              3.091375000000047,
+              3.133888666666659
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-7100-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.761125,
+      "binaryenImportMs": 198.17375,
+      "generationMs": 79.249041,
+      "optimizationMs": 55.23300000000003,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 6.586959000000036,
+      "wasmCompileMs": 0.10054199999996172,
+      "wasmInstantiateMs": 0.07645800000000236
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.34515266666664957,
+            "minMs": 0.2344303333333452,
+            "maxMs": 0.43401399999997164,
+            "samplesMs": [
+              0.43401399999997164,
+              0.37548599999994775,
+              0.40823633333332054,
+              0.34515266666664957,
+              0.2429303333333337,
+              0.2863193333333432,
+              0.2344303333333452,
+              0.3484170000000025,
+              0.2542363333333621
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.15759733333338014,
+            "minMs": 0.13536133333332145,
+            "maxMs": 0.2157360000000305,
+            "samplesMs": [
+              0.2157360000000305,
+              0.14901366666667096,
+              0.15924966666663445,
+              0.13536133333332145,
+              0.1613196666666378,
+              0.15759733333338014,
+              0.16283333333334818,
+              0.14722266666668324,
+              0.15554166666667393
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 3.3140136666666726,
+            "minMs": 2.9204306666666375,
+            "maxMs": 4.14099966666663,
+            "samplesMs": [
+              3.500319333333342,
+              3.3140136666666726,
+              4.14099966666663,
+              3.3569860000000062,
+              3.0955836666666223,
+              2.9204306666666375,
+              3.0043746666666493,
+              3.4623333333333526,
+              3.087152666666649
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.0464163333333545,
+            "minMs": 2.8931109999999762,
+            "maxMs": 3.4220280000000307,
+            "samplesMs": [
+              3.0464163333333545,
+              3.0459723333333386,
+              3.4220280000000307,
+              3.129152666666679,
+              3.095750333333323,
+              3.413556000000009,
+              3.012944333333394,
+              2.932333666666674,
+              2.8931109999999762
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-7100-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.927708000000003,
+      "binaryenImportMs": 208.75975,
+      "generationMs": 23.66904199999999,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 4.108084000000019,
+      "wasmCompileMs": 0.09962500000000318,
+      "wasmInstantiateMs": 0.0775000000000432
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.3515416666666624,
+            "minMs": 0.2846803333333507,
+            "maxMs": 0.45447233333334225,
+            "samplesMs": [
+              0.4160280000000209,
+              0.44452766666665866,
+              0.45447233333334225,
+              0.4318196666666836,
+              0.2846803333333507,
+              0.3515416666666624,
+              0.30236133333331355,
+              0.3509026666666462,
+              0.2900276666666741
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.30254166666668425,
+            "minMs": 0.23295866666664247,
+            "maxMs": 0.3438193333333099,
+            "samplesMs": [
+              0.3438193333333099,
+              0.2423886666666514,
+              0.31226399999995164,
+              0.30741633333335966,
+              0.3373889999999922,
+              0.25009766666664746,
+              0.30254166666668425,
+              0.23295866666664247,
+              0.2831943333333129
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 3.508735999999999,
+            "minMs": 3.1069859999999685,
+            "maxMs": 3.901985666666633,
+            "samplesMs": [
+              3.5703053333333323,
+              3.508735999999999,
+              3.6179863333333437,
+              3.901985666666633,
+              3.3636250000000323,
+              3.2520973333333814,
+              3.4462636666666335,
+              3.5179170000000113,
+              3.1069859999999685
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.3398473333333336,
+            "minMs": 3.134694333333338,
+            "maxMs": 4.026471999999994,
+            "samplesMs": [
+              4.026471999999994,
+              3.220277666666656,
+              3.3398473333333336,
+              3.561597333333301,
+              3.398763666666696,
+              3.341805333333317,
+              3.134694333333338,
+              3.2440416666667033,
+              3.158875333333299
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-7100-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 5.011708999999996,
+      "binaryenImportMs": 210.861542,
+      "generationMs": 87.19737500000002,
+      "optimizationMs": 58.267457999999976,
+      "selectionBranchMs": 8.563333,
+      "generatedTypescriptImportMs": 1.3918340000000171,
+      "wasmCompileMs": 0.09300000000001774,
+      "wasmInstantiateMs": 0.07295900000002575
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 12.144625333333275,
+            "minMs": 11.808277666666678,
+            "maxMs": 13.21812533333347,
+            "samplesMs": [
+              11.815861000000004,
+              11.94652800000002,
+              12.570346999999932,
+              12.74115299999994,
+              12.144625333333275,
+              12.072763666666711,
+              11.808277666666678,
+              12.52119433333337,
+              13.21812533333347
+            ]
+          },
+          "wasm": {
+            "medianMs": 14.088986333333272,
+            "minMs": 13.472555666666684,
+            "maxMs": 14.59229166666652,
+            "samplesMs": [
+              13.472555666666684,
+              14.227555333333308,
+              14.506430333333356,
+              14.088986333333272,
+              14.492374999999962,
+              13.954333666666722,
+              13.553014,
+              13.846555666666669,
+              14.59229166666652
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 15.751249666666657,
+            "minMs": 14.719291666666626,
+            "maxMs": 17.317888666666704,
+            "samplesMs": [
+              15.24351366666671,
+              15.538263666666657,
+              16.10226366666666,
+              15.751249666666657,
+              17.317888666666704,
+              15.615514,
+              14.719291666666626,
+              16.298999666666532,
+              16.19097233333332
+            ]
+          },
+          "wasm": {
+            "medianMs": 17.371555333333465,
+            "minMs": 17.068055666666698,
+            "maxMs": 19.197083666666646,
+            "samplesMs": [
+              19.197083666666646,
+              17.367264000000016,
+              19.052110666666675,
+              17.276611333333296,
+              18.547236000000037,
+              17.50948633333337,
+              17.068055666666698,
+              17.371555333333465,
+              17.103749666666772
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-7100-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.999041999999999,
+      "binaryenImportMs": 218.506542,
+      "generationMs": 115.685541,
+      "optimizationMs": 81.90533299999998,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 7.762792000000047,
+      "wasmCompileMs": 0.13629200000002584,
+      "wasmInstantiateMs": 0.08500000000003638
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 11.791389000000132,
+            "minMs": 11.379416666666733,
+            "maxMs": 12.187555666666563,
+            "samplesMs": [
+              11.72479199999998,
+              11.379416666666733,
+              11.791389000000132,
+              11.673791666666753,
+              11.949041666666744,
+              11.415097333333202,
+              12.187555666666563,
+              11.972861000000043,
+              11.98650000000013
+            ]
+          },
+          "wasm": {
+            "medianMs": 30.74452800000002,
+            "minMs": 28.798791666666755,
+            "maxMs": 33.408416666666575,
+            "samplesMs": [
+              32.435152333333384,
+              33.408416666666575,
+              30.36259700000005,
+              30.96437566666661,
+              30.74452800000002,
+              28.798791666666755,
+              30.463111000000026,
+              29.645430666666623,
+              31.975625000000036
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 15.050319666666686,
+            "minMs": 14.80918066666671,
+            "maxMs": 16.180625333333257,
+            "samplesMs": [
+              15.015319333333386,
+              14.80918066666671,
+              15.758875333333359,
+              15.257972333333177,
+              15.181819000000056,
+              15.050319666666686,
+              14.992180666666627,
+              14.953152666666634,
+              16.180625333333257
+            ]
+          },
+          "wasm": {
+            "medianMs": 34.00176366666665,
+            "minMs": 31.625625000000127,
+            "maxMs": 36.68719466666668,
+            "samplesMs": [
+              36.68719466666668,
+              34.71406933333325,
+              34.63658333333334,
+              34.00176366666665,
+              35.412389000000225,
+              31.625625000000127,
+              32.921542000000045,
+              33.7919446666668,
+              32.65409699999994
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-7100-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 1033169,
+      "records": 7100,
+      "hash": "ae6c4fc7b90a9421454962a4f616812bcec6229b5702f779fb060dadfec40e50",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 5.000959000000002,
+      "binaryenImportMs": 219.62704200000002,
+      "generationMs": 27.198792000000026,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.025624999999991,
+      "wasmCompileMs": 0.1365409999999656,
+      "wasmInstantiateMs": 0.06749999999999545
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 12.13759733333336,
+            "minMs": 11.24452766666665,
+            "maxMs": 12.838708333333292,
+            "samplesMs": [
+              12.838708333333292,
+              12.157097333333317,
+              12.425958333333407,
+              11.24452766666665,
+              11.520611000000068,
+              12.037874999999985,
+              12.140833666666671,
+              12.13759733333336,
+              11.930374999999913
+            ]
+          },
+          "wasm": {
+            "medianMs": 14.309388999999934,
+            "minMs": 13.354638666666688,
+            "maxMs": 14.637763666666615,
+            "samplesMs": [
+              14.309721999999965,
+              13.354638666666688,
+              14.434124999999995,
+              14.637763666666615,
+              14.038972000000058,
+              14.223166666666657,
+              14.309388999999934,
+              14.011055999999977,
+              14.461527666666674
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 15.470097333333266,
+            "minMs": 14.455486333333434,
+            "maxMs": 16.73759733333331,
+            "samplesMs": [
+              16.73759733333331,
+              15.286055666666547,
+              15.5595413333333,
+              14.455486333333434,
+              14.698694666666674,
+              15.573042000000063,
+              15.470097333333266,
+              15.291805333333437,
+              16.607569333333384
+            ]
+          },
+          "wasm": {
+            "medianMs": 18.128541666666706,
+            "minMs": 16.819041333333377,
+            "maxMs": 18.773014000000103,
+            "samplesMs": [
+              18.128541666666706,
+              16.819041333333377,
+              18.773014000000103,
+              17.300833666666676,
+              18.325236333333425,
+              17.69034700000005,
+              18.252555666666694,
+              17.772583333333312,
+              18.147485999999997
+            ]
+          }
+        },
+        "oracleHash": "6034e994049cc5e35ef8df6a70e18ff0b3e71c69f9e835cff5dcdbb8e00df1b8"
+      }
+    ]
+  },
+  {
+    "id": "reverse-3550-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.6609169999999978,
+      "binaryenImportMs": 222.92666599999998,
+      "generationMs": 98.35433300000003,
+      "optimizationMs": 70.67754200000002,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 6.126708000000008,
+      "wasmCompileMs": 0.19400000000001683,
+      "wasmInstantiateMs": 0.06520899999998164
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.13670833333335017,
+            "minMs": 0.0781526666666726,
+            "maxMs": 0.18380566666667164,
+            "samplesMs": [
+              0.18380566666667164,
+              0.1616109999999935,
+              0.13670833333335017,
+              0.16866633333336267,
+              0.10019433333332017,
+              0.1486253333333707,
+              0.13252800000001722,
+              0.08491666666664817,
+              0.0781526666666726
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.06780500000000227,
+            "minMs": 0.06148600000000215,
+            "maxMs": 0.08268033333331459,
+            "samplesMs": [
+              0.08222200000002051,
+              0.06148600000000215,
+              0.07927799999998797,
+              0.06780500000000227,
+              0.06538933333331443,
+              0.06176399999996344,
+              0.08268033333331459,
+              0.06531933333330169,
+              0.0721810000000384
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 1.5845693333333202,
+            "minMs": 1.5253746666666643,
+            "maxMs": 2.4542223333333673,
+            "samplesMs": [
+              1.56973633333331,
+              1.7043613333333194,
+              1.5253746666666643,
+              1.7073886666666642,
+              1.6238473333332877,
+              2.4542223333333673,
+              1.534652666666678,
+              1.5735133333333426,
+              1.5845693333333202
+            ]
+          },
+          "wasm": {
+            "medianMs": 1.5950976666666559,
+            "minMs": 1.4933469999999716,
+            "maxMs": 1.6458053333333662,
+            "samplesMs": [
+              1.5261669999999679,
+              1.4933469999999716,
+              1.6127079999999978,
+              1.5950976666666559,
+              1.6458053333333662,
+              1.597639000000034,
+              1.5691943333332574,
+              1.5446109999999937,
+              1.644263999999983
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "reverse-3550-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.818625000000001,
+      "binaryenImportMs": 217.756333,
+      "generationMs": 25.474999999999994,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.3690000000000282,
+      "wasmCompileMs": 0.17700000000002092,
+      "wasmInstantiateMs": 0.14749999999997954
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.15977766666666562,
+            "minMs": 0.09229166666667273,
+            "maxMs": 0.21768066666665695,
+            "samplesMs": [
+              0.21768066666665695,
+              0.18976333333332226,
+              0.1411393333333232,
+              0.15688866666666476,
+              0.17523600000000292,
+              0.15977766666666562,
+              0.17223599999999806,
+              0.11093066666666118,
+              0.09229166666667273
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.11056933333334958,
+            "minMs": 0.05902766666666063,
+            "maxMs": 0.14409733333332042,
+            "samplesMs": [
+              0.14409733333332042,
+              0.11056933333334958,
+              0.12225033333330278,
+              0.114972000000004,
+              0.13152766666665153,
+              0.07462499999998802,
+              0.1053886666666699,
+              0.07058333333333167,
+              0.05902766666666063
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 1.7528610000000147,
+            "minMs": 1.6318750000000175,
+            "maxMs": 2.0267220000000066,
+            "samplesMs": [
+              2.0267220000000066,
+              1.7528610000000147,
+              1.6924863333333444,
+              1.7672223333333363,
+              1.9168890000000072,
+              1.715249999999988,
+              1.8052920000000086,
+              1.6318750000000175,
+              1.671055666666651
+            ]
+          },
+          "wasm": {
+            "medianMs": 1.6866386666666624,
+            "minMs": 1.5861803333333266,
+            "maxMs": 1.794889000000012,
+            "samplesMs": [
+              1.6096110000000106,
+              1.7232500000000073,
+              1.6866386666666624,
+              1.7005280000000198,
+              1.794889000000012,
+              1.6605000000000132,
+              1.6182916666666831,
+              1.7322639999999865,
+              1.5861803333333266
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "reverse-3550-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.874834,
+      "binaryenImportMs": 235.816834,
+      "generationMs": 106.69716600000004,
+      "optimizationMs": 71.535708,
+      "selectionBranchMs": 7.167124999999999,
+      "generatedTypescriptImportMs": 3.254374999999982,
+      "wasmCompileMs": 0.08804099999997561,
+      "wasmInstantiateMs": 0.05437499999999318
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 3.0413056666666307,
+            "minMs": 2.96712500000001,
+            "maxMs": 3.232555666666675,
+            "samplesMs": [
+              3.0628469999999575,
+              3.0099723333333563,
+              3.232555666666675,
+              3.1729996666666316,
+              2.96712500000001,
+              3.084611000000033,
+              2.9878053333333128,
+              2.9792083333333417,
+              3.0413056666666307
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.667735999999953,
+            "minMs": 3.5121663333333495,
+            "maxMs": 3.7725280000000034,
+            "samplesMs": [
+              3.5468196666666927,
+              3.7115000000000387,
+              3.7725280000000034,
+              3.5121663333333495,
+              3.634222333333355,
+              3.735068999999991,
+              3.5212916666666843,
+              3.667735999999953,
+              3.6987223333333077
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.63588900000002,
+            "minMs": 4.493208666666646,
+            "maxMs": 4.933902999999948,
+            "samplesMs": [
+              4.65433299999999,
+              4.624444333333334,
+              4.933902999999948,
+              4.734110999999984,
+              4.615208333333347,
+              4.493208666666646,
+              4.669430333333366,
+              4.63588900000002,
+              4.502125000000016
+            ]
+          },
+          "wasm": {
+            "medianMs": 5.34655566666667,
+            "minMs": 4.998944666666678,
+            "maxMs": 5.830694333333365,
+            "samplesMs": [
+              5.189805333333349,
+              5.36884733333333,
+              5.313347333333316,
+              5.34655566666667,
+              5.830694333333365,
+              5.639375666666638,
+              4.998944666666678,
+              5.474041666666646,
+              5.186666666666686
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "reverse-3550-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 2.9095830000000014,
+      "binaryenImportMs": 232.10845899999998,
+      "generationMs": 97.52154199999995,
+      "optimizationMs": 69.233833,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.5679589999999735,
+      "wasmCompileMs": 0.09929199999999128,
+      "wasmInstantiateMs": 0.059750000000008185
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 3.1773886666666917,
+            "minMs": 2.87676399999998,
+            "maxMs": 3.4667500000000473,
+            "samplesMs": [
+              3.1773886666666917,
+              3.3801800000000335,
+              3.1312223333333122,
+              2.87676399999998,
+              2.963513999999956,
+              2.9218193333332843,
+              3.2757780000000216,
+              3.4667500000000473,
+              3.3190833333333862
+            ]
+          },
+          "wasm": {
+            "medianMs": 10.421721666666675,
+            "minMs": 9.524000333333333,
+            "maxMs": 11.028222333333323,
+            "samplesMs": [
+              10.75588933333332,
+              10.537305666666725,
+              11.028222333333323,
+              9.524000333333333,
+              9.709833666666745,
+              9.893485666666644,
+              10.143472333333344,
+              10.672305666666716,
+              10.421721666666675
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.737805666666645,
+            "minMs": 4.387680333333378,
+            "maxMs": 5.7938469999999525,
+            "samplesMs": [
+              5.7938469999999525,
+              5.343125333333319,
+              4.860860666666706,
+              4.428971999999969,
+              4.387680333333378,
+              4.6777223333333495,
+              4.737805666666645,
+              4.653263666666665,
+              4.795707999999952
+            ]
+          },
+          "wasm": {
+            "medianMs": 12.11290299999996,
+            "minMs": 11.138041333333339,
+            "maxMs": 13.279194333333294,
+            "samplesMs": [
+              12.435222666666695,
+              12.32308333333333,
+              13.279194333333294,
+              11.138041333333339,
+              11.485249999999988,
+              11.451208333333321,
+              11.566861333333312,
+              12.500444333333311,
+              12.11290299999996
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "reverse-3550-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 516194,
+      "records": 3550,
+      "hash": "c445470e845d64981eb1aeeaffc518de8c2a48f4d654e08e2a367f86cd642cba",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 4.297333999999999,
+      "binaryenImportMs": 224.01600000000002,
+      "generationMs": 25.74362500000001,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.544207999999969,
+      "wasmCompileMs": 0.16720900000001393,
+      "wasmInstantiateMs": 0.15525000000002365
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 3.092569666666691,
+            "minMs": 2.835194333333334,
+            "maxMs": 3.189319666666696,
+            "samplesMs": [
+              2.835194333333334,
+              2.8691249999999777,
+              3.003499999999955,
+              3.189319666666696,
+              3.142236333333282,
+              3.092569666666691,
+              3.080722333333332,
+              3.1140556666666726,
+              3.1355140000000197
+            ]
+          },
+          "wasm": {
+            "medianMs": 3.544541666666646,
+            "minMs": 3.399013666666671,
+            "maxMs": 4.119819333333339,
+            "samplesMs": [
+              3.4830833333332976,
+              3.399013666666671,
+              3.8862499999999423,
+              3.535819333333355,
+              3.670139000000025,
+              3.544541666666646,
+              3.502291666666679,
+              3.595888333333354,
+              4.119819333333339
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 4.696847000000048,
+            "minMs": 4.461485999999998,
+            "maxMs": 4.932069666666659,
+            "samplesMs": [
+              4.461485999999998,
+              4.633139000000028,
+              4.65913900000002,
+              4.893333666666687,
+              4.932069666666659,
+              4.6006943333333465,
+              4.696847000000048,
+              4.786402333333285,
+              4.902194666666635
+            ]
+          },
+          "wasm": {
+            "medianMs": 5.247166333333325,
+            "minMs": 4.959472333333338,
+            "maxMs": 5.72526366666663,
+            "samplesMs": [
+              5.427833333333335,
+              4.959472333333338,
+              5.1189030000000075,
+              5.033513666666674,
+              5.3417080000000015,
+              5.408305333333298,
+              5.247166333333325,
+              5.72526366666663,
+              5.21562533333334
+            ]
+          }
+        },
+        "oracleHash": "e4228347a4912bff4ab8e4c1af9fa33320a09da21f163a89278e27936d2d48aa"
+      }
+    ]
+  },
+  {
+    "id": "reverse-710-heap-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.9191249999999975,
+      "binaryenImportMs": 222.955792,
+      "generationMs": 111.85716699999998,
+      "optimizationMs": 70.15145899999999,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.681250000000034,
+      "wasmCompileMs": 0.10483399999998255,
+      "wasmInstantiateMs": 0.08258299999999963
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.01561133333334889,
+            "minMs": 0.014819333333340031,
+            "maxMs": 0.04205566666665087,
+            "samplesMs": [
+              0.04073633333331372,
+              0.024708333333326966,
+              0.015014000000007854,
+              0.016819333333330633,
+              0.01561133333334889,
+              0.014903000000003885,
+              0.014819333333340031,
+              0.04205566666665087,
+              0.015235999999977897
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.011236333333329185,
+            "minMs": 0.009486333333351618,
+            "maxMs": 0.02155566666668089,
+            "samplesMs": [
+              0.01524933333333441,
+              0.009917000000010981,
+              0.010319666666665247,
+              0.010930333333324901,
+              0.011236333333329185,
+              0.009486333333351618,
+              0.016944333333318202,
+              0.02155566666668089,
+              0.012791333333344332
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.37048600000000914,
+            "minMs": 0.3541666666666667,
+            "maxMs": 0.6213053333333013,
+            "samplesMs": [
+              0.37966666666667,
+              0.369055666666668,
+              0.35916666666668107,
+              0.37519399999996494,
+              0.3766803333333352,
+              0.3541666666666667,
+              0.3606666666666645,
+              0.6213053333333013,
+              0.37048600000000914
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.3749580000000113,
+            "minMs": 0.355999666666681,
+            "maxMs": 0.7273469999999899,
+            "samplesMs": [
+              0.37070833333334957,
+              0.3749580000000113,
+              0.37756966666667796,
+              0.37316666666669107,
+              0.35943033333332625,
+              0.355999666666681,
+              0.6462226666666501,
+              0.7273469999999899,
+              0.41719433333332745
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "reverse-710-heap-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.9115409999999997,
+      "binaryenImportMs": 205.80516599999999,
+      "generationMs": 19.828417,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 3.3910419999999704,
+      "wasmCompileMs": 0.094791999999984,
+      "wasmInstantiateMs": 0.07883299999997462
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "heap",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.01509733333332027,
+            "minMs": 0.013861666666684869,
+            "maxMs": 0.03638866666665308,
+            "samplesMs": [
+              0.03638866666665308,
+              0.02288900000000164,
+              0.016680333333321567,
+              0.014889000000001337,
+              0.013861666666684869,
+              0.01509733333332027,
+              0.015597333333327393,
+              0.014652666666658357,
+              0.01437500000001061
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.009750333333348257,
+            "minMs": 0.007666333333342361,
+            "maxMs": 0.02536133333334571,
+            "samplesMs": [
+              0.013972333333337398,
+              0.02536133333334571,
+              0.009847333333330729,
+              0.00952799999996993,
+              0.009750333333348257,
+              0.009014333333349592,
+              0.013889000000006035,
+              0.008653000000000096,
+              0.007666333333342361
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.3546666666666738,
+            "minMs": 0.3361666666666565,
+            "maxMs": 0.38072199999999157,
+            "samplesMs": [
+              0.37147200000000186,
+              0.3468893333333085,
+              0.36415266666667395,
+              0.3399306666666651,
+              0.3361666666666565,
+              0.37768033333334944,
+              0.38072199999999157,
+              0.3546666666666738,
+              0.3435966666666748
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.34095800000000054,
+            "minMs": 0.33026399999999967,
+            "maxMs": 0.4078750000000089,
+            "samplesMs": [
+              0.37636133333332583,
+              0.4078750000000089,
+              0.34095800000000054,
+              0.337555666666655,
+              0.3306526666666703,
+              0.33026399999999967,
+              0.3893053333333493,
+              0.3781806666666701,
+              0.3351803333333123
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "reverse-710-selection-O3-branch",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "26bbe5eb472409d4fe6dc0503883b556f9d78fb1214cf405b7bfdd104885eabf",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": true
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.8093749999999993,
+      "binaryenImportMs": 213.242208,
+      "generationMs": 88.17775000000003,
+      "optimizationMs": 59.67566600000001,
+      "selectionBranchMs": 8.673790999999994,
+      "generatedTypescriptImportMs": 4.014208999999994,
+      "wasmCompileMs": 0.10704199999997854,
+      "wasmInstantiateMs": 0.09029199999997672
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.13255566666665194,
+            "minMs": 0.11655566666667028,
+            "maxMs": 0.16805566666664618,
+            "samplesMs": [
+              0.16805566666664618,
+              0.13743066666665982,
+              0.16259733333335666,
+              0.11676366666665672,
+              0.13255566666665194,
+              0.11655566666667028,
+              0.11813866666667157,
+              0.14752799999998464,
+              0.12084699999998823
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.16862500000000105,
+            "minMs": 0.14836099999998473,
+            "maxMs": 0.20622200000000626,
+            "samplesMs": [
+              0.16862500000000105,
+              0.15750000000000833,
+              0.18736100000000988,
+              0.14836099999998473,
+              0.20622200000000626,
+              0.18618099999999535,
+              0.16419466666665508,
+              0.19026399999999435,
+              0.15818066666666178
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.5032363333333288,
+            "minMs": 0.4266939999999977,
+            "maxMs": 0.6185553333333283,
+            "samplesMs": [
+              0.6185553333333283,
+              0.5419169999999932,
+              0.5874999999999773,
+              0.4266939999999977,
+              0.5032363333333288,
+              0.4272496666666636,
+              0.4311390000000112,
+              0.506402666666645,
+              0.49863933333333915
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.5276666666666946,
+            "minMs": 0.46220833333332695,
+            "maxMs": 0.6236530000000092,
+            "samplesMs": [
+              0.5005136666666962,
+              0.4863056666666618,
+              0.5690976666666643,
+              0.46220833333332695,
+              0.6236530000000092,
+              0.5465553333333446,
+              0.5276666666666946,
+              0.5761249999999905,
+              0.5140139999999936
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "reverse-710-selection-O3",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "761e28d8b595bc88d9fdfc4611e25d4212e9347e7d4072a50881f2dd93c929de",
+      "wasmBytes": 1051,
+      "binaryen": "132.0.0",
+      "optimization": "O3",
+      "optimizationLevel": 3,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": true,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.8737500000000011,
+      "binaryenImportMs": 209.137458,
+      "generationMs": 74.26583300000001,
+      "optimizationMs": 54.04358400000001,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 1.8241669999999885,
+      "wasmCompileMs": 0.09474999999997635,
+      "wasmInstantiateMs": 0.06799999999998363
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.1562780000000051,
+            "minMs": 0.12100000000003774,
+            "maxMs": 0.17863933333332702,
+            "samplesMs": [
+              0.1562780000000051,
+              0.16313900000000103,
+              0.16129166666665165,
+              0.14105533333334583,
+              0.13404166666667075,
+              0.17863933333332702,
+              0.1579443333333188,
+              0.12100000000003774,
+              0.12536100000001701
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.4949306666666568,
+            "minMs": 0.49290266666668003,
+            "maxMs": 0.6209446666666736,
+            "samplesMs": [
+              0.6209446666666736,
+              0.49290266666668003,
+              0.4994999999999929,
+              0.5420136666666812,
+              0.5436526666666737,
+              0.4949306666666568,
+              0.4936246666666572,
+              0.4935556666666798,
+              0.4942363333333333
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.5422499999999862,
+            "minMs": 0.4579583333333517,
+            "maxMs": 0.6344996666666702,
+            "samplesMs": [
+              0.567514000000017,
+              0.5776950000000056,
+              0.5405143333333058,
+              0.48669466666666494,
+              0.48645833333332195,
+              0.6344996666666702,
+              0.5422499999999862,
+              0.4579583333333517,
+              0.573111000000002
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.8734443333333578,
+            "minMs": 0.7955273333333253,
+            "maxMs": 0.9862639999999866,
+            "samplesMs": [
+              0.9862639999999866,
+              0.8734443333333578,
+              0.8918610000000058,
+              0.9319303333333172,
+              0.8543056666666757,
+              0.9352499999999964,
+              0.8055693333333428,
+              0.8134030000000317,
+              0.7955273333333253
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  },
+  {
+    "id": "reverse-710-selection-none",
+    "environment": {
+      "bun": "1.3.14",
+      "platform": "darwin",
+      "release": "25.6.0",
+      "arch": "arm64",
+      "cpu": "Apple M4"
+    },
+    "input": {
+      "bytes": 102503,
+      "records": 710,
+      "hash": "e3bab24f80713727219bc5073061053d11aab00b5611410908d9e41555bc3cb7",
+      "synthetic": true
+    },
+    "protocol": {
+      "samples": 9,
+      "warmup": 10,
+      "iterations": 3,
+      "order": "alternating TS/Wasm by sample",
+      "jobOrder": "reverse",
+      "units": "milliseconds per sort",
+      "kernel": "pre-encoded i32 keys; copy excluded; Wasm call boundary included",
+      "endToEnd": "JSON parse + validation + rank encoding + copy + sort + reconstruction + stringify; file IO/build/startup excluded"
+    },
+    "manifest": {
+      "profile": "json-sort-i32-v1",
+      "productionLlangProfile": false,
+      "program": {
+        "optimize": true,
+        "jobs": [
+          {
+            "key": "name",
+            "algorithm": "insertion",
+            "exportName": "sort_name_insertion"
+          },
+          {
+            "key": "name",
+            "algorithm": "selection",
+            "exportName": "sort_name_selection"
+          },
+          {
+            "key": "name",
+            "algorithm": "bubble",
+            "exportName": "sort_name_bubble"
+          },
+          {
+            "key": "name",
+            "algorithm": "shell",
+            "exportName": "sort_name_shell"
+          },
+          {
+            "key": "name",
+            "algorithm": "heap",
+            "exportName": "sort_name_heap"
+          },
+          {
+            "key": "age",
+            "algorithm": "insertion",
+            "exportName": "sort_age_insertion"
+          },
+          {
+            "key": "age",
+            "algorithm": "selection",
+            "exportName": "sort_age_selection"
+          },
+          {
+            "key": "age",
+            "algorithm": "bubble",
+            "exportName": "sort_age_bubble"
+          },
+          {
+            "key": "age",
+            "algorithm": "shell",
+            "exportName": "sort_age_shell"
+          },
+          {
+            "key": "age",
+            "algorithm": "heap",
+            "exportName": "sort_age_heap"
+          },
+          {
+            "key": "race",
+            "algorithm": "insertion",
+            "exportName": "sort_race_insertion"
+          },
+          {
+            "key": "race",
+            "algorithm": "selection",
+            "exportName": "sort_race_selection"
+          },
+          {
+            "key": "race",
+            "algorithm": "bubble",
+            "exportName": "sort_race_bubble"
+          },
+          {
+            "key": "race",
+            "algorithm": "shell",
+            "exportName": "sort_race_shell"
+          },
+          {
+            "key": "race",
+            "algorithm": "heap",
+            "exportName": "sort_race_heap"
+          }
+        ]
+      },
+      "sourceHash": "7d6b0a65986ddbf29436eca0ef85e941a0ff130fea2621f3e2e49f834d95f53a",
+      "templateHash": "9ba4a03ce7138716099cb60ef5cf60189049642f1f05bfc4cc82b7fe052731f3",
+      "watTemplateHash": "316f1d966a6ebdeb33c2874e39d8330a6dd781236166d55ec493791fd8af89e6",
+      "typescriptHash": "2818601449b3b38f2ea94a97de798d5061e5a0607ecd78968762f2d939cecb65",
+      "wasmHash": "263134563b3060420ecea2ad3eee3d898fdb9de6b8389a6e95f449369648053a",
+      "wasmBytes": 1092,
+      "binaryen": "132.0.0",
+      "optimization": "none",
+      "optimizationLevel": 0,
+      "shrinkLevel": 0,
+      "optimizationPassApplied": false,
+      "selectionBranch": false
+    },
+    "startup": {
+      "inputReadOrGenerateMs": 0.8237079999999999,
+      "binaryenImportMs": 210.584542,
+      "generationMs": 21.03608299999999,
+      "optimizationMs": 0,
+      "selectionBranchMs": 0,
+      "generatedTypescriptImportMs": 2.6725000000000136,
+      "wasmCompileMs": 0.087333000000001,
+      "wasmInstantiateMs": 0.07933400000001711
+    },
+    "results": [
+      {
+        "key": "age",
+        "algorithm": "selection",
+        "kernel": {
+          "typescript": {
+            "medianMs": 0.12613899999998543,
+            "minMs": 0.11716666666666242,
+            "maxMs": 0.1410140000000221,
+            "samplesMs": [
+              0.13941666666666683,
+              0.12720866666664202,
+              0.12613899999998543,
+              0.12934733333332815,
+              0.1410140000000221,
+              0.12115300000001146,
+              0.11716666666666242,
+              0.12086100000000972,
+              0.11793066666668513
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.15361100000001215,
+            "minMs": 0.14943033333332778,
+            "maxMs": 0.1950836666666381,
+            "samplesMs": [
+              0.1665416666666791,
+              0.16366633333334826,
+              0.15361100000001215,
+              0.1539026666666435,
+              0.1950836666666381,
+              0.1498473333333171,
+              0.15155533333330595,
+              0.15001366666666627,
+              0.14943033333332778
+            ]
+          }
+        },
+        "endToEnd": {
+          "typescript": {
+            "medianMs": 0.45148600000000744,
+            "minMs": 0.4208053333333244,
+            "maxMs": 0.5233056666666585,
+            "samplesMs": [
+              0.46108300000003055,
+              0.4697776666666679,
+              0.45148600000000744,
+              0.46722233333332497,
+              0.5233056666666585,
+              0.43300000000001165,
+              0.4208053333333244,
+              0.43676399999996346,
+              0.424208333333335
+            ]
+          },
+          "wasm": {
+            "medianMs": 0.4660553333333534,
+            "minMs": 0.4497220000000273,
+            "maxMs": 0.5449163333333521,
+            "samplesMs": [
+              0.5076390000000023,
+              0.5185140000000009,
+              0.4695419999999899,
+              0.4660553333333534,
+              0.5449163333333521,
+              0.46519466666666176,
+              0.45993033333331823,
+              0.46398599999997714,
+              0.4497220000000273
+            ]
+          }
+        },
+        "oracleHash": "37a843c9642aecd66bc8da6b3b0d86014a9536ab2ca853f3cfd900ae94a03aba"
+      }
+    ]
+  }
+]

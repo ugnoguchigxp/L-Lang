@@ -1,0 +1,151 @@
+{
+  "stage": "selection",
+  "protocol": [
+    "--samples",
+    "15",
+    "--warmup",
+    "30",
+    "--iterations",
+    "10"
+  ],
+  "experiments": [
+    {
+      "id": "forward-none",
+      "args": [
+        "--optimization",
+        "none",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O2",
+      "args": [
+        "--optimization",
+        "O2",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O2-branch",
+      "args": [
+        "--optimization",
+        "O2",
+        "--selection-branch",
+        "true",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O3",
+      "args": [
+        "--optimization",
+        "O3",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "forward-O3-branch",
+      "args": [
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "forward"
+      ]
+    },
+    {
+      "id": "reverse-O3-branch",
+      "args": [
+        "--optimization",
+        "O3",
+        "--selection-branch",
+        "true",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-O3",
+      "args": [
+        "--optimization",
+        "O3",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-O2-branch",
+      "args": [
+        "--optimization",
+        "O2",
+        "--selection-branch",
+        "true",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-O2",
+      "args": [
+        "--optimization",
+        "O2",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "reverse"
+      ]
+    },
+    {
+      "id": "reverse-none",
+      "args": [
+        "--optimization",
+        "none",
+        "--key",
+        "age",
+        "--algorithm",
+        "selection",
+        "--job-order",
+        "reverse"
+      ]
+    }
+  ]
+}

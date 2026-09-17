@@ -27,7 +27,7 @@ bun run capability package artifacts/access-bad-source/access.prompt.json --test
 bun run capability verify artifacts/access-bad/capability.json --report artifacts/access-bad-report.json
 ```
 
-Sourceの2例は合格するが、suiteの`stopped`が失敗し、終了コード1になる。正しい保存済みLockから新しい候補をpackageすれば同じsuiteで合格する。修正依頼・修正の自動実行は後続の実装対象。
+Sourceの2例は合格するが、suiteの`stopped`が失敗し、終了コード1になる。正しい保存済みLockから新しい候補をpackageすれば同じsuiteで合格する。固定suiteでの製造・最大1回修正は[製造例](../capability-development/README.md)を参照。SAAAからの受け入れ失敗を使う修正adapterは別の未完了項目。
 
 ## エージェントへ渡すもの
 

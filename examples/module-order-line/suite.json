@@ -1,0 +1,28 @@
+{
+  "format": "llang-module-suite",
+  "version": 2,
+  "profile": "module-value-v1",
+  "interfaceHash": "42956753b1b66c9e0353ab16938859abce4785927a5b4dbfd2fa2ad91306041d",
+  "cases": [
+    {
+      "id": "success",
+      "input": { "member": false, "productCode": "商品A", "quantity": 3, "unitPrice": 200 },
+      "expected": { "kind": "value", "value": { "tag": "ok", "total": 600, "label": "商品A" } }
+    },
+    {
+      "id": "business-error",
+      "input": { "member": true, "productCode": "商品A", "quantity": 0, "unitPrice": 200 },
+      "expected": { "kind": "value", "value": { "tag": "error", "code": "INVALID_QUANTITY" } }
+    },
+    {
+      "id": "overflow",
+      "input": { "member": false, "productCode": "x", "quantity": 2, "unitPrice": 2147483647 },
+      "expected": { "kind": "fault", "code": "ARITHMETIC_OVERFLOW" }
+    },
+    {
+      "id": "invalid-input",
+      "input": { "member": false, "productCode": "x", "quantity": 1.5, "unitPrice": 1 },
+      "expected": { "kind": "invalid-input" }
+    }
+  ]
+}

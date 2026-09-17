@@ -1,25 +1,39 @@
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { packageCapability } from "./capability-package";
+import { packageLlangCapability } from "./llang-capability";
 import {
-  packageCapability,
-  readCapability,
-  verifyCapability,
-} from "./capability-package";
+  readCapabilitySnapshot,
+  verifyCapabilityPackage,
+} from "./capability-snapshot";
 import { HOST_PROTOCOL, runHostRequest } from "./capability-host";
 import { readJson } from "./prompt-source";
 import { digest } from "./wasm-contract";
 
-export async function createHostKit(directory: string) {
+export async function createHostKit(directory: string, version: 1 | 2 = 1) {
   const root = resolve(directory);
   await mkdir(root, { recursive: false });
   const example = resolve(import.meta.dir, "../examples/capability-access");
-  const candidate = await packageCapability(
-    resolve(example, "access.prompt.json"),
-    resolve(example, "tests.json"),
-    await readJson(resolve(example, "metadata.json")),
-    resolve(root, "candidate"),
+  const jsoncExample = resolve(
+    import.meta.dir,
+    "../examples/jsonc-enabled-user",
   );
-  const report = await verifyCapability(candidate.manifest);
+  const candidate =
+    version === 2
+      ? await packageLlangCapability(
+          resolve(jsoncExample, "enabled-user.llang.jsonc"),
+          resolve(jsoncExample, "request.json"),
+          resolve(jsoncExample, "tests.json"),
+          await readJson(resolve(jsoncExample, "metadata.json")),
+          resolve(root, "candidate"),
+        )
+      : await packageCapability(
+          resolve(example, "access.prompt.json"),
+          resolve(example, "tests.json"),
+          await readJson(resolve(example, "metadata.json")),
+          resolve(root, "candidate"),
+        );
+  const report = await verifyCapabilityPackage(candidate.manifest);
   if (report.status !== "pass")
     throw new Error("kit candidate failed verification");
   const bundled = await Bun.build({
@@ -27,6 +41,7 @@ export async function createHostKit(directory: string) {
       "capability-host-cli.ts",
       "capability-worker.ts",
       "capability-invoke-worker.ts",
+      "llang-capability-worker.ts",
     ].map((name) => resolve(import.meta.dir, name)),
     outdir: resolve(root, "runtime"),
     target: "bun",
@@ -82,7 +97,7 @@ export async function createHostKit(directory: string) {
     resolve(root, "verification.json"),
     JSON.stringify(report, null, 2),
   );
-  const snapshot = await readCapability(candidate.manifest);
+  const snapshot = await readCapabilitySnapshot(candidate.manifest);
   const files = [
     "candidate/capability.json",
     ...Object.values(snapshot.manifest.files).map((f) => `candidate/${f.path}`),
@@ -111,6 +126,7 @@ export async function createHostKit(directory: string) {
     bunVersion: Bun.version,
     packageHash: snapshot.packageHash,
     fixture: true,
+    packageVersion: snapshot.manifest.version,
     provenance,
     acceptance: "not-run",
     files: hashes,
@@ -120,6 +136,18 @@ export async function createHostKit(directory: string) {
 }
 if (import.meta.main) {
   const destination = process.argv[2];
-  if (!destination) throw new Error("expected new kit directory");
-  console.log(JSON.stringify(await createHostKit(destination), null, 2));
+  const option = process.argv[3];
+  if (
+    !destination ||
+    (option !== undefined && option !== "--jsonc") ||
+    process.argv.length > 4
+  )
+    throw new Error("expected new kit directory [--jsonc]");
+  console.log(
+    JSON.stringify(
+      await createHostKit(destination, option === "--jsonc" ? 2 : 1),
+      null,
+      2,
+    ),
+  );
 }

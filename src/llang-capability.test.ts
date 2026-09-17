@@ -1,28 +1,22 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   access,
-  mkdtemp,
+  mkdir,
   readFile,
   rm,
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import {
-  packageLlangCapability,
   checkLlangMutations,
+  packageLlangCapability,
   parseLlangRequest,
   parseLlangSuite,
   requestRevision,
   verifyLlangCapability,
 } from "./llang-capability";
-import {
-  developLlangCapability,
-  fixtureLlangAgent,
-  replayLlangDevelopment,
-} from "./llang-development";
-import { migratePromptSource } from "./llang-migrate";
+import { createLlangCapabilityFixture } from "./llang-test-fixture";
 import { contentHash } from "./prompt-source";
 
 const roots: string[] = [];
@@ -30,92 +24,10 @@ afterEach(async () => {
   while (roots.length)
     await rm(roots.pop() as string, { recursive: true, force: true });
 });
-async function fixture() {
-  const root = await mkdtemp(resolve(tmpdir(), "llang-v2-"));
-  roots.push(root);
-  const source = resolve(
-    process.cwd(),
-    "examples/jsonc-enabled-user/enabled-user.llang.jsonc",
-  );
-  const contract = JSON.parse(
-    (await readFile(source, "utf8"))
-      .replace(/\/\/.*$/gm, "")
-      .replace(/,\s*([}\]])/g, "$1"),
-  ).contract;
-  const request = parseLlangRequest({
-    version: 2,
-    id: "enabled-user",
-    body: "enabledかつsuspendedでない利用者だけを許可する。",
-    profile: "predicate-i32-v1",
-    contract,
-    requirements: [
-      { id: "enabled", level: "must", text: "enabledであること" },
-      {
-        id: "not-suspended",
-        level: "must-not",
-        text: "suspendedを許可しないこと",
-      },
-    ],
-  });
-  const suite = parseLlangSuite(
-    {
-      version: 2,
-      requestRevision: requestRevision(request),
-      contractHash: contentHash(contract),
-      cases: [
-        {
-          id: "accept",
-          requirementIds: ["enabled", "not-suspended"],
-          input: { enabled: true, suspended: false },
-          undefinedFields: [],
-          expected: { kind: "value", value: true },
-        },
-        {
-          id: "disabled",
-          requirementIds: ["enabled"],
-          input: { enabled: false, suspended: false },
-          undefinedFields: [],
-          expected: { kind: "value", value: false },
-        },
-        {
-          id: "suspended",
-          requirementIds: ["not-suspended"],
-          input: { enabled: true, suspended: true },
-          undefinedFields: [],
-          expected: { kind: "value", value: false },
-        },
-      ],
-    },
-    request,
-  );
-  const requestPath = resolve(root, "request.json"),
-    suitePath = resolve(root, "tests.json"),
-    metadataPath = resolve(root, "metadata.json");
-  const metadata = {
-    id: "enabled-user",
-    release: "v2",
-    purpose: "受付可否",
-    useWhen: "利用者受付時",
-    doNotUseWhen: "外部状態が必要な場合",
-  };
-  await writeFile(requestPath, JSON.stringify(request));
-  await writeFile(suitePath, JSON.stringify(suite));
-  await writeFile(metadataPath, JSON.stringify(metadata));
-  return {
-    root,
-    source,
-    request,
-    suite,
-    requestPath,
-    suitePath,
-    metadataPath,
-    metadata,
-  };
-}
 
 describe("L-Lang Capability v2", () => {
   test("packages raw JSONC without a lock and verifies after relocation", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const built = await packageLlangCapability(
       f.source,
       f.requestPath,
@@ -141,7 +53,7 @@ describe("L-Lang Capability v2", () => {
   });
 
   test("fixed contract cannot be changed to evade the suite", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const altered = structuredClone(f.request);
     const first = altered.contract.fields[0];
     if (!first) throw new Error("fixture contract is empty");
@@ -150,7 +62,7 @@ describe("L-Lang Capability v2", () => {
   });
 
   test("verification fails when an identified required requirement is uncovered", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const suite = {
       ...f.suite,
       cases: f.suite.cases.map((item) => ({
@@ -250,54 +162,8 @@ describe("L-Lang Capability v2", () => {
     ).toThrow("use undefinedFields");
   });
 
-  test("fixture repair passes and replay reproduces the hashes", async () => {
-    const f = await fixture();
-    const good = JSON.parse(
-      (await readFile(f.source, "utf8"))
-        .replace(/\/\/.*$/gm, "")
-        .replace(/,\s*([}\]])/g, "$1"),
-    );
-    const bad = structuredClone(good);
-    bad.body.conditions = [bad.body.conditions[0]];
-    const reply = (program: unknown, id: string) => ({
-      result: { outcome: "generated", program, diagnostics: [] },
-      provider: "fixture",
-      model: "fixture",
-      responseId: id,
-      usage: null,
-    });
-    const run = await developLlangCapability(
-      f.request,
-      f.suite,
-      f.metadata,
-      {
-        version: 2,
-        mode: "fixture",
-        model: "fixture",
-        maxCalls: 2,
-        maxOutputTokens: 4096,
-        maxTotalTokens: 100000,
-        maxWallMs: 120000,
-      },
-      fixtureLlangAgent({
-        version: 2,
-        responses: [
-          { stage: "implementation", reply: reply(bad, "one") },
-          { stage: "repair", reply: reply(good, "two") },
-        ],
-      }),
-      resolve(f.root, "run"),
-    );
-    expect(run.status).toBe("pass");
-    const replay = await replayLlangDevelopment(
-      resolve(f.root, "run"),
-      resolve(f.root, "replay"),
-    );
-    expect(replay.status).toBe("pass");
-  });
-
   test("invalid-input cases never kill semantic mutants", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const suite = {
       ...f.suite,
       cases: [
@@ -323,7 +189,7 @@ describe("L-Lang Capability v2", () => {
   });
 
   test("mutation check does not report equivalent duplicate removal as survived", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const program = JSON.parse(
       (await readFile(f.source, "utf8"))
         .replace(/\/\/.*$/gm, "")
@@ -351,109 +217,8 @@ describe("L-Lang Capability v2", () => {
     ).toBe(false);
   });
 
-  test("development records failed calls and replay reproduces the failure", async () => {
-    const f = await fixture();
-    const output = resolve(f.root, "failed-run");
-    const run = await developLlangCapability(
-      f.request,
-      f.suite,
-      f.metadata,
-      {
-        version: 2,
-        mode: "fixture",
-        model: "fixture",
-        maxCalls: 2,
-        maxOutputTokens: 4096,
-        maxTotalTokens: 100000,
-        maxWallMs: 120000,
-      },
-      async () => {
-        throw new Error("fixture transport failed");
-      },
-      output,
-    );
-    expect(run).toMatchObject({
-      status: "error",
-      logicalCalls: 1,
-      calls: [{ reply: null, error: "fixture transport failed" }],
-    });
-    expect(
-      (await replayLlangDevelopment(output, resolve(f.root, "failed-replay")))
-        .status,
-    ).toBe("error");
-    const changedSuite = { ...f.suite, cases: [...f.suite.cases].reverse() };
-    await writeFile(
-      resolve(output, "tests.json"),
-      JSON.stringify(changedSuite),
-    );
-    await expect(
-      replayLlangDevelopment(output, resolve(f.root, "tampered-replay")),
-    ).rejects.toThrow("snapshot hash mismatch");
-  });
-
-  test("development validates metadata before creating its output", async () => {
-    const f = await fixture();
-    const output = resolve(f.root, "invalid-metadata");
-    await expect(
-      developLlangCapability(
-        f.request,
-        f.suite,
-        { ...f.metadata, id: "other" },
-        {
-          version: 2,
-          mode: "fixture",
-          model: "fixture",
-          maxCalls: 1,
-          maxOutputTokens: 4096,
-          maxTotalTokens: 100000,
-          maxWallMs: 120000,
-        },
-        async () => {
-          throw new Error("must not run");
-        },
-        output,
-      ),
-    ).rejects.toThrow("metadata id differs");
-    await expect(access(output)).rejects.toThrow();
-  });
-
-  test("legacy migration requires a valid lock and emits source, request and tests", async () => {
-    const root = await mkdtemp(resolve(tmpdir(), "llang-migrate-"));
-    roots.push(root);
-    const output = resolve(root, "active.llang.jsonc");
-    const result = await migratePromptSource(
-      resolve(
-        process.cwd(),
-        "examples/prompt-active-customer/customer.prompt.json",
-      ),
-      output,
-    );
-    expect(await readFile(result.source, "utf8")).toContain(
-      '"language": "l-lang"',
-    );
-    expect(JSON.parse(await readFile(result.request, "utf8")).version).toBe(2);
-    await expect(
-      migratePromptSource(
-        resolve(
-          process.cwd(),
-          "examples/prompt-active-customer/customer.prompt.json",
-        ),
-        output,
-      ),
-    ).rejects.toThrow();
-    await expect(
-      migratePromptSource(
-        resolve(
-          process.cwd(),
-          "examples/prompt-active-customer/customer.prompt.json",
-        ),
-        resolve(root, "wrong-extension.json"),
-      ),
-    ).rejects.toThrow("must use .llang.jsonc");
-  });
-
   test("artifact reader rejects a symlinked manifest", async () => {
-    const f = await fixture();
+    const f = await createLlangCapabilityFixture(roots);
     const built = await packageLlangCapability(
       f.source,
       f.requestPath,
@@ -469,5 +234,180 @@ describe("L-Lang Capability v2", () => {
     const { readLlangArtifact } = await import("./llang-build");
     await expect(readLlangArtifact(linked)).rejects.toThrow("non-symlink");
     expect(built.manifest).toContain("capability.json");
+  });
+
+  test("verification rejects tampering of every packaged role", async () => {
+    const f = await createLlangCapabilityFixture(roots);
+    for (const role of [
+      "request",
+      "source",
+      "build",
+      "wasm",
+      "tests",
+    ] as const) {
+      const directory = resolve(f.root, `tamper-${role}`);
+      const built = await packageLlangCapability(
+        f.source,
+        f.requestPath,
+        f.suitePath,
+        f.metadata,
+        directory,
+      );
+      const manifest = JSON.parse(await readFile(built.manifest, "utf8"));
+      const target = resolve(directory, manifest.files[role].path);
+      const bytes = new Uint8Array(await readFile(target));
+      const changed = new Uint8Array(bytes.length + 1);
+      changed.set(bytes);
+      changed[changed.length - 1] = 0x20;
+      await writeFile(target, changed);
+      expect((await verifyLlangCapability(built.manifest)).status, role).toBe(
+        "error",
+      );
+    }
+  });
+
+  test("verification rejects manifest path relinking and internal symlinks", async () => {
+    const f = await createLlangCapabilityFixture(roots);
+    const relinked = await packageLlangCapability(
+      f.source,
+      f.requestPath,
+      f.suitePath,
+      f.metadata,
+      resolve(f.root, "relinked"),
+    );
+    const manifest = JSON.parse(await readFile(relinked.manifest, "utf8"));
+    manifest.files.request.path = "../request.json";
+    await writeFile(relinked.manifest, JSON.stringify(manifest));
+    expect((await verifyLlangCapability(relinked.manifest)).status).toBe(
+      "error",
+    );
+
+    const linked = await packageLlangCapability(
+      f.source,
+      f.requestPath,
+      f.suitePath,
+      f.metadata,
+      resolve(f.root, "internal-link"),
+    );
+    const linkedManifest = JSON.parse(await readFile(linked.manifest, "utf8"));
+    const request = resolve(
+      f.root,
+      "internal-link",
+      linkedManifest.files.request.path,
+    );
+    await rm(request);
+    await symlink(f.requestPath, request);
+    expect((await verifyLlangCapability(linked.manifest)).status).toBe("error");
+  });
+
+  test("verification reports worker errors and terminates silent workers", async () => {
+    const f = await createLlangCapabilityFixture(roots);
+    const built = await packageLlangCapability(
+      f.source,
+      f.requestPath,
+      f.suitePath,
+      f.metadata,
+      resolve(f.root, "worker-failures"),
+    );
+    const NativeWorker = globalThis.Worker;
+    let terminated = 0;
+    class FakeWorker {
+      onerror: ((event: { message: string }) => void) | null = null;
+      onmessage: ((event: { data: unknown }) => void) | null = null;
+      terminate() {
+        terminated++;
+      }
+      postMessage() {
+        queueMicrotask(() => this.onerror?.({ message: "worker failed" }));
+      }
+    }
+    try {
+      globalThis.Worker = FakeWorker as unknown as typeof Worker;
+      expect(await verifyLlangCapability(built.manifest)).toMatchObject({
+        status: "error",
+        diagnostics: ["worker failed"],
+      });
+
+      FakeWorker.prototype.postMessage = () => {};
+      const timeout = await verifyLlangCapability(built.manifest);
+      expect(timeout.status).toBe("error");
+      expect(timeout.diagnostics[0]).toContain("exceeded 10 seconds");
+      expect(terminated).toBe(2);
+    } finally {
+      globalThis.Worker = NativeWorker;
+    }
+  }, 15_000);
+
+  test("packaging preserves existing output and creates nothing for invalid metadata", async () => {
+    const f = await createLlangCapabilityFixture(roots);
+    const existing = resolve(f.root, "existing");
+    await mkdir(existing);
+    const sentinel = resolve(existing, "keep.txt");
+    await writeFile(sentinel, "keep");
+    await expect(
+      packageLlangCapability(
+        f.source,
+        f.requestPath,
+        f.suitePath,
+        f.metadata,
+        existing,
+      ),
+    ).rejects.toThrow();
+    expect(await readFile(sentinel, "utf8")).toBe("keep");
+
+    const absent = resolve(f.root, "invalid-metadata-package");
+    await expect(
+      packageLlangCapability(
+        f.source,
+        f.requestPath,
+        f.suitePath,
+        { ...f.metadata, id: "other" },
+        absent,
+      ),
+    ).rejects.toThrow("metadata/request/source mismatch");
+    await expect(access(absent)).rejects.toThrow();
+  });
+
+  test("packaging cleans partial writes and rejects changed fixed inputs", async () => {
+    const f = await createLlangCapabilityFixture(roots);
+    const failed = resolve(f.root, "partial-write");
+    let writes = 0;
+    await expect(
+      packageLlangCapability(
+        f.source,
+        f.requestPath,
+        f.suitePath,
+        f.metadata,
+        failed,
+        async (path, data, options) => {
+          writes++;
+          if (writes === 2) throw new Error("injected package write failure");
+          await writeFile(path, data, options);
+        },
+      ),
+    ).rejects.toThrow("injected package write failure");
+    await expect(access(failed)).rejects.toThrow();
+
+    const racing = resolve(f.root, "changed-input");
+    let changed = false;
+    await expect(
+      packageLlangCapability(
+        f.source,
+        f.requestPath,
+        f.suitePath,
+        f.metadata,
+        racing,
+        async (path, data, options) => {
+          await writeFile(path, data, options);
+          if (!changed) {
+            changed = true;
+            const suite = JSON.parse(await readFile(f.suitePath, "utf8"));
+            suite.cases.reverse();
+            await writeFile(f.suitePath, JSON.stringify(suite));
+          }
+        },
+      ),
+    ).rejects.toThrow("input changed during packaging");
+    await expect(access(racing)).rejects.toThrow();
   });
 });

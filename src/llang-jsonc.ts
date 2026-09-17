@@ -302,7 +302,10 @@ export function formatLlangJsonc(text: string, file = "<input>") {
 
 export function decodeUtf8(bytes: Uint8Array, file: string): string {
   try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    // Preserve BOM so the parser can reject it instead of silently changing source bytes.
+    return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(
+      bytes,
+    );
   } catch {
     throw new Error(`${file} must contain valid UTF-8`);
   }

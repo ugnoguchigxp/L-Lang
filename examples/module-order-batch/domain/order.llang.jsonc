@@ -1,0 +1,18 @@
+{
+  "language": "l-lang",
+  "version": 4,
+  "kind": "module",
+  "profile": "module-collection-v1",
+  "imports": [],
+  "types": [
+    { "name": "Input", "export": true, "kind": "record", "typeParameters": [], "fields": [
+      { "name": "values", "type": { "list": "i32" } },
+      { "name": "threshold", "type": "i32" }
+    ] },
+    { "name": "Output", "export": true, "kind": "record", "typeParameters": [], "fields": [
+      { "name": "values", "type": { "list": "i32" } },
+      { "name": "total", "type": "i32" }
+    ] }
+  ],
+  "functions": []
+}

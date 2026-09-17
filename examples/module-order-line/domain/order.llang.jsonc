@@ -1,0 +1,40 @@
+{
+  "language": "l-lang",
+  "version": 3,
+  "kind": "module",
+  "profile": "module-value-v1",
+  "description": "Order-line input and result types.",
+  "imports": [],
+  "types": [
+    {
+      "name": "OrderLine",
+      "export": true,
+      "kind": "record",
+      "fields": [
+        { "name": "member", "type": "boolean" },
+        { "name": "productCode", "type": "string" },
+        { "name": "quantity", "type": "i32" },
+        { "name": "unitPrice", "type": "i32" }
+      ]
+    },
+    {
+      "name": "QuoteResult",
+      "export": true,
+      "kind": "union",
+      "variants": [
+        {
+          "tag": "ok",
+          "fields": [
+            { "name": "label", "type": "string" },
+            { "name": "total", "type": "i32" }
+          ]
+        },
+        {
+          "tag": "error",
+          "fields": [{ "name": "code", "type": "string" }]
+        }
+      ]
+    }
+  ],
+  "functions": []
+}

@@ -14,7 +14,13 @@ L-Langは研究・検証段階のソフトウェアです。生成候補を無�
 - `semanticTest`の値、Benchmark Oracle、hidden casesは通常のモデル入力へ送りません。
 - `.semantic/`にはモデル応答や監査情報が保存されるため、公開前に内容を確認してください。
 
-## Trust boundary
+## JSONCとエージェントの境界
+
+TypeScriptとJSONCの両経路を扱います。[経路の対応](./docs/guides/language-routes.md)に応じて認証と検証範囲を確認してください。JSONCのlint/build/testはLLMを起動せず、明示されたProgramを検証します。`llang develop --agent codex-sdk`は別工程として外部エージェントを呼びます。
+
+JSONC経路では固定request・独立suiteとProgramの契約一致を検査します。hashは整合性検査であり署名ではありません。suite合格は自然言語要求の完全な正しさを証明せず、パッケージの部品検証はSAAAの受け入れ・配備を意味しません。生成工程へ渡す要求自体に機密情報を含めないでください。
+
+## Semantic TypeScriptの信頼境界
 
 LLM出力は信頼済みコードではありません。通常の`semantic build`は、制限IRのparse、型文脈検証、決定的生成、候補専用の型検査とSemantic Test、全体typecheck、全体testを通過すると自動昇格します。`--review`、`diff`、`approve`は互換用のcandidate stagingであり、セキュリティ上の信頼水準を引き上げるものではありません。自動昇格済みのartifactも、安全性や業務上の正しさが保証されるわけではありません。`compatible`なSemantic Diffも同様です。
 

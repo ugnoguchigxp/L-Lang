@@ -4,22 +4,29 @@ Issue、提案、文書修正、実装、検証データの提供を歓迎しま
 
 ## 開発環境
 
-- Bun 1.3.14
+- Bun 1.4.2
 - TypeScript 5.9
 - OpenAI APIまたはAzure OpenAIはlive検証時のみ必要
 
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run typecheck
 bun test
 bun run ci:docs
 ```
 
-APIを使わないfixture経路で基本動作を確認できます。
+TypeScriptとJSONCの両経路を保守します。[入力・出力の対応](./docs/guides/language-routes.md)を確認してください。APIを使わないTypeScriptのfixture経路で基本動作を確認できます。
 
 ```bash
 bun run semantic build examples/active-customer/semantic.ts \
   --fixture examples/active-customer/openai-response.fixture.json
+```
+
+JSONCの基本検証もAPIなしで実行できます。
+
+```sh
+bun run llang lint examples/jsonc-enabled-user/enabled-user.llang.jsonc --json
+bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --request examples/jsonc-enabled-user/request.json --suite examples/jsonc-enabled-user/tests.json
 ```
 
 ## 変更方針
@@ -67,3 +74,10 @@ git diff --check
 ## License
 
 Contributionは、リポジトリと同じ[MIT License](./LICENSE)で提供されるものとします。
+
+
+## 文書の配置と更新
+
+利用方法は`docs/guides/`、現行仕様とCLIは`docs/`、過去の状態記録は`docs/records/`、実行例は`examples/`へ置く。設計・計画・結果の既存パスは参照を維持し、[文書一覧](./docs/README.md)で分類する。新規文書は一覧と[全Markdown台帳](./docs/MAINTENANCE_STATUS.md)にも追加する。
+
+言語・出力形式の追加は[経路表](./docs/guides/language-routes.md)へ反映する。TypeScriptとJSONCの併存を前提とし、ある経路の制限をプロジェクト全体の制限として記載しない。結果文書には対象revision・環境・未確認事項を残し、凍結済みbenchmark・Pilot証跡は説明整理のためにも書き換えない。

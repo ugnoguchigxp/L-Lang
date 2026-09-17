@@ -2,6 +2,8 @@
 
 モデルを呼ばずに候補のinspect、部品verify、単発invokeを行うBunプロセス。SAAAの登録・配備APIではない。候補パスは信頼するホストがargvで渡し、モデルの任意パス指定を受け付けない。
 
+hostはPrompt SourceのCapability v1とJSONCのCapability v2を判別する。既定のキットはv1、生成コマンド末尾に`--jsonc`を付けるとv2になる。プロトコルの`llang-host-v1`はパッケージの版番号とは独立。
+
 ## キットの生成
 
 リポジトリルートで依存をインストールして実行する。出力先は新規ディレクトリにする。
@@ -11,9 +13,9 @@ bun install --frozen-lockfile
 bun run capability:host-kit artifacts/saaa-host-kit
 ```
 
-候補Wasm、runtimeの3ファイル、request/responseのJSON Schema、期待値付きvectors.json、検証report、hash一覧kit.jsonを生成する。キット全体を別ディレクトリへコピーして利用できる。受信側ではkit.jsonのhashと信頼する受け渡し元を確認する。hash一覧は署名ではない。
+候補Wasm、runtimeの4ファイル、request/responseのJSON Schema、期待値付きvectors.json、検証report、hash一覧kit.jsonを生成する。キット全体を別ディレクトリへコピーして利用できる。受信側ではkit.jsonのhashと信頼する受け渡し元を確認する。hash一覧は署名ではない。
 
-キットのディレクトリで、Bun 1.3.14を使って実行する。
+キット生成時のBun版は`kit.json`の`bunVersion`で確認する。現在のリポジトリ指定版は[package.json](../../package.json)を参照。過去の1.3.14での測定は当時の記録であり、現在の固定版ではない。キットのディレクトリで実行する。
 
 ```sh
 bun runtime/capability-host-cli.ts candidate/capability.json < request.json

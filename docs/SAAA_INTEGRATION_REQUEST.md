@@ -1,5 +1,7 @@
 # SAAA側への開発依頼：S-LANG能力の受け入れ・配備PoC
 
+> 分類：記載された基点に対する外部接続依頼・計画です。外部SAAAの現在の実装状態を保証するものではありません。提供済みR1キットは[操作例](../examples/saaa-host/README.md)を参照してください。キットはCapability v1向けで、JSONC Capability v2は現行`capability:host`の対象外です。
+
 2026-09-16。依頼元：S-LANG（リポジトリ名L-Lang）。対象基点：`wasm-compiler`の`2d31e9e`。本書はSAAA側の開発担当・Coding Agentへ渡す依頼書であり、連携が実装済みであることを示すものではない。
 
 ## 依頼したいこと

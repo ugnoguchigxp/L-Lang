@@ -1,0 +1,24 @@
+{
+  // Experimental example profile, not accepted by the standard llang CLI.
+  "language": "L-Lang-experimental",
+  "version": 1,
+  "profile": "json-sort-i32-v1",
+  "optimize": true,
+  "jobs": [
+    { "key": "name", "algorithm": "insertion" },
+    { "key": "name", "algorithm": "selection" },
+    { "key": "name", "algorithm": "bubble" },
+    { "key": "name", "algorithm": "shell" },
+    { "key": "name", "algorithm": "heap" },
+    { "key": "age", "algorithm": "insertion" },
+    { "key": "age", "algorithm": "selection" },
+    { "key": "age", "algorithm": "bubble" },
+    { "key": "age", "algorithm": "shell" },
+    { "key": "age", "algorithm": "heap" },
+    { "key": "race", "algorithm": "insertion" },
+    { "key": "race", "algorithm": "selection" },
+    { "key": "race", "algorithm": "bubble" },
+    { "key": "race", "algorithm": "shell" },
+    { "key": "race", "algorithm": "heap" }
+  ]
+}

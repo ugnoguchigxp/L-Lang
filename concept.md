@@ -1,5 +1,7 @@
 # Staged Semantic TypeScript Concept
 
+> 設計文書：Semantic TypeScriptの構想と将来の拡張案を含みます。コード例のすべてが実装済みという意味ではありません。現行の利用範囲は[TypeScriptガイド](./docs/guides/semantic-typescript.md)、JSONCとの併存・出力形式は[経路ガイド](./docs/guides/language-routes.md)を参照してください。
+
 ## Status
 
 Executable research MVP concept.

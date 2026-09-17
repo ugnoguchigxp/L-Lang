@@ -1,0 +1,52 @@
+{
+  "language": "l-lang",
+  "version": 3,
+  "kind": "module",
+  "profile": "module-value-v1",
+  "imports": [
+    {
+      "from": "../domain/order.llang.jsonc",
+      "bindings": [
+        { "kind": "type", "name": "OrderLine", "as": "OrderLine" },
+        { "kind": "type", "name": "QuoteResult", "as": "QuoteResult" }
+      ]
+    },
+    {
+      "from": "../pricing/calculate.llang.jsonc",
+      "bindings": [{ "kind": "function", "name": "calculate", "as": "calculate" }]
+    }
+  ],
+  "types": [],
+  "functions": [
+    {
+      "name": "quote",
+      "export": true,
+      "parameters": [{ "name": "line", "type": { "ref": "OrderLine" } }],
+      "returns": { "ref": "QuoteResult" },
+      "body": {
+        "kind": "if",
+        "condition": {
+          "kind": "binary",
+          "op": ">",
+          "left": { "kind": "field", "base": { "kind": "param", "name": "line" }, "name": "quantity" },
+          "right": { "kind": "literal", "type": "i32", "value": 0 }
+        },
+        "then": {
+          "kind": "variant",
+          "type": "QuoteResult",
+          "tag": "ok",
+          "fields": [
+            { "name": "total", "value": { "kind": "call", "callee": "calculate", "arguments": [{ "kind": "param", "name": "line" }] } },
+            { "name": "label", "value": { "kind": "field", "base": { "kind": "param", "name": "line" }, "name": "productCode" } }
+          ]
+        },
+        "else": {
+          "kind": "variant",
+          "type": "QuoteResult",
+          "tag": "error",
+          "fields": [{ "name": "code", "value": { "kind": "literal", "type": "string", "value": "INVALID_QUANTITY" } }]
+        }
+      }
+    }
+  ]
+}

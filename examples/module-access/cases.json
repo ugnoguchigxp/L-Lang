@@ -1,0 +1,12 @@
+{
+  "format": "llang-module-suite",
+  "version": 1,
+  "interfaceHash": "f88da62c53b63c3948197b4febe28801678849d0493a88acb09901720be0d2f0",
+  "cases": [
+    { "id": "disabled", "input": { "enabled": false, "suspended": false }, "expected": false },
+    { "id": "disabled-suspended", "input": { "enabled": false, "suspended": true }, "expected": false },
+    { "id": "allowed", "input": { "enabled": true, "suspended": false }, "expected": true },
+    { "id": "suspended", "input": { "enabled": true, "suspended": true }, "expected": false },
+    { "id": "missing-field", "input": { "enabled": true }, "expected": "INVALID_INPUT" }
+  ]
+}
