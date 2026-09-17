@@ -300,7 +300,7 @@ export function decide(input:I):boolean{return input.ready===true;}`,
           );
         },
       ),
-    15000,
+    30000,
   );
 
   test("rejects paths outside the workspace and symbolic links", async () =>

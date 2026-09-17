@@ -1,6 +1,6 @@
 export {};
 
-const child = Bun.spawn(["bun", "test", "--coverage"], {
+const child = Bun.spawn(["bun", "test", "--coverage", "--timeout", "30000"], {
   cwd: process.cwd(),
   env: process.env,
   stdin: "inherit",

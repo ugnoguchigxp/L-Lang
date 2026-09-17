@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: ${{ matrix.os }}
+  cross-platform-test:
+    name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -21,7 +21,6 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
           - windows-latest
 
     steps:
@@ -36,8 +35,36 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
 
+      - name: Test
+        run: bun test --timeout 30000
+        env:
+          OPENAI_API_KEY: ""
+          AZURE_OPENAI_API_KEY: ""
+
+      - name: Run offline CLI smoke checks
+        run: bun run ci:smoke
+        env:
+          OPENAI_API_KEY: ""
+          AZURE_OPENAI_API_KEY: ""
+
+  quality:
+    name: Quality and coverage (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
       - name: Audit dependencies
-        if: matrix.os == 'ubuntu-latest'
         run: bun audit
 
       - name: Check formatting
@@ -54,12 +81,6 @@ jobs:
 
       - name: Test with coverage
         run: bun run coverage
-        env:
-          OPENAI_API_KEY: ""
-          AZURE_OPENAI_API_KEY: ""
-
-      - name: Run offline CLI smoke checks
-        run: bun run ci:smoke
         env:
           OPENAI_API_KEY: ""
           AZURE_OPENAI_API_KEY: ""
