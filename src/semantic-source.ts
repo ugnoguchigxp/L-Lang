@@ -1,7 +1,4 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-
 import ts from "typescript";
 
 import {
@@ -20,7 +17,6 @@ import {
   findOptionalArrayProperty,
 } from "./semantic-source-cases";
 import {
-  formatDiagnostics,
   SemanticSourceError,
   sourceError,
 } from "./semantic-source-diagnostics";
@@ -29,6 +25,11 @@ import {
   findTypeDeclaration,
   type TypeSchema,
 } from "./semantic-source-type-schema";
+import {
+  loadTypeScriptSource,
+  type LoadedTypeScriptSource,
+  TypeScriptSourceLoadError,
+} from "./typescript-source-loader";
 
 export {
   formatDiagnostics,
@@ -112,49 +113,16 @@ async function scanPredicateSource(
   sourcePath: string,
   expectedForm: "semantic-test" | "benchmark-probe",
 ): Promise<SemanticSource | BenchmarkSemanticSource> {
-  const absolutePath = resolve(sourcePath);
-  const sourceText = await readFile(absolutePath, "utf8");
-  const configPath = ts.findConfigFile(
-    dirname(absolutePath),
-    ts.sys.fileExists,
-  );
-
-  if (configPath === undefined) {
-    throw new SemanticSourceError(
-      `tsconfig.json was not found for ${absolutePath}`,
-    );
+  let loaded: LoadedTypeScriptSource;
+  try {
+    loaded = await loadTypeScriptSource({ sourcePath });
+  } catch (error) {
+    if (error instanceof TypeScriptSourceLoadError) {
+      throw new SemanticSourceError(error.message);
+    }
+    throw error;
   }
-
-  const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
-  if (configFile.error) {
-    throw new SemanticSourceError(formatDiagnostics([configFile.error]));
-  }
-
-  const parsed = ts.parseJsonConfigFileContent(
-    configFile.config,
-    ts.sys,
-    dirname(configPath),
-  );
-  const rootNames = parsed.fileNames.includes(absolutePath)
-    ? parsed.fileNames
-    : [...parsed.fileNames, absolutePath];
-  const program = ts.createProgram({ rootNames, options: parsed.options });
-  const sourceFile = program.getSourceFile(absolutePath);
-
-  if (sourceFile === undefined) {
-    throw new SemanticSourceError(`TypeScript could not load ${absolutePath}`);
-  }
-
-  const sourceDiagnostics = ts
-    .getPreEmitDiagnostics(program, sourceFile)
-    .filter(
-      (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
-    );
-  if (sourceDiagnostics.length > 0) {
-    throw new SemanticSourceError(formatDiagnostics(sourceDiagnostics));
-  }
-
-  const checker = program.getTypeChecker();
+  const { absolutePath, sourceText, sourceFile, program, checker } = loaded;
   const concepts: SemanticSourceBase["concept"][] = [];
   const predicates: SemanticSourceBase["predicate"][] = [];
   const tests: SemanticSource["tests"][] = [];

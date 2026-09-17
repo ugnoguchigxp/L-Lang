@@ -8,6 +8,7 @@ export const SEMANTIC_LIMITS = {
   propertySegmentCharacters: 128,
   diagnostics: 32,
   diagnosticCharacters: 2_000,
+  typescriptSourceBytes: 2 * 1024 * 1024,
   externalJsonBytes: 2 * 1024 * 1024,
   lockBytes: 16 * 1024 * 1024,
   responseItems: 64,

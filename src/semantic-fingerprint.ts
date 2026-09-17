@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { dirname, relative, resolve } from "node:path";
 
 import { PREDICATE_PROMPT_VERSION } from "./openai";
@@ -6,6 +5,9 @@ import type { ProjectContext } from "./project-context";
 import type { SemanticSource } from "./semantic-source";
 import { STATIC_JUDGMENT_PROMPT_VERSION } from "./static-judgment";
 import type { StaticJudgmentSource } from "./static-judgment-source";
+import { sha256, stableJson } from "./stable-hash";
+
+export { fingerprintFor, sha256, stableJson } from "./stable-hash";
 
 export type PredicateSemanticHashes = {
   conceptHash: string;
@@ -112,26 +114,6 @@ export function staticJudgmentSemanticHashes(
       }),
     ),
   };
-}
-
-export function fingerprintFor(input: object): string {
-  return sha256(stableJson(input));
-}
-
-export function sha256(value: string | Uint8Array): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-export function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (typeof value === "object" && value !== null) {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value);
 }
 
 export function normalizePath(value: string): string {

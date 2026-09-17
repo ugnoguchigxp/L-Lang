@@ -1,4 +1,8 @@
 import { parsePredicateExpression } from "./ir";
+import {
+  parseCanonicalPredicateType,
+  type CanonicalPredicateType,
+} from "./canonical-type-ir";
 import type { TypeSchema } from "./semantic-source";
 import {
   contractSlots,
@@ -59,6 +63,40 @@ export function contractFromType(schema: TypeSchema): WasmContract {
     })
     .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return parseContract({ version: 1, fields });
+}
+
+export function contractFromCanonicalType(
+  input: CanonicalPredicateType,
+): WasmContract {
+  const type = parseCanonicalPredicateType(input);
+  return parseContract({
+    version: 1,
+    fields: type.fields.map((field): WasmField => {
+      const base = {
+        name: field.name,
+        nullable: field.nullability === "nullable",
+        undefinable: field.undefinedValue === "allowed",
+        optional: field.presence === "optional",
+      };
+      switch (field.value.kind) {
+        case "boolean":
+          return { ...base, kind: "boolean", values: [] };
+        case "open-string":
+          return { ...base, kind: "string", values: [] };
+        case "closed-string-enum":
+          return {
+            ...base,
+            kind: "enum",
+            values: [...field.value.values],
+          };
+        default:
+          throw new WasmError(
+            "UNSUPPORTED_TYPE",
+            "unsupported canonical field kind",
+          );
+      }
+    }),
+  });
 }
 
 export function lowerPredicate(
