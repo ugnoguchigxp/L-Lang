@@ -49,6 +49,8 @@
     "hybrid": "bun run src/hybrid-cli.ts",
     "hybrid:demo": "bun run examples/hybrid-wasm-scenarios/run.ts",
     "hybrid:demo:test": "bun test examples/hybrid-wasm-scenarios/scenarios.test.ts",
+    "world-clock:demo": "bun run examples/saaa-world-clock/server.ts",
+    "world-clock:test": "bun test examples/saaa-world-clock/world-clock.test.ts",
     "prompt": "bun run src/prompt-cli.ts",
     "prompt:evaluate": "bun run src/prompt-evaluation.ts",
     "capability": "bun run src/capability-cli.ts",

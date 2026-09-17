@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "intent": "分散したプロダクトチームが、各拠点の現在時刻と日付差を一目で確認できる世界時計を作る。落ち着いた夜空の外観にし、会議を設定しやすくする。",
+  "title": "Orbit Clock",
+  "subtitle": "Distributed team time, computed by WebAssembly",
+  "accent": "#78E3C2",
+  "locale": "ja-JP",
+  "cities": [
+    {
+      "id": "tokyo",
+      "label": "東京",
+      "timeZone": "Asia/Tokyo",
+      "group": "HQ"
+    },
+    {
+      "id": "singapore",
+      "label": "シンガポール",
+      "timeZone": "Asia/Singapore",
+      "group": "APAC"
+    },
+    {
+      "id": "london",
+      "label": "ロンドン",
+      "timeZone": "Europe/London",
+      "group": "EMEA"
+    },
+    {
+      "id": "new-york",
+      "label": "ニューヨーク",
+      "timeZone": "America/New_York",
+      "group": "AMER"
+    },
+    {
+      "id": "san-francisco",
+      "label": "サンフランシスコ",
+      "timeZone": "America/Los_Angeles",
+      "group": "AMER"
+    },
+    {
+      "id": "sydney",
+      "label": "シドニー",
+      "timeZone": "Australia/Sydney",
+      "group": "APAC"
+    }
+  ]
+}

@@ -12,6 +12,8 @@ The LLM does not generate unrestricted code. At compile time it returns a restri
 
 The [seven-stage Hybrid Compiler demo](./examples/hybrid-wasm-scenarios/README.md) (Japanese) also imports existing TypeScript types and restricted predicates statically and produces reproducible Wasm artifacts. Its 30 cases progress from booleans through nullable values and composite business rules to Unicode enums.
 
+The [browser-based World Clock Wasm demo](./examples/saaa-world-clock/README.md) (Japanese) is an end-to-end example of SAAA shaping a conversational request into a UI capability. It deterministically generates a purpose-specific Wasm ABI and manifest, then renders live IANA timezone data through a host adapter.
+
 An experimental path also compiles a limited predicate from JSON Prompt Source to WebAssembly without a TypeScript DSL. It supports source creation, updates scoped to requirement IDs, resolution into a separate Lock, and offline build/test/inspect. See the [usage guide](./examples/prompt-active-customer/README.md) and [results and limitations](./docs/PROMPT_SOURCE_RESULTS.md) (Japanese).
 
 The [capability candidate workflow](./examples/capability-access/README.md) (Japanese) packages Wasm with its source and separate tests for offline verification in another process. SAAA acceptance and deployment remain future work.

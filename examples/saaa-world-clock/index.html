@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Orbit Clock — SAAA Wasm demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <main>
+      <header class="hero">
+        <div class="eyebrow"><span></span>SAAA GENERATED CAPABILITY</div>
+        <div class="hero-grid">
+          <div>
+            <h1 id="title">Orbit Clock</h1>
+            <p id="subtitle">Loading generated capability…</p>
+          </div>
+          <div class="runtime-panel">
+            <span id="runtime-status" data-state="loading">Loading Wasm</span>
+            <strong id="utc-clock">UTC --:--:--</strong>
+          </div>
+        </div>
+        <p class="intent" id="intent"></p>
+      </header>
+
+      <section class="clock-grid" id="app" aria-live="polite">
+        <div class="loading-card">Compiling local time views…</div>
+      </section>
+
+      <footer>
+        <div>
+          <span class="footer-label">Execution boundary</span>
+          <strong>Intl timezone adapter → deterministic Wasm arithmetic</strong>
+        </div>
+        <code id="wasm-meta">world-clock-i32-v1</code>
+      </footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
