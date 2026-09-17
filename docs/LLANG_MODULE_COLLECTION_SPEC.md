@@ -53,20 +53,25 @@ i32 arithmetic retains `ARITHMETIC_OVERFLOW` and `DIVISION_BY_ZERO`.
 
 ## ABI and artifacts
 
-Build manifest version 3 uses ABI `llang-collection-memory-v1`, suite version
-3, fixed 128-page memory, and source and lowered hashes. A List wire descriptor
+New builds use manifest version 4 and ABI `llang-collection-native-v1`;
+manifest version 3 / `llang-collection-memory-v1` identifies the retired
+host-evaluated shell format and is never interpreted as native. Suite version
+3 remains unchanged. The native ABI uses fixed 128-page memory and source and
+lowered hashes. A List wire descriptor
 is an eight-byte little-endian pointer/count pair. Empty Lists use the sole
 canonical representation `pointer=0,count=0`. The codec verifies alignment,
 count×stride arithmetic, containment, non-overlapping payload regions, UTF-8,
 depth, and aggregate element limits.
 
-The artifact exports only `memory` and
-`evaluate(inputPtr,inputLength,outputPtr,outputCapacity) -> status` and imports
-nothing. Status 6 is reserved for `INDEX_OUT_OF_BOUNDS`; statuses from older
-ABIs are not redefined. Portable verification authenticates the sealed lowered
-executable contract, validates the Wasm shell with Binaryen 132.0.0 and the
-WebAssembly engine, then performs the same codec and resource checks without
-source files or the compiler.
+The artifact imports nothing and exports `memory`,
+`evaluate(inputPtr,inputLength,outputPtr,outputCapacity) -> outputLength`, and
+`fault_code()`. List operations, loops, direct calls, monomorphized calls,
+closure dispatch, checked arithmetic, fuel, and call-depth are executed by
+native Wasm instructions. Fault codes are read only after a trap. Portable
+verification validates the native Wasm with Binaryen 132.0.0 and the
+WebAssembly engine, then executes it without source files, compiler, IR, or the
+reference evaluator. Output promotion recursively copies nested List/string
+payloads into the output region before returning.
 
 See [`../examples/module-order-batch/`](../examples/module-order-batch/) for
-equivalent TypeScript and JSONC sources and a portable version-3 suite.
+equivalent TypeScript and JSONC sources and a portable suite.

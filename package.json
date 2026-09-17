@@ -39,7 +39,7 @@
     "test": "bun test",
     "coverage": "bun run src/run-coverage.ts",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun test",
-    "ci:smoke": "bun run semantic explain examples/active-customer/semantic.ts --json && bun run semantic verify semantic-closure.json --json && bun run ci:llang-smoke && bun run ci:module-smoke",
+    "ci:smoke": "bun run semantic explain examples/active-customer/semantic.ts --json && bun run semantic verify semantic-closure.json --json && bun run ci:llang-smoke && bun run ci:module-smoke && bun run ci:effects-smoke",
     "ci:protected": "bun run src/verify-protected-inputs.ts",
     "ci:docs": "bun run src/verify-markdown-links.ts && bun run src/verify-doc-contracts.ts",
     "verify": "bun run src/cli.ts verify examples/active-customer/predicate.ir.json --out artifacts/active-customer/predicate.generated.ts",
@@ -59,6 +59,7 @@
     "capability:host-kit": "bun run src/capability-host-kit.ts",
     "ci:llang-smoke": "bun run src/llang-smoke.ts",
     "ci:module-smoke": "bun run src/llang-module-smoke.ts",
+    "ci:effects-smoke": "bun run src/llang-effects-smoke.ts",
     "examples:matrix": "bun run examples/source-output-matrix/run.ts",
     "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts"
   },

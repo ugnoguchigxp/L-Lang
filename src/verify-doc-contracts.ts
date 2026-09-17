@@ -38,6 +38,8 @@ if (!pkg.scripts["ci:smoke"].includes("ci:llang-smoke"))
   throw new Error("JSONC smoke is not included in CI smoke");
 if (!pkg.scripts["ci:smoke"].includes("ci:module-smoke"))
   throw new Error("typed module smoke is not included in CI smoke");
+if (!pkg.scripts["ci:smoke"].includes("ci:effects-smoke"))
+  throw new Error("effects smoke is not included in CI smoke");
 console.log(
-  `documentation contracts passed: ${commands.length + moduleCommands.length} commands, ${versions.length} versions, JSONC and module smoke`,
+  `documentation contracts passed: ${commands.length + moduleCommands.length} commands, ${versions.length} versions, JSONC, module, and effects smoke`,
 );

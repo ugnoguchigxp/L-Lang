@@ -22,6 +22,12 @@ import {
   encodeCollectionToMemory,
 } from "./llang-collection-abi";
 import type { CollectionType } from "./llang-module-collection-ir";
+import { canonicalCollectionType } from "./llang-module-collection-ir";
+import {
+  instantiateLegacyCollectionModule,
+  type LegacyCollectionWasmContract,
+} from "./llang-module-collection-legacy-runtime";
+import { fingerprintFor } from "./stable-hash";
 
 const local = (name: string) => ({ kind: "local", name });
 const field = (base: object, name: string) => ({ kind: "field", base, name });
@@ -252,12 +258,19 @@ export function evaluate(input: Input): Output {
       expect(
         evaluateCollectionProgram(program, { values: [1, 2, 3], threshold: 0 }),
       ).toEqual({ total: 6 });
+      const native = emitCollectionModuleWasm(program);
+      expect(
+        instantiateCollectionModule(native.contract, native.bytes).evaluate({
+          values: [1, 2, 3],
+          threshold: 0,
+        }),
+      ).toEqual({ total: 6 });
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   });
 
-  test("version-3 bundle verifies without source or compiler", async () => {
+  test("version-4 native bundle verifies without source or compiler", async () => {
     const root = await mkdtemp(join(tmpdir(), "llang-collection-build-"));
     try {
       await writeFile(join(root, "main.llang.jsonc"), JSON.stringify(source));
@@ -429,10 +442,14 @@ export function evaluate(input: Input): Output {
         "evaluate",
       );
       expect(evaluateCollectionProgram(program, { value: 10 })).toBe(10);
+      const native = emitCollectionModuleWasm(program),
+        runtime = instantiateCollectionModule(native.contract, native.bytes);
+      expect(runtime.evaluate({ value: 10 })).toBe(10);
       expect(program.instances.some((x) => x.includes("identity"))).toBe(true);
       expect(() => evaluateCollectionProgram(program, { value: 65 })).toThrow(
         "call depth exceeded",
       );
+      expect(() => runtime.evaluate({ value: 65 })).toThrow("RESOURCE_LIMIT");
       recursive.functions[2].body.result.typeArguments = [];
       await writeFile(join(root, "bad.llang.jsonc"), JSON.stringify(recursive));
       expect(
@@ -519,6 +536,13 @@ export function evaluate(input: Input): Output {
       expect(evaluateCollectionProgram(program, { base: 4, value: 6 })).toBe(
         10,
       );
+      const native = emitCollectionModuleWasm(program);
+      expect(
+        instantiateCollectionModule(native.contract, native.bytes).evaluate({
+          base: 4,
+          value: 6,
+        }),
+      ).toBe(10);
       closure.functions[0].body = {
         statements: [
           { kind: "let", name: "captured", type: "i32", value: local("base") },
@@ -556,6 +580,54 @@ export function evaluate(input: Input): Output {
     const empty = new Uint8Array(32);
     encodeCollectionToMemory(empty, type, [], 8, 16);
     expect([...empty.slice(8, 16)]).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  test("native output promotion deep-copies nested input payloads", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-collection-promote-"));
+    const passThrough = {
+      language: "l-lang",
+      version: 4,
+      kind: "module",
+      profile: "module-collection-v1",
+      imports: [],
+      types: [
+        {
+          name: "Input",
+          export: true,
+          kind: "record",
+          typeParameters: [],
+          fields: [{ name: "values", type: { list: "string" } }],
+        },
+      ],
+      functions: [
+        {
+          name: "evaluate",
+          export: true,
+          typeParameters: [],
+          parameters: [{ name: "input", type: { ref: "Input" } }],
+          returns: { ref: "Input" },
+          body: { statements: [], result: local("input") },
+        },
+      ],
+    };
+    try {
+      await writeFile(
+        join(root, "main.llang.jsonc"),
+        JSON.stringify(passThrough),
+      );
+      const program = await loadCollectionModuleProgram(
+          "main.llang.jsonc",
+          root,
+          "evaluate",
+        ),
+        native = emitCollectionModuleWasm(program),
+        runtime = instantiateCollectionModule(native.contract, native.bytes);
+      expect(runtime.evaluate({ values: ["商品", "", "A"] })).toEqual({
+        values: ["商品", "", "A"],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   test("untrusted ABI values and suite shapes are rejected strictly", () => {
@@ -628,7 +700,7 @@ export function evaluate(input: Input): number { return 0; }`,
     }
   });
 
-  test("portable runtime invokes the Wasm ABI export", async () => {
+  test("portable runtime invokes the native Wasm ABI export", async () => {
     const root = await mkdtemp(join(tmpdir(), "llang-collection-wasm-call-"));
     try {
       await writeFile(join(root, "main.llang.jsonc"), JSON.stringify(source));
@@ -640,19 +712,210 @@ export function evaluate(input: Input): number { return 0; }`,
         emitted = emitCollectionModuleWasm(program),
         replacement = binaryen.parseText(`(module
           (memory (export "memory") 128 128)
+          (func (export "fault_code") (result i32) (i32.const 0))
           (func (export "evaluate") (param i32 i32 i32 i32) (result i32)
-            (i32.const 4)))`);
+            (i32.const 0)))`);
       try {
         const runtime = instantiateCollectionModule(
           emitted.contract,
           new Uint8Array(replacement.emitBinary()),
         );
         expect(() => runtime.evaluate({ values: [], threshold: 0 })).toThrow(
-          "unexpected Wasm execution status",
+          "invalid native output length",
         );
       } finally {
         replacement.dispose();
       }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("legacy shell ABI remains explicit and isolated from native runtime", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-collection-legacy-"));
+    try {
+      await writeFile(join(root, "main.llang.jsonc"), JSON.stringify(source));
+      const program = await loadCollectionModuleProgram(
+          "main.llang.jsonc",
+          root,
+          "evaluate",
+        ),
+        legacyLayoutHash = fingerprintFor({
+          abi: "llang-collection-memory-v1",
+          input: canonicalCollectionType(program.entryInput),
+          output: canonicalCollectionType(program.entryOutput),
+        }),
+        { modules: _modules, ...nativeExecutable } = program,
+        executable = { ...nativeExecutable, layoutHash: legacyLayoutHash },
+        contract: LegacyCollectionWasmContract = {
+          abi: "llang-collection-memory-v1",
+          memory: { initial: 128, maximum: 128 },
+          inputType: program.entryInput,
+          outputType: program.entryOutput,
+          layoutHash: legacyLayoutHash,
+          programHash: program.programHash,
+          loweredHash: program.loweredHash,
+          executableHash: fingerprintFor(executable),
+          executable,
+        },
+        shell = binaryen.parseText(`(module
+          (memory (export "memory") 128 128)
+          (func (export "evaluate") (param i32 i32 i32 i32) (result i32)
+            (i32.const 5)))`);
+      try {
+        expect(
+          instantiateLegacyCollectionModule(
+            contract,
+            new Uint8Array(shell.emitBinary()),
+          ).evaluate({ values: [3, 1, 2], threshold: 2 }),
+        ).toEqual({ values: [2, 3], total: 5 });
+        const native = emitCollectionModuleWasm(program);
+        expect(() =>
+          instantiateCollectionModule(
+            contract as unknown as typeof native.contract,
+            native.bytes,
+          ),
+        ).toThrow("invalid collection ABI contract");
+      } finally {
+        shell.dispose();
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("native lowering covers strings, map, append, variants and match", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-collection-native-wide-"));
+    const wide: any = {
+      language: "l-lang",
+      version: 4,
+      kind: "module",
+      profile: "module-collection-v1",
+      imports: [],
+      types: [
+        {
+          name: "Input",
+          export: true,
+          kind: "record",
+          typeParameters: [],
+          fields: [{ name: "names", type: { list: "string" } }],
+        },
+        {
+          name: "Result",
+          export: true,
+          kind: "union",
+          typeParameters: [],
+          variants: [
+            {
+              tag: "Ok",
+              fields: [{ name: "values", type: { list: "string" } }],
+            },
+            { tag: "Empty", fields: [] },
+          ],
+        },
+      ],
+      functions: [
+        {
+          name: "count",
+          export: false,
+          typeParameters: [],
+          parameters: [{ name: "result", type: { ref: "Result" } }],
+          returns: "i32",
+          body: {
+            statements: [
+              {
+                kind: "match",
+                value: local("result"),
+                cases: [
+                  {
+                    tag: "Ok",
+                    body: [
+                      {
+                        kind: "return",
+                        value: { kind: "literal", type: "i32", value: 1 },
+                      },
+                    ],
+                  },
+                  {
+                    tag: "Empty",
+                    body: [
+                      {
+                        kind: "return",
+                        value: { kind: "literal", type: "i32", value: 0 },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          name: "evaluate",
+          export: true,
+          typeParameters: [],
+          parameters: [{ name: "input", type: { ref: "Input" } }],
+          returns: "i32",
+          body: {
+            statements: [
+              {
+                kind: "const",
+                name: "mapped",
+                type: { list: "string" },
+                value: callIntrinsic("map", [
+                  field(local("input"), "names"),
+                  lambda([{ name: "name", type: "string" }], "string", {
+                    kind: "intrinsic",
+                    name: "concat",
+                    typeArguments: [],
+                    arguments: [
+                      local("name"),
+                      { kind: "literal", type: "string", value: "!" },
+                    ],
+                  }),
+                ]),
+              },
+              {
+                kind: "const",
+                name: "appended",
+                type: { list: "string" },
+                value: callIntrinsic("append", [
+                  local("mapped"),
+                  { kind: "literal", type: "string", value: "done" },
+                ]),
+              },
+            ],
+            result: {
+              kind: "call",
+              callee: "count",
+              typeArguments: [],
+              arguments: [
+                {
+                  kind: "variant",
+                  type: "Result",
+                  typeArguments: [],
+                  tag: "Ok",
+                  fields: [{ name: "values", value: local("appended") }],
+                },
+              ],
+            },
+          },
+        },
+      ],
+    };
+    try {
+      await writeFile(join(root, "main.llang.jsonc"), JSON.stringify(wide));
+      const program = await loadCollectionModuleProgram(
+          "main.llang.jsonc",
+          root,
+          "evaluate",
+        ),
+        native = emitCollectionModuleWasm(program),
+        runtime = instantiateCollectionModule(native.contract, native.bytes);
+      expect(evaluateCollectionProgram(program, { names: ["A", "商品"] })).toBe(
+        1,
+      );
+      expect(runtime.evaluate({ names: ["A", "商品"] })).toBe(1);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

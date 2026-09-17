@@ -142,7 +142,7 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         unknown
       >;
       const report =
-        manifest.version === 3 && manifest.profile === "module-collection-v1"
+        manifest.version === 4 && manifest.profile === "module-collection-v1"
           ? await verifyCollectionModuleBundle(
               source,
               options["--suite"] as string,

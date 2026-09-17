@@ -1072,7 +1072,7 @@ export function checkCollectionProgram(
     output: canonicalCollectionType(entry.returnType),
   });
   const layoutHash = fingerprintFor({
-    abi: "llang-collection-memory-v1",
+    abi: "llang-collection-native-v1",
     input: canonicalCollectionType(entryInput),
     output: canonicalCollectionType(entry.returnType),
   });

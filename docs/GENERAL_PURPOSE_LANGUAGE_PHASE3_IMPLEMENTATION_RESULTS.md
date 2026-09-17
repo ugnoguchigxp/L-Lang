@@ -65,3 +65,12 @@ contract を host 側の決定的 evaluator で実行する。
 したがって、直接 Wasm 命令へ lower する旧 value emitter と実装方式が
 異なる。外部から見た ABI、portable verify、資源・fault oracle は固定した
 が、collection 本体の native Wasm lowering は未完了である。
+
+## 第四弾開始時のnative補完（2026-09-18）
+
+上記の未完了事項は第四弾 PR-0A/0B 相当で補完した。新しい build manifest
+version 4 / ABI `llang-collection-native-v1` は旧shell版と明確に区別される。
+配布runtimeから参照評価器のimportとsealed executable contractを除去し、
+List、loop、再帰、単相化call、closure、fault、fuelをWasm内で実行する。
+portable verifyはsource/compiler/evaluatorなしでnative artifactを実行する。
+旧version 3 artifactをnativeとして推測して読むことはない。

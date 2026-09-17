@@ -1,9 +1,5 @@
 import binaryen from "binaryen";
-import { evaluateCollectionProgram } from "./llang-module-collection-evaluator";
-import {
-  canonicalCollectionType,
-  type CheckedCollectionProgram,
-} from "./llang-module-collection-ir";
+import { canonicalCollectionType } from "./llang-module-collection-ir";
 import { fingerprintFor } from "./stable-hash";
 import {
   COLLECTION_ABI,
@@ -22,7 +18,7 @@ export function assertCollectionWasmContract(candidate: unknown): void {
     const value = candidate as CollectionWasmContract,
       keys = Object.keys(value);
     if (
-      keys.length !== 9 ||
+      keys.length !== 7 ||
       ![
         "abi",
         "memory",
@@ -31,8 +27,6 @@ export function assertCollectionWasmContract(candidate: unknown): void {
         "layoutHash",
         "programHash",
         "loweredHash",
-        "executableHash",
-        "executable",
       ].every((key) => Object.hasOwn(value, key)) ||
       value.abi !== COLLECTION_ABI ||
       !value.memory ||
@@ -43,15 +37,7 @@ export function assertCollectionWasmContract(candidate: unknown): void {
       value.memory.maximum !== 128 ||
       !HASH.test(value.layoutHash) ||
       !HASH.test(value.programHash) ||
-      !HASH.test(value.loweredHash) ||
-      !HASH.test(value.executableHash) ||
-      !value.executable ||
-      typeof value.executable !== "object" ||
-      Array.isArray(value.executable) ||
-      value.executable.profile !== "module-collection-v1" ||
-      value.executable.programHash !== value.programHash ||
-      value.executable.loweredHash !== value.loweredHash ||
-      fingerprintFor(value.executable) !== value.executableHash
+      !HASH.test(value.loweredHash)
     )
       throw new Error();
     const layoutHash = fingerprintFor({
@@ -77,9 +63,10 @@ export function assertCollectionWasmBinary(
     exports = WebAssembly.Module.exports(compiled);
   if (
     imports.length ||
-    exports.length !== 2 ||
+    exports.length !== 3 ||
     !exports.some((x) => x.name === "memory" && x.kind === "memory") ||
-    !exports.some((x) => x.name === "evaluate" && x.kind === "function")
+    !exports.some((x) => x.name === "evaluate" && x.kind === "function") ||
+    !exports.some((x) => x.name === "fault_code" && x.kind === "function")
   )
     throw new Error("INVALID_ARTIFACT: unexpected collection Wasm interface");
   const inspected = binaryen.readBinary(bytes);
@@ -141,22 +128,33 @@ export function instantiateCollectionModule(
           inputBase,
           inputLength,
         );
-      // Status 5 is the ABI's explicit sealed-host-execution marker. Calling
-      // the export prevents a shape-compatible but behaviorally unrelated
-      // binary from being silently ignored by the portable runtime.
-      if (wasmEvaluate(inputBase, inputLength, outputBase, capacity) !== 5)
-        throw new Error("INVALID_ARTIFACT: unexpected Wasm execution status");
-      const result = evaluateCollectionProgram(
-          { ...contract.executable, modules: [] } as CheckedCollectionProgram,
-          decodedInput,
-        ),
-        outputLength = encodeCollectionToMemory(
-          bytes,
-          contract.outputType,
-          result,
-          outputBase,
-          capacity,
+      // Decode once before entering Wasm so malformed descriptors never reach
+      // the native program. The decoded value is intentionally unused: the
+      // Wasm module consumes the canonical bytes directly.
+      void decodedInput;
+      let outputLength: number;
+      try {
+        outputLength = Number(
+          wasmEvaluate(inputBase, inputLength, outputBase, capacity),
         );
+      } catch (error) {
+        const faultCode = instance.exports.fault_code;
+        const code = typeof faultCode === "function" ? Number(faultCode()) : 0;
+        const names: Record<number, string> = {
+          1: "INDEX_OUT_OF_BOUNDS",
+          2: "DIVISION_BY_ZERO",
+          3: "ARITHMETIC_OVERFLOW",
+          4: "RESOURCE_LIMIT",
+          5: "INVALID_ARTIFACT",
+        };
+        throw new Error(names[code] ?? `WASM_TRAP: ${String(error)}`);
+      }
+      if (
+        !Number.isInteger(outputLength) ||
+        outputLength <= 0 ||
+        outputLength > capacity
+      )
+        throw new Error("INVALID_ARTIFACT: invalid native output length");
       return decodeCollectionFromMemory(
         bytes,
         contract.outputType,

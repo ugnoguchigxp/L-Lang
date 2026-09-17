@@ -31,9 +31,9 @@ import {
 export type CollectionModuleTarget = "typescript" | "jsonc" | "wasm";
 export type CollectionModuleBuildManifest = {
   format: "llang-module-build";
-  version: 3;
+  version: 4;
   profile: "module-collection-v1";
-  abi: "llang-collection-memory-v1";
+  abi: "llang-collection-native-v1";
   entry: string;
   sourceSetHash: string;
   programHash: string;
@@ -154,9 +154,9 @@ export async function buildCollectionModuleProgram(options: {
     await revalidateCollectionModuleSnapshot(program);
     const manifest: CollectionModuleBuildManifest = {
       format: "llang-module-build",
-      version: 3,
+      version: 4,
       profile: "module-collection-v1",
-      abi: "llang-collection-memory-v1",
+      abi: "llang-collection-native-v1",
       entry: program.entry,
       sourceSetHash: program.sourceSetHash,
       programHash: program.programHash,
@@ -268,9 +268,9 @@ export async function readCollectionModuleBuildManifest(path: string): Promise<{
   const value = parsed as CollectionModuleBuildManifest;
   if (
     value.format !== "llang-module-build" ||
-    value.version !== 3 ||
+    value.version !== 4 ||
     value.profile !== "module-collection-v1" ||
-    value.abi !== "llang-collection-memory-v1" ||
+    value.abi !== "llang-collection-native-v1" ||
     typeof value.entry !== "string" ||
     !value.entry.includes("#") ||
     value.entry.length > 1024 ||

@@ -1,6 +1,9 @@
 # 第四弾実装計画：バイナリ実行と外部接続
 
-作成日：2026-09-18。状態：**実装前の計画案**。新構文・profile・ABI・版番号・ファイル配置は提案であり、利用可能な機能を表さない。
+作成日：2026-09-18。状態：**実装中**。PR-0相当のcollection native化と、
+effects runtimeの値・契約・session・adapter・継続ABI基盤は実装済み。
+`module-effects-v1` frontendと汎用loweringを含む全体は未完了であり、
+本書の未完了項目を利用可能な言語機能として扱わない。
 
 参照：[拡張方針](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)、[第三弾計画](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)、[第三弾結果](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_RESULTS.md)。
 
