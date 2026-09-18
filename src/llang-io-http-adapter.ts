@@ -71,19 +71,9 @@ const addressType = (family: 4 | 6) => (family === 4 ? "ipv4" : "ipv6");
 const HEADER_NAME = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 const HEADER_VALUE = /^[\t\x20-\x7e\x80-\xff]*$/;
 
-const setHeader = (
-  target: Record<string, string>,
-  name: string,
-  value: string,
-): void => {
+const validateHeader = (name: string, value: string): void => {
   if (!HEADER_NAME.test(name) || !HEADER_VALUE.test(value))
     throw new Error("INVALID_HTTP_HEADER");
-  Object.defineProperty(target, name, {
-    value,
-    writable: true,
-    enumerable: true,
-    configurable: true,
-  });
 };
 
 const explicitAddresses = (entries: readonly string[]) => {
@@ -170,7 +160,7 @@ export class HttpAdapter {
       throw new Error("PERMISSION_DENIED: origin");
     if (options.body && options.body.length > 1024 * 1024)
       throw new Error("RESOURCE_LIMIT: request body");
-    const headers: Record<string, string> = {};
+    const headerEntries: [string, string][] = [];
     for (const [name, value] of Object.entries(options.headers ?? {})) {
       const lower = name.toLowerCase();
       if (
@@ -179,14 +169,17 @@ export class HttpAdapter {
         )
       )
         throw new Error("PERMISSION_DENIED: credential header");
-      setHeader(headers, lower, value);
+      validateHeader(lower, value);
+      headerEntries.push([lower, value]);
     }
     for (const [name, value] of Object.entries(
       this.credentialHeaders.get(url.origin) ?? {},
     )) {
       const lower = name.toLowerCase();
-      setHeader(headers, lower, value);
+      validateHeader(lower, value);
+      headerEntries.push([lower, value]);
     }
+    const headers = Object.fromEntries(headerEntries);
 
     const hostname = url.hostname.replace(/^\[|\]$/g, ""),
       addresses = await this.#resolve(hostname),
@@ -228,14 +221,14 @@ export class HttpAdapter {
     options.signal?.addEventListener("abort", abortBody, { once: true });
     if (options.signal?.aborted) abortBody();
     this.#bodies.set(id, resource);
-    const responseHeaders: Record<string, string> = {};
+    const responseHeaderEntries: [string, string][] = [];
     for (const [name, value] of Object.entries(response.headers))
       if (value !== undefined)
-        setHeader(
-          responseHeaders,
+        responseHeaderEntries.push([
           name,
           Array.isArray(value) ? value.join(", ") : value,
-        );
+        ]);
+    const responseHeaders = Object.fromEntries(responseHeaderEntries);
     return Object.freeze({
       status: response.statusCode ?? 0,
       headers: Object.freeze(responseHeaders),
