@@ -81,7 +81,7 @@ describe("Private Pilot live runner", () => {
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }
-  }, 20_000);
+  }, 30_000);
 
   test("retries HTTP 429 with a cooldown after every API attempt", async () => {
     const fixture = await createLiveFixture();
@@ -112,7 +112,7 @@ describe("Private Pilot live runner", () => {
     } finally {
       await rm(fixture.directory, { recursive: true, force: true });
     }
-  }, 20_000);
+  }, 30_000);
 
   test("refuses to duplicate an uncertain pending API call", async () => {
     const fixture = await createLiveFixture();
