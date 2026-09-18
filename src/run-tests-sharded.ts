@@ -14,11 +14,17 @@ const files = (await new Response(listing.stdout).text())
 if ((await listing.exited) !== 0) throw new Error("cannot list test files");
 if (files.length === 0) throw new Error("no test files found");
 
+const isolated = new Set(["src/static-judgment-compiler.integration.test.ts"]);
+const regularFiles = files.filter((file) => !isolated.has(file));
 const shardSize = 24;
-for (let offset = 0; offset < files.length; offset += shardSize) {
-  const shard = files.slice(offset, offset + shardSize);
-  const number = Math.floor(offset / shardSize) + 1;
-  const count = Math.ceil(files.length / shardSize);
+const shards: string[][] = [];
+for (let offset = 0; offset < regularFiles.length; offset += shardSize)
+  shards.push(regularFiles.slice(offset, offset + shardSize));
+for (const file of files) if (isolated.has(file)) shards.push([file]);
+
+for (const [index, shard] of shards.entries()) {
+  const number = index + 1;
+  const count = shards.length;
   console.log(`test shard ${number}/${count} (${shard.length} files)`);
   const child = Bun.spawn(
     [process.execPath, "test", "--timeout", "30000", ...shard],

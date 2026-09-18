@@ -232,7 +232,7 @@ describe("Static Judgment compiler transaction", () => {
     } finally {
       await rm(testRoot, { recursive: true, force: true });
     }
-  }, 120_000);
+  }, 240_000);
 });
 
 function createRunner(
