@@ -160,7 +160,7 @@ export class HttpAdapter {
       throw new Error("PERMISSION_DENIED: origin");
     if (options.body && options.body.length > 1024 * 1024)
       throw new Error("RESOURCE_LIMIT: request body");
-    const headerEntries: [string, string][] = [];
+    const headers: Record<string, string> = {};
     for (const [name, value] of Object.entries(options.headers ?? {})) {
       const lower = name.toLowerCase();
       if (
@@ -170,16 +170,27 @@ export class HttpAdapter {
       )
         throw new Error("PERMISSION_DENIED: credential header");
       validateHeader(lower, value);
-      headerEntries.push([lower, value]);
+      if (lower === "__proto__")
+        Object.defineProperty(headers, lower, {
+          value,
+          enumerable: true,
+          configurable: true,
+        });
+      else headers[lower] = value;
     }
     for (const [name, value] of Object.entries(
       this.credentialHeaders.get(url.origin) ?? {},
     )) {
       const lower = name.toLowerCase();
       validateHeader(lower, value);
-      headerEntries.push([lower, value]);
+      if (lower === "__proto__")
+        Object.defineProperty(headers, lower, {
+          value,
+          enumerable: true,
+          configurable: true,
+        });
+      else headers[lower] = value;
     }
-    const headers = Object.fromEntries(headerEntries);
 
     const hostname = url.hostname.replace(/^\[|\]$/g, ""),
       addresses = await this.#resolve(hostname),
@@ -221,14 +232,10 @@ export class HttpAdapter {
     options.signal?.addEventListener("abort", abortBody, { once: true });
     if (options.signal?.aborted) abortBody();
     this.#bodies.set(id, resource);
-    const responseHeaderEntries: [string, string][] = [];
+    const responseHeaders: Record<string, string> = {};
     for (const [name, value] of Object.entries(response.headers))
-      if (value !== undefined)
-        responseHeaderEntries.push([
-          name,
-          Array.isArray(value) ? value.join(", ") : value,
-        ]);
-    const responseHeaders = Object.fromEntries(responseHeaderEntries);
+      if (value !== undefined && name !== "__proto__")
+        responseHeaders[name] = Array.isArray(value) ? value.join(", ") : value;
     return Object.freeze({
       status: response.statusCode ?? 0,
       headers: Object.freeze(responseHeaders),
