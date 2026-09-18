@@ -40,5 +40,24 @@ describe("generic typed effect values", () => {
     expect(() => decodeEffectValue({ kind: "f64" }, Infinity)).toThrow(
       "NUMERIC_NON_FINITE",
     );
+    expect(() =>
+      encodeEffectValue(type, {
+        count: 42n,
+        payload: LBytes.from([1]),
+        extra: true,
+      }),
+    ).toThrow("INVALID_RECORD");
+  });
+
+  test("keeps special record field names as own data properties", () => {
+    const type = parseEffectValueType(
+      JSON.parse('{"kind":"record","fields":{"__proto__":"string"}}'),
+    );
+    if (type.kind !== "record") throw new Error("missing record type");
+    expect(Object.hasOwn(type.fields, "__proto__")).toBe(true);
+    const value = Object.fromEntries([["__proto__", "safe"]]);
+    expect(decodeEffectWire(type, encodeEffectWire(type, value))).toEqual(
+      value,
+    );
   });
 });

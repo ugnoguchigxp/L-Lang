@@ -145,4 +145,120 @@ describe("generic typed effects Wasm state machine", () => {
       runtime.dispose();
     }
   });
+
+  test("copies responses larger than the old overlapping buffer gap", () => {
+    const emitted = emitTypedEffectsWasm(
+        {
+          nodes: [
+            {
+              kind: "await",
+              operation: "host.bytes",
+              version: 1,
+              requestType: { kind: "bytes" },
+              responseType: { kind: "bytes" },
+              request: LBytes.from([]),
+            },
+          ],
+          resultType: { kind: "bytes" },
+        },
+        [{ id: "host.bytes", version: 1 }],
+      ),
+      runtime = new TypedEffectsRuntime(emitted.bytes, emitted.states),
+      bytes = LBytes.from(
+        Uint8Array.from({ length: 900 * 1024 }, (_, index) => index % 251),
+      );
+    try {
+      const pending = runtime.start();
+      if (!pending.request) throw new Error("missing bytes request");
+      expect(runtime.resume(pending.request, true, bytes).result).toEqual(
+        bytes,
+      );
+    } finally {
+      runtime.dispose();
+    }
+  });
+
+  test("rejects inconsistent direct lowering contracts", () => {
+    expect(() =>
+      emitTypedEffectsWasm(
+        {
+          nodes: [
+            {
+              kind: "await",
+              operation: "host.value",
+              version: 1,
+              requestType: { kind: "i32" },
+              responseType: { kind: "i32" },
+              request: 1,
+            },
+          ],
+          resultType: { kind: "string" },
+        },
+        [{ id: "host.value", version: 1 }],
+      ),
+    ).toThrow("INVALID_PROGRAM_RESULT_TYPE");
+    expect(() =>
+      emitTypedEffectsWasm(
+        {
+          nodes: [
+            {
+              kind: "task",
+              tasks: [
+                {
+                  kind: "await",
+                  operation: "host.missing",
+                  version: 1,
+                  requestType: { kind: "i32" },
+                  responseType: { kind: "i32" },
+                  request: 1,
+                },
+              ],
+              responseType: { kind: "list", element: { kind: "i32" } },
+            },
+          ],
+          resultType: { kind: "list", element: { kind: "i32" } },
+        },
+        [],
+      ),
+    ).toThrow("UNKNOWN_OPERATION");
+  });
+
+  test("rejects a forged state before resuming Wasm", () => {
+    const emitted = emitTypedEffectsWasm(
+        {
+          nodes: [
+            {
+              kind: "await",
+              operation: "host.value",
+              version: 1,
+              requestType: { kind: "i32" },
+              responseType: { kind: "i32" },
+              request: 1,
+            },
+            {
+              kind: "await",
+              operation: "host.value",
+              version: 1,
+              requestType: { kind: "i32" },
+              responseType: { kind: "i32" },
+              request: 2,
+            },
+          ],
+          resultType: { kind: "i32" },
+        },
+        [{ id: "host.value", version: 1 }],
+      ),
+      runtime = new TypedEffectsRuntime(emitted.bytes, emitted.states);
+    try {
+      const pending = runtime.start();
+      if (!pending.request) throw new Error("missing request");
+      const request = pending.request;
+      expect(() =>
+        runtime.resume({ ...request, state: 1 }, true, 9),
+      ).toThrow("INVALID_REQUEST");
+      expect(runtime.resume(request, true, 9).request?.state).toBe(1);
+    } finally {
+      runtime.dispose();
+    }
+  });
 });

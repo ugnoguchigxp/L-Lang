@@ -3,6 +3,8 @@ import {
   request as httpRequest,
   type IncomingMessage,
   type RequestOptions,
+  validateHeaderName,
+  validateHeaderValue,
 } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP, type LookupFunction } from "node:net";
@@ -153,9 +155,18 @@ export class HttpAdapter {
       throw new Error("PERMISSION_DENIED: origin");
     if (options.body && options.body.length > 1024 * 1024)
       throw new Error("RESOURCE_LIMIT: request body");
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = Object.create(null) as Record<
+      string,
+      string
+    >;
     for (const [name, value] of Object.entries(options.headers ?? {})) {
       const lower = name.toLowerCase();
+      try {
+        validateHeaderName(lower);
+        validateHeaderValue(lower, value);
+      } catch {
+        throw new Error("INVALID_HTTP_HEADER");
+      }
       if (
         ["authorization", "proxy-authorization", "host", "cookie"].includes(
           lower,
@@ -166,8 +177,16 @@ export class HttpAdapter {
     }
     for (const [name, value] of Object.entries(
       this.credentialHeaders.get(url.origin) ?? {},
-    ))
-      headers[name.toLowerCase()] = value;
+    )) {
+      const lower = name.toLowerCase();
+      try {
+        validateHeaderName(lower);
+        validateHeaderValue(lower, value);
+      } catch {
+        throw new Error("INVALID_HTTP_HEADER");
+      }
+      headers[lower] = value;
+    }
 
     const hostname = url.hostname.replace(/^\[|\]$/g, ""),
       addresses = await this.#resolve(hostname),
@@ -209,7 +228,9 @@ export class HttpAdapter {
     options.signal?.addEventListener("abort", abortBody, { once: true });
     if (options.signal?.aborted) abortBody();
     this.#bodies.set(id, resource);
-    const responseHeaders: Record<string, string> = {};
+    const responseHeaders: Record<string, string> = Object.create(
+      null,
+    ) as Record<string, string>;
     for (const [name, value] of Object.entries(response.headers))
       if (value !== undefined)
         responseHeaders[name] = Array.isArray(value) ? value.join(", ") : value;

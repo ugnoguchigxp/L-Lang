@@ -69,6 +69,8 @@ export const TYPE_TAG = Object.freeze({
   list: 9,
 });
 
+export const MAX_EFFECT_WIRE_BYTES = 2 * 1024 * 1024;
+
 const object = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
@@ -99,7 +101,9 @@ export function parseEffectValueType(value: unknown): EffectValueType {
       element: parseEffectValueType(value.element),
     });
   if (value.kind === "record" && object(value.fields)) {
-    const fields: Record<string, EffectValueType> = {};
+    const fields: Record<string, EffectValueType> = Object.create(
+      null,
+    ) as Record<string, EffectValueType>;
     for (const key of Object.keys(value.fields).sort()) {
       if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key))
         throw new Error("INVALID_EFFECT_VALUE_TYPE");
@@ -255,7 +259,12 @@ export function encodeEffectValue(
       if (!Array.isArray(value)) throw new Error("INVALID_LIST");
       return value.map((item) => encodeEffectValue(type.element, item));
     case "record": {
-      if (!object(value)) throw new Error("INVALID_RECORD");
+      if (
+        !object(value) ||
+        Object.keys(value).sort().join() !==
+          Object.keys(type.fields).sort().join()
+      )
+        throw new Error("INVALID_RECORD");
       return Object.fromEntries(
         Object.keys(type.fields)
           .sort()
@@ -278,7 +287,7 @@ export function encodeEffectWire(
   const body = new TextEncoder().encode(
     JSON.stringify(encodeEffectValue(type, value)),
   );
-  if (body.length > 2 * 1024 * 1024)
+  if (body.length > MAX_EFFECT_WIRE_BYTES)
     throw new Error("RESOURCE_LIMIT: wireBytes");
   return body;
 }
@@ -287,7 +296,7 @@ export function decodeEffectWire(
   type: EffectValueType,
   bytes: Uint8Array,
 ): EffectValue {
-  if (bytes.length > 2 * 1024 * 1024)
+  if (bytes.length > MAX_EFFECT_WIRE_BYTES)
     throw new Error("RESOURCE_LIMIT: wireBytes");
   let value: unknown;
   try {
@@ -381,8 +390,20 @@ export function checkTypedEffectsProgram(
     if (node.kind === "task") {
       if (!node.tasks.length || node.tasks.length > 1024)
         throw new Error("INVALID_TASK_GROUP");
-      for (const task of node.tasks)
+      for (const task of node.tasks) {
+        if (
+          !task.operation ||
+          !Number.isInteger(task.version) ||
+          task.version < 1
+        )
+          throw new Error("INVALID_EFFECT_NODE");
         encodeEffectWire(task.requestType, task.request);
+        if (
+          JSON.stringify(effectValueTypeJson(task.responseType)) !==
+          JSON.stringify(effectValueTypeJson(node.responseType.element))
+        )
+          throw new Error("INVALID_TASK_GROUP");
+      }
     } else {
       if (
         !node.operation ||
@@ -400,5 +421,12 @@ export function checkTypedEffectsProgram(
         throw new Error("INVALID_STREAM_LIMIT");
     }
   }
+  const final = program.nodes.at(-1);
+  if (
+    !final ||
+    JSON.stringify(effectValueTypeJson(final.responseType)) !==
+      JSON.stringify(effectValueTypeJson(program.resultType))
+  )
+    throw new Error("INVALID_PROGRAM_RESULT_TYPE");
   return program;
 }

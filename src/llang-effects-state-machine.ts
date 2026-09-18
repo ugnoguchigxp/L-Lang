@@ -6,6 +6,7 @@ import {
   type EffectValueType,
   effectValueTypeJson,
   encodeEffectWire,
+  MAX_EFFECT_WIRE_BYTES,
   typeTag,
   type TypedAwait,
   type TypedEffectsProgram,
@@ -18,7 +19,7 @@ export const TYPED_EVENT_BYTES = 24;
 export const TYPED_OUTPUT_BYTES = 12;
 const DATA_START = 4096;
 const RESULT_START = 2 * 1024 * 1024;
-const MAX_WIRE_BYTES = 2 * 1024 * 1024;
+const EVENT_PAYLOAD_START = RESULT_START + MAX_EFFECT_WIRE_BYTES;
 
 export type LoweredEffectState = Readonly<{
   kind: "await" | "task" | "stream";
@@ -47,32 +48,28 @@ const flatten = (
   Object.freeze(
     program.nodes.map((node): LoweredEffectState => {
       if (node.kind === "task") {
+        const taskOperations = node.tasks.map((task) => {
+          const operation = operationIndex.get(
+            `${task.operation}@${task.version}`,
+          );
+          if (operation === undefined)
+            throw new Error(
+              `UNKNOWN_OPERATION: ${task.operation}@${task.version}`,
+            );
+          return operation;
+        });
         const request = Object.freeze(
-          node.tasks.map((task) => ({
-            operation: operationIndex.get(`${task.operation}@${task.version}`),
+          node.tasks.map((task, index) => ({
+            operation: taskOperations[index],
             requestType: task.requestType,
             responseType: task.responseType,
             request: task.request,
           })),
         ) as unknown as EffectValue;
-        const envelopeType: EffectValueType = {
-          kind: "list",
-          element: {
-            kind: "record",
-            fields: {
-              operation: { kind: "i32" },
-              requestType: { kind: "record", fields: {} },
-              responseType: { kind: "record", fields: {} },
-              request: { kind: "record", fields: {} },
-            },
-          },
-        };
         const payload = new TextEncoder().encode(
           JSON.stringify(
-            node.tasks.map((task) => ({
-              operation: operationIndex.get(
-                `${task.operation}@${task.version}`,
-              ),
+            node.tasks.map((task, index) => ({
+              operation: taskOperations[index],
               requestType: task.requestType,
               responseType: task.responseType,
               request: JSON.parse(
@@ -83,7 +80,8 @@ const flatten = (
             })),
           ),
         );
-        void envelopeType;
+        if (payload.length > MAX_EFFECT_WIRE_BYTES)
+          throw new Error("RESOURCE_LIMIT: wireBytes");
         return Object.freeze({
           kind: "task",
           operation: -1,
@@ -140,7 +138,7 @@ export function emitTypedEffectsWasm(
     cursor += state.payload.length;
     return { address, bytes: state.payload };
   });
-  if (cursor >= RESULT_START)
+  if (cursor > RESULT_START)
     throw new Error("RESOURCE_LIMIT: embedded effect requests");
   const cases = states
     .map((state, index) => {
@@ -235,8 +233,9 @@ export function emitTypedEffectsWasm(
       if i32.const 7 global.set $fault i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
       local.get $event i32.load offset=16 local.set $payload
       local.get $event i32.load offset=20 local.set $payload-length
-      local.get $payload-length i32.const ${MAX_WIRE_BYTES} i32.gt_u
-      local.get $payload local.get $payload-length i32.add i32.const ${512 * 65536} i32.gt_u i32.or
+      local.get $payload-length i32.const ${MAX_EFFECT_WIRE_BYTES} i32.gt_u
+      local.get $payload i32.const ${512 * 65536} i32.gt_u i32.or
+      local.get $payload-length i32.const ${512 * 65536} local.get $payload i32.sub i32.gt_u i32.or
       if i32.const 8 global.set $fault i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
       local.get $payload i32.const ${RESULT_START} local.get $payload-length call $copy
       local.get $payload-length global.set $result-length
@@ -313,9 +312,10 @@ export class TypedEffectsRuntime {
   readonly #states: readonly LoweredEffectState[];
   readonly #requestAddress = 64;
   readonly #eventAddress = 128;
-  readonly #eventPayloadAddress = 1024 * 1024;
+  readonly #eventPayloadAddress = EVENT_PAYLOAD_START;
   #started = false;
   #disposed = false;
+  #pending: TypedHostRequest | undefined;
 
   constructor(bytes: Uint8Array, states: readonly LoweredEffectState[]) {
     const module = new WebAssembly.Module(bytes as BufferSource);
@@ -345,6 +345,17 @@ export class TypedEffectsRuntime {
     value: EffectValue,
   ): { status: number; request?: TypedHostRequest; result?: EffectValue } {
     if (!this.#started || this.#disposed) throw new Error("SESSION_NOT_ACTIVE");
+    const pending = this.#pending;
+    if (
+      !pending ||
+      request.generation !== pending.generation ||
+      request.sequence !== pending.sequence ||
+      request.state !== pending.state ||
+      request.kind !== pending.kind ||
+      request.operation !== pending.operation ||
+      request.requestTypeTag !== pending.requestTypeTag
+    )
+      throw new Error("INVALID_REQUEST");
     const state = this.#states[request.state];
     if (!state) throw new Error("INVALID_STATE");
     const payload = ok
@@ -362,6 +373,7 @@ export class TypedEffectsRuntime {
     view.setUint32(this.#eventAddress + 12, typeTag(state.responseType), true);
     view.setUint32(this.#eventAddress + 16, this.#eventPayloadAddress, true);
     view.setUint32(this.#eventAddress + 20, payload.length, true);
+    this.#pending = undefined;
     return this.#outcome(
       this.#exports.resume(
         this.#eventAddress,
@@ -373,10 +385,14 @@ export class TypedEffectsRuntime {
   }
 
   cancel(): void {
-    if (!this.#disposed) this.#exports.cancel();
+    if (!this.#disposed) {
+      this.#pending = undefined;
+      this.#exports.cancel();
+    }
   }
   dispose(): void {
     if (!this.#disposed) {
+      this.#pending = undefined;
       this.#exports.dispose();
       this.#disposed = true;
     }
@@ -391,35 +407,51 @@ export class TypedEffectsRuntime {
     if (status === SESSION_STATUS.YIELDED) {
       const stateIndex = view.getUint32(this.#requestAddress + 8, true),
         state = this.#states[stateIndex],
+        kindTag = view.getUint32(this.#requestAddress + 12, true),
+        operation = view.getInt32(this.#requestAddress + 16, true),
+        requestTypeTag = view.getUint32(this.#requestAddress + 20, true),
         pointer = view.getUint32(this.#requestAddress + 24, true),
         length = view.getUint32(this.#requestAddress + 28, true);
-      if (!state || pointer + length > this.#exports.memory.buffer.byteLength)
+      const expectedKind =
+        state?.kind === "await" ? 1 : state?.kind === "task" ? 2 : 3;
+      if (
+        !state ||
+        kindTag !== expectedKind ||
+        operation !== state.operation ||
+        requestTypeTag !== typeTag(state.requestType) ||
+        pointer > this.#exports.memory.buffer.byteLength ||
+        length > this.#exports.memory.buffer.byteLength - pointer
+      )
         throw new Error("INVALID_ARTIFACT");
+      const request = Object.freeze({
+        generation: view.getUint32(this.#requestAddress, true),
+        sequence: view.getUint32(this.#requestAddress + 4, true),
+        state: stateIndex,
+        kind: state.kind,
+        operation,
+        requestTypeTag,
+        payload: new Uint8Array(
+          this.#exports.memory.buffer.slice(pointer, pointer + length),
+        ),
+      });
+      this.#pending = request;
       return {
         status,
-        request: Object.freeze({
-          generation: view.getUint32(this.#requestAddress, true),
-          sequence: view.getUint32(this.#requestAddress + 4, true),
-          state: stateIndex,
-          kind:
-            view.getUint32(this.#requestAddress + 12, true) === 1
-              ? "await"
-              : view.getUint32(this.#requestAddress + 12, true) === 2
-                ? "task"
-                : "stream",
-          operation: view.getInt32(this.#requestAddress + 16, true),
-          requestTypeTag: view.getUint32(this.#requestAddress + 20, true),
-          payload: new Uint8Array(
-            this.#exports.memory.buffer.slice(pointer, pointer + length),
-          ),
-        }),
+        request,
       };
     }
     if (status === SESSION_STATUS.DONE) {
       const pointer = view.getUint32(this.#requestAddress + 4, true),
         length = view.getUint32(this.#requestAddress + 8, true),
+        resultTypeTag = view.getUint32(this.#requestAddress, true),
         state = this.#states.at(-1);
-      if (!state) throw new Error("INVALID_ARTIFACT");
+      if (
+        !state ||
+        resultTypeTag !== typeTag(state.responseType) ||
+        pointer > this.#exports.memory.buffer.byteLength ||
+        length > this.#exports.memory.buffer.byteLength - pointer
+      )
+        throw new Error("INVALID_ARTIFACT");
       return {
         status,
         result: decodeEffectWire(

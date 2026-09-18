@@ -696,10 +696,17 @@ export async function readEffectsModuleBuildManifest(path: string): Promise<{
       throw new Error("INVALID_ARTIFACT: effects Wasm contract");
     if (typedContract) {
       if (
+        parsed.resultType === undefined ||
         !Array.isArray(parsed.wasm.states) ||
         parsed.wasm.states.length !== parsed.wasm.contract.stateCount
       )
         throw new Error("INVALID_ARTIFACT: typed effects states");
+      let resultType: ReturnType<typeof parseEffectValueType>;
+      try {
+        resultType = parseEffectValueType(parsed.resultType);
+      } catch {
+        throw new Error("INVALID_ARTIFACT: typed effects result type");
+      }
       for (const state of parsed.wasm.states) {
         if (
           !object(state) ||
@@ -712,7 +719,10 @@ export async function readEffectsModuleBuildManifest(path: string): Promise<{
           !["await", "task", "stream"].includes(String(state.kind)) ||
           !Number.isInteger(state.operation) ||
           Number(state.operation) < -1 ||
-          Number(state.operation) >= parsed.operations.length
+          Number(state.operation) >= parsed.operations.length ||
+          (state.kind === "task"
+            ? state.operation !== -1
+            : Number(state.operation) < 0)
         )
           throw new Error("INVALID_ARTIFACT: typed effects state");
         try {
@@ -722,6 +732,15 @@ export async function readEffectsModuleBuildManifest(path: string): Promise<{
           throw new Error("INVALID_ARTIFACT: typed effects state");
         }
       }
+      const finalState = parsed.wasm.states.at(-1);
+      if (
+        !object(finalState) ||
+        JSON.stringify(effectValueTypeJson(resultType)) !==
+          JSON.stringify(
+            effectValueTypeJson(parseEffectValueType(finalState.responseType)),
+          )
+      )
+        throw new Error("INVALID_ARTIFACT: typed effects result type");
     }
   } else if (parsed.wasm !== undefined)
     throw new Error("INVALID_ARTIFACT: unexpected effects Wasm");

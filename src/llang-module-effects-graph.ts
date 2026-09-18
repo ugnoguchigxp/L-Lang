@@ -106,7 +106,12 @@ const operation = (value: unknown): OperationDefinition => {
   parseEffectValueType(item.responseType);
   return Object.freeze({
     id: string(item.id, "operation id"),
-    version: integer(item.version, "operation version"),
+    version: (() => {
+      const version = integer(item.version, "operation version");
+      if (version < 1)
+        throw new ModuleError("LLE001", "operation version must be positive");
+      return version;
+    })(),
     requestType: item.requestType,
     responseType: item.responseType,
     errorType: item.errorType,
@@ -201,7 +206,10 @@ const literal = (
   if (ts.isArrayLiteralExpression(node))
     return node.elements.map((item) => literal(item, count, depth + 1));
   if (ts.isObjectLiteralExpression(node)) {
-    const result: Record<string, unknown> = {};
+    const result: Record<string, unknown> = Object.create(null) as Record<
+      string,
+      unknown
+    >;
     for (const property of node.properties) {
       if (
         !ts.isPropertyAssignment(property) ||
@@ -347,8 +355,15 @@ const compileNode = (
   const kind = string(object(raw, "effect node").kind, "effect node kind");
   if (kind === "await") return awaitNode(raw, operations);
   if (kind === "file") {
-    const item = object(raw, "file node"),
-      action = string(item.action, "file action"),
+    const base = object(raw, "file node"),
+      action = string(base.action, "file action"),
+      item = exact(
+        raw,
+        action === "read"
+          ? ["kind", "action", "path"]
+          : ["kind", "action", "path", "bytes", "replace"],
+        "file node",
+      ),
       path = string(item.path, "file path");
     if (action === "read")
       return Object.freeze({
@@ -375,19 +390,29 @@ const compileNode = (
     throw new ModuleError("LLE001", "invalid file action");
   }
   if (kind === "http") {
-    const item = object(raw, "http node"),
+    const item = exact(
+        raw,
+        ["kind", "url", "method", "headers", "body"],
+        "http node",
+      ),
       method = string(item.method, "HTTP method").toUpperCase();
     if (!["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"].includes(method))
       throw new ModuleError("LLE001", "invalid HTTP method");
     const headers = object(item.headers ?? {}, "HTTP headers"),
-      normalized: { name: string; value: string }[] = [];
+      normalized: { name: string; value: string }[] = [],
+      headerNames = new Set<string>();
     for (const [name, value] of Object.entries(headers).sort(([a], [b]) =>
       a.localeCompare(b),
-    ))
+    )) {
+      const lower = name.toLowerCase();
+      if (headerNames.has(lower))
+        throw new ModuleError("LLE001", `duplicate HTTP header ${lower}`);
+      headerNames.add(lower);
       normalized.push({
-        name: name.toLowerCase(),
+        name: lower,
         value: string(value, "HTTP header"),
       });
+    }
     return Object.freeze({
       kind: "await",
       operation: "http.request",
@@ -450,6 +475,7 @@ export async function loadEffectsModuleGraph(
 ): Promise<CheckedEffectsGraph> {
   const canonicalRoot = resolve(root),
     modules = new Map<string, EffectsGraphSource>(),
+    modulesByPath = new Map<string, EffectsGraphSource>(),
     sourceRecords: { path: string; hash: string }[] = [],
     visiting = new Set<string>();
   const visit = async (
@@ -464,10 +490,16 @@ export async function loadEffectsModuleGraph(
     );
     if (visiting.has(path))
       throw new ModuleError("LLE002", "cyclic effects module import", path);
-    const known = [...modules.values()].find(
-      (module) => module.module === expectedModule,
-    );
-    if (known) return known;
+    const known = modulesByPath.get(path);
+    if (known) {
+      if (expectedModule && known.module !== expectedModule)
+        throw new ModuleError(
+          "LLE002",
+          `import expected module ${expectedModule}`,
+          path,
+        );
+      return known;
+    }
     const bytes = await readFile(path);
     if (bytes.length > LLANG_SOURCE_BYTES)
       throw new ModuleError(
@@ -502,6 +534,7 @@ export async function loadEffectsModuleGraph(
       );
     visiting.add(path);
     modules.set(source.module, source);
+    modulesByPath.set(path, source);
     sourceRecords.push({
       path: relative(canonicalRoot, path).replaceAll("\\", "/"),
       hash: digest(bytes),

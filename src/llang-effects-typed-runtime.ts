@@ -14,7 +14,7 @@ import type {
   EffectValueType,
   TypedTask,
 } from "./llang-effects-ir";
-import { decodeEffectWire } from "./llang-effects-ir";
+import { decodeEffectWire, MAX_EFFECT_WIRE_BYTES } from "./llang-effects-ir";
 import { LBytes } from "./llang-effects-values";
 import {
   emitTypedEffectsWasm,
@@ -107,7 +107,7 @@ export async function runTypedEffectsGraph(options: {
                 chunks += 1;
                 if (chunks > node.maximumChunks)
                   throw new Error("RESOURCE_LIMIT: stream chunks");
-                output = output.concat(chunk.bytes);
+                output = output.concat(chunk.bytes, MAX_EFFECT_WIRE_BYTES);
               }
               response = output;
             } finally {
@@ -270,20 +270,27 @@ export function createTypedIoExecutor(
     if (operation.id === "http.request") {
       if (!(input.body instanceof LBytes) || !Array.isArray(input.headers))
         throw new Error("INVALID_IO_REQUEST");
-      const headers: Record<string, string> = {};
+      const method = String(input.method);
+      if (
+        !(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] as const).some(
+          (allowed) => allowed === method,
+        )
+      )
+        throw new Error("INVALID_IO_REQUEST");
+      const headers: Record<string, string> = Object.create(null) as Record<
+        string,
+        string
+      >;
       for (const raw of input.headers) {
         const header = record(raw);
-        headers[String(header.name)] = String(header.value);
+        const name = String(header.name).toLowerCase();
+        if (Object.hasOwn(headers, name))
+          throw new Error("INVALID_IO_REQUEST: duplicate header");
+        headers[name] = String(header.value);
       }
       const response = await adapters.http.request({
         url: String(input.url),
-        method: String(input.method) as
-          | "GET"
-          | "HEAD"
-          | "POST"
-          | "PUT"
-          | "PATCH"
-          | "DELETE",
+        method: method as "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE",
         headers,
         body: input.body,
         signal: context.signal,
@@ -291,6 +298,7 @@ export function createTypedIoExecutor(
       let output = LBytes.from([]);
       try {
         while (true) {
+          if (context.signal.aborted) throw abortError();
           const chunk = await adapters.http.readChunk(response.body);
           if (chunk.eof) break;
           output = output.concat(chunk.bytes, maximum);

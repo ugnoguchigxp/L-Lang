@@ -138,4 +138,21 @@ describe("loopback HTTP effects adapter", () => {
       mapped.request({ url: "http://mapped.example.test/", method: "GET" }),
     ).rejects.toThrow("PERMISSION_DENIED: address");
   });
+
+  test("rejects malformed header names before opening a connection", async () => {
+    const adapter = new HttpAdapter(
+      new Set(["https://public.example.test"]),
+      new Map(),
+      {
+        resolve: async () => [{ address: "93.184.216.34", family: 4 }],
+      },
+    );
+    await expect(
+      adapter.request({
+        url: "https://public.example.test/",
+        method: "GET",
+        headers: { "bad\nname": "value" },
+      }),
+    ).rejects.toThrow("INVALID_HTTP_HEADER");
+  });
 });

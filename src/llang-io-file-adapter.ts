@@ -143,6 +143,7 @@ export class LocalFileAdapter {
         offset,
         value.length - offset,
       );
+      if (result.bytesWritten < 1) throw new Error("FILE_WRITE_NO_PROGRESS");
       offset += result.bytesWritten;
     }
     return offset;

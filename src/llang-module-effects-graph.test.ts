@@ -447,4 +447,61 @@ describe("module-effects-v1 source graph and target matrix", () => {
     expect(execution.result).toEqual(LBytes.from([1, 2]));
     expect(closed).toEqual([1]);
   });
+
+  test("rejects a second path that impersonates an already loaded module", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-effects-duplicate-"));
+    temporary.push(root);
+    await writeFile(
+      join(root, "first.llang.jsonc"),
+      jsonSource("lib/shared", undefined, [], true, "1"),
+    );
+    await writeFile(
+      join(root, "second.llang.jsonc"),
+      jsonSource("lib/shared", undefined, [], true, "2"),
+    );
+    await writeFile(
+      join(root, "main.llang.jsonc"),
+      jsonSource(
+        "app/main",
+        "main",
+        [
+          { source: "./first.llang.jsonc", module: "lib/shared" },
+          { source: "./second.llang.jsonc", module: "lib/shared" },
+        ],
+        false,
+        "3",
+      ),
+    );
+    expect(
+      loadEffectsModuleGraph("main.llang.jsonc", root, "main"),
+    ).rejects.toThrow("duplicate module lib/shared");
+  });
+
+  test("rejects unknown keys in source-level I/O nodes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-effects-keys-"));
+    temporary.push(root);
+    const source = {
+      language: "l-lang",
+      version: 5,
+      kind: "module",
+      profile: "module-effects-v1",
+      module: "app/main",
+      entry: "main",
+      imports: [],
+      operations: [],
+      resultType: "bytes",
+      nodes: [
+        {
+          kind: "http",
+          url: "https://example.com",
+          method: "GET",
+          typo: true,
+        },
+      ],
+    };
+    await writeFile(join(root, "main.llang.jsonc"), JSON.stringify(source));
+    expect(
+      loadEffectsModuleGraph("main.llang.jsonc", root, "main"),
+    ).rejects.toThrow("unknown http node key typo");
+  });
 });
