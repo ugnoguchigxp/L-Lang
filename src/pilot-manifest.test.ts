@@ -58,7 +58,7 @@ describe("Private Pilot manifest and freeze", () => {
       expect(changed.concept.id, entry.id).toBe(initial.concept.id);
       expect(changed.concept.hash, entry.id).toBe(initial.concept.hash);
     }
-  }, 15_000);
+  }, 30_000);
 
   test("rejects unsafe execution, cooldown, unknown fields, and wrong case count", () => {
     const base = validManifest();

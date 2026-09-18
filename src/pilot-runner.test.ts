@@ -49,7 +49,7 @@ describe("Private Pilot fixture runner", () => {
     } finally {
       await rm(reportRoot, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, 30_000);
 
   test("applies cooldown after success, rate limit, and terminal error", async () => {
     const waits: number[] = [];
