@@ -37,6 +37,7 @@
     "lint": "biome lint .",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "test:sharded": "bun run src/run-tests-sharded.ts",
     "coverage": "bun run src/run-coverage.ts",
     "check": "bun run format:check && bun run lint && bun run typecheck && bun test",
     "ci:smoke": "bun run semantic explain examples/active-customer/semantic.ts --json && bun run semantic verify semantic-closure.json --json && bun run ci:llang-smoke && bun run ci:module-smoke && bun run ci:effects-smoke",

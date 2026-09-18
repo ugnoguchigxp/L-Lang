@@ -37,7 +37,15 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Test
+        if: runner.os != 'Windows'
         run: bun test --timeout 30000
+        env:
+          OPENAI_API_KEY: ""
+          AZURE_OPENAI_API_KEY: ""
+
+      - name: Test in bounded shards
+        if: runner.os == 'Windows'
+        run: bun run test:sharded
         env:
           OPENAI_API_KEY: ""
           AZURE_OPENAI_API_KEY: ""
