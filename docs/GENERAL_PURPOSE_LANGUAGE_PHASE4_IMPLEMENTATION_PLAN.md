@@ -1,10 +1,10 @@
 # 第四弾実装計画：バイナリ実行と外部接続
 
-作成日：2026-09-18。状態：**機能実装完了、全OS証跡待ち**。PR-0相当の
+作成日：2026-09-18。状態：**完了**。PR-0相当の
 collection native化、effects runtime、汎用typed effect IR、await/task/stream
 state-machine lowering、file/HTTP compiler統合、複数moduleの混在source graphと
-4構成×3target matrixを実装した。未push revisionのUbuntu/Windows/Bun 1.4.2
-証跡とE01〜E16の集約記録は完了条件として残る。
+4構成×3target matrixを実装した。Bun 1.4.2のUbuntu／macOS／Windows同一revision
+証跡とE01〜E16の集約記録は[実装結果](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md)に固定した。
 
 参照：[拡張方針](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)、[第三弾計画](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)、[第三弾結果](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_RESULTS.md)。
 
@@ -267,14 +267,14 @@ git diff --check
 
 既存`verify`は旧Predicate生成経路の回帰検査であり、第四弾の検証の代用ではない。新effects smokeを追加し、fixture/replayとloopback/file統合試験を既存smokeへ組み込む。coverage閾値を下げず、同じrevisionのmacOS/Ubuntu/Windows結果・実行環境・件数・hash・ログを記録する。
 
-- [ ] 第三弾の本体がnative Wasmになり、host evaluator不要の配布試験が通った。
-- [ ] IO・非同期・取消/timeout・失敗/cleanup・権限/予算を実装した。
-- [ ] bytes・i64/f64/decimal・制限付き並行処理・streamが全targetで動く。
-- [ ] event/資源/数値/所有・寿命の意味とABI/schemaが固定されている。
-- [ ] E01〜E16、fixture/replay、実adapter統合、4構成×3targetが成功した。
-- [ ] 第三弾までのpure profile、旧host、既存成果物の契約を維持した。
-- [ ] 指定toolchainと対象OSの品質Gateを同一最終revisionで記録した。
-- [ ] 利用仕様・対応adapter/OS表・help・examples・制限・結果記録を同期した。
+- [x] 第三弾の本体がnative Wasmになり、host evaluator不要の配布試験が通った。
+- [x] IO・非同期・取消/timeout・失敗/cleanup・権限/予算を実装した。
+- [x] bytes・i64/f64/decimal・制限付き並行処理・streamが全targetで動く。
+- [x] event/資源/数値/所有・寿命の意味とABI/schemaが固定されている。
+- [x] E01〜E16、fixture/replay、実adapter統合、4構成×3targetが成功した。
+- [x] 第三弾までのpure profile、旧host、既存成果物の契約を維持した。
+- [x] 指定toolchainと対象OSの品質Gateを同一最終revisionで記録した。
+- [x] 利用仕様・対応adapter/OS表・help・examples・制限・結果記録を同期した。
 
 未実行のOS、未対応adapter、host評価へのfallbackを成功として埋めない。失敗したGateは原因に近い試験で修正し、その変更の影響範囲を再検証する。範囲の一部だけ実装した時点は中間到達点として報告し、第四弾完了としない。
 

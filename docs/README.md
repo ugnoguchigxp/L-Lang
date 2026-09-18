@@ -19,16 +19,16 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | 汎用言語への拡張 | [拡張方針コンセプト](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)。関数・moduleから一般プログラムへ広げる提案 |
 | JSONC | [Predicate v1仕様](./LLANG_JSONC_SPEC.md) |
 | Typed modules | [Phase 1仕様](./LLANG_MODULE_SPEC.md)：boolean module、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)：値・制御・型付き結果 |
-| Wasm | [コンパイラ構想](./WASM_COMPILER_CONCEPT.md) |
+| Wasm | [コンパイラ構想](./WASM_COMPILER_CONCEPT.md)、[Effects runtime仕様](./LLANG_MODULE_EFFECTS_SPEC.md) |
 | Hybrid | [コンパイラ構想](./HYBRID_COMPILER_CONCEPT.md) |
 | Prompt Source | [v2設計提案](./PROMPT_SOURCE_V2_DESIGN.md)。採用状態はJSONC仕様を参照 |
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
 
 ## 実装計画・進捗
 
-- [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装前）
+- [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 
-- [汎用言語化・第三弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)：List・反復・再帰・generics・closure・メモリ寿命（実装結果あり、直接Wasm生成は未完）
+- [汎用言語化・第三弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)：List・反復・再帰・generics・closure・メモリ寿命（当時の直接Wasm未完了分は第四弾で補完）
 
 - [全体の現在地とロードマップ](../PROJECT_STATUS_AND_ROADMAP.md)
 - [汎用言語化・第一弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE1_IMPLEMENTATION_PLAN.md)：型付き関数・複数module・TS/JSONC混在・3形式出力（実装済み）
@@ -43,6 +43,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 
 ## 結果・証跡
 
+- [汎用言語化・第四弾の実装結果](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md)：Bun 1.4.2、Ubuntu／macOS／Windowsの同一revision証跡とE01〜E16対応表
 - [6項目の改善とexamples拡充](./IMPROVEMENTS_RESULTS_20260917.md)
 
 - [Wasm PoC結果](./WASM_POC_RESULTS.md)

@@ -18,6 +18,7 @@ L-Langは、要求や型に基づく判定処理を、制限されたIRとテス
 | 解決済みのPrompt SourceをJSONCへ変換する | Prompt Source v1＋Lock → JSONC・要求・suite | [入力と出力の対応](./docs/guides/language-routes.md) |
 | 既存TypeScriptの型と限定Predicateを取り込む | TypeScript → Wasm | [Hybridの段階別デモ](./examples/hybrid-wasm-scenarios/README.md) |
 | Prompt Sourceから意味解決を行う | Prompt Source JSON → 解決Lock → Wasm | [Prompt Sourceの例](./examples/prompt-active-customer/README.md) |
+| 型付きIO・非同期処理をローカルで実行する | TypeScript／JSONC → TypeScript／JSONC／Wasm | [Effects仕様](./docs/LLANG_MODULE_EFFECTS_SPEC.md)・[Module IO例](./examples/module-io-pipeline/README.md) |
 
 JSONCの生成は現行の`develop`・`migrate`で扱います。任意のTypeScriptとJSONCの相互変換や、全コマンド共通の出力形式切替を意味しません。各CLIと生成物の対応は[経路ガイド](./docs/guides/language-routes.md)にまとめています。
 
@@ -48,11 +49,13 @@ bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --reques
 
 ## 保証する範囲
 
-現在は限定されたBoolean Predicateを中心に検証しています。TypeScriptのStatic Judgmentや世界時計の用途別デモもありますが、汎用言語・任意の業務処理の完成を意味しません。
+限定されたBoolean Predicateに加え、`module-effects-v1`ではbytes、i64、有限f64、decimal、型付きIO、await、structured task、pull streamをTypeScript／JSONCからWasmへlowerできます。これは制限されたIRと登録済みhost operationによる実行系であり、任意のTypeScript、任意の外部API、汎用package ecosystemを提供するものではありません。
 
 制限IR、型・入力契約、独立テスト、hash、replayで不正な入力や改変を検査します。hashは署名ではなく、テスト合格は自然言語要求の完全な充足を証明しません。部品検証とSAAAによる受け入れ・配備も別工程です。詳しくは[セキュリティ](./SECURITY.md)を参照してください。
 
 実モデル評価・性能計測は経路と条件ごとの結果です。TypeScript経路の評価をJSONC経路の精度証拠へ読み替えず、fixture成功を実モデル評価とは扱いません。[現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)から各証跡を確認できます。
+
+Phase 4はローカルfile、許可済みHTTP、fixture/replay、loopback統合を対象に実装・検証済みです。SAAAでのsoak／capability評価、実ネットワークのTLS運用試験、長期の性能・memory評価は、利用期間と観測条件を確保してから別証跡として実施します。[Phase 4結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md)に現在の完了範囲と保留した運用評価を記録しています。
 
 ## リポジトリの案内
 

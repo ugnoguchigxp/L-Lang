@@ -1,6 +1,6 @@
 # 汎用言語化・第四弾 実装結果
 
-実施日：2026-09-18。状態：**機能実装完了、全OSの最終証跡待ち**。
+実施日：2026-09-18。状態：**完了**。
 
 ## 完了した範囲
 
@@ -47,37 +47,49 @@
 - file pull、分割UTF-8、typed NDJSON、最大4並行、decimal、temporary file
   commitを通す縦断exampleを追加した。
 
-## 残る完了証跡
-
-- GitHub Actions上のBun 1.4.2／Ubuntu／macOS／Windows同一revision結果。
-- E01〜E16をID別に集約した最終証跡表。個別の境界・負例は実装済みテストに
-  分散しているため、CI結果と対応付けて記録する。
-
 実装済みruntime APIの仕様は
 [`LLANG_MODULE_EFFECTS_SPEC.md`](./LLANG_MODULE_EFFECTS_SPEC.md)を参照する。
 
-## 検証結果
+## 最終検証結果
 
-macOS arm64、Bun 1.3.14で次を確認した。計画で指定したBun 1.4.2、Ubuntu、
-Windowsの同一revision検証は未実施であり、第四弾の完了証跡には数えない。
-CI matrixにはmacOSを追加し、Ubuntu/macOS/WindowsをBun 1.4.2で実行する設定に
-したが、この未push revisionのCI結果はまだ存在しない。
+実装証跡revision `1e77ea98ac57004f710d26ccd998a0e341e4cb9e`をBun 1.4.2で
+検証した。[GitHub Actions run 35316448284](https://github.com/ugnoguchigxp/L-Lang/actions/runs/35316448284)では、Ubuntu／macOS／Windowsのtestとoffline CLI smoke、Ubuntuのaudit、format、lint、文書link、typecheck、coverage、protected input検査がすべて成功した。
 
-- `bun install --frozen-lockfile`: 変更なし
-- `bun test --timeout 30000`: 121 files、593 pass、0 fail
-- `bun run format:check`: pass
-- `bun run lint`: pass（既存warningあり、今回追加分のwarningなし、errorなし）
-- `bun run typecheck`: pass
-- `bun run ci:docs`: pass
-- `bun run ci:protected`: pass
-- `bun run ci:smoke`: pass
-- `bun run coverage`: 121 files、593 pass、0 fail、coverage threshold pass
-- `bun audit`: vulnerability 0
-- `git diff --check`: pass
+- test：121 files、600 pass、0 fail
+- coverage：functions 92.96%、lines 92.42%。設定済みthresholdを維持
+- `bun audit`：vulnerability 0
+- `bun run ci:smoke`：Semantic、JSONC、module、effectsのoffline smoke成功
+- 証跡採取時のworktree：commit・push済み、`main`と`origin/main`が同期
 
-coverage計測で露呈した5ms wall-clock境界のテストは、agent開始前の上限到達と
-agent待機中のdeadline到達という二つの正当な結果を、同じ
-`DEVELOPMENT_LIMIT`として検査するよう修正した。修正後のcoverage全実行で上記件数と
-threshold合格を確認した。
+## E01〜E16 証跡対応表
 
-縦断exampleは最終lint修正後にも単独再実行し、2 pass、0 failを確認した。
+各IDは表内の単一ファイルだけで完結するという意味ではない。主要な境界・負例の入口と、全体を同一revisionで実行した上記CIを対応付ける。
+
+| ID | 確認済みの内容 | 主な自動テスト |
+| --- | --- | --- |
+| E01 | native-only collection、旧shell拒否、portable Wasm | [`llang-module-collection.test.ts`](../src/llang-module-collection.test.ts)、[`llang-effects-build.test.ts`](../src/llang-effects-build.test.ts) |
+| E02 | bytes境界、base64、分割UTF-8、EOF不正列 | [`llang-effects-values.test.ts`](../src/llang-effects-values.test.ts)、[`pipeline.test.ts`](../examples/module-io-pipeline/pipeline.test.ts) |
+| E03 | i64、有限f64、decimal、丸めとoverflow | [`llang-effects-values.test.ts`](../src/llang-effects-values.test.ts)、[`llang-effects-ir.test.ts`](../src/llang-effects-ir.test.ts) |
+| E04 | operation版・signature・型・effect・grant不一致 | [`llang-effects-runtime.test.ts`](../src/llang-effects-runtime.test.ts)、[`llang-module-effects-graph.test.ts`](../src/llang-module-effects-graph.test.ts) |
+| E05 | root／symlink境界、HTTP origin・解決IP・redirect拒否 | [`llang-io-file-adapter.test.ts`](../src/llang-io-file-adapter.test.ts)、[`llang-io-http-adapter.test.ts`](../src/llang-io-http-adapter.test.ts) |
+| E06 | 複数await、未知・重複・遅延応答、偽造state | [`llang-effects-session.test.ts`](../src/llang-effects-session.test.ts)、[`llang-effects-state-machine.test.ts`](../src/llang-effects-state-machine.test.ts) |
+| E07 | 取消、deadline、完了競合、取消後dispatch拒否 | [`llang-effects-session.test.ts`](../src/llang-effects-session.test.ts)、[`llang-effects-runtime.test.ts`](../src/llang-effects-runtime.test.ts) |
+| E08 | cleanup逆順、二重close、cleanup失敗の分離 | [`llang-effects-session.test.ts`](../src/llang-effects-session.test.ts)、[`llang-effects-concurrency.test.ts`](../src/llang-effects-concurrency.test.ts) |
+| E09 | file commit／abort、HTTP retryなし、未確定結果 | [`llang-io-file-adapter.test.ts`](../src/llang-io-file-adapter.test.ts)、[`llang-io-http-adapter.test.ts`](../src/llang-io-http-adapter.test.ts) |
+| E10 | task上限、join順、兄弟取消、共有予算 | [`llang-effects-concurrency.test.ts`](../src/llang-effects-concurrency.test.ts)、[`llang-effects-state-machine.test.ts`](../src/llang-effects-state-machine.test.ts) |
+| E11 | pull stream、EOF、背圧、途中失敗 | [`llang-effects-concurrency.test.ts`](../src/llang-effects-concurrency.test.ts)、[`pipeline.test.ts`](../examples/module-io-pipeline/pipeline.test.ts) |
+| E12 | region再利用、await生存値、stream累積上限 | [`llang-effects-concurrency.test.ts`](../src/llang-effects-concurrency.test.ts)、[`llang-effects-state-machine.test.ts`](../src/llang-effects-state-machine.test.ts) |
+| E13 | fuel、byte、request、memory境界とfault分類 | [`llang-effects-session.test.ts`](../src/llang-effects-session.test.ts)、[`llang-effects-state-machine.test.ts`](../src/llang-effects-state-machine.test.ts) |
+| E14 | fixture replay、権限再検査、transcript redaction | [`llang-effects-runtime.test.ts`](../src/llang-effects-runtime.test.ts)、[`llang-effects-build.test.ts`](../src/llang-effects-build.test.ts) |
+| E15 | 4 source構成×3 target、再compile、portable verify | [`llang-module-effects-graph.test.ts`](../src/llang-module-effects-graph.test.ts)、[`llang-module-effects-build.test.ts`](../src/llang-module-effects-build.test.ts) |
+| E16 | manifest／ABI改変拒否、旧profile・replay回帰 | [`llang-effects-contract.test.ts`](../src/llang-effects-contract.test.ts)、[`llang-module-effects-cli.test.ts`](../src/llang-module-effects-cli.test.ts) |
+
+## 運用後に評価する項目
+
+次はPhase 4の未実装ではなく、代表的な利用期間を必要とする運用証跡として保留する。
+
+- SAAAで実処理を流した後のsoak testとcapability check
+- ローカル利用を越えてTLS接続を配備するときの実ネットワーク試験
+- workload、入力規模、観測期間を固定した性能・memory回収の長期測定
+
+短時間のcorrectness suiteやloopback成功から、これらの結果を推定しない。現段階の利用範囲はローカル実行と明示grant下のadapterであり、観測結果が得られた時点で本書とは別の運用証跡を追加する。

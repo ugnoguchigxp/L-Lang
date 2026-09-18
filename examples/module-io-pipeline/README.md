@@ -12,3 +12,9 @@ bun test examples/module-io-pipeline/pipeline.test.ts
 
 The failure test proves that malformed typed JSON does not publish a partial
 output. The adapter refuses traversal, symlink escapes, and implicit replace.
+
+This is the current operational starting point: local files and deterministic
+fixtures require no external credentials, while HTTP access is granted by the
+embedding host. The example is not a soak, TLS deployment, or performance
+benchmark. Those measurements should use representative SAAA workloads and a
+recorded observation window rather than this short correctness test.

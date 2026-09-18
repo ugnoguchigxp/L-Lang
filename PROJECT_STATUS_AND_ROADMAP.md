@@ -1,6 +1,6 @@
 # 現在の実装状況とロードマップ
 
-更新：2026-09-17。[入出力の対応](./docs/guides/language-routes.md) · [文書一覧](./docs/README.md)
+更新：2026-09-18。[入出力の対応](./docs/guides/language-routes.md) · [文書一覧](./docs/README.md)
 
 ## 実装されている経路
 
@@ -15,6 +15,7 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 | 既存TypeScript → Wasm | 限定Predicateの静的import、Canonical Type IR、schema・仕様投影、artifactとrebuild検証 | [Hybrid例](./examples/hybrid-order/README.md) |
 | Prompt Source → Lock → Wasm | 構造化要求の作成・更新・解決、Wasm、Capability v1、独立テスト製造・修正 | [Prompt Source](./examples/prompt-active-customer/README.md)、[製造例](./examples/capability-development/README.md) |
 | Wasm host | v1/v2のinspect/verify/invoke、移動可能な単発キット | [host例](./examples/saaa-host/README.md) |
+| Effects module | bytes／i64／f64／decimal、型付きfile・HTTP、await、task、streamをTS／JSONCから3targetへbuild | [Effects仕様](./docs/LLANG_MODULE_EFFECTS_SPEC.md)、[IO例](./examples/module-io-pipeline/README.md) |
 | 用途別ソート実験 | examples内の専用JSONC profileからTypeScript/Wasmを生成・比較。標準CLIとは別 | [ソート実験](./examples/wasm-json-sort/README.md) |
 | 用途別UI | 固定構造化要求から世界時計用WasmとUIを実行 | [世界時計](./examples/saaa-world-clock/README.md) |
 
@@ -26,7 +27,7 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
-[4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Ubuntu/Windows CIの最終結果はローカルの成功とは別に確認する。
+[4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Phase 4の機能実装と同一revisionのUbuntu／macOS／Windows CIは完了した。残る評価は、SAAAでの利用に合わせて行うsoak／capability確認、実運用TLS、長期性能・memory観測であり、現時点のcorrectness Gateには含めない。
 
 ## 評価済みの範囲と未実証事項
 
@@ -42,13 +43,13 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 ## 言語としての拡張方針
 
-[第四弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)を今後の実行機能の計画とする。第三弾のnative Wasm補完を前提に、IO、非同期、取消・timeout、失敗/cleanup、権限/予算、bytes、追加数値、制限付き並行、streamを含める。人間向け抽象化の追加や旧G5全体の実施は目標にしない。
+[第四弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)は完了した。第三弾のnative Wasm補完、IO、非同期、取消・timeout、失敗/cleanup、権限/予算、bytes、追加数値、制限付き並行、streamを`module-effects-v1`として実装した。完了範囲と証跡は[第四弾の実装結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md)を参照する。人間向け抽象化の追加や旧G5全体は今回の完了範囲ではない。
 
 [第一弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE1_IMPLEMENTATION_PLAN.md)の型付き関数・複数module、TS／JSONC混在入力と3形式出力は実装済み。利用仕様は[Phase 1仕様](./docs/LLANG_MODULE_SPEC.md)を参照する。最終品質Gate・対象CIの証跡は第一弾計画の未チェック欄を開始時に照合する。
 
 [第二弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE2_IMPLEMENTATION_PLAN.md)では、整数・文字列・record／union戻り値・局所束縛・分岐・型付き失敗と最小memory ABIを、10の変更単位に分けた。単一注文明細の計算は[第二弾の実装結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE2_IMPLEMENTATION_RESULTS.md)を参照する。指定Bunとの差と対象OSの未確認事項は同記録に残っている。
 
-[第三弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)では、可変長List、反復・再帰、generics、closure、局所更新と呼出し内のメモリ寿命を11の実装単位に分ける。注文一覧の変換・集計・安定ソートの[実装結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_RESULTS.md)がある。ただしcollection本体はhost評価であり、直接Wasm生成は未完了である。
+[第三弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)では、可変長List、反復・再帰、generics、closure、局所更新と呼出し内のメモリ寿命を11の実装単位に分けた。注文一覧の変換・集計・安定ソートの[実装結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_RESULTS.md)がある。当時残っていたcollection本体の直接Wasm生成は第四弾で補完した。
 
 [汎用言語化コンセプト](./docs/GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)に、関数・module、型とデータ構造、状態、入出力、非同期・並行処理、標準libraryの拡張方針をまとめた。TypeScript／JSONCの両入力・両出力とWasmを目標とする設計提案であり、全範囲が提供済みという意味ではない。現行Predicate v1と実装済みのboolean moduleを維持し、第二弾以降で値・制御・実行環境を段階的に広げる。
 

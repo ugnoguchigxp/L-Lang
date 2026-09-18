@@ -14,6 +14,7 @@ L-Lang is a research project for validating predicates through restricted IR and
 | Convert a resolved Prompt Source | Prompt Source v1 and Lock → JSONC, request, suite | [Route guide](./docs/guides/language-routes.md) |
 | Import existing types and a restricted predicate | TypeScript → Wasm | [Hybrid demos](./examples/hybrid-wasm-scenarios/README.md) |
 | Resolve a Prompt Source | Prompt Source JSON → resolution Lock → Wasm | [Prompt Source example](./examples/prompt-active-customer/README.md) |
+| Run typed local I/O and asynchronous workflows | TypeScript/JSONC → TypeScript/JSONC/Wasm | [Effects specification](./docs/LLANG_MODULE_EFFECTS_SPEC.md), [module I/O example](./examples/module-io-pipeline/README.md) |
 
 JSONC output is available through `develop` and `migrate`. This does not imply arbitrary TypeScript/JSONC conversion or a universal output-format switch. The route guide distinguishes implemented conversions from possible future combinations. Guides other than Semantic TypeScript are currently in Japanese.
 
@@ -34,9 +35,11 @@ These checks need no API credentials. See the TypeScript guide for fixture-based
 
 ## Scope and evidence
 
-The implementation focuses on restricted Boolean predicates, with additional Static Judgment and purpose-specific demos. It is not a general-purpose language implementation. Input validation, tests, hashes, and replay help detect invalid inputs and tampering; hashes are not signatures, and passing tests does not prove complete compliance with natural-language requirements. Package verification is separate from SAAA acceptance and deployment. See [Security](./SECURITY.md).
+In addition to restricted Boolean predicates, `module-effects-v1` lowers bytes, i64, finite f64, decimal, typed I/O, await, structured tasks, and pull streams from TypeScript or JSONC to Wasm. This remains a restricted IR with registered host operations; it does not accept arbitrary TypeScript, arbitrary external APIs, or a general package ecosystem. Input validation, tests, hashes, and replay help detect invalid inputs and tampering; hashes are not signatures, and passing tests does not prove complete compliance with natural-language requirements. Package verification is separate from SAAA acceptance and deployment. See [Security](./SECURITY.md).
 
 Evidence applies to its recorded route and conditions. TypeScript results do not establish JSONC generation accuracy; fixtures do not measure live model accuracy. See [Status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md).
+
+Phase 4 is implemented and verified for local files, granted HTTP requests, fixture replay, and loopback integration. SAAA soak and capability evaluation, operational TLS testing, and long-running performance and memory evidence are intentionally deferred until representative usage data exists. See the [Phase 4 results](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md).
 
 ## Repository
 

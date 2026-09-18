@@ -116,3 +116,18 @@ an actively hostile concurrent parent-directory replacement. Such an
 environment is outside this adapter's supported capability and must use a host
 adapter with native directory-handle operations; the limitation is not
 reported as race-safe support.
+
+## Verification and operational evidence
+
+Phase 4 correctness is covered by typed boundary and negative tests, fixture
+replay, temporary-file and loopback HTTP integration, portable bundle checks,
+and Bun 1.4.2 CI on Ubuntu, macOS, and Windows. The consolidated E01–E16 mapping
+and the pinned CI run are recorded in the
+[Phase 4 results](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md).
+
+Soak tests, SAAA capability checks, Internet TLS deployment tests, and
+long-running performance or memory claims are not inferred from the correctness
+suite. They require representative workloads and an explicit observation
+period. Until those records exist, the supported adoption path is local use
+with explicit grants; no production-scale throughput, latency, or memory claim
+is made.
