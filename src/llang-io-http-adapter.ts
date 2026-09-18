@@ -3,8 +3,6 @@ import {
   request as httpRequest,
   type IncomingMessage,
   type RequestOptions,
-  validateHeaderName,
-  validateHeaderValue,
 } from "node:http";
 import { request as httpsRequest } from "node:https";
 import { BlockList, isIP, type LookupFunction } from "node:net";
@@ -70,6 +68,23 @@ for (const [network, prefix] of [
   deniedByDefault.addSubnet(network, prefix, "ipv6");
 
 const addressType = (family: 4 | 6) => (family === 4 ? "ipv4" : "ipv6");
+const HEADER_NAME = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+const HEADER_VALUE = /^[\t\x20-\x7e\x80-\xff]*$/;
+
+const setHeader = (
+  target: Record<string, string>,
+  name: string,
+  value: string,
+): void => {
+  if (!HEADER_NAME.test(name) || !HEADER_VALUE.test(value))
+    throw new Error("INVALID_HTTP_HEADER");
+  Object.defineProperty(target, name, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+};
 
 const explicitAddresses = (entries: readonly string[]) => {
   const list = new BlockList();
@@ -155,37 +170,22 @@ export class HttpAdapter {
       throw new Error("PERMISSION_DENIED: origin");
     if (options.body && options.body.length > 1024 * 1024)
       throw new Error("RESOURCE_LIMIT: request body");
-    const headers: Record<string, string> = Object.create(null) as Record<
-      string,
-      string
-    >;
+    const headers: Record<string, string> = {};
     for (const [name, value] of Object.entries(options.headers ?? {})) {
       const lower = name.toLowerCase();
-      try {
-        validateHeaderName(lower);
-        validateHeaderValue(lower, value);
-      } catch {
-        throw new Error("INVALID_HTTP_HEADER");
-      }
       if (
         ["authorization", "proxy-authorization", "host", "cookie"].includes(
           lower,
         )
       )
         throw new Error("PERMISSION_DENIED: credential header");
-      headers[lower] = value;
+      setHeader(headers, lower, value);
     }
     for (const [name, value] of Object.entries(
       this.credentialHeaders.get(url.origin) ?? {},
     )) {
       const lower = name.toLowerCase();
-      try {
-        validateHeaderName(lower);
-        validateHeaderValue(lower, value);
-      } catch {
-        throw new Error("INVALID_HTTP_HEADER");
-      }
-      headers[lower] = value;
+      setHeader(headers, lower, value);
     }
 
     const hostname = url.hostname.replace(/^\[|\]$/g, ""),
@@ -228,12 +228,14 @@ export class HttpAdapter {
     options.signal?.addEventListener("abort", abortBody, { once: true });
     if (options.signal?.aborted) abortBody();
     this.#bodies.set(id, resource);
-    const responseHeaders: Record<string, string> = Object.create(
-      null,
-    ) as Record<string, string>;
+    const responseHeaders: Record<string, string> = {};
     for (const [name, value] of Object.entries(response.headers))
       if (value !== undefined)
-        responseHeaders[name] = Array.isArray(value) ? value.join(", ") : value;
+        setHeader(
+          responseHeaders,
+          name,
+          Array.isArray(value) ? value.join(", ") : value,
+        );
     return Object.freeze({
       status: response.statusCode ?? 0,
       headers: Object.freeze(responseHeaders),

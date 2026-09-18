@@ -277,21 +277,18 @@ export function createTypedIoExecutor(
         )
       )
         throw new Error("INVALID_IO_REQUEST");
-      const headers: Record<string, string> = Object.create(null) as Record<
-        string,
-        string
-      >;
+      const headers = new Map<string, string>();
       for (const raw of input.headers) {
         const header = record(raw);
         const name = String(header.name).toLowerCase();
-        if (Object.hasOwn(headers, name))
+        if (headers.has(name))
           throw new Error("INVALID_IO_REQUEST: duplicate header");
-        headers[name] = String(header.value);
+        headers.set(name, String(header.value));
       }
       const response = await adapters.http.request({
         url: String(input.url),
         method: method as "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE",
-        headers,
+        headers: Object.fromEntries(headers),
         body: input.body,
         signal: context.signal,
       });

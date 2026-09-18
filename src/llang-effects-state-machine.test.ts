@@ -253,9 +253,9 @@ describe("generic typed effects Wasm state machine", () => {
       const pending = runtime.start();
       if (!pending.request) throw new Error("missing request");
       const request = pending.request;
-      expect(() =>
-        runtime.resume({ ...request, state: 1 }, true, 9),
-      ).toThrow("INVALID_REQUEST");
+      expect(() => runtime.resume({ ...request, state: 1 }, true, 9)).toThrow(
+        "INVALID_REQUEST",
+      );
       expect(runtime.resume(request, true, 9).request?.state).toBe(1);
     } finally {
       runtime.dispose();
