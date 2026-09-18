@@ -302,16 +302,14 @@ export function evaluate(input: Input): Output {
         };
       const suitePath = join(root, "suite.json");
       await writeFile(suitePath, JSON.stringify(suite));
-      expect(
-        (
-          await testCollectionModuleProgram({
-            entry: "main.llang.jsonc",
-            root,
-            entryName: "evaluate",
-            suite: suitePath,
-          })
-        ).ok,
-      ).toBe(true);
+      const sourceReport = await testCollectionModuleProgram({
+        entry: "main.llang.jsonc",
+        root,
+        entryName: "evaluate",
+        suite: suitePath,
+      });
+      if (!sourceReport.ok)
+        throw new Error(JSON.stringify(sourceReport, null, 2));
       const out = join(root, "bundle");
       await buildCollectionModuleProgram({
         entry: "main.llang.jsonc",

@@ -8,7 +8,6 @@ import {
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
-import { isDeepStrictEqual } from "node:util";
 import { parseStrictJsonObject } from "./llang-jsonc";
 import {
   CollectionFault,
@@ -166,7 +165,25 @@ function outcome(run: () => unknown): CollectionExpected {
       : { kind: "fault", code };
   }
 }
-const same = (a: unknown, b: unknown) => isDeepStrictEqual(a, b);
+function same(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (Array.isArray(a) || Array.isArray(b))
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((value, index) => same(value, b[index]))
+    );
+  if (!isRecord(a) || !isRecord(b)) return false;
+  const leftKeys = Object.keys(a).sort();
+  const rightKeys = Object.keys(b).sort();
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every(
+      (key, index) => key === rightKeys[index] && same(a[key], b[key]),
+    )
+  );
+}
 export async function testCollectionModuleProgram(options: {
   entry: string;
   root: string;

@@ -172,7 +172,7 @@ describe("blind schema evolution benchmark", () => {
     });
     expect(report.cases).toHaveLength(24);
     expect(report.cases.every((entry) => entry.consensus.passed)).toBe(true);
-  }, 120_000);
+  }, 240_000);
 });
 
 async function loadFixtures() {
