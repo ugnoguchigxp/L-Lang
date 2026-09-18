@@ -4,6 +4,12 @@ This document records the implemented Phase 4 runtime contracts. The profile
 uses ABI `llang-effects-session-v1`. Grants and credentials are runtime inputs;
 they are never embedded in a program manifest.
 
+The JSONC frontend is defined by
+[`llang-module-v5.schema.json`](../schemas/llang-module-v5.schema.json). Its
+restricted TypeScript counterpart is a literal `defineEffects` declaration;
+both lower to the same checked typed effect graph. The original single-source
+linear i32 form remains accepted as a compatibility form.
+
 ## Values
 
 `bytes` is an immutable octet sequence with strict bounds, canonical base64
@@ -51,6 +57,30 @@ success flag, and an i32 value. Wasm owns the continuation index and computed
 accumulator. The host transports events only. Portable fixture replay verifies
 the exact request sequence and never invokes an adapter.
 
+Typed graphs use the `typed-wire-v1` layout: a 32-byte request descriptor, a
+24-byte response event, and a 12-byte result descriptor. Payloads are bounded
+canonical UTF-8 JSON bytes with explicit type tags; bytes, i64, and decimal
+remain tagged and are never coerced through JavaScript number. Wasm owns the
+state, generation, sequence, response-type check, and result copy. Await,
+task-join, and stream-pull states share this continuation ABI. Task execution
+uses the structured scope and shared ledger; stream execution permits one
+outstanding pull, closes the producer at EOF or cancellation, and enforces the
+declared chunk count.
+
+An effects graph may import relative `.ts` and `.llang.jsonc` modules in either
+direction. Every imported module must declare the same profile and expected
+module name; cycles, duplicate modules, operation signature conflicts,
+symlinks, and root escapes are rejected. Builds flatten the checked graph for
+generated TypeScript and JSONC while retaining every original source path and
+hash in the manifest. Generated TypeScript is executable through `EffectsHost`;
+generated JSONC recompiles to the same typed program; Wasm embeds canonical
+request payloads.
+
+Source `file` and `http` nodes compile directly to versioned `file.read`,
+`file.write`, and `http.request` operations. Programs do not call Node APIs or
+`fetch`; the host-owned adapters still perform grants, address checks,
+credential injection, cancellation, byte limits, atomic commit, and cleanup.
+
 Portable effects bundles use build and replay-suite version 5 (version 4 is
 already used by the native collection complement). The manifest pins the
 program hash, operation requirements, effect set, exact ABI layout, Wasm hash,
@@ -63,14 +93,21 @@ hash mismatches.
 The local file adapter uses handle-based reads. Writes go to an exclusive
 same-directory temporary file and become visible only on explicit commit;
 non-replacing commit uses a hard-link publication step and abort removes only
-its own temporary file. Traversal and symlink escapes are rejected.
+its own temporary file. Before publication or abort, the path must still name
+the regular file with the device/inode recorded at creation. Traversal and
+symlink escapes are rejected, and cleanup never recursively removes a path.
 
-The initial HTTP adapter is deliberately loopback-only. It accepts only literal
-loopback IP hosts (not DNS names), does not follow redirects, separates
-credential injection from program headers, returns 4xx/5xx as responses, caps
-request bodies and pull chunks, and distinguishes timeout/cancellation from an
-HTTP response. General network support remains refused until the adapter can
-pin and recheck the connected address across DNS, proxy, and redirect paths.
+The HTTP adapter supports DNS names and public Internet addresses for origins
+granted by the host. It resolves before connecting, rejects private, loopback,
+link-local, documentation, multicast, and reserved destinations by default,
+then pins one permitted address into the socket lookup while retaining the
+original host name for HTTP Host and TLS SNI. A host can explicitly grant an
+exact private address or CIDR (the loopback compatibility adapter does this).
+Redirects and retries are not automatic, and proxy routing is not supported.
+Credentials are injected from host-owned configuration and credential headers
+from the program are rejected. HTTP 4xx/5xx remain responses; DNS, TLS,
+connection, timeout, and cancellation failures remain IO errors. Request
+bodies and pull chunks are bounded.
 
 The Node file adapter verifies the opened read handle against the path's
 device/inode after open. Node does not expose portable directory-relative

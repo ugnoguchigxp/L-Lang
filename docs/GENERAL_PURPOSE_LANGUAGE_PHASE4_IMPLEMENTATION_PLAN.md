@@ -1,9 +1,10 @@
 # 第四弾実装計画：バイナリ実行と外部接続
 
-作成日：2026-09-18。状態：**実装中**。PR-0相当のcollection native化と、
-effects runtimeの値・契約・session・adapter・継続ABI基盤は実装済み。
-`module-effects-v1` frontendと汎用loweringを含む全体は未完了であり、
-本書の未完了項目を利用可能な言語機能として扱わない。
+作成日：2026-09-18。状態：**機能実装完了、全OS証跡待ち**。PR-0相当の
+collection native化、effects runtime、汎用typed effect IR、await/task/stream
+state-machine lowering、file/HTTP compiler統合、複数moduleの混在source graphと
+4構成×3target matrixを実装した。未push revisionのUbuntu/Windows/Bun 1.4.2
+証跡とE01〜E16の集約記録は完了条件として残る。
 
 参照：[拡張方針](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)、[第三弾計画](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_PLAN.md)、[第三弾結果](./GENERAL_PURPOSE_LANGUAGE_PHASE3_IMPLEMENTATION_RESULTS.md)。
 
@@ -51,7 +52,7 @@ effects runtimeの値・契約・session・adapter・継続ABI基盤は実装済
 | `src/capability-host.ts` | 現状はpackage inspect/verify/invoke。言語内IO APIとは別であり、旧host v1/v2を変更しない |
 | worker、path/atomic file、hash部品 | 適用できる部品を共有。新しい権限検査を既存root検査だけで代用しない |
 
-仮称profileは`module-effects-v1`、JSONC source version 5、build/suite version 4、ABI `llang-effects-session-v1`。第三弾native補完で番号を使用した場合はPR-1で重複なく再割当てする。版ごとの対応表を正本とし、未知版を推測しない。
+profileは`module-effects-v1`、JSONC source version 5、build/suite version 5、ABI `llang-effects-session-v1`。build version 4は第三弾native collectionで使用済みのため分離した。版ごとの対応表を正本とし、未知版を推測しない。
 
 TSは`--profile module-effects-v1`で明示選択、JSONC headerと一致させる。同一graphのprofile混在は引き続き拒否。TS/JSONC両入力、TS/JSONC/Wasmの3出力を維持する。旧pure profileの契約、hash、sourceや成果物を遡って変更しない。
 
@@ -214,7 +215,7 @@ portable verifyは新runtime/adapter契約で実行する。原source、compiler
 | PR-7 | file/HTTP/clock adapter、credential境界 | 3、6 | 一時file/loopbackでIOと権限・取消・timeout |
 | PR-8 | structured task、join、同時実行数・予算共有 | 5、6 | 順序・公平性・親取消・過剰spawnの拒否 |
 | PR-9 | stream read/write、背圧、UTF-8境界、region回収 | 4、7、8 | 長いstreamを一定のmemory上限内で処理 |
-| PR-10 | build/test/verify/CLI、suite v4、replay、portable kit | 2〜9 | 4source構成×3target、compilerなし配布 |
+| PR-10 | build/test/verify/CLI、suite v5、replay、portable kit | 2〜9 | 4source構成×3target、compilerなし配布 |
 | PR-11 | 縦断examples、help/仕様、全品質Gate・結果記録 | 10 | 全領域の成功/失敗と対象OSを確認 |
 
 配置は`llang-module-effects-*`（IR/frontend/lowering/build/suite）、`llang-effects-runtime`、`llang-host-operations`、`llang-io-adapters`等を候補とする。既存Capability hostを新規IO runtimeに読み替えない。PR-2/3の独立作業も、共通契約が固定されてから進める。

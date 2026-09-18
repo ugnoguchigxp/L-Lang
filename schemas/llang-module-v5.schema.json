@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llang-module-v5.schema.json",
+  "title": "L-Lang effects module source v5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "language",
+    "version",
+    "kind",
+    "profile",
+    "module",
+    "entry",
+    "operations"
+  ],
+  "properties": {
+    "language": { "const": "l-lang" },
+    "version": { "const": 5 },
+    "kind": { "const": "module" },
+    "profile": { "const": "module-effects-v1" },
+    "module": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-z][A-Za-z0-9]*(?:[._/-][A-Za-z0-9]+)*$"
+    },
+    "entry": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*$"
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/operation" }
+    },
+    "imports": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "module"],
+        "properties": {
+          "source": { "type": "string", "minLength": 1 },
+          "module": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "initial": { "$ref": "#/$defs/i32" },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "resultType": { "$ref": "#/$defs/valueType" },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/effectNode" }
+    }
+  },
+  "oneOf": [
+    { "required": ["initial", "steps"], "properties": { "initial": {}, "steps": {}, "resultType": false, "nodes": false, "imports": false } },
+    { "required": ["imports", "resultType", "nodes"], "properties": { "imports": {}, "resultType": {}, "nodes": {}, "initial": false, "steps": false } }
+  ],
+  "$defs": {
+    "i32": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
+    },
+    "operationId": {
+      "type": "string",
+      "pattern": "^[a-z][A-Za-z0-9]*(?:[._/-][A-Za-z0-9]+)*$"
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "requestType",
+        "responseType",
+        "errorType",
+        "effect",
+        "resource",
+        "cancellable",
+        "idempotent"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/operationId" },
+        "version": { "type": "integer", "minimum": 1 },
+        "requestType": true,
+        "responseType": true,
+        "errorType": true,
+        "effect": { "enum": ["file", "http", "clock", "host"] },
+        "resource": { "enum": ["none", "file", "http-body", "stream"] },
+        "cancellable": { "type": "boolean" },
+        "idempotent": { "type": "boolean" }
+      }
+    },
+    "valueType": {
+      "oneOf": [
+        { "enum": ["i32", "i64", "f64", "bytes", "string", "bool"] },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "scale"],
+          "properties": {
+            "kind": { "const": "decimal" },
+            "scale": { "type": "integer", "minimum": 0, "maximum": 18 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "element"],
+          "properties": {
+            "kind": { "const": "list" },
+            "element": { "$ref": "#/$defs/valueType" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "fields"],
+          "properties": {
+            "kind": { "const": "record" },
+            "fields": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/valueType" }
+            }
+          }
+        }
+      ]
+    },
+    "effectNode": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": { "kind": { "enum": ["await", "task", "stream", "file", "http"] } }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "version", "payload", "combine"],
+      "properties": {
+        "operation": { "$ref": "#/$defs/operationId" },
+        "version": { "type": "integer", "minimum": 1 },
+        "payload": { "$ref": "#/$defs/i32" },
+        "combine": { "enum": ["replace", "add"] }
+      }
+    }
+  }
+}

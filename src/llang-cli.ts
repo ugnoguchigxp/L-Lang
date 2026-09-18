@@ -1,29 +1,44 @@
-import { withSourceWriteLock } from "./source-write-lock";
 import { lstat, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { atomicWriteText } from "./atomic-file";
 import { buildLlangProgram } from "./llang-build";
 import {
-  packageLlangCapability,
   checkLlangMutations,
+  packageLlangCapability,
   runLlangSuite,
   verifyLlangCapability,
 } from "./llang-capability";
-import type { LlangDiagnosticReport } from "./llang-diagnostics";
-import {
-  LLANG_SOURCE_BYTES,
-  decodeUtf8,
-  formatLlangJsonc,
-  parseStrictJsonObject,
-} from "./llang-jsonc";
-import { checkLlangProgram } from "./llang-program";
-import { migratePromptSource } from "./llang-migrate";
 import {
   developLlangCapability,
   fixtureLlangAgent,
   replayLlangDevelopment,
 } from "./llang-development";
+import type { LlangDiagnosticReport } from "./llang-diagnostics";
+import {
+  decodeUtf8,
+  formatLlangJsonc,
+  LLANG_SOURCE_BYTES,
+  parseStrictJsonObject,
+} from "./llang-jsonc";
+import { migratePromptSource } from "./llang-migrate";
 import { buildModuleProgram } from "./llang-module-build";
+import { buildCollectionModuleProgram } from "./llang-module-collection-build";
+import { loadCollectionModuleProgram } from "./llang-module-collection-loader";
+import {
+  testCollectionModuleProgram,
+  verifyCollectionModuleBundle,
+} from "./llang-module-collection-suite";
+import { buildEffectsModuleProgram } from "./llang-module-effects-build";
+import { loadEffectsModuleProgram } from "./llang-module-effects-loader";
+import { loadEffectsModuleGraph } from "./llang-module-effects-graph";
+import {
+  testEffectsModuleProgram,
+  verifyEffectsModuleBundle,
+} from "./llang-module-effects-suite";
+import {
+  testEffectsModuleGraph,
+  verifyTypedEffectsModuleBundle,
+} from "./llang-module-effects-graph-suite";
 import { loadModuleProgram } from "./llang-module-loader";
 import { testModuleProgram, verifyModuleBundle } from "./llang-module-suite";
 import { buildValueModuleProgram } from "./llang-module-value-build";
@@ -32,12 +47,8 @@ import {
   testValueModuleProgram,
   verifyValueModuleBundle,
 } from "./llang-module-value-suite";
-import { buildCollectionModuleProgram } from "./llang-module-collection-build";
-import { loadCollectionModuleProgram } from "./llang-module-collection-loader";
-import {
-  testCollectionModuleProgram,
-  verifyCollectionModuleBundle,
-} from "./llang-module-collection-suite";
+import { checkLlangProgram } from "./llang-program";
+import { withSourceWriteLock } from "./source-write-lock";
 
 type CliResult = { exitCode: number; output: unknown };
 
@@ -52,9 +63,9 @@ export const LLANG_HELP = `usage: llang <command> [arguments]
   migrate <prompt.json> --out <source.llang.jsonc>
   develop <request.json> --suite <tests.json> --metadata <metadata.json> --fixtures <fixture.json>|--agent codex-sdk --out-dir <new-directory> [--max-output-tokens N] [--max-total-tokens N] [--max-wall-ms N]
   replay-development <run-directory> --out-dir <new-directory>
-  module lint <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> [--profile module-bool-v1|module-value-v1|module-collection-v1]
-  module build <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory> [--profile module-bool-v1|module-value-v1|module-collection-v1]
-  module test <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --suite <cases.json> [--profile module-bool-v1|module-value-v1|module-collection-v1]
+  module lint <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
+  module build <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
+  module test <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --suite <cases.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
   module verify <module-build.json> --suite <cases.json>
 Global: --help, --json (machine-readable errors and results)
 Exit codes: 0 success; 1 validation/test failure; 2 usage, I/O or execution error.
@@ -138,21 +149,35 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
     if (subcommand === "verify") {
       if (Object.keys(options).join() !== "--suite") usage();
       const manifest = (await readRegularJson(source)) as Record<
-        string,
-        unknown
-      >;
+          string,
+          unknown
+        >,
+        suite = (await readRegularJson(options["--suite"] as string)) as {
+          mode?: unknown;
+        };
       const report =
-        manifest.version === 4 && manifest.profile === "module-collection-v1"
-          ? await verifyCollectionModuleBundle(
-              source,
-              options["--suite"] as string,
-            )
-          : manifest.version === 2 && manifest.profile === "module-value-v1"
-            ? await verifyValueModuleBundle(
+        manifest.version === 5 && manifest.profile === "module-effects-v1"
+          ? suite.mode === "typed"
+            ? await verifyTypedEffectsModuleBundle(
                 source,
                 options["--suite"] as string,
               )
-            : await verifyModuleBundle(source, options["--suite"] as string);
+            : await verifyEffectsModuleBundle(
+                source,
+                options["--suite"] as string,
+              )
+          : manifest.version === 4 &&
+              manifest.profile === "module-collection-v1"
+            ? await verifyCollectionModuleBundle(
+                source,
+                options["--suite"] as string,
+              )
+            : manifest.version === 2 && manifest.profile === "module-value-v1"
+              ? await verifyValueModuleBundle(
+                  source,
+                  options["--suite"] as string,
+                )
+              : await verifyModuleBundle(source, options["--suite"] as string);
       return { exitCode: report.ok ? 0 : 1, output: report };
     }
     const root = options["--root"],
@@ -162,7 +187,8 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
     if (
       profile !== "module-bool-v1" &&
       profile !== "module-value-v1" &&
-      profile !== "module-collection-v1"
+      profile !== "module-collection-v1" &&
+      profile !== "module-effects-v1"
     )
       usage();
     if (subcommand === "lint") {
@@ -173,11 +199,15 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       )
         usage();
       const program =
-        profile === "module-collection-v1"
-          ? await loadCollectionModuleProgram(source, root, entryName)
-          : profile === "module-value-v1"
-            ? await loadValueModuleProgram(source, root, entryName)
-            : await loadModuleProgram(source, root, entryName);
+        profile === "module-effects-v1"
+          ? await loadEffectsModuleGraph(source, root, entryName).catch(() =>
+              loadEffectsModuleProgram(source, root, entryName),
+            )
+          : profile === "module-collection-v1"
+            ? await loadCollectionModuleProgram(source, root, entryName)
+            : profile === "module-value-v1"
+              ? await loadValueModuleProgram(source, root, entryName)
+              : await loadModuleProgram(source, root, entryName);
       return {
         exitCode: 0,
         output: {
@@ -185,8 +215,8 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
           sourceSetHash: program.sourceSetHash,
           programHash: program.programHash,
           interfaceHash: program.interfaceHash,
-          modules: program.modules.length,
-          functions: program.functions.length,
+          modules: "modules" in program ? program.modules.length : 1,
+          functions: "functions" in program ? program.functions.length : 1,
         },
       };
     }
@@ -210,29 +240,37 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       return {
         exitCode: 0,
         output:
-          profile === "module-collection-v1"
-            ? await buildCollectionModuleProgram({
+          profile === "module-effects-v1"
+            ? await buildEffectsModuleProgram({
                 entry: source,
                 root,
                 entryName,
                 target: target as "typescript" | "jsonc" | "wasm" | "all",
                 outDir: options["--out-dir"] as string,
               })
-            : profile === "module-value-v1"
-              ? await buildValueModuleProgram({
+            : profile === "module-collection-v1"
+              ? await buildCollectionModuleProgram({
                   entry: source,
                   root,
                   entryName,
                   target: target as "typescript" | "jsonc" | "wasm" | "all",
                   outDir: options["--out-dir"] as string,
                 })
-              : await buildModuleProgram({
-                  entry: source,
-                  root,
-                  entryName,
-                  target: target as "typescript" | "jsonc" | "wasm" | "all",
-                  outDir: options["--out-dir"] as string,
-                }),
+              : profile === "module-value-v1"
+                ? await buildValueModuleProgram({
+                    entry: source,
+                    root,
+                    entryName,
+                    target: target as "typescript" | "jsonc" | "wasm" | "all",
+                    outDir: options["--out-dir"] as string,
+                  })
+                : await buildModuleProgram({
+                    entry: source,
+                    root,
+                    entryName,
+                    target: target as "typescript" | "jsonc" | "wasm" | "all",
+                    outDir: options["--out-dir"] as string,
+                  }),
       };
     }
     if (subcommand === "test") {
@@ -244,26 +282,44 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       )
         usage();
       const report =
-        profile === "module-collection-v1"
-          ? await testCollectionModuleProgram({
-              entry: source,
-              root,
-              entryName,
-              suite: options["--suite"] as string,
-            })
-          : profile === "module-value-v1"
-            ? await testValueModuleProgram({
+        profile === "module-effects-v1"
+          ? (
+              (await readRegularJson(options["--suite"] as string)) as {
+                mode?: unknown;
+              }
+            ).mode === "typed"
+            ? await testEffectsModuleGraph({
                 entry: source,
                 root,
                 entryName,
                 suite: options["--suite"] as string,
               })
-            : await testModuleProgram({
+            : await testEffectsModuleProgram({
                 entry: source,
                 root,
                 entryName,
                 suite: options["--suite"] as string,
-              });
+              })
+          : profile === "module-collection-v1"
+            ? await testCollectionModuleProgram({
+                entry: source,
+                root,
+                entryName,
+                suite: options["--suite"] as string,
+              })
+            : profile === "module-value-v1"
+              ? await testValueModuleProgram({
+                  entry: source,
+                  root,
+                  entryName,
+                  suite: options["--suite"] as string,
+                })
+              : await testModuleProgram({
+                  entry: source,
+                  root,
+                  entryName,
+                  suite: options["--suite"] as string,
+                });
       return { exitCode: report.ok ? 0 : 1, output: report };
     }
     usage();

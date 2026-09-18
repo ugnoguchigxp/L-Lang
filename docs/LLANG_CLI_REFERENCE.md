@@ -36,13 +36,13 @@
 ## module
 
 ```sh
-bun run llang module lint <entry.ts|entry.llang.jsonc> --root <root> --entry <export> [--profile module-bool-v1|module-value-v1] --json
-bun run llang module build <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory>
-bun run llang module test <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --suite <suite.json> --json
+bun run llang module lint <entry.ts|entry.llang.jsonc> --root <root> --entry <export> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1] --json
+bun run llang module build <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
+bun run llang module test <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --suite <suite.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1] --json
 bun run llang module verify <module-build.json> --suite <suite.json> --json
 ```
 
-`module-bool-v1`の型付き関数・複数moduleに加え、`--profile module-value-v1`でi32、string、record、tagged union、const、if、match、型付き結果を扱う。lint/build/testのentryはroot相対、verifyのmanifestとsuiteはcwd相対である。testはreference evaluator、生成TypeScript、再生成JSONC、Wasmを同じ固定suiteで比較する。buildは既存出力directoryを上書きせず、source snapshot再検査後にmanifestを最後に公開する。verifyにはWasm targetを含むbundleが必要で、sourceやcompilerを読まない。詳細は[Typed modules Phase 1仕様](./LLANG_MODULE_SPEC.md)、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、[Phase 2実行例](../examples/module-order-line/README.md)を参照。
+`module-bool-v1`の型付き関数・複数moduleに加え、`module-value-v1`はi32、string、record、tagged union等、`module-collection-v1`はList・loop・closure等を扱う。`module-effects-v1`は互換用の線形i32形式と、bytes／i64／f64／decimal、await／task／stream、file／HTTP専用nodeを持つtyped graph形式を扱う。graphはTS/JSONCを相互にimportでき、全TS・全JSONC・混在2方向からTypeScript/JSONC/Wasmを生成する。version 5 suiteは旧i32 replayに加え、`mode: "typed"`でoperation、version、canonical request/responseと最終値をreplayする。lint/build/testのentryはroot相対、verifyのmanifestとsuiteはcwd相対である。pure profileのtestはreference evaluator、生成TypeScript、再生成JSONC、Wasmを同じ固定suiteで比較する。buildは既存出力directoryを上書きせず、manifestを最後に公開する。詳細は[Typed modules Phase 1仕様](./LLANG_MODULE_SPEC.md)、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、[Collection仕様](./LLANG_MODULE_COLLECTION_SPEC.md)、[Effects仕様](./LLANG_MODULE_EFFECTS_SPEC.md)を参照。
 
 ## lint
 

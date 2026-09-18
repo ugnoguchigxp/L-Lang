@@ -110,7 +110,13 @@ export function effectsManifest(
   registry: HostOperationRegistry,
   operations: readonly { id: string; version: number }[],
 ): EffectsManifest {
-  const requirements = operations
+  const unique = new Map(
+      operations.map((operation) => [
+        `${operation.id}@${operation.version}`,
+        operation,
+      ]),
+    ),
+    requirements = [...unique.values()]
       .map(({ id, version }) => registry.requirement(id, version))
       .sort((a, b) =>
         a.id === b.id ? a.version - b.version : a.id.localeCompare(b.id),

@@ -116,6 +116,7 @@ type ReadResult =
 export class BoundedPullStream {
   #pendingRead = false;
   #closed = false;
+  #producerClosed = false;
   #bytes = 0;
 
   constructor(
@@ -134,7 +135,10 @@ export class BoundedPullStream {
         if (result.bytes.length > this.maximumChunkBytes)
           throw new Error("RESOURCE_LIMIT: chunk");
         this.#bytes += result.bytes.length;
-      } else this.#closed = true;
+      } else {
+        this.#closed = true;
+        await this.#closeProducer();
+      }
       return result;
     } finally {
       this.#pendingRead = false;
@@ -144,10 +148,16 @@ export class BoundedPullStream {
   async cancel(): Promise<void> {
     if (this.#closed) return;
     this.#closed = true;
-    await this.closeProducer();
+    await this.#closeProducer();
   }
 
   get processedBytes(): number {
     return this.#bytes;
+  }
+
+  async #closeProducer(): Promise<void> {
+    if (this.#producerClosed) return;
+    this.#producerClosed = true;
+    await this.closeProducer();
   }
 }

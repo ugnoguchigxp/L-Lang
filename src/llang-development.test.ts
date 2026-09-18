@@ -243,7 +243,9 @@ describe("L-Lang Development and migration", () => {
       resolve(f.root, "timed-run"),
     );
     expect(timed).toMatchObject({ status: "stopped" });
-    expect(String(timed.stopReason)).toContain("deadline");
+    expect(String(timed.stopReason)).toMatch(
+      /^DEVELOPMENT_LIMIT: (?:agent response deadline exceeded|wall-clock limit reached)$/,
+    );
 
     const noBudget = await developLlangCapability(
       f.request,

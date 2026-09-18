@@ -1,13 +1,19 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
-  emitLinearEffectsWasm,
+  effectsManifest,
+  HostOperationRegistry,
+  type OperationDefinition,
+} from "./llang-effects-contract";
+import { runLinearEffects } from "./llang-effects-runtime";
+import { Decimal, i64, LBytes } from "./llang-effects-values";
+import {
   assertEffectsWasm,
+  emitLinearEffectsWasm,
   SESSION_STATUS,
 } from "./llang-effects-wasm";
 import { LocalFileAdapter } from "./llang-io-file-adapter";
-import { LBytes, Decimal, i64 } from "./llang-effects-values";
 
 const emitted = emitLinearEffectsWasm({
     initial: 2,
@@ -52,6 +58,40 @@ for (const [sequence, value] of [3, 5].entries()) {
 }
 if (view.getInt32(output, true) !== 10)
   throw new Error("effects smoke Wasm result mismatch");
+
+const hostOperations: OperationDefinition[] = ["host.first", "host.second"].map(
+    (id) => ({
+      id,
+      version: 1,
+      requestType: { value: "i32" },
+      responseType: { value: "i32" },
+      errorType: { code: "string" },
+      effect: "host",
+      resource: "none",
+      cancellable: true,
+      idempotent: true,
+    }),
+  ),
+  registry = new HostOperationRegistry(hostOperations),
+  manifest = effectsManifest(
+    registry,
+    hostOperations.map(({ id, version }) => ({ id, version })),
+  ),
+  hosted = await runLinearEffects({
+    wasm: emitted.bytes,
+    manifest,
+    registry,
+    grant: {
+      operations: new Set(["host.first@1", "host.second@1"]),
+      wallClock: false,
+    },
+    execute: async (request) => ({
+      ok: true,
+      value: request.operation === "host.first" ? 3 : 5,
+    }),
+  });
+if (hosted.result !== 10 || hosted.ledger.used("hostRequests") !== 2)
+  throw new Error("effects smoke hosted runtime mismatch");
 
 const root = await mkdtemp(join(tmpdir(), "llang-effects-smoke-"));
 try {

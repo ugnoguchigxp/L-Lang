@@ -1,11 +1,12 @@
+import { randomUUID } from "node:crypto";
 import {
+  type FileHandle,
   link,
   lstat,
   open,
   realpath,
   rename,
   unlink,
-  type FileHandle,
 } from "node:fs/promises";
 import {
   basename,
@@ -16,7 +17,6 @@ import {
   resolve,
   sep,
 } from "node:path";
-import { randomUUID } from "node:crypto";
 import { LBytes } from "./llang-effects-values";
 
 export type FileResourceHandle = Readonly<{
@@ -39,6 +39,8 @@ type WriteResource = {
   target: string;
   replace: boolean;
   closed: boolean;
+  device: number;
+  inode: number;
 };
 type Resource = ReadResource | WriteResource;
 
@@ -113,6 +115,7 @@ export class LocalFileAdapter {
         `.${basename(target)}.llang-${randomUUID()}.tmp`,
       ),
       file = await open(temporary, "wx", 0o600),
+      identity = await file.stat(),
       id = this.#nextId++,
       generation = 1;
     this.#resources.set(id, {
@@ -123,6 +126,8 @@ export class LocalFileAdapter {
       target,
       replace: options.replace,
       closed: false,
+      device: identity.dev,
+      inode: identity.ino,
     });
     return Object.freeze({ id, generation, mode: "write" });
   }
@@ -147,16 +152,18 @@ export class LocalFileAdapter {
     const resource = this.#get(handle, "write") as WriteResource;
     resource.closed = true;
     await resource.file.sync();
+    await this.#assertOwnTemporary(resource);
     await resource.file.close();
     try {
+      await this.#assertOwnTemporary(resource);
       if (resource.replace) await rename(resource.temporary, resource.target);
       else {
         await link(resource.temporary, resource.target);
-        await unlink(resource.temporary);
+        await this.#unlinkOwnTemporary(resource);
       }
       this.#resources.delete(handle.id);
     } catch (error) {
-      await unlink(resource.temporary).catch(() => undefined);
+      await this.#unlinkOwnTemporary(resource).catch(() => undefined);
       this.#resources.delete(handle.id);
       throw error;
     }
@@ -167,8 +174,7 @@ export class LocalFileAdapter {
     if (!resource || resource.generation !== handle.generation) return;
     this.#resources.delete(handle.id);
     await resource.file.close().catch(() => undefined);
-    if (resource.mode === "write")
-      await unlink(resource.temporary).catch(() => undefined);
+    if (resource.mode === "write") await this.#unlinkOwnTemporary(resource);
   }
 
   async close(handle: FileResourceHandle): Promise<void> {
@@ -217,5 +223,21 @@ export class LocalFileAdapter {
     )
       throw new Error("STALE_RESOURCE_HANDLE");
     return resource;
+  }
+
+  async #assertOwnTemporary(resource: WriteResource): Promise<void> {
+    const current = await lstat(resource.temporary);
+    if (
+      current.isSymbolicLink() ||
+      !current.isFile() ||
+      current.dev !== resource.device ||
+      current.ino !== resource.inode
+    )
+      throw new Error("PERMISSION_DENIED: temporary path changed");
+  }
+
+  async #unlinkOwnTemporary(resource: WriteResource): Promise<void> {
+    await this.#assertOwnTemporary(resource);
+    await unlink(resource.temporary);
   }
 }

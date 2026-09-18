@@ -1,9 +1,17 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import {
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { LocalFileAdapter } from "./llang-io-file-adapter";
+import { join } from "node:path";
 import { LBytes } from "./llang-effects-values";
+import { LocalFileAdapter } from "./llang-io-file-adapter";
 
 describe("local file effects adapter", () => {
   test("reads by handle, atomically commits, and aborts temporary writes", async () => {
@@ -63,6 +71,27 @@ describe("local file effects adapter", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
       await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  test("never unlinks a temporary path whose identity was replaced", async () => {
+    const root = await mkdtemp(join(tmpdir(), "llang-file-"));
+    try {
+      const adapter = await LocalFileAdapter.create(root),
+        write = await adapter.openWrite("safe.bin", { replace: false }),
+        temporary = (await readdir(root)).find((name) =>
+          name.startsWith(".safe.bin.llang-"),
+        );
+      expect(temporary).toBeDefined();
+      const path = join(root, temporary as string);
+      await unlink(path);
+      await writeFile(path, "attacker-owned");
+      await expect(adapter.abort(write)).rejects.toThrow(
+        "PERMISSION_DENIED: temporary path changed",
+      );
+      expect(await readFile(path, "utf8")).toBe("attacker-owned");
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   });
 });
