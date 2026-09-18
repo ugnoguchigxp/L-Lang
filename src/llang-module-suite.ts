@@ -6,7 +6,7 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { instantiateWasmPredicate } from "./wasm-runtime";
 import { digest, WasmError } from "./wasm-contract";
@@ -122,7 +122,7 @@ async function runGeneratedTypeScript(
   await writeFile(casesPath, JSON.stringify(suite.cases));
   await writeFile(
     runnerPath,
-    `import { evaluate } from ${JSON.stringify(`./${generatedPath.slice(generatedPath.lastIndexOf("/") + 1)}`)};
+    `import { evaluate } from ${JSON.stringify(`./${basename(generatedPath)}`)};
 const cases = await Bun.file(process.argv[2] as string).json() as { id: string; input: unknown; expected: boolean | "INVALID_INPUT" }[];
 const results = cases.map((test) => {
   try {
