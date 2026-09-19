@@ -30,6 +30,8 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 
 - [要求付きWasmパッケージの事後検査](./CAPABILITY_INSPECTION_IMPLEMENTATION_PLAN.md)：既存Capability v2から要求・成果物の対応情報と検査用TypeScriptを出す機能（実装済み）
 - [Effects Bundleの事後検査](./EFFECTS_BUNDLE_INSPECTION_IMPLEMENTATION_PLAN.md)：同梱JSONCからTypeScriptとWasmを再生成し、外部操作・effect・資源・成果物の対応を実行せずに確認する実装済みの検査機能
+- [Effects実行証跡](./EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)：検査済みbundle、実grant、redacted transcript、結果・失敗・取消・cleanupを結び付ける実装済み機能
+- [Effects実行証跡の実装結果](./EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_RESULTS.md)：CLI、grant、journal、回収、受け入れ条件、保証境界
 
 - [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 

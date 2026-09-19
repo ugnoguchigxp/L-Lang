@@ -112,6 +112,11 @@ describe("effects operation contracts, grants and budgets", () => {
     ledger.consume("concurrentIo");
     expect(() => ledger.consume("concurrentIo")).toThrow("RESOURCE_LIMIT");
     ledger.release("concurrentIo");
+    const snapshot = ledger.snapshot();
+    expect(snapshot.used.hostRequests).toBe(2);
+    expect(snapshot.used.concurrentIo).toBe(0);
+    expect(snapshot.peak.hostRequests).toBe(2);
+    expect(snapshot.peak.concurrentIo).toBe(1);
     expect(ledger.used("concurrentIo")).toBe(0);
   });
 

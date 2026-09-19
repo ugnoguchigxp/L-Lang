@@ -1,6 +1,6 @@
 # JSONC CLIリファレンス
 
-2026-09-17時点の`src/llang-cli.ts`に対応する操作説明。[JSONC仕様](./LLANG_JSONC_SPEC.md)・[実行例](../examples/jsonc-enabled-user/README.md)・[経路一覧](./guides/language-routes.md)。TypeScriptのCLIは[専用ガイド](./guides/semantic-typescript.md)を参照。
+2026-09-20時点の`src/llang-cli.ts`に対応する操作説明。[JSONC仕様](./LLANG_JSONC_SPEC.md)・[実行例](../examples/jsonc-enabled-user/README.md)・[経路一覧](./guides/language-routes.md)。TypeScriptのCLIは[専用ガイド](./guides/semantic-typescript.md)を参照。
 
 ## 共通事項
 
@@ -32,6 +32,8 @@
 | module test | JSON | 4実行経路で全case成功 | 期待値不一致 | suite・I/O・実行障害 |
 | module verify | JSON | 移動可能Wasm bundleの全case成功 | 期待値不一致 | 改変・ABI・I/O・実行障害 |
 | module inspect | JSON | Effects bundleの再構築検査成功 | 使用しない | target不足・改変・出力先・I/O等 |
+| module execute | JSON | 実行完了と証跡report公開 | failed/cancelled/incompleteの有効な証跡 | preflight・grant・出力・証跡I/O等 |
+| module recover-execution | JSON | 使用しない | crash後のincomplete report公開 | live owner・改変・既存report・I/O等 |
 
 正常なbooleanの`false`はCLIエラーとは別。`test`の期待値不一致は終了1、実行障害は終了2なので、reportと終了値を併せて読む。
 
@@ -43,11 +45,19 @@ bun run llang module build <entry.ts|entry.llang.jsonc> --root <root> --entry <e
 bun run llang module test <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --suite <suite.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1] --json
 bun run llang module verify <module-build.json> --suite <suite.json> --json
 bun run llang module inspect <module-build.json> [--out-dir <new-directory>] --json
+bun run llang module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-evidence-directory> [--credential-env <mapping.json>] --json
+bun run llang module recover-execution <evidence-directory> --json
 ```
 
 `module-bool-v1`の型付き関数・複数moduleに加え、`module-value-v1`はi32、string、record、tagged union等、`module-collection-v1`はList・loop・closure等を扱う。`module-effects-v1`は互換用の線形i32形式と、bytes／i64／f64／decimal、await／task／stream、file／HTTP専用nodeを持つtyped graph形式を扱う。graphはTS/JSONCを相互にimportでき、全TS・全JSONC・混在2方向からTypeScript/JSONC/Wasmを生成する。version 5 suiteは旧i32 replayに加え、`mode: "typed"`でoperation、version、canonical request/responseと最終値をreplayする。lint/build/testのentryはroot相対、verifyのmanifestとsuiteはcwd相対である。pure profileのtestはreference evaluator、生成TypeScript、再生成JSONC、Wasmを同じ固定suiteで比較する。buildは既存出力directoryを上書きせず、manifestを最後に公開する。詳細は[Typed modules Phase 1仕様](./LLANG_MODULE_SPEC.md)、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、[Collection仕様](./LLANG_MODULE_COLLECTION_SPEC.md)、[Effects仕様](./LLANG_MODULE_EFFECTS_SPEC.md)を参照。
 
 `module inspect`はversion 5のtyped `module-effects-v1` bundleに限定し、`--target all`で同梱されたflattened JSONCを検査してTypeScriptとWasmを再生成する。interface、operation、TypeScript/Wasm bytes、Wasm contract/stateがmanifestと一致した場合だけ成功する。`--out-dir`指定時はbundle外部の新規directoryへ`program.inspection.ts`と`effects-inspection.json`を保存する。元source本文はbundleにないため再検査せず、Wasm・生成TS・adapterを実行しない。manifestのeffect要求はruntime grantではなく、credential、実行transcript、真正性、要求充足、安全性を確認したとは表示しない。
+
+`module execute`は同じ静的検査をpreflightとして実行し、検査したbundle内の`wasm/program.wasm`そのものを実行する。grantはformat `llang-effects-grant` version 1で、bundle identity、operation、file logical root、HTTP origin/method/header/network、wall clock、deadline、既定値以下のresource limitを固定する。出力先はbundleとfile adapter rootの外側にある新規directoryでなければならない。
+
+外部operationより先に`execution-intent.json`とrequest eventを耐久化し、`effects-transcript.jsonl`にはpayload本文、HTTP path/query、credential値、実file root、完全なerrorを保存しない。完了時は`effects-execution.json`を最後に公開する。`--credential-env`のmappingはformat `llang-effects-credential-env` version 1の`origins -> header名 -> 環境変数名`であり、値と環境変数名は証跡へ記録しない。reportの`attestation`は`not-signed`、保存責任は`caller-managed`である。
+
+`module recover-execution`はlive ownerがいない未完了directoryだけを処理し、hash chainを検査してresponseのないrequestを`certainty: "unknown"`とした終了1のreportを作る。operationの再送、Wasmの再開、file commitは行わない。既存の最終reportは上書きしない。
 
 ## lint
 

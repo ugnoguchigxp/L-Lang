@@ -26,6 +26,19 @@ TypeScript and Wasm artifacts. It reports declared file operations, but does
 not grant file access, invoke an adapter, execute Wasm, or create a runtime
 transcript.
 
+An all-target typed bundle can also be executed under an identity-bound grant:
+
+```sh
+bun run llang module execute artifacts/module-io-inspection-bundle/module-build.json --grant effects-grant.json --out-dir artifacts/module-io-execution --json
+```
+
+`effects-grant.json` must use format `llang-effects-grant`, version 1, and the
+`bundleIdentityHash` printed by `module inspect`. Its file `adapterRoot` is
+resolved relative to the grant file; `logicalRoots` name only the relative
+paths visible to the program. The evidence directory must be outside both the
+bundle and adapter root. The resulting intent, hash-chained transcript, and
+final report contain hashes and byte counts rather than file contents.
+
 This is the current operational starting point: local files and deterministic
 fixtures require no external credentials, while HTTP access is granted by the
 embedding host. The example is not a soak, TLS deployment, or performance

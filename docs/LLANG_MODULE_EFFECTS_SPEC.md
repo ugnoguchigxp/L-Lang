@@ -107,6 +107,31 @@ Original source bodies are not present in the portable bundle, and internal
 consistency is not publisher authentication or a general proof of semantic
 equivalence.
 
+### Runtime execution evidence
+
+`llang module execute` accepts only an inspected version-5 typed all-target
+bundle and an `llang-effects-grant` version-1 document bound to that bundle
+identity. Execution instantiates the bundled Wasm bytes rather than a newly
+emitted replacement. File, HTTP, and wall-clock built-ins and embedding-host
+operations all pass through the same grant, resource-ledger, and recording
+boundary.
+
+Before the first host dispatch, the runtime durably publishes an execution
+intent and appends a request event to a single-writer JSON Lines journal. Each
+event commits to the previous event hash. Responses, stream chunks,
+cancellation, cleanup, and the terminal state are appended in observed order.
+Payload and response bodies, credential values and environment-variable names,
+absolute file roots, HTTP paths and queries, full error messages, and stacks
+are excluded. The journal retains typed-wire hashes and byte counts instead.
+
+The final `effects-execution.json` binds the bundle identity, grant commitment,
+bundled Wasm hash, transcript and result hashes, resource usage and peaks, and
+cleanup outcome. Evidence is explicitly unsigned and caller-retained. A stale
+execution can be finalized with `module recover-execution`; pending requests
+become unknown outcomes and are never replayed. This evidence does not prove
+host identity, remote-service truth, business correctness, exactly-once side
+effects, or rollback.
+
 ## Initial adapters
 
 The local file adapter uses handle-based reads. Writes go to an exclusive

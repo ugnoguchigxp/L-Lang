@@ -164,7 +164,15 @@ export function assertGranted(
   if (operation.effect === "file") {
     if (!grant.file || !target?.path || !target.fileMode)
       throw new Error("PERMISSION_DENIED: file");
-    const targetPath = target.path;
+    const targetPath = target.path,
+      parts = targetPath.split("/");
+    if (targetPath.startsWith("/")) parts.shift();
+    if (
+      !targetPath ||
+      targetPath.includes("\\") ||
+      parts.some((part) => !part || part === "." || part === "..")
+    )
+      throw new Error("PERMISSION_DENIED: file");
     const allowed = grant.file.roots.some((root) => {
       const prefix = root.endsWith("/") ? root : `${root}/`;
       return targetPath === root || targetPath.startsWith(prefix);
@@ -235,6 +243,7 @@ export const DEFAULT_EFFECTS_LIMITS: BudgetLimits = Object.freeze({
 
 export class ResourceLedger {
   readonly #used = new Map<keyof BudgetLimits, number>();
+  readonly #peak = new Map<keyof BudgetLimits, number>();
 
   constructor(readonly limits: BudgetLimits = DEFAULT_EFFECTS_LIMITS) {
     for (const [name, value] of Object.entries(limits))
@@ -248,6 +257,7 @@ export class ResourceLedger {
     const next = (this.#used.get(name) ?? 0) + amount;
     if (next > this.limits[name]) throw new Error(`RESOURCE_LIMIT: ${name}`);
     this.#used.set(name, next);
+    this.#peak.set(name, Math.max(this.#peak.get(name) ?? 0, next));
   }
 
   release(
@@ -263,6 +273,27 @@ export class ResourceLedger {
 
   used(name: keyof BudgetLimits): number {
     return this.#used.get(name) ?? 0;
+  }
+
+  snapshot(): Readonly<{
+    limits: BudgetLimits;
+    used: BudgetLimits;
+    peak: BudgetLimits;
+  }> {
+    const values = (source: ReadonlyMap<keyof BudgetLimits, number>) =>
+      Object.freeze(
+        Object.fromEntries(
+          Object.keys(this.limits).map((name) => [
+            name,
+            source.get(name as keyof BudgetLimits) ?? 0,
+          ]),
+        ) as BudgetLimits,
+      );
+    return Object.freeze({
+      limits: this.limits,
+      used: values(this.#used),
+      peak: values(this.#peak),
+    });
   }
 }
 

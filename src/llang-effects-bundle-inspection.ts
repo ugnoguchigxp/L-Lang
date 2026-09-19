@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { atomicWriteText } from "./atomic-file";
 import { effectValueTypeJson } from "./llang-effects-ir";
 import { emitTypedEffectsWasm } from "./llang-effects-state-machine";
+import type { LoweredEffectState } from "./llang-effects-state-machine";
 import { assertEffectsWasm } from "./llang-effects-wasm";
 import { decodeUtf8 } from "./llang-jsonc";
 import {
@@ -22,10 +23,12 @@ import { digest, WasmError } from "./wasm-contract";
 export const LLANG_EFFECTS_BUNDLE_INSPECTION_VERSION = 1 as const;
 export const LLANG_EFFECTS_PROJECTION_VERSION = 1 as const;
 
-type EffectsBundleSnapshot = Awaited<
+export type EffectsBundleSnapshot = Awaited<
   ReturnType<typeof readEffectsModuleBuildManifest>
 >;
-type TypedEffectsWasm = NonNullable<EffectsModuleBuildManifest["wasm"]> & {
+export type TypedEffectsWasm = NonNullable<
+  EffectsModuleBuildManifest["wasm"]
+> & {
   contract: NonNullable<EffectsModuleBuildManifest["wasm"]>["contract"] & {
     layout: "typed-wire-v1";
   };
@@ -277,6 +280,42 @@ function reportFor(snapshot: EffectsBundleSnapshot) {
   };
 }
 
+export type VerifiedEffectsExecutionSnapshot = Readonly<{
+  manifestPath: string;
+  manifest: EffectsModuleBuildManifest;
+  graph: ReturnType<typeof checkFlattenedEffectsGraph>;
+  wasmBytes: Uint8Array;
+  states: readonly LoweredEffectState[];
+  bundleIdentityHash: string;
+  inspection: ReturnType<typeof reportFor>;
+}>;
+
+export async function readVerifiedEffectsExecutionSnapshot(
+  path: string,
+): Promise<VerifiedEffectsExecutionSnapshot> {
+  const manifestPath = resolve(path),
+    snapshot = await readEffectsModuleBuildManifest(manifestPath),
+    inspection = reportFor(snapshot),
+    jsoncBytes = artifact(snapshot, "jsonc/program.llang.jsonc"),
+    graph = checkFlattenedEffectsGraph(
+      parseEffectsGraphJsonc(
+        decodeUtf8(jsoncBytes, "jsonc/program.llang.jsonc"),
+        "jsonc/program.llang.jsonc",
+      ),
+      digest(jsoncBytes),
+    ),
+    emitted = emitTypedEffectsWasm(graph.program, graph.manifest.operations);
+  return Object.freeze({
+    manifestPath,
+    manifest: snapshot.manifest,
+    graph,
+    wasmBytes: artifact(snapshot, "wasm/program.wasm").slice(),
+    states: emitted.states,
+    bundleIdentityHash: inspection.bundleIdentityHash,
+    inspection,
+  });
+}
+
 function isContained(root: string, target: string): boolean {
   const relation = relative(root, target);
   return (
@@ -378,6 +417,13 @@ async function assertUnchanged(path: string, expectedIdentity: string) {
       "INVALID_ARTIFACT",
       "effects bundle changed during inspection",
     );
+}
+
+export async function assertEffectsBundleIdentity(
+  path: string,
+  expectedIdentity: string,
+): Promise<void> {
+  await assertUnchanged(path, expectedIdentity);
 }
 
 export async function inspectEffectsModuleBundle(

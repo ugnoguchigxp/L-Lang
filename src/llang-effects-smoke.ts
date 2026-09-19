@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
+import { executeEffectsModuleBundle } from "./llang-effects-execution-evidence";
 import {
   effectsManifest,
   HostOperationRegistry,
@@ -97,6 +98,7 @@ if (hosted.result !== 10 || hosted.ledger.used("hostRequests") !== 2)
 
 const root = await mkdtemp(join(tmpdir(), "llang-effects-smoke-"));
 let bundleIdentityHash = "";
+let executionEvidenceHash = "";
 try {
   const files = await LocalFileAdapter.create(root),
     handle = await files.openWrite("result.bin", { replace: false }),
@@ -157,6 +159,31 @@ try {
   )
     throw new Error("effects bundle inspection smoke mismatch");
   bundleIdentityHash = inspected.bundleIdentityHash;
+  await writeFile(
+    join(root, "execution-grant.json"),
+    JSON.stringify({
+      format: "llang-effects-grant",
+      version: 1,
+      bundleIdentityHash,
+      operations: ["host.echo@1"],
+      file: null,
+      http: null,
+      wallClock: false,
+      deadlineMs: 30_000,
+      limits: {},
+    }),
+  );
+  const execution = await executeEffectsModuleBundle({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    grantPath: join(root, "execution-grant.json"),
+    outputDirectory: join(root, "execution-evidence"),
+    execute: async () => 42n,
+  });
+  if (execution.status !== "completed")
+    throw new Error("effects execution evidence smoke mismatch");
+  executionEvidenceHash = String(
+    (execution.authenticity as Record<string, unknown>).evidenceHash,
+  );
 } finally {
   await rm(root, { recursive: true, force: true });
 }
@@ -172,5 +199,6 @@ console.log(
     programHash: emitted.contract.programHash,
     wasmBytes: emitted.bytes.length,
     bundleIdentityHash,
+    executionEvidenceHash,
   }),
 );

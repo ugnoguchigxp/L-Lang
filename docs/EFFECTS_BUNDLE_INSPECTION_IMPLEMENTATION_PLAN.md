@@ -219,7 +219,7 @@ coverageとUbuntu/macOS/Windowsは既存CIに従います。ローカル成功�
 - 人間参加者による理解度・調査時間の評価。
 - 新しい最適化pass、ABI、manifest version、operation schema。
 
-この実装後の次候補は、hostが実際に与えたgrantとredacted transcriptを、bundle identityおよび実行結果へ結び付ける「Effects実行証跡」計画です。その段階では、typed runtimeでのtranscript取得、credential非記録、失敗・取消・cleanup・unknown outcome、署名主体と保存期間を先に設計します。静的inspectの成功を実行証跡の代用にはしません。
+この実装後の次候補は、hostが実際に与えたgrantとredacted transcriptを、bundle identityおよび実行結果へ結び付ける[Effects実行証跡](./EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)計画です。その段階では、typed runtimeでのtranscript取得、credential非記録、失敗・取消・cleanup・unknown outcome、署名主体と保存期間を先に設計します。静的inspectの成功を実行証跡の代用にはしません。
 
 ## 完了報告で示すもの
 

@@ -47,6 +47,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 `module-effects-v1`のall-target bundleを実行せずに再構築・検査する[Effects Bundle事後検査](./docs/EFFECTS_BUNDLE_INSPECTION_IMPLEMENTATION_PLAN.md)を実装した。静的なbundle整合を対象とし、実行時grantやtranscriptの証跡化は後続へ分離している。
 
+検査済みbundleの実Wasm、hostが与えたgrant、redacted transcript、結果・失敗・取消・cleanupを結び付ける[Effects実行証跡](./docs/EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)を実装した。CLIは実行前intent、hash chain journal、最終report、再実行しないcrash回収を提供する。署名によるhost真正性とremote attestationは、unsigned evidenceからさらに分離する。
+
 [第一弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE1_IMPLEMENTATION_PLAN.md)の型付き関数・複数module、TS／JSONC混在入力と3形式出力は実装済み。利用仕様は[Phase 1仕様](./docs/LLANG_MODULE_SPEC.md)を参照する。最終品質Gate・対象CIの証跡は第一弾計画の未チェック欄を開始時に照合する。
 
 [第二弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE2_IMPLEMENTATION_PLAN.md)では、整数・文字列・record／union戻り値・局所束縛・分岐・型付き失敗と最小memory ABIを、10の変更単位に分けた。単一注文明細の計算は[第二弾の実装結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE2_IMPLEMENTATION_RESULTS.md)を参照する。指定Bunとの差と対象OSの未確認事項は同記録に残っている。

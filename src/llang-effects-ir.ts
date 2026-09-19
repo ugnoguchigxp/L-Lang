@@ -341,6 +341,17 @@ const HTTP_REQUEST_TYPE = Object.freeze({
 export const BUILTIN_IO_OPERATIONS: readonly OperationDefinition[] =
   Object.freeze([
     Object.freeze({
+      id: "clock.wall",
+      version: 1,
+      requestType: "string",
+      responseType: "i64",
+      errorType: { code: "string" },
+      effect: "clock",
+      resource: "none",
+      cancellable: false,
+      idempotent: true,
+    }),
+    Object.freeze({
       id: "file.read",
       version: 1,
       requestType: effectValueTypeJson(FILE_READ_TYPE),

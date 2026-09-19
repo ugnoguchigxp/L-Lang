@@ -18,6 +18,53 @@ export type IoErrorCode =
   | "invalid-response"
   | "resource-limit"
   | "internal";
+
+export function effectsRequestId(
+  sessionId: string,
+  taskId: number,
+  generation: number,
+  sequence: number,
+): RequestId {
+  if (
+    !sessionId ||
+    sessionId.includes(":") ||
+    ![taskId, generation, sequence].every(
+      (value) => Number.isSafeInteger(value) && value >= 0,
+    )
+  )
+    throw new Error("INVALID_REQUEST_ID");
+  return `${sessionId}:${taskId}:${generation}:${sequence}`;
+}
+
+export function classifyIoError(error: unknown): Readonly<{
+  code: IoErrorCode;
+  outcome: "known" | "unknown";
+}> {
+  const message = error instanceof Error ? error.message : String(error),
+    upper = message.toUpperCase(),
+    code: IoErrorCode =
+      upper.includes("NOT_FOUND") || upper.includes("ENOENT")
+        ? "not-found"
+        : upper.includes("PERMISSION") || upper.includes("EACCES")
+          ? "permission"
+          : upper.includes("TIMEOUT")
+            ? "timeout"
+            : upper.includes("CANCEL") || upper.includes("ABORT")
+              ? "cancelled"
+              : upper.includes("CONNECTION") || upper.includes("ECONN")
+                ? "connection"
+                : upper.includes("RESOURCE_LIMIT")
+                  ? "resource-limit"
+                  : upper.includes("INVALID")
+                    ? "invalid-response"
+                    : "internal";
+  return Object.freeze({
+    code,
+    outcome: ["timeout", "cancelled", "connection"].includes(code)
+      ? "unknown"
+      : "known",
+  });
+}
 export type OperationOutcome =
   | Readonly<{ ok: true; value: unknown; receivedBytes?: number }>
   | Readonly<{
@@ -131,8 +178,12 @@ export class EffectsSession {
     this.ledger.consume("hostRequests");
     this.ledger.consume("concurrentIo");
     this.ledger.consume("sentBytes", request.sentBytes ?? 0);
-    const id =
-      `${this.id}:${request.taskId}:${this.#generation}:${++this.#requestSequence}` as RequestId;
+    const id = effectsRequestId(
+      this.id,
+      request.taskId,
+      this.#generation,
+      ++this.#requestSequence,
+    );
     this.#pending.set(id, { operation, request, generation: this.#generation });
     const target = redactTarget(request);
     this.#transcript.push(

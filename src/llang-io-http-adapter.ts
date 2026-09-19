@@ -301,6 +301,16 @@ export class HttpAdapter {
     await resource.reader.cancel().catch(() => undefined);
   }
 
+  async dispose(): Promise<void> {
+    await Promise.all(
+      [...this.#bodies.keys()].map((id) => {
+        const resource = this.#bodies.get(id);
+        if (!resource) return Promise.resolve();
+        return this.close({ id, generation: resource.generation });
+      }),
+    );
+  }
+
   #allowed(item: ResolvedAddress): boolean {
     if (isIP(item.address) !== item.family) return false;
     const type = addressType(item.family);
