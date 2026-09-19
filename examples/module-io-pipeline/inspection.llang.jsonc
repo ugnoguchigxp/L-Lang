@@ -1,0 +1,25 @@
+{
+  "language": "l-lang",
+  "version": 5,
+  "kind": "module",
+  "profile": "module-effects-v1",
+  "module": "examples/module-io-inspection",
+  "entry": "main",
+  "imports": [],
+  "operations": [],
+  "resultType": "bytes",
+  "nodes": [
+    {
+      "kind": "file",
+      "action": "write",
+      "path": "result.bin",
+      "bytes": { "bytes": "b2s=" },
+      "replace": false
+    },
+    {
+      "kind": "file",
+      "action": "read",
+      "path": "result.bin"
+    }
+  ]
+}

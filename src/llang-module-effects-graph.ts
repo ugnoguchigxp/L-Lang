@@ -5,16 +5,16 @@ import { resolveContainedFile } from "./contained-path";
 import {
   effectsManifest,
   HostOperationRegistry,
-  operationSignature,
   type OperationDefinition,
+  operationSignature,
 } from "./llang-effects-contract";
 import {
   BUILTIN_IO_OPERATIONS,
   BUILTIN_IO_TYPES,
   checkTypedEffectsProgram,
   decodeEffectValue,
-  effectValueTypeJson,
   type EffectValueType,
+  effectValueTypeJson,
   parseEffectValueType,
   type TypedAwait,
   type TypedEffectNode,
@@ -468,6 +468,112 @@ const compileNode = (
   throw new ModuleError("LLE001", `unknown effect node kind ${kind}`);
 };
 
+function checkEffectsGraphModules(
+  entrySource: EffectsGraphSource,
+  modules: ReadonlyMap<string, EffectsGraphSource>,
+  sourceRecords: readonly Readonly<{ path: string; hash: string }>[],
+  entryName: string,
+): CheckedEffectsGraph {
+  if (entrySource.entry !== entryName)
+    throw new ModuleError("LLE002", `entry ${entryName} was not found`);
+  const definitions = new Map<string, OperationDefinition>();
+  for (const definition of [
+    ...BUILTIN_IO_OPERATIONS,
+    ...[...modules.values()].flatMap((module) => module.operations),
+  ]) {
+    const key = `${definition.id}@${definition.version}`,
+      old = definitions.get(key);
+    if (old && operationSignature(old) !== operationSignature(definition))
+      throw new ModuleError("LLE002", `operation conflict ${key}`);
+    definitions.set(key, definition);
+  }
+  const orderedModules: EffectsGraphSource[] = [],
+    seen = new Set<string>();
+  const order = (module: EffectsGraphSource) => {
+    if (seen.has(module.module)) return;
+    for (const imported of module.imports) {
+      const child = modules.get(imported.module);
+      if (!child)
+        throw new ModuleError("LLE002", `missing module ${imported.module}`);
+      order(child);
+    }
+    seen.add(module.module);
+    orderedModules.push(module);
+  };
+  order(entrySource);
+  const nodes = Object.freeze(
+      orderedModules.flatMap((module) =>
+        module.nodes.map((node) => compileNode(node, definitions)),
+      ),
+    ),
+    last = nodes.at(-1);
+  if (!last || !sameType(last.responseType, entrySource.resultType))
+    throw new ModuleError(
+      "LLE002",
+      "entry result type does not match final node",
+    );
+  const program = checkTypedEffectsProgram(
+      Object.freeze({ nodes, resultType: entrySource.resultType }),
+    ),
+    requirements = nodes.flatMap((node) =>
+      node.kind === "task"
+        ? node.tasks.map((task) => ({
+            id: task.operation,
+            version: task.version,
+          }))
+        : [{ id: node.operation, version: node.version }],
+    ),
+    registry = new HostOperationRegistry([...definitions.values()]),
+    manifest = effectsManifest(registry, requirements),
+    sources = Object.freeze(
+      [...sourceRecords].sort((a, b) => a.path.localeCompare(b.path)),
+    ),
+    programHash = fingerprintFor({
+      modules: orderedModules.map((module) => module.module),
+      sources,
+      resultType: effectValueTypeJson(program.resultType),
+      nodes: nodes.map((node) => node.kind),
+    }),
+    interfaceHash = fingerprintFor({
+      profile: "module-effects-v1",
+      entry: entryName,
+      resultType: effectValueTypeJson(program.resultType),
+      operations: manifest.operations,
+      effects: manifest.effects,
+    });
+  return Object.freeze({
+    entry: `${entrySource.module}#${entryName}`,
+    modules: Object.freeze(orderedModules),
+    sources,
+    sourceSetHash: fingerprintFor(sources),
+    programHash,
+    interfaceHash,
+    registry,
+    operations: Object.freeze([...definitions.values()]),
+    manifest,
+    program,
+  });
+}
+
+export function checkFlattenedEffectsGraph(
+  source: EffectsGraphSource,
+  sourceHash: string,
+): CheckedEffectsGraph {
+  if (source.imports.length)
+    throw new ModuleError(
+      "LLE002",
+      "inspection JSONC must be a flattened effects graph",
+    );
+  if (!source.entry)
+    throw new ModuleError("LLE002", "inspection JSONC is missing entry");
+  return checkEffectsGraphModules(
+    source,
+    new Map([[source.module, source]]),
+    [{ path: "jsonc/program.llang.jsonc", hash: sourceHash }],
+    source.entry,
+  );
+}
+
 export async function loadEffectsModuleGraph(
   entry: string,
   root: string,
@@ -548,89 +654,10 @@ export async function loadEffectsModuleGraph(
     return source;
   };
   const entrySource = await visit(entry);
-  if (entrySource.entry !== entryName)
-    throw new ModuleError("LLE002", `entry ${entryName} was not found`);
-  const definitions = new Map<string, OperationDefinition>();
-  for (const definition of [
-    ...BUILTIN_IO_OPERATIONS,
-    ...[...modules.values()].flatMap((module) => module.operations),
-  ]) {
-    const key = `${definition.id}@${definition.version}`,
-      old = definitions.get(key);
-    if (old && operationSignature(old) !== operationSignature(definition))
-      throw new ModuleError("LLE002", `operation conflict ${key}`);
-    definitions.set(key, definition);
-  }
-  const orderedModules: EffectsGraphSource[] = [],
-    seen = new Set<string>();
-  const order = (module: EffectsGraphSource) => {
-    if (seen.has(module.module)) return;
-    for (const imported of module.imports) {
-      const child = modules.get(imported.module);
-      if (!child)
-        throw new ModuleError("LLE002", `missing module ${imported.module}`);
-      order(child);
-    }
-    seen.add(module.module);
-    orderedModules.push(module);
-  };
-  order(entrySource);
-  const nodes = Object.freeze(
-      orderedModules.flatMap((module) =>
-        module.nodes.map((node) => compileNode(node, definitions)),
-      ),
-    ),
-    last = nodes.at(-1);
-  if (
-    !last ||
-    !sameType(
-      last.kind === "task" ? last.responseType : last.responseType,
-      entrySource.resultType,
-    )
-  )
-    throw new ModuleError(
-      "LLE002",
-      "entry result type does not match final node",
-    );
-  const program = checkTypedEffectsProgram(
-      Object.freeze({ nodes, resultType: entrySource.resultType }),
-    ),
-    requirements = nodes.flatMap((node) =>
-      node.kind === "task"
-        ? node.tasks.map((task) => ({
-            id: task.operation,
-            version: task.version,
-          }))
-        : [{ id: node.operation, version: node.version }],
-    ),
-    registry = new HostOperationRegistry([...definitions.values()]),
-    manifest = effectsManifest(registry, requirements),
-    sources = Object.freeze(
-      sourceRecords.sort((a, b) => a.path.localeCompare(b.path)),
-    ),
-    programHash = fingerprintFor({
-      modules: orderedModules.map((module) => module.module),
-      sources,
-      resultType: effectValueTypeJson(program.resultType),
-      nodes: nodes.map((node) => node.kind),
-    }),
-    interfaceHash = fingerprintFor({
-      profile: "module-effects-v1",
-      entry: entryName,
-      resultType: effectValueTypeJson(program.resultType),
-      operations: manifest.operations,
-      effects: manifest.effects,
-    });
-  return Object.freeze({
-    entry: `${entrySource.module}#${entryName}`,
-    modules: Object.freeze(orderedModules),
-    sources,
-    sourceSetHash: fingerprintFor(sources),
-    programHash,
-    interfaceHash,
-    registry,
-    operations: Object.freeze([...definitions.values()]),
-    manifest,
-    program,
-  });
+  return checkEffectsGraphModules(
+    entrySource,
+    modules,
+    sourceRecords,
+    entryName,
+  );
 }

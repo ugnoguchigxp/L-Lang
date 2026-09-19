@@ -1,7 +1,7 @@
 import type { PredicateDefinition, PredicateExpression } from "./ir";
 
 export function generatePredicate(definition: PredicateDefinition): string {
-  const expression = renderExpression(
+  const expression = renderPredicateExpression(
     definition.body,
     definition.input.parameter,
     1,
@@ -21,10 +21,14 @@ export function generatePredicate(definition: PredicateDefinition): string {
   ].join("\n");
 }
 
-function renderExpression(
+export function renderPredicateExpression(
   expression: PredicateExpression,
   parameter: string,
   depth: number,
+  renderProperty: (
+    parameter: string,
+    property: string[],
+  ) => string = renderDirectProperty,
 ): string {
   switch (expression.kind) {
     case "all":
@@ -34,13 +38,20 @@ function renderExpression(
       const closingIndentation = "  ".repeat(depth);
 
       const rendered = expression.conditions
-        .map((condition) => renderExpression(condition, parameter, depth + 1))
+        .map((condition) =>
+          renderPredicateExpression(
+            condition,
+            parameter,
+            depth + 1,
+            renderProperty,
+          ),
+        )
         .join(` ${operator}\n${childIndentation}`);
 
       return `(\n${childIndentation}${rendered}\n${closingIndentation})`;
     }
     case "not":
-      return `!(${renderExpression(expression.condition, parameter, depth + 1)})`;
+      return `!(${renderPredicateExpression(expression.condition, parameter, depth + 1, renderProperty)})`;
     case "equals":
       return `${renderProperty(parameter, expression.property)} === ${JSON.stringify(expression.value)}`;
     case "present": {
@@ -50,7 +61,7 @@ function renderExpression(
   }
 }
 
-function renderProperty(parameter: string, property: string[]): string {
+function renderDirectProperty(parameter: string, property: string[]): string {
   return [parameter, ...property].join(".");
 }
 

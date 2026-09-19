@@ -22,6 +22,7 @@
 | test | JSON | 全ケース成功、必須要求の未網羅なし | ケース不一致・未網羅 | ケース内実行error、入力検証・build・I/O等の例外 |
 | package | JSON | パッケージ作成 | 使用しない | 不正入力、既存出力、I/O等 |
 | verify | JSON | report.statusがpass | report.statusがfail | report.statusがerror、または例外 |
+| inspect | JSON | 整合する検査report生成 | 使用しない | 改変・未対応profile・出力先・I/O等 |
 | mutation-check | JSON | 下記の失敗条件なし | survived/unknown、未処理提案、必須要求未網羅あり | 不正入力・I/O等の例外 |
 | migrate | JSON | 新規変換ファイル作成 | 使用しない | 欠損・不正・stale Lock、既存出力等 |
 | develop | JSON | statusがpass | statusがfail | unresolved/stopped/error、または例外 |
@@ -30,6 +31,7 @@
 | module build | JSON | 新規bundle作成 | source診断 | 既存出力・I/O・SOURCE_CONFLICT |
 | module test | JSON | 4実行経路で全case成功 | 期待値不一致 | suite・I/O・実行障害 |
 | module verify | JSON | 移動可能Wasm bundleの全case成功 | 期待値不一致 | 改変・ABI・I/O・実行障害 |
+| module inspect | JSON | Effects bundleの再構築検査成功 | 使用しない | target不足・改変・出力先・I/O等 |
 
 正常なbooleanの`false`はCLIエラーとは別。`test`の期待値不一致は終了1、実行障害は終了2なので、reportと終了値を併せて読む。
 
@@ -40,9 +42,12 @@ bun run llang module lint <entry.ts|entry.llang.jsonc> --root <root> --entry <ex
 bun run llang module build <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
 bun run llang module test <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --suite <suite.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1] --json
 bun run llang module verify <module-build.json> --suite <suite.json> --json
+bun run llang module inspect <module-build.json> [--out-dir <new-directory>] --json
 ```
 
 `module-bool-v1`の型付き関数・複数moduleに加え、`module-value-v1`はi32、string、record、tagged union等、`module-collection-v1`はList・loop・closure等を扱う。`module-effects-v1`は互換用の線形i32形式と、bytes／i64／f64／decimal、await／task／stream、file／HTTP専用nodeを持つtyped graph形式を扱う。graphはTS/JSONCを相互にimportでき、全TS・全JSONC・混在2方向からTypeScript/JSONC/Wasmを生成する。version 5 suiteは旧i32 replayに加え、`mode: "typed"`でoperation、version、canonical request/responseと最終値をreplayする。lint/build/testのentryはroot相対、verifyのmanifestとsuiteはcwd相対である。pure profileのtestはreference evaluator、生成TypeScript、再生成JSONC、Wasmを同じ固定suiteで比較する。buildは既存出力directoryを上書きせず、manifestを最後に公開する。詳細は[Typed modules Phase 1仕様](./LLANG_MODULE_SPEC.md)、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、[Collection仕様](./LLANG_MODULE_COLLECTION_SPEC.md)、[Effects仕様](./LLANG_MODULE_EFFECTS_SPEC.md)を参照。
+
+`module inspect`はversion 5のtyped `module-effects-v1` bundleに限定し、`--target all`で同梱されたflattened JSONCを検査してTypeScriptとWasmを再生成する。interface、operation、TypeScript/Wasm bytes、Wasm contract/stateがmanifestと一致した場合だけ成功する。`--out-dir`指定時はbundle外部の新規directoryへ`program.inspection.ts`と`effects-inspection.json`を保存する。元source本文はbundleにないため再検査せず、Wasm・生成TS・adapterを実行しない。manifestのeffect要求はruntime grantではなく、credential、実行transcript、真正性、要求充足、安全性を確認したとは表示しない。
 
 ## lint
 
@@ -79,11 +84,13 @@ bun run llang test <source.llang.jsonc> --request <request.json> --suite <tests.
 
 `requestRevision/suiteHash/sourceHash/programHash/artifactHash`は実際に検証・実行したsnapshotから得る。元のSourceをbuild時に読み直さず、取り込んだJSONC原文を一時Sourceとしてコンパイルする。コメントだけの変更はsourceHashに反映し、programHash/artifactHashは変えない。同じ入力の`verify`と5種類のhashが一致する。要求IDのない入力のcoverageは`not-evaluated`で、要求網羅の証明ではない。
 
-## packageとverify
+## package、verify、inspect
 
 ```sh
 bun run llang package <source.llang.jsonc> --request <request.json> --suite <tests.json> --metadata <metadata.json> --out-dir <new-directory>
 bun run llang verify <new-directory/capability.json>
+bun run llang inspect <new-directory/capability.json> --json
+bun run llang inspect <new-directory/capability.json> --out-dir <inspection-directory> --json
 ```
 
 metadataは`id/release/purpose/useWhen/doNotUseWhen`。request・Source・metadataのIDと契約の整合を要求する。パッケージはrequest/source/build/wasm/testsの5 roleを持ち、JSONC原文を保持する。Resolution Lockは含まない。
@@ -91,6 +98,8 @@ metadataは`id/release/purpose/useWhen/doNotUseWhen`。request・Source・metada
 packageの成功出力は`manifest/packageHash/verification:"not-run"/acceptance:"not-run"/apiCalls:0`。作成だけではテスト合格と表示しない。
 
 verifyは自己完結したパッケージを読み、各file hashと契約・成果物の対応を照合してWorkerでsuiteを実行する。reportは`status/results/requirements/coverage/diagnostics`等と、`requestRevision/suiteHash/sourceHash/programHash/artifactHash`を持つ。`acceptance`は`not-run`のままで、外部SAAAの受け入れ・配備は実行しない。
+
+inspectは同じreaderで整合性を確認したsnapshotから、要求・契約・成果物hash・要求とcaseの対応・自己完結したTypeScript判定をまとめる。`--out-dir`なしではファイルを書かず、指定時はパッケージ外部の存在しないディレクトリへ`program.inspection.ts`と`inspection.json`を保存する。既存ディレクトリ、パッケージ内、symlinkである出力親は拒否する。生成TSは契約適合入力向けであり、runtimeの入力検査を複製しない。inspectはsuite、Wasm、生成TSを実行せず、意味一致・安全性・配備可否を証明しない。真正性には`packageHash`と外部の信頼値との照合が別途必要である。
 
 パッケージ全体を移動して再検証できる。`capability verify`はv1向けなのでv2には`llang verify`を使う。`capability:host`はv1/v2を判別してinspect/verify/invokeできる。`capability:host-kit <new-directory> --jsonc`はv2の自己完結したキットを作る。
 

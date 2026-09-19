@@ -88,6 +88,25 @@ and byte length. Verification rejects unknown manifest fields, symlinked or
 changed Wasm, mismatched request sequences, unused events, and suite/program
 hash mismatches.
 
+### Static bundle inspection
+
+`llang module inspect` accepts only typed version-5 `module-effects-v1`
+bundles built with all three TypeScript, JSONC, and Wasm targets. It parses the
+verified flattened JSONC in memory, regenerates TypeScript and Wasm with the
+pinned toolchain, and compares the TypeScript/Wasm bytes, interface, lowered
+hash, Wasm contract, and continuation states. The original `programHash`
+includes source inventory and is retained for provenance; it is not compared
+with the flattened source's different program hash.
+
+Inspection does not instantiate Wasm, import generated TypeScript, invoke an
+adapter, grant authority, access credentials, or create a runtime transcript.
+Declared operations and effects remain requirements on a future host, not
+permissions. Task continuation states distinguish the internal `task.join`
+step, which needs no host grant, from each child operation, which still does.
+Original source bodies are not present in the portable bundle, and internal
+consistency is not publisher authentication or a general proof of semantic
+equivalence.
+
 ## Initial adapters
 
 The local file adapter uses handle-based reads. Writes go to an exclusive

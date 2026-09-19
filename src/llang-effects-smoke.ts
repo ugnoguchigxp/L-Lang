@@ -1,6 +1,7 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
 import {
   effectsManifest,
   HostOperationRegistry,
@@ -14,6 +15,7 @@ import {
   SESSION_STATUS,
 } from "./llang-effects-wasm";
 import { LocalFileAdapter } from "./llang-io-file-adapter";
+import { buildEffectsModuleProgram } from "./llang-module-effects-build";
 
 const emitted = emitLinearEffectsWasm({
     initial: 2,
@@ -94,6 +96,7 @@ if (hosted.result !== 10 || hosted.ledger.used("hostRequests") !== 2)
   throw new Error("effects smoke hosted runtime mismatch");
 
 const root = await mkdtemp(join(tmpdir(), "llang-effects-smoke-"));
+let bundleIdentityHash = "";
 try {
   const files = await LocalFileAdapter.create(root),
     handle = await files.openWrite("result.bin", { replace: false }),
@@ -102,6 +105,58 @@ try {
   await files.commit(handle);
   if ((await readFile(join(root, "result.bin"), "utf8")) !== "ok")
     throw new Error("effects smoke file mismatch");
+
+  await writeFile(
+    join(root, "inspection.llang.jsonc"),
+    JSON.stringify({
+      language: "l-lang",
+      version: 5,
+      kind: "module",
+      profile: "module-effects-v1",
+      module: "smoke/inspection",
+      entry: "main",
+      imports: [],
+      operations: [
+        {
+          id: "host.echo",
+          version: 1,
+          requestType: "i64",
+          responseType: "i64",
+          errorType: { code: "string" },
+          effect: "host",
+          resource: "none",
+          cancellable: true,
+          idempotent: true,
+        },
+      ],
+      resultType: "i64",
+      nodes: [
+        {
+          kind: "await",
+          operation: "host.echo",
+          version: 1,
+          request: { i64: "42" },
+        },
+      ],
+    }),
+  );
+  await buildEffectsModuleProgram({
+    entry: "inspection.llang.jsonc",
+    root,
+    entryName: "main",
+    target: "all",
+    outDir: join(root, "inspection-bundle"),
+  });
+  const inspected = await inspectEffectsModuleBundle(
+    join(root, "inspection-bundle/module-build.json"),
+    join(root, "inspection-output"),
+  );
+  if (
+    inspected.inspection.execution !== "not-run" ||
+    inspected.reconstruction.wasmBytes !== "checked"
+  )
+    throw new Error("effects bundle inspection smoke mismatch");
+  bundleIdentityHash = inspected.bundleIdentityHash;
 } finally {
   await rm(root, { recursive: true, force: true });
 }
@@ -116,5 +171,6 @@ console.log(
     abi: emitted.contract.abi,
     programHash: emitted.contract.programHash,
     wasmBytes: emitted.bytes.length,
+    bundleIdentityHash,
   }),
 );

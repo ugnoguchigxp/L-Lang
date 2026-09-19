@@ -6,6 +6,12 @@ Runnable examples: [TypeScript/JSONC → TypeScript/Wasm matrix](./examples/sour
 
 L-Lang is a research project for validating predicates through restricted IR and tests, then producing reproducible artifacts. **TypeScript and JSONC coexist.** Input languages and output formats are separate choices.
 
+## Research concept
+
+L-Lang anticipates a setting where LLM-generated executable binaries are used without mandatory human source-code review. Its research goal is to preserve the connection between requirements and executable behavior, while allowing people to inspect that behavior through TypeScript derived from a shared, checked semantic representation. Protecting trusted instructions from untrusted data is combined with independently defined permissions and runtime enforcement.
+
+These are research goals, not established guarantees. Current supported paths compile checked intermediate representations to Wasm; they do not establish the safety of arbitrary directly generated binaries or complete agreement with natural-language requirements. See the [main concept (Japanese)](./MAIN_CONCEPT.md) for the proposed approach and open research questions.
+
 | Task | Input → output | Guide |
 | --- | --- | --- |
 | Adapt a natural-language Concept to project types | TypeScript DSL → ordinary TypeScript | [Semantic TypeScript](./docs/guides/semantic-typescript.en.md) |

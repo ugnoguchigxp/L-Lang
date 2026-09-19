@@ -21,10 +21,11 @@ bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --reques
 ```sh
 bun run llang package examples/jsonc-enabled-user/enabled-user.llang.jsonc --request examples/jsonc-enabled-user/request.json --suite examples/jsonc-enabled-user/tests.json --metadata examples/jsonc-enabled-user/metadata.json --out-dir artifacts/jsonc-enabled-user-package
 bun run llang verify artifacts/jsonc-enabled-user-package/capability.json
+bun run llang inspect artifacts/jsonc-enabled-user-package/capability.json --out-dir artifacts/jsonc-enabled-user-inspection --json
 bun run llang mutation-check examples/jsonc-enabled-user/enabled-user.llang.jsonc --request examples/jsonc-enabled-user/request.json --suite examples/jsonc-enabled-user/tests.json
 ```
 
-packageは作成のみで`verification:not-run`。verifyは`status:pass`、`acceptance:not-run`、API呼出0となる。mutation-checkではこの例の8変異をsuiteが検出する。どちらもSAAAへの登録・配備ではない。v2パッケージは`llang verify`またはv1/v2対応の`capability:host`で検証・実行できる。
+packageは作成のみで`verification:not-run`。verifyは`status:pass`、`acceptance:not-run`、API呼出0となる。inspectは整合性を確認したsnapshotから`inspection.json`と`program.inspection.ts`を生成するが、suiteやTypeScriptを実行しないため`verification:not-run`、`semanticEquivalence:not-checked`のままである。`--out-dir`を省略すれば同じ情報をJSONだけで返す。mutation-checkではこの例の8変異をsuiteが検出する。いずれもSAAAへの登録・配備ではない。v2パッケージは`llang verify`またはv1/v2対応の`capability:host`で検証・実行できる。
 
 ## JSONCを生成し、1回修正する
 

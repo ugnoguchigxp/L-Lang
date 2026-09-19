@@ -281,6 +281,7 @@ describe("L-Lang CLI complete command matrix", () => {
       ["test", "x", "--suite", "s", "--request", "r"],
       ["package", "x"],
       ["verify", "x", "extra"],
+      ["inspect", "x", "--bad", "out"],
       ["mutation-check", "x"],
       ["migrate", "x", "--bad", "out"],
       ["develop", "x", "--suite", "s"],

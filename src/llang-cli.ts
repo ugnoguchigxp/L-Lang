@@ -8,12 +8,14 @@ import {
   runLlangSuite,
   verifyLlangCapability,
 } from "./llang-capability";
+import { inspectLlangCapability } from "./llang-capability-inspection";
 import {
   developLlangCapability,
   fixtureLlangAgent,
   replayLlangDevelopment,
 } from "./llang-development";
 import type { LlangDiagnosticReport } from "./llang-diagnostics";
+import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
 import {
   decodeUtf8,
   formatLlangJsonc,
@@ -29,16 +31,16 @@ import {
   verifyCollectionModuleBundle,
 } from "./llang-module-collection-suite";
 import { buildEffectsModuleProgram } from "./llang-module-effects-build";
-import { loadEffectsModuleProgram } from "./llang-module-effects-loader";
 import { loadEffectsModuleGraph } from "./llang-module-effects-graph";
-import {
-  testEffectsModuleProgram,
-  verifyEffectsModuleBundle,
-} from "./llang-module-effects-suite";
 import {
   testEffectsModuleGraph,
   verifyTypedEffectsModuleBundle,
 } from "./llang-module-effects-graph-suite";
+import { loadEffectsModuleProgram } from "./llang-module-effects-loader";
+import {
+  testEffectsModuleProgram,
+  verifyEffectsModuleBundle,
+} from "./llang-module-effects-suite";
 import { loadModuleProgram } from "./llang-module-loader";
 import { testModuleProgram, verifyModuleBundle } from "./llang-module-suite";
 import { buildValueModuleProgram } from "./llang-module-value-build";
@@ -59,6 +61,7 @@ export const LLANG_HELP = `usage: llang <command> [arguments]
   test <source.llang.jsonc> --request <request.json> --suite <tests.json>
   package <source.llang.jsonc> --request <request.json> --suite <tests.json> --metadata <metadata.json> --out-dir <new-directory>
   verify <capability.json>
+  inspect <capability.json> [--out-dir <new-directory>]
   mutation-check <source.llang.jsonc> --request <request.json> --suite <tests.json>
   migrate <prompt.json> --out <source.llang.jsonc>
   develop <request.json> --suite <tests.json> --metadata <metadata.json> --fixtures <fixture.json>|--agent codex-sdk --out-dir <new-directory> [--max-output-tokens N] [--max-total-tokens N] [--max-wall-ms N]
@@ -67,6 +70,7 @@ export const LLANG_HELP = `usage: llang <command> [arguments]
   module build <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --target typescript|jsonc|wasm|all --out-dir <new-directory> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
   module test <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --suite <cases.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
   module verify <module-build.json> --suite <cases.json>
+  module inspect <module-build.json> [--out-dir <new-directory>]
 Global: --help, --json (machine-readable errors and results)
 Exit codes: 0 success; 1 validation/test failure; 2 usage, I/O or execution error.
 TypeScript sources: bun run hybrid -- see examples/source-output-matrix/README.md`;
@@ -124,6 +128,7 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       "test",
       "package",
       "verify",
+      "inspect",
       "mutation-check",
       "migrate",
       "develop",
@@ -179,6 +184,17 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
                 )
               : await verifyModuleBundle(source, options["--suite"] as string);
       return { exitCode: report.ok ? 0 : 1, output: report };
+    }
+    if (subcommand === "inspect") {
+      if (
+        Object.keys(options).some((key) => key !== "--out-dir") ||
+        Object.keys(options).length > 1
+      )
+        usage();
+      return {
+        exitCode: 0,
+        output: await inspectEffectsModuleBundle(source, options["--out-dir"]),
+      };
     }
     const root = options["--root"],
       entryName = options["--entry"],
@@ -442,6 +458,17 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
     return {
       exitCode: report.status === "pass" ? 0 : report.status === "fail" ? 1 : 2,
       output: report,
+    };
+  }
+  if (command === "inspect") {
+    if (
+      options.length !== 0 &&
+      (options.length !== 2 || options[0] !== "--out-dir" || !options[1])
+    )
+      usage();
+    return {
+      exitCode: 0,
+      output: await inspectLlangCapability(path, options[1]),
     };
   }
   if (command === "mutation-check") {

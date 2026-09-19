@@ -67,11 +67,27 @@ try {
     "verify",
     resolve(root, "moved/capability.json"),
   ]);
+  const inspected = await cli([
+    "inspect",
+    resolve(root, "moved/capability.json"),
+    "--out-dir",
+    resolve(root, "inspection"),
+  ]);
   if (
     verified.packageHash !== packaged.packageHash ||
-    verified.status !== "pass"
+    verified.status !== "pass" ||
+    inspected.packageHash !== packaged.packageHash ||
+    inspected.inspection.verification !== "not-run"
   )
     throw new Error("moved package mismatch");
+  const savedInspection = JSON.parse(
+    await readFile(resolve(root, "inspection/inspection.json"), "utf8"),
+  );
+  if (
+    savedInspection.typescript.projectionHash !==
+    inspected.typescript.projectionHash
+  )
+    throw new Error("inspection output mismatch");
   for (const key of [
     "requestRevision",
     "suiteHash",

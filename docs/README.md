@@ -14,6 +14,8 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 
 ## 言語仕様・設計
 
+プロジェクト全体の研究方針は[メインコンセプト](../MAIN_CONCEPT.md)を参照してください。要求と実行物の対応、TypeScriptによる事後検査、プロンプト保護と実行制限を中心に、今後検証する主張をまとめています。
+
 | 領域 | 文書 |
 | --- | --- |
 | 汎用言語への拡張 | [拡張方針コンセプト](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)。関数・moduleから一般プログラムへ広げる提案 |
@@ -25,6 +27,9 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
 
 ## 実装計画・進捗
+
+- [要求付きWasmパッケージの事後検査](./CAPABILITY_INSPECTION_IMPLEMENTATION_PLAN.md)：既存Capability v2から要求・成果物の対応情報と検査用TypeScriptを出す機能（実装済み）
+- [Effects Bundleの事後検査](./EFFECTS_BUNDLE_INSPECTION_IMPLEMENTATION_PLAN.md)：同梱JSONCからTypeScriptとWasmを再生成し、外部操作・effect・資源・成果物の対応を実行せずに確認する実装済みの検査機能
 
 - [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 
