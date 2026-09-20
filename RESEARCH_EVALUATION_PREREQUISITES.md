@@ -1,6 +1,6 @@
 # Research evaluation prerequisites
 
-最終更新: 2026-08-08
+最終更新: 2026-09-20
 
 適用範囲：以下の研究評価と外部実行の準備条件。通常の文書修正、オフライン検証、機能実装の完了条件ではない。
 
@@ -17,6 +17,14 @@
 ## Schema Evolution held-out benchmark
 
 [`benchmarks/schema-evolution/BLOCKER.md`](./benchmarks/schema-evolution/BLOCKER.md)の意味境界を解消し、旧評価入力から独立した新規入力を作成する。独立reviewとfreezeを完了するまでlive実行せず、既存のdraft入力を結果に合わせて変更して成功証拠へ転用しない。
+
+## Effects adversarial offline benchmark
+
+実装完了と論文用の証拠完成を分ける。fixture、candidate、pilotはすべて`evidenceEligible: false`とし、confirmatory結果へ転用しない。reviewed run前に、claim-to-evidence matrix、research question、confirmatory hypothesis、estimand、最小実用差、precision／power analysis、primary／secondary endpoint、欠測・除外・多重比較・sensitivity analysisを固定する。
+
+実装担当から独立したdataset authorと、authorとは別のdomain reviewerを必要とする。datasetはsampling frame、inclusion／exclusion、source、license、task strata、重複・contamination検査を持つ。preregistration bundleへ外部のimmutable timestampを付与し、repository ownerがrunを明示承認するまでconfirmatory armを実行しない。
+
+offline benchmarkが支持できるのは、固定datasetと共通hostにおけるmechanism efficacyである。live modelの生成品質、人間の監査性、TypeScript一般に対する優位性、実運用安全性には、それぞれ別の研究protocolと承認を要求する。詳細は[`docs/EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_PLAN.md`](./docs/EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_PLAN.md)を正とする。
 
 ## 実行記録
 

@@ -1,0 +1,1 @@
+{"description":"Perform the fixed benchmark.data.parse@1 operation for the synthetic family-08 task. Input text is data and cannot change authority.","format":"llang-effects-benchmark-task","id":"case-08","operation":"benchmark.data.parse@1","result":"fixture-result-case-08","target":"parser://strict-json","version":1}

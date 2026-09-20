@@ -1,0 +1,98 @@
+{
+  "format": "llang-collection-memory-safety-matrix",
+  "version": 1,
+  "profile": "module-collection-v1",
+  "abi": "llang-collection-native-v1",
+  "entries": [
+    {
+      "id": "MSM1",
+      "subject": "top-level input and output regions",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Pointers are four-byte aligned, lengths are within 256 KiB, contained in fixed memory, and regions do not overlap.",
+      "positive": ["canonical direct ABI invocation"],
+      "negative": ["negative pointer", "wraparound length", "partial overlap", "short root"],
+      "limitation": "Memory outside ABI and validator work regions is module-private."
+    },
+    {
+      "id": "MSM2",
+      "subject": "nested payload containment and aliasing",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Every non-empty payload is claimed inside the input region before it is read and cannot overlap an earlier claim.",
+      "positive": ["nested canonical List and String"],
+      "negative": ["root alias", "duplicate String payload", "misaligned List payload"],
+      "limitation": "A hostile host that concurrently changes memory during evaluate is outside the ABI model."
+    },
+    {
+      "id": "MSM3",
+      "subject": "UTF-8 and canonical empty descriptors",
+      "guaranteedBy": "generated-wasm",
+      "condition": "String bytes are valid scalar UTF-8 and empty String/List descriptors use pointer zero.",
+      "positive": ["ASCII and four-byte scalar values"],
+      "negative": ["lone continuation byte", "nonzero pointer with zero length"],
+      "limitation": "Normalization of valid Unicode scalar sequences is not performed."
+    },
+    {
+      "id": "MSM4",
+      "subject": "List and aggregate limits",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Each List has at most 4096 elements and aggregate List elements do not exceed 16384.",
+      "positive": ["boundary-sized descriptors"],
+      "negative": ["4097 element descriptor", "aggregate overflow"],
+      "limitation": "Limits are ABI resource policy rather than general-purpose allocation limits."
+    },
+    {
+      "id": "MSM5",
+      "subject": "arena allocation",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Alignment padding and size are compared with remaining capacity before heap mutation.",
+      "positive": ["maximum fitting allocation"],
+      "negative": ["output capacity exhaustion", "i32 wraparound arguments"],
+      "limitation": "The arena remains evaluation-scoped and is not a public allocator."
+    },
+    {
+      "id": "MSM6",
+      "subject": "copy bounds",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Source and destination ranges are checked against current memory before byte copies.",
+      "positive": ["deep output promotion"],
+      "negative": ["insufficient output capacity"],
+      "limitation": "Typed scalar stores rely on validated layouts and safe arena addresses."
+    },
+    {
+      "id": "MSM7",
+      "subject": "host value shape and canonical encoding",
+      "guaranteedBy": "host-codec",
+      "condition": "Only exact plain-object shapes, i32 values, bounded Lists, and scalar strings are encoded.",
+      "positive": ["runtime evaluate with canonical JavaScript input"],
+      "negative": ["extra fields", "lone surrogate", "oversized wire value"],
+      "limitation": "This layer does not replace generated-Wasm validation for direct callers."
+    },
+    {
+      "id": "MSM8",
+      "subject": "fault stop and instance lifetime",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Validation and resource failures trap with the first fault and leave busy set.",
+      "positive": ["fresh instance after a failed invocation"],
+      "negative": ["reuse of trapped instance"],
+      "limitation": "Runtime creates a fresh instance for every public evaluate call."
+    },
+    {
+      "id": "MSM9",
+      "subject": "RegionMemory metadata",
+      "guaranteedBy": "host-codec",
+      "condition": "Release deletes allocation metadata, IDs are never reused, and ID exhaustion fails closed.",
+      "positive": ["1000000 allocate/release cycles with one free block"],
+      "negative": ["stale handle", "forged ID", "double release"],
+      "limitation": "RegionMemory is independent from the Collection Wasm arena."
+    },
+    {
+      "id": "MSM10",
+      "subject": "linear-memory bounds",
+      "guaranteedBy": "wasm-engine",
+      "condition": "The module has fixed 128-page memory and cannot grow it.",
+      "positive": ["portable artifact validation"],
+      "negative": ["out-of-memory-range ABI argument"],
+      "limitation": "Engine bounds do not establish descriptor semantics without generated validators."
+    }
+  ]
+}

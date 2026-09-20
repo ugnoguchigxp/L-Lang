@@ -22,6 +22,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | JSONC | [Predicate v1仕様](./LLANG_JSONC_SPEC.md) |
 | Typed modules | [Phase 1仕様](./LLANG_MODULE_SPEC.md)：boolean module、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)：値・制御・型付き結果 |
 | Wasm | [コンパイラ構想](./WASM_COMPILER_CONCEPT.md)、[Effects runtime仕様](./LLANG_MODULE_EFFECTS_SPEC.md) |
+| メモリー安全性・最適化 | [段階的検証のコンセプト](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md)、[Collection実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)、[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md) |
 | Hybrid | [コンパイラ構想](./HYBRID_COMPILER_CONCEPT.md) |
 | Prompt Source | [v2設計提案](./PROMPT_SOURCE_V2_DESIGN.md)。採用状態はJSONC仕様を参照 |
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
@@ -39,6 +40,11 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [Effects attestation鍵運用runbook](./EFFECTS_ATTESTATION_KEY_RUNBOOK.md)：rotation、revocation、鍵紛失、backup、Windows ACL
 - [Trust／Data分離とadversarial評価基盤](./TRUST_DATA_SEPARATION_AND_EVALUATION_IMPLEMENTATION_PLAN.md)：外部dataのprovenance、authority／data-flow制約、決定的監査summary、公平なTypeScript baselineを扱う実装済みの中核v1
 - [Trust／Data分離の実装結果](./TRUST_DATA_SEPARATION_AND_EVALUATION_RESULTS.md)、[Effects assurance core v1](./EFFECTS_ASSURANCE_CORE_V1.md)
+- [Effects adversarial比較benchmark](./EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_PLAN.md)：独立dataset、共通host、runnable L-Lang／TypeScript arm、freeze、Oracle、checkpoint、portable resultを定義した実装済み計画
+- [Effects adversarial benchmark実装引継ぎプロンプト](./EFFECTS_ADVERSARIAL_BENCHMARK_HANDOFF_PROMPT.md)：正本設計、論文証拠の境界、PR-0〜PR-9、EAB1〜EAB40、品質Gateを別sessionへ引き継ぐ
+- [Effects adversarial benchmark実装結果](./EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_RESULTS.md)：PR-0〜PR-9、EAB1〜EAB40のoffline fixture基盤と未実証範囲。
+- [Collectionメモリー安全性と最適化基盤 実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)：direct Wasm境界、safe allocator、RegionMemory metadata、cost計測、一候補だけの条件付き最適化を完了した計画
+- [Collectionメモリー安全性Matrix](./COLLECTION_MEMORY_SAFETY_MATRIX.md)、[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)：Wasm自身の境界検査、allocator、RegionMemory有界化、決定的cost観測と最適化判断
 
 - [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 

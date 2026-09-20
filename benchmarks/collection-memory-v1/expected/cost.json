@@ -1,0 +1,45 @@
+{
+  "format": "llang-collection-cost-observation",
+  "version": 1,
+  "programHash": "8e41737822acfe323b1cb4dcca5f06314cebb9e2fbb5cb002986ae4ebd91a0be",
+  "loweredHash": "97956b8096ce2b5c6766933e73e9515a7c7bdc9d421ca263d753d88c33d837b3",
+  "inputHash": "ce91903d8cc3015a51893af47e7ae0891ce4278133b914ae4565b4c6cdecf252",
+  "productWasmHash": "9ef811c18be00d12db13a73e481fdbb35ab4d44c159bed898390c234371cd75f",
+  "instrumentedWasmHash": "bde58643e84809c3068556acd917bbd27d603a9528c62e994b6831874a0bd4f7",
+  "productWasmBytes": 2672,
+  "instrumentedWasmBytes": 3620,
+  "output": {
+    "total": 10,
+    "values": [
+      2,
+      3,
+      5
+    ]
+  },
+  "outputHash": "ca47eb1b1eda4fbae24dc9ac108073b6fa6bd8f1bff98b925fe320e3552be0ef",
+  "metrics": {
+    "allocationSites": 9,
+    "allocationCalls": 9,
+    "requestedBytes": 96,
+    "alignedBytes": 96,
+    "copySites": 9,
+    "copyCalls": 15,
+    "copyBytes": 68,
+    "promotionAllocationBytes": 12,
+    "promotionCopyBytes": 24,
+    "validationDescriptors": 7,
+    "validationListElements": 4,
+    "validationStringBytes": 0,
+    "arenaPeakBytes": 108
+  },
+  "decision": {
+    "candidate": "output-promotion",
+    "status": "rejected",
+    "measuredShare": 0.35294117647058826,
+    "reason": "The copy establishes output ownership; removing it would expose input or arena lifetimes through ABI v1."
+  },
+  "memory": {
+    "linearBytes": 8388608,
+    "arenaPeakBytes": 108
+  }
+}

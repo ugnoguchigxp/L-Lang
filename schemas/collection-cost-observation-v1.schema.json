@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/collection-cost-observation-v1.schema.json",
+  "title": "L-Lang Collection cost observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "programHash", "loweredHash", "inputHash", "productWasmHash", "instrumentedWasmHash", "productWasmBytes", "instrumentedWasmBytes", "output", "outputHash", "metrics", "decision", "memory"],
+  "properties": {
+    "format": { "const": "llang-collection-cost-observation" },
+    "version": { "const": 1 },
+    "programHash": { "$ref": "#/$defs/hash" },
+    "loweredHash": { "$ref": "#/$defs/hash" },
+    "inputHash": { "$ref": "#/$defs/hash" },
+    "productWasmHash": { "$ref": "#/$defs/hash" },
+    "instrumentedWasmHash": { "$ref": "#/$defs/hash" },
+    "productWasmBytes": { "type": "integer", "minimum": 1 },
+    "instrumentedWasmBytes": { "type": "integer", "minimum": 1 },
+    "output": true,
+    "outputHash": { "$ref": "#/$defs/hash" },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allocationSites", "allocationCalls", "requestedBytes", "alignedBytes", "copySites", "copyCalls", "copyBytes", "promotionAllocationBytes", "promotionCopyBytes", "validationDescriptors", "validationListElements", "validationStringBytes", "arenaPeakBytes"],
+      "properties": {
+        "allocationSites": { "$ref": "#/$defs/count" },
+        "allocationCalls": { "$ref": "#/$defs/count" },
+        "requestedBytes": { "$ref": "#/$defs/count" },
+        "alignedBytes": { "$ref": "#/$defs/count" },
+        "copySites": { "$ref": "#/$defs/count" },
+        "copyCalls": { "$ref": "#/$defs/count" },
+        "copyBytes": { "$ref": "#/$defs/count" },
+        "promotionAllocationBytes": { "$ref": "#/$defs/count" },
+        "promotionCopyBytes": { "$ref": "#/$defs/count" },
+        "validationDescriptors": { "$ref": "#/$defs/count" },
+        "validationListElements": { "$ref": "#/$defs/count" },
+        "validationStringBytes": { "$ref": "#/$defs/count" },
+        "arenaPeakBytes": { "$ref": "#/$defs/count" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate", "status", "measuredShare", "reason"],
+      "properties": {
+        "candidate": { "type": ["string", "null"], "enum": ["output-promotion", null] },
+        "status": { "enum": ["rejected", "skipped"] },
+        "measuredShare": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "timingMs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["build", "instantiate", "encode", "hostValidation", "wasmValidation", "kernel", "decode", "endToEnd"],
+      "properties": {
+        "build": { "$ref": "#/$defs/duration" },
+        "instantiate": { "$ref": "#/$defs/duration" },
+        "encode": { "$ref": "#/$defs/duration" },
+        "hostValidation": { "$ref": "#/$defs/duration" },
+        "wasmValidation": { "$ref": "#/$defs/duration" },
+        "kernel": { "$ref": "#/$defs/duration" },
+        "decode": { "$ref": "#/$defs/duration" },
+        "endToEnd": { "$ref": "#/$defs/duration" }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["linearBytes", "arenaPeakBytes"],
+      "properties": {
+        "linearBytes": { "$ref": "#/$defs/count" },
+        "arenaPeakBytes": { "$ref": "#/$defs/count" },
+        "rssBefore": { "$ref": "#/$defs/count" },
+        "rssAfter": { "$ref": "#/$defs/count" },
+        "peakRssBytes": { "$ref": "#/$defs/count" },
+        "steadyRssBytes": { "$ref": "#/$defs/count" }
+      }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "count": { "type": "integer", "minimum": 0 },
+    "duration": { "type": "number", "minimum": 0 }
+  }
+}

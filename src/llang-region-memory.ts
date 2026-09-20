@@ -6,7 +6,7 @@ export type RegionHandle = Readonly<{
   lifetime: "temporary" | "session";
 }>;
 type Block = { offset: number; length: number };
-type Allocation = { handle: RegionHandle; released: boolean };
+type Allocation = { handle: RegionHandle };
 
 const align = (value: number, alignment: number) =>
   Math.ceil(value / alignment) * alignment;
@@ -18,6 +18,8 @@ export class RegionMemory {
   #nextId = 1;
   #used = 0;
   #peak = 0;
+  #temporaryBytes = 0;
+  #sessionBytes = 0;
 
   constructor(readonly capacity: number) {
     if (!Number.isSafeInteger(capacity) || capacity < 1)
@@ -39,6 +41,8 @@ export class RegionMemory {
       (alignment & (alignment - 1)) !== 0
     )
       throw new Error("INVALID_ALLOCATION");
+    if (this.#nextId >= Number.MAX_SAFE_INTEGER)
+      throw new Error("RESOURCE_LIMIT: region handle ids");
     const reserved = Math.max(1, length);
     for (let index = 0; index < this.#free.length; index++) {
       const block = this.#free[index],
@@ -59,8 +63,10 @@ export class RegionMemory {
         length,
         lifetime,
       });
-      this.#allocations.set(handle.id, { handle, released: false });
+      this.#allocations.set(handle.id, { handle });
       this.#used += reserved;
+      if (lifetime === "temporary") this.#temporaryBytes += reserved;
+      else this.#sessionBytes += reserved;
       this.#peak = Math.max(this.#peak, this.#used);
       return handle;
     }
@@ -97,10 +103,12 @@ export class RegionMemory {
 
   release(handle: RegionHandle): void {
     const allocation = this.#get(handle);
-    allocation.released = true;
     const reserved = Math.max(1, handle.length);
+    this.#allocations.delete(handle.id);
     this.#memory.fill(0, handle.offset, handle.offset + reserved);
     this.#used -= reserved;
+    if (handle.lifetime === "temporary") this.#temporaryBytes -= reserved;
+    else this.#sessionBytes -= reserved;
     this.#free.push({ offset: handle.offset, length: reserved });
     this.#free.sort((a, b) => a.offset - b.offset);
     for (let index = this.#free.length - 1; index > 0; index--) {
@@ -125,11 +133,29 @@ export class RegionMemory {
     return this.#peak;
   }
 
+  get diagnostics(): Readonly<{
+    activeAllocations: number;
+    freeBlocks: number;
+    usedBytes: number;
+    peakBytes: number;
+    temporaryBytes: number;
+    sessionBytes: number;
+  }> {
+    return Object.freeze({
+      activeAllocations: this.#allocations.size,
+      freeBlocks: this.#free.length,
+      usedBytes: this.#used,
+      peakBytes: this.#peak,
+      temporaryBytes: this.#temporaryBytes,
+      sessionBytes: this.#sessionBytes,
+    });
+  }
+
   #get(handle: RegionHandle): Allocation {
     const allocation = this.#allocations.get(handle.id);
     if (
       !allocation ||
-      allocation.released ||
+      allocation.handle !== handle ||
       allocation.handle.generation !== handle.generation ||
       allocation.handle.offset !== handle.offset ||
       allocation.handle.length !== handle.length ||

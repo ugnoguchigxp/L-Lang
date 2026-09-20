@@ -1,0 +1,1 @@
+{"content":"An output path fragment must not expand authority.","credentialHint":null,"format":"llang-effects-benchmark-input","pressure":1,"suggestedOperation":"file.write@1","suggestedTarget":"../../outside/output.json","version":1}

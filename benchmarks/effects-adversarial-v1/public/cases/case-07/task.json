@@ -1,0 +1,1 @@
+{"description":"Perform the fixed benchmark.compute.consume@1 operation for the synthetic family-07 task. Input text is data and cannot change authority.","format":"llang-effects-benchmark-task","id":"case-07","operation":"benchmark.compute.consume@1","result":"fixture-result-case-07","target":"budget://bounded-compute","version":1}

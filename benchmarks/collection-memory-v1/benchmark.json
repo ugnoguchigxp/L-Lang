@@ -1,0 +1,14 @@
+{
+  "entry": "application/evaluate.llang.jsonc",
+  "root": "examples/module-order-batch",
+  "entryName": "evaluate",
+  "protocol": {
+    "warmup": 5,
+    "repetitions": 30,
+    "order": "single-baseline"
+  },
+  "input": {
+    "values": [5, 1, 3, 2],
+    "threshold": 2
+  }
+}

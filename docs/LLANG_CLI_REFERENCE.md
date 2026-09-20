@@ -197,3 +197,25 @@ bun run llang replay-development <saved-run-directory> --out-dir <new-directory>
 ## 関連する実行例
 
 [TypeScript/JSONC × TypeScript/Wasm](../examples/source-output-matrix/README.md)と[修正・配備・切戻し](../examples/capability-lifecycle/README.md)を参照。実装と検証結果は[改善記録](./IMPROVEMENTS_RESULTS_20260917.md)へ集約する。
+
+## Effects adversarial benchmark
+
+```sh
+bun run effects:benchmark validate benchmarks/effects-adversarial-v1/study.json
+bun run effects:benchmark plan benchmarks/effects-adversarial-v1/study.json
+bun run effects:benchmark fixture benchmarks/effects-adversarial-v1/study.json --out-dir <new-directory>
+bun run effects:benchmark freeze <study.json> --review <review.json> --out <freeze.json>
+bun run effects:benchmark run <study.json> --out-dir <new-directory>
+bun run effects:benchmark run <study.json> --out-dir <existing-run-directory> --resume
+bun run effects:benchmark analyze <result-package.json>
+bun run effects:benchmark verify <result-package.json> [--freeze <external-freeze.json>]
+bun run effects:benchmark reproduce <result-package.json> --out-dir <new-directory> [--freeze <external-freeze.json>]
+```
+
+`evidenceEligible: true` の reviewed package は、埋め込みコピーとは別に保管した freeze を `--freeze` で指定しない限り検証・再生成を拒否する。fixture packageでも `--freeze` を指定すれば外部コピーとの完全一致を検査できる。未知のoption、重複option、値のないoptionは拒否される。
+
+`fixture`はchecked-in synthetic pairを、外部network、credential、API callなしで実行する。`freeze`はstudy内のreviewと`--review`のbyte-equivalentなstrict record、analysis／sample-size plan、全file hashを固定する。reviewed studyはさらに`--external-timestamp <external-record>`と`--owner-run-approval`を必要とするが、softwareはtimestamp authorityや人物の実在性を証明しない。
+
+`run`は新規directoryを排他的に作り、trialごとにJSONLとcheckpointを更新する。`--resume`は同じstudy／freeze／trial orderを再検査し、completed trialを再実行しない。uncertain trialがあれば人のreviewまで停止する。
+
+`analyze`はraw observationと同梱Oracleからprimary、worst-case sensitivity、table／figure CSVを再生成する。`verify`と`reproduce`はarm source、Wasm、networkを実行しない。fixture、candidate、pilotは常に`evidenceEligible: false`であり、live model品質、人間の監査性、TypeScript一般への優位、実運用安全性を示さない。

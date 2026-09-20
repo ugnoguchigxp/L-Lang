@@ -73,5 +73,29 @@ WebAssembly engine, then executes it without source files, compiler, IR, or the
 reference evaluator. Output promotion recursively copies nested List/string
 payloads into the output region before returning.
 
+The generated `evaluate` entry validates the ABI independently from the host
+codec. Input and output bases must be four-byte aligned and at least 64,
+lengths are capped at 256 KiB, both regions must fit fixed linear memory, and
+the regions must not overlap. Validation uses subtraction-before-addition
+bounds checks. Nested descriptors are contained in the declared input region;
+non-empty payload regions may not overlap the root or another payload. Empty
+String and List descriptors require pointer zero. Boolean values, List counts,
+aggregate element counts, String byte limits, and scalar UTF-8 are checked
+before the entry function runs.
+
+Validation failure traps with `INVALID_ARTIFACT` fault code 5 and poisons that
+instance. A trapped instance is discarded; a fresh instance can process the
+next invocation. The arena allocator checks padding and requested size against
+remaining output capacity before updating its heap. Byte-copy helpers check
+source and destination containment before reading or writing. Validator claim
+storage is a bounded module-private work region selected outside the declared
+input and output regions.
+
+Instrumented Collection builds are available only to the internal cost
+benchmark. They add metric exports and therefore are not portable product
+artifacts. Normal builds retain exactly `memory`, `evaluate`, and `fault_code`.
+The checked-in observation separates deterministic allocation/copy/validation
+counters from host timing and RSS.
+
 See [`../examples/module-order-batch/`](../examples/module-order-batch/) for
 equivalent TypeScript and JSONC sources and a portable suite.

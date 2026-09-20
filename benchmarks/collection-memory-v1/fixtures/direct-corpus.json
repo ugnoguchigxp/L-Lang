@@ -1,0 +1,16 @@
+{
+  "format": "llang-collection-direct-corpus",
+  "version": 1,
+  "canonicalListSizes": [0, 1, 2, 31, 256, 4096],
+  "topLevelCases": [
+    { "id": "short-root", "input": 64, "inputLength": 4, "output": 524288, "outputCapacity": 262144 },
+    { "id": "negative-input", "input": -16, "inputLength": 32, "output": 524288, "outputCapacity": 262144 },
+    { "id": "length-wrap", "input": 64, "inputLength": 4294967295, "output": 524288, "outputCapacity": 262144 },
+    { "id": "complete-overlap", "input": 64, "inputLength": 32, "output": 64, "outputCapacity": 64 },
+    { "id": "partial-overlap", "input": 64, "inputLength": 32, "output": 80, "outputCapacity": 64 },
+    { "id": "one-byte-overlap", "input": 64, "inputLength": 32, "output": 95, "outputCapacity": 64 },
+    { "id": "negative-output", "input": 64, "inputLength": 32, "output": -16, "outputCapacity": 64 },
+    { "id": "input-memory-end", "input": 8388604, "inputLength": 8, "output": 524288, "outputCapacity": 262144 },
+    { "id": "output-memory-end", "input": 64, "inputLength": 32, "output": 8388604, "outputCapacity": 8 }
+  ]
+}

@@ -61,6 +61,9 @@
     "ci:llang-smoke": "bun run src/llang-smoke.ts",
     "ci:module-smoke": "bun run src/llang-module-smoke.ts",
     "ci:effects-smoke": "bun run src/llang-effects-smoke.ts",
+    "effects:benchmark": "bun run src/effects-adversarial-cli.ts",
+    "collection:memory": "bun run src/llang-collection-cost-cli.ts benchmarks/collection-memory-v1/benchmark.json benchmarks/collection-memory-v1/observations/latest.json",
+    "collection:memory:matrix": "bun run src/llang-collection-memory-matrix.ts benchmarks/collection-memory-v1/memory-safety-matrix.json docs/COLLECTION_MEMORY_SAFETY_MATRIX.md",
     "examples:matrix": "bun run examples/source-output-matrix/run.ts",
     "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts"
   },

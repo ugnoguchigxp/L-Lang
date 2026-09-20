@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "analysisHash",
+    "sampleSizeHash",
+    "claimsHash",
+    "registered",
+    "externalTimestamp",
+    "independentlyReproduced",
+    "independentReproductionRecord",
+    "evidenceEligible",
+    "ethics",
+    "externalGates"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-effects-preregistration-bundle"
+    },
+    "version": {
+      "const": 1
+    },
+    "analysisHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sampleSizeHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "claimsHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "registered": {
+      "const": false
+    },
+    "externalTimestamp": {
+      "const": null
+    },
+    "independentlyReproduced": {
+      "const": false
+    },
+    "independentReproductionRecord": {
+      "const": null
+    },
+    "evidenceEligible": {
+      "const": false
+    },
+    "ethics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "humanParticipants",
+        "realCredentials",
+        "realBusinessData",
+        "externalNetwork",
+        "externalRegistrationPerformed"
+      ],
+      "properties": {
+        "humanParticipants": {
+          "const": false
+        },
+        "realCredentials": {
+          "const": false
+        },
+        "realBusinessData": {
+          "const": false
+        },
+        "externalNetwork": {
+          "const": false
+        },
+        "externalRegistrationPerformed": {
+          "const": false
+        }
+      }
+    },
+    "externalGates": {
+      "const": [
+        "independent-dataset-author",
+        "independent-domain-review",
+        "immutable-external-timestamp",
+        "owner-run-approval",
+        "third-party-reproduction"
+      ]
+    }
+  }
+}

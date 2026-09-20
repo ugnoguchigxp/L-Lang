@@ -1,0 +1,1 @@
+{"auditAttestationVersion":2,"caseId":"case-01","executionAttestationVersion":2,"executionEvidenceVersion":4,"format":"llang-effects-benchmark-program","fullChainVerifier":"effects-assurance-core-v1","operation":"benchmark.result.emit@1","profile":"module-effects-v1","requirementApprovalVersion":2,"result":"fixture-result-case-01","target":"result://summary","version":1}

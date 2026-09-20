@@ -7,7 +7,10 @@ import type {
   CollectionType,
   CollectionTypeUse,
 } from "./llang-module-collection-ir";
-import { canonicalCollectionType } from "./llang-module-collection-ir";
+import {
+  canonicalCollectionType,
+  COLLECTION_LIMITS,
+} from "./llang-module-collection-ir";
 import { layoutCollectionType } from "./llang-collection-abi";
 
 type Binding = { type: CollectionType; get: string; local?: string };
@@ -86,10 +89,15 @@ class NativeCompiler {
   private readonly dispatchArities = new Set<number>();
   private readonly copyNames = new Map<string, string>();
   private readonly copyFunctions: string[] = [];
+  private readonly validatorNames = new Map<string, string>();
+  private readonly validatorFunctions: string[] = [];
   private nextLambda = 1;
   private nextTemporary = 0;
 
-  constructor(private readonly program: CheckedCollectionProgram) {
+  constructor(
+    private readonly program: CheckedCollectionProgram,
+    private readonly instrumented = false,
+  ) {
     program.functions.forEach((fn, index) => {
       this.functions.set(fn.symbol, fn);
       this.names.set(fn.symbol, `$f${index}_${safe(fn.name)}`);
@@ -109,6 +117,8 @@ class NativeCompiler {
     const entry = this.names.get(this.program.entry);
     if (!entry) throw new Error("INVALID_IR: entry function missing");
     const outputLayout = layoutCollectionType(this.program.entryOutput);
+    const inputLayout = layoutCollectionType(this.program.entryInput);
+    const validator = this.ensureValidator(this.program.entryInput);
     const materialize =
       this.program.entryOutput.kind === "boolean" ||
       this.program.entryOutput.kind === "i32"
@@ -116,25 +126,152 @@ class NativeCompiler {
         : `local.get $result local.get $output call ${this.ensureCopyFunction(this.program.entryOutput)}`;
     const evaluate = `(func (export "evaluate")
       (param $input i32) (param $inputLength i32) (param $output i32) (param $capacity i32)
-      (result i32) (local $result i32)
+      (result i32) (local $result i32) (local $memoryBytes i32) (local $inputEnd i32) (local $outputEnd i32)
       global.get $busy
       if i32.const 5 call $fail end
       i32.const 1 global.set $busy
       i32.const 0 global.set $fault
       i32.const 1000000 global.set $fuel
       i32.const 0 global.set $depth
+      memory.size i32.const 65536 i32.mul local.set $memoryBytes
+      local.get $input i32.const 64 i32.lt_u
+      local.get $output i32.const 64 i32.lt_u i32.or
+      local.get $input i32.const 3 i32.and i32.or
+      local.get $output i32.const 3 i32.and i32.or
+      local.get $inputLength i32.const ${inputLayout.size} i32.lt_u i32.or
+      local.get $inputLength i32.const ${COLLECTION_LIMITS.wireBytes} i32.gt_u i32.or
+      local.get $capacity i32.const ${outputLayout.size} i32.lt_u i32.or
+      local.get $capacity i32.const ${COLLECTION_LIMITS.wireBytes} i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      local.get $input local.get $memoryBytes i32.gt_u
+      local.get $inputLength local.get $memoryBytes local.get $input i32.sub i32.gt_u i32.or
+      local.get $output local.get $memoryBytes i32.gt_u i32.or
+      local.get $capacity local.get $memoryBytes local.get $output i32.sub i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      local.get $input local.get $inputLength i32.add local.set $inputEnd
+      local.get $output local.get $capacity i32.add local.set $outputEnd
+      local.get $input local.get $outputEnd i32.lt_u
+      local.get $output local.get $inputEnd i32.lt_u i32.and
+      if i32.const 5 call $fail end
+      local.get $input global.set $inputBase
+      local.get $inputEnd global.set $inputEnd
+      i32.const 0 global.set $validationElements
+      i32.const 0 global.set $validationDepth
+      ${
+        this.instrumented
+          ? `i32.const 0 global.set $metricAllocCalls
+      i32.const 0 global.set $metricAllocRequested
+      i32.const 0 global.set $metricAllocAligned
+      i32.const 0 global.set $metricCopyCalls
+      i32.const 0 global.set $metricCopyBytes
+      i32.const 0 global.set $metricValidationDescriptors
+      i32.const 0 global.set $metricValidationListElements
+      i32.const 0 global.set $metricValidationStringBytes
+      i32.const 0 global.set $metricPromotion
+      i32.const 0 global.set $metricPromotionAllocBytes
+      i32.const 0 global.set $metricPromotionCopyBytes`
+          : ""
+      }
+      local.get $input local.get $inputLength local.get $output local.get $capacity local.get $memoryBytes call $prepareClaims
+      local.get $input i32.const ${inputLayout.size} call $claim
+      local.get $input call ${validator}
+      ${
+        this.instrumented
+          ? `local.get $output global.set $metricArenaBase
+      i32.const ${align(outputLayout.size, 4)} global.set $metricArenaPeak`
+          : ""
+      }
       local.get $output
       i32.const ${align(outputLayout.size, 4)}
       i32.add global.set $heap
-      local.get $output local.get $capacity i32.add global.set $heapEnd
+      local.get $outputEnd global.set $heapEnd
       local.get $input call ${entry} local.set $result
+      ${this.instrumented ? "i32.const 1 global.set $metricPromotion" : ""}
       ${materialize}
+      ${this.instrumented ? "i32.const 0 global.set $metricPromotion" : ""}
       i32.const 0 global.set $busy
       global.get $heap local.get $output i32.sub)
     (func (export "fault_code") (result i32) global.get $fault)`;
     const dispatchers = [...this.dispatchArities]
       .sort((a, b) => a - b)
       .map((arity) => this.emitDispatcher(arity));
+    const metricGlobals = this.instrumented
+        ? `(global $metricAllocCalls (mut i32) (i32.const 0))
+      (global $metricAllocRequested (mut i32) (i32.const 0))
+      (global $metricAllocAligned (mut i32) (i32.const 0))
+      (global $metricCopyCalls (mut i32) (i32.const 0))
+      (global $metricCopyBytes (mut i32) (i32.const 0))
+      (global $metricValidationDescriptors (mut i32) (i32.const 0))
+      (global $metricValidationListElements (mut i32) (i32.const 0))
+      (global $metricValidationStringBytes (mut i32) (i32.const 0))
+      (global $metricArenaBase (mut i32) (i32.const 0))
+      (global $metricArenaPeak (mut i32) (i32.const 0))
+      (global $metricPromotion (mut i32) (i32.const 0))
+      (global $metricPromotionAllocBytes (mut i32) (i32.const 0))
+      (global $metricPromotionCopyBytes (mut i32) (i32.const 0))`
+        : "",
+      metricExports = this.instrumented
+        ? `(func (export "__metric_alloc_calls") (result i32) global.get $metricAllocCalls)
+      (func (export "__metric_alloc_requested_bytes") (result i32) global.get $metricAllocRequested)
+      (func (export "__metric_alloc_aligned_bytes") (result i32) global.get $metricAllocAligned)
+      (func (export "__metric_copy_calls") (result i32) global.get $metricCopyCalls)
+      (func (export "__metric_copy_bytes") (result i32) global.get $metricCopyBytes)
+      (func (export "__metric_validation_descriptors") (result i32) global.get $metricValidationDescriptors)
+      (func (export "__metric_validation_list_elements") (result i32) global.get $metricValidationListElements)
+      (func (export "__metric_validation_string_bytes") (result i32) global.get $metricValidationStringBytes)
+      (func (export "__metric_arena_peak") (result i32) global.get $metricArenaPeak)
+      (func (export "__metric_promotion_alloc_bytes") (result i32) global.get $metricPromotionAllocBytes)
+      (func (export "__metric_promotion_copy_bytes") (result i32) global.get $metricPromotionCopyBytes)`
+        : "",
+      metricProbes = this.instrumented
+        ? `(func (export "__validate")
+      (param $input i32) (param $inputLength i32) (param $output i32) (param $capacity i32) (result i32)
+      (local $memoryBytes i32) (local $inputEndLocal i32) (local $outputEnd i32)
+      i32.const 0 global.set $fault
+      memory.size i32.const 65536 i32.mul local.set $memoryBytes
+      local.get $input i32.const 64 i32.lt_u
+      local.get $output i32.const 64 i32.lt_u i32.or
+      local.get $input i32.const 3 i32.and i32.or
+      local.get $output i32.const 3 i32.and i32.or
+      local.get $inputLength i32.const ${inputLayout.size} i32.lt_u i32.or
+      local.get $inputLength i32.const ${COLLECTION_LIMITS.wireBytes} i32.gt_u i32.or
+      local.get $capacity i32.const ${outputLayout.size} i32.lt_u i32.or
+      local.get $capacity i32.const ${COLLECTION_LIMITS.wireBytes} i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      local.get $input local.get $memoryBytes i32.gt_u
+      local.get $inputLength local.get $memoryBytes local.get $input i32.sub i32.gt_u i32.or
+      local.get $output local.get $memoryBytes i32.gt_u i32.or
+      local.get $capacity local.get $memoryBytes local.get $output i32.sub i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      local.get $input local.get $inputLength i32.add local.set $inputEndLocal
+      local.get $output local.get $capacity i32.add local.set $outputEnd
+      local.get $input local.get $outputEnd i32.lt_u
+      local.get $output local.get $inputEndLocal i32.lt_u i32.and
+      if i32.const 5 call $fail end
+      local.get $input global.set $inputBase
+      local.get $inputEndLocal global.set $inputEnd
+      i32.const 0 global.set $validationElements
+      i32.const 0 global.set $validationDepth
+      local.get $input local.get $inputLength local.get $output local.get $capacity local.get $memoryBytes call $prepareClaims
+      local.get $input i32.const ${inputLayout.size} call $claim
+      local.get $input call ${validator}
+      i32.const 0)
+    (func (export "__kernel")
+      (param $input i32) (param $inputLength i32) (param $output i32) (param $capacity i32) (result i32)
+      (local $result i32)
+      i32.const 0 global.set $fault
+      i32.const ${COLLECTION_LIMITS.fuel} global.set $fuel
+      i32.const 0 global.set $depth
+      local.get $output global.set $metricArenaBase
+      i32.const ${align(outputLayout.size, 4)} global.set $metricArenaPeak
+      local.get $output i32.const ${align(outputLayout.size, 4)} i32.add global.set $heap
+      local.get $output local.get $capacity i32.add global.set $heapEnd
+      local.get $input call ${entry} local.set $result
+      i32.const 1 global.set $metricPromotion
+      ${materialize}
+      i32.const 0 global.set $metricPromotion
+      global.get $heap local.get $output i32.sub)`
+        : "";
     return `(module
       (memory (export "memory") 128 128)
       (global $heap (mut i32) (i32.const 0))
@@ -143,15 +280,39 @@ class NativeCompiler {
       (global $depth (mut i32) (i32.const 0))
       (global $fault (mut i32) (i32.const 0))
       (global $busy (mut i32) (i32.const 0))
+      (global $inputBase (mut i32) (i32.const 0))
+      (global $inputEnd (mut i32) (i32.const 0))
+      (global $claimBase (mut i32) (i32.const 0))
+      (global $validationElements (mut i32) (i32.const 0))
+      (global $validationDepth (mut i32) (i32.const 0))
+      ${metricGlobals}
       ${this.helpers()}
+      ${this.validatorFunctions.join("\n")}
       ${compiledFunctions.join("\n")}
       ${this.lambdaFunctions.join("\n")}
       ${dispatchers.join("\n")}
       ${this.copyFunctions.join("\n")}
-      ${evaluate})`;
+      ${evaluate}
+      ${metricProbes}
+      ${metricExports})`;
   }
 
   private helpers(): string {
+    const recordAllocation = this.instrumented
+        ? `global.get $metricAllocCalls i32.const 1 i32.add global.set $metricAllocCalls
+      global.get $metricAllocRequested local.get $size i32.add global.set $metricAllocRequested
+      global.get $metricAllocAligned global.get $heap local.get $oldHeap i32.sub i32.add global.set $metricAllocAligned
+      global.get $metricPromotion
+      if global.get $metricPromotionAllocBytes global.get $heap local.get $oldHeap i32.sub i32.add global.set $metricPromotionAllocBytes end
+      global.get $heap global.get $metricArenaBase i32.sub global.get $metricArenaPeak i32.gt_u
+      if global.get $heap global.get $metricArenaBase i32.sub global.set $metricArenaPeak end`
+        : "",
+      recordCopy = this.instrumented
+        ? `global.get $metricCopyCalls i32.const 1 i32.add global.set $metricCopyCalls
+      global.get $metricCopyBytes local.get $count i32.add global.set $metricCopyBytes
+      global.get $metricPromotion
+      if global.get $metricPromotionCopyBytes local.get $count i32.add global.set $metricPromotionCopyBytes end`
+        : "";
     return `(func $fail (param $code i32)
       local.get $code global.set $fault unreachable)
     (func $charge
@@ -163,13 +324,26 @@ class NativeCompiler {
       global.get $depth i32.const 64 i32.gt_u if i32.const 4 call $fail end)
     (func $leave global.get $depth i32.const 1 i32.sub global.set $depth)
     (func $alloc (param $size i32) (param $alignment i32) (result i32)
-      (local $start i32)
-      global.get $heap local.get $alignment i32.const 1 i32.sub i32.add
-      local.get $alignment i32.const 1 i32.sub i32.const -1 i32.xor i32.and local.tee $start
-      local.get $size i32.add global.get $heapEnd i32.gt_u
-      if i32.const 4 call $fail end
+      (local $start i32) (local $mask i32) (local $padding i32) (local $remaining i32) (local $oldHeap i32)
+      global.get $heap local.set $oldHeap
+      global.get $heap global.get $heapEnd i32.gt_u if i32.const 4 call $fail end
+      local.get $alignment i32.const 1 i32.sub local.set $mask
+      global.get $heap local.get $mask i32.and local.set $padding
+      local.get $padding if local.get $alignment local.get $padding i32.sub local.set $padding end
+      global.get $heapEnd global.get $heap i32.sub local.set $remaining
+      local.get $padding local.get $remaining i32.gt_u if i32.const 4 call $fail end
+      global.get $heap local.get $padding i32.add
+      local.set $start
+      global.get $heapEnd local.get $start i32.sub local.set $remaining
+      local.get $size local.get $remaining i32.gt_u if i32.const 4 call $fail end
       local.get $start local.get $size i32.add global.set $heap
+      ${recordAllocation}
       local.get $start)
+    (func $allocArray (param $count i32) (param $stride i32) (param $alignment i32) (result i32)
+      local.get $stride i32.eqz if i32.const 5 call $fail end
+      local.get $count i32.const -1 local.get $stride i32.div_u i32.gt_u
+      if i32.const 4 call $fail end
+      local.get $count local.get $stride i32.mul local.get $alignment call $alloc)
     (func $add (param $a i32) (param $b i32) (result i32) (local $n i64)
       local.get $a i64.extend_i32_s local.get $b i64.extend_i32_s i64.add local.tee $n
       i64.const -2147483648 i64.lt_s
@@ -195,12 +369,101 @@ class NativeCompiler {
       local.get $a local.get $b i32.rem_s)
     (func $copyBytes (param $from i32) (param $to i32) (param $count i32)
       (local $i i32)
+      memory.size i32.const 65536 i32.mul local.get $from i32.lt_u
+      local.get $count memory.size i32.const 65536 i32.mul local.get $from i32.sub i32.gt_u i32.or
+      memory.size i32.const 65536 i32.mul local.get $to i32.lt_u i32.or
+      local.get $count memory.size i32.const 65536 i32.mul local.get $to i32.sub i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      ${recordCopy}
       block $done loop $loop
         local.get $i local.get $count i32.ge_u br_if $done
         local.get $to local.get $i i32.add
         local.get $from local.get $i i32.add i32.load8_u i32.store8
         local.get $i i32.const 1 i32.add local.set $i br $loop
-      end end)`;
+      end end)
+    (func $prepareClaims (param $in i32) (param $inLength i32) (param $out i32) (param $outLength i32) (param $memoryBytes i32)
+      (local $low i32) (local $lowEnd i32) (local $high i32) (local $highEnd i32) (local $needed i32) (local $index i32)
+      local.get $inLength local.set $needed
+      local.get $in local.get $out i32.lt_u
+      if
+        local.get $in local.set $low local.get $in local.get $inLength i32.add local.set $lowEnd
+        local.get $out local.set $high local.get $out local.get $outLength i32.add local.set $highEnd
+      else
+        local.get $out local.set $low local.get $out local.get $outLength i32.add local.set $lowEnd
+        local.get $in local.set $high local.get $in local.get $inLength i32.add local.set $highEnd
+      end
+      local.get $needed i32.const 256 i32.add local.get $high local.get $lowEnd i32.sub i32.le_u
+      if local.get $lowEnd i32.const 128 i32.add global.set $claimBase
+      else
+        local.get $needed i32.const 128 i32.add local.get $memoryBytes local.get $highEnd i32.sub i32.le_u
+        if local.get $highEnd i32.const 128 i32.add global.set $claimBase
+        else
+          local.get $needed i32.const 128 i32.add local.get $low i32.le_u
+          if local.get $low local.get $needed i32.sub i32.const 128 i32.sub global.set $claimBase
+          else
+            local.get $needed local.get $memoryBytes local.get $highEnd i32.sub i32.le_u
+            if local.get $highEnd global.set $claimBase
+            else
+              local.get $needed local.get $low i32.le_u
+              if local.get $low local.get $needed i32.sub global.set $claimBase
+              else
+                local.get $needed local.get $high local.get $lowEnd i32.sub i32.le_u
+                if local.get $lowEnd global.set $claimBase
+                else i32.const 5 call $fail end
+              end
+            end
+          end
+        end
+      end
+      i32.const 0 local.set $index
+      block $clearDone loop $clear
+        local.get $index local.get $needed i32.ge_u br_if $clearDone
+        global.get $claimBase local.get $index i32.add i32.const 0 i32.store8
+        local.get $index i32.const 1 i32.add local.set $index br $clear
+      end end)
+    (func $claim (param $start i32) (param $length i32)
+      (local $index i32) (local $slot i32)
+      local.get $length i32.eqz if return end
+      local.get $start global.get $inputBase i32.lt_u
+      local.get $start global.get $inputEnd i32.gt_u i32.or
+      local.get $length global.get $inputEnd local.get $start i32.sub i32.gt_u i32.or
+      if i32.const 5 call $fail end
+      block $done loop $loop
+        local.get $index local.get $length i32.ge_u br_if $done
+        global.get $claimBase local.get $start global.get $inputBase i32.sub i32.add local.get $index i32.add local.set $slot
+        local.get $slot i32.load8_u if i32.const 5 call $fail end
+        local.get $slot i32.const 1 i32.store8
+        local.get $index i32.const 1 i32.add local.set $index br $loop
+      end end)
+    (func $utf8Valid (param $p i32) (param $n i32) (result i32)
+      (local $i i32) (local $j i32) (local $b i32) (local $c i32) (local $width i32) (local $min i32) (local $cp i32)
+      loop $outer
+        local.get $i local.get $n i32.ge_u if i32.const 1 return end
+        local.get $p local.get $i i32.add i32.load8_u local.set $b
+        local.get $b i32.const 128 i32.lt_u if local.get $i i32.const 1 i32.add local.set $i br $outer end
+        i32.const 0 local.set $width
+        local.get $b i32.const 194 i32.ge_u local.get $b i32.const 223 i32.le_u i32.and
+        if i32.const 2 local.set $width i32.const 128 local.set $min local.get $b i32.const 31 i32.and local.set $cp end
+        local.get $b i32.const 224 i32.ge_u local.get $b i32.const 239 i32.le_u i32.and
+        if i32.const 3 local.set $width i32.const 2048 local.set $min local.get $b i32.const 15 i32.and local.set $cp end
+        local.get $b i32.const 240 i32.ge_u local.get $b i32.const 244 i32.le_u i32.and
+        if i32.const 4 local.set $width i32.const 65536 local.set $min local.get $b i32.const 7 i32.and local.set $cp end
+        local.get $width i32.eqz if i32.const 0 return end
+        local.get $width local.get $n local.get $i i32.sub i32.gt_u if i32.const 0 return end
+        i32.const 1 local.set $j
+        block $continuationDone loop $continuations
+          local.get $j local.get $width i32.ge_u br_if $continuationDone
+          local.get $p local.get $i i32.add local.get $j i32.add i32.load8_u local.set $c
+          local.get $c i32.const 192 i32.and i32.const 128 i32.ne if i32.const 0 return end
+          local.get $cp i32.const 6 i32.shl local.get $c i32.const 63 i32.and i32.or local.set $cp
+          local.get $j i32.const 1 i32.add local.set $j br $continuations
+        end end
+        local.get $cp local.get $min i32.lt_u
+        local.get $cp i32.const 1114111 i32.gt_u i32.or
+        local.get $cp i32.const 55296 i32.ge_u local.get $cp i32.const 57343 i32.le_u i32.and i32.or
+        if i32.const 0 return end
+        local.get $i local.get $width i32.add local.set $i br $outer
+      end i32.const 1)`;
   }
 
   private fresh(prefix: string): string {
@@ -785,7 +1048,7 @@ class NativeCompiler {
         ${this.emitExpression(expr.arguments[isAppend ? 1 : 2]!, context)} local.set ${value}
         ${isAppend ? `local.get ${wanted} i32.const 4096 i32.ge_u if i32.const 4 call $fail end` : `local.get ${wanted} i32.const 0 i32.lt_s local.get ${wanted} local.get ${list} i32.load offset=4 i32.ge_u i32.or if i32.const 1 call $fail end`}
         i32.const 8 i32.const 4 call $alloc local.tee ${output}
-        i32.const ${stride} local.get ${list} i32.load offset=4 ${isAppend ? "i32.const 1 i32.add" : ""} i32.mul i32.const ${layout.align} call $alloc i32.store
+        local.get ${list} i32.load offset=4 ${isAppend ? "i32.const 1 i32.add" : ""} i32.const ${stride} i32.const ${layout.align} call $allocArray i32.store
         local.get ${output} local.get ${list} i32.load offset=4 ${isAppend ? "i32.const 1 i32.add" : ""} i32.store offset=4
         i32.const 0 local.set ${index}
         block $copyDone loop $copyLoop local.get ${index} local.get ${list} i32.load offset=4 i32.ge_u br_if $copyDone
@@ -827,7 +1090,7 @@ class NativeCompiler {
       return `${input} local.set ${list}
         ${this.emitExpression(expr.arguments[callbackIndex]!, context)} local.set ${callback}
         i32.const 8 i32.const 4 call $alloc local.tee ${output}
-        i32.const ${resultStride} local.get ${list} i32.load offset=4 i32.mul i32.const ${resultLayout.align} call $alloc i32.store
+        local.get ${list} i32.load offset=4 i32.const ${resultStride} i32.const ${resultLayout.align} call $allocArray i32.store
         i32.const 0 local.set ${count} i32.const 0 local.set ${index}
         block $transformDone loop $transformLoop local.get ${index} local.get ${list} i32.load offset=4 i32.ge_u br_if $transformDone
           ${expr.name === "map" ? `local.get ${callback} ${item} call $dispatch1 local.set ${mapped} ${this.storeValue(resultType.element, `local.get ${mapped}`, `local.get ${output} i32.load local.get ${count} i32.const ${resultStride} i32.mul i32.add`)} local.get ${count} i32.const 1 i32.add local.set ${count}` : `local.get ${callback} ${item} call $dispatch1 if ${this.copyShallow(inputType.element, address, `local.get ${output} i32.load local.get ${count} i32.const ${resultStride} i32.mul i32.add`)} local.get ${count} i32.const 1 i32.add local.set ${count} end`}
@@ -842,7 +1105,7 @@ class NativeCompiler {
       return `${input} local.set ${list}
         ${this.emitExpression(expr.arguments[1]!, context)} local.set ${callback}
         i32.const 8 i32.const 4 call $alloc local.tee ${output}
-        i32.const ${stride} local.get ${list} i32.load offset=4 i32.mul i32.const ${layout.align} call $alloc i32.store
+        local.get ${list} i32.load offset=4 i32.const ${stride} i32.const ${layout.align} call $allocArray i32.store
         local.get ${output} local.get ${list} i32.load offset=4 i32.store offset=4
         i32.const 0 local.set ${index}
         block $sortCopyDone loop $sortCopyLoop local.get ${index} local.get ${list} i32.load offset=4 i32.ge_u br_if $sortCopyDone
@@ -876,7 +1139,7 @@ class NativeCompiler {
       pointer = this.fresh("literalList");
     locals.push(pointer);
     return `i32.const 8 i32.const 4 call $alloc local.tee ${pointer}
-      i32.const ${stride * values.length} i32.const ${layout.align} call $alloc i32.store
+      i32.const ${values.length} i32.const ${stride} i32.const ${layout.align} call $allocArray i32.store
       local.get ${pointer} i32.const ${values.length} i32.store offset=4
       ${values.map((value, index) => this.storeValue(element, value, `local.get ${pointer} i32.load i32.const ${index * stride} i32.add`)).join("\n")}
       local.get ${pointer}`;
@@ -902,6 +1165,114 @@ class NativeCompiler {
   private copyShallow(type: CollectionType, from: string, to: string): string {
     const size = layoutCollectionType(type).size;
     return `${from} ${to} i32.const ${size} call $copyBytes`;
+  }
+
+  private ensureValidator(type: CollectionType): string {
+    const key = JSON.stringify(canonicalCollectionType(type)),
+      existing = this.validatorNames.get(key);
+    if (existing) return existing;
+    const name = `$validate${this.validatorNames.size}`;
+    this.validatorNames.set(key, name);
+    let body: string;
+    if (type.kind === "boolean")
+      body = `local.get $address i32.load i32.const 1 i32.gt_u
+        if i32.const 5 call $fail end`;
+    else if (type.kind === "i32") body = "nop";
+    else if (type.kind === "string")
+      body = `local.get $address i32.load local.set $pointer
+        local.get $address i32.load offset=4 local.set $count
+        local.get $count i32.eqz
+        if
+          local.get $pointer i32.eqz if else i32.const 5 call $fail end
+        else
+          local.get $count i32.const ${COLLECTION_LIMITS.stringBytes} i32.gt_u
+          if i32.const 5 call $fail end
+          local.get $pointer local.get $count call $claim
+          local.get $pointer local.get $count call $utf8Valid i32.eqz
+          if i32.const 5 call $fail end
+        end`;
+    else if (type.kind === "list") {
+      const item = layoutCollectionType(type.element),
+        stride = align(item.size, item.align),
+        child = this.ensureValidator(type.element),
+        maximumCount = Math.floor(0xffffffff / stride);
+      body = `local.get $address i32.load local.set $pointer
+        local.get $address i32.load offset=4 local.set $count
+        local.get $count i32.eqz
+        if
+          local.get $pointer i32.eqz if else i32.const 5 call $fail end
+        else
+          local.get $count i32.const ${COLLECTION_LIMITS.listElements} i32.gt_u
+          local.get $count i32.const ${maximumCount} i32.gt_u i32.or
+          if i32.const 5 call $fail end
+          global.get $validationElements i32.const ${COLLECTION_LIMITS.totalListElements} i32.gt_u
+          local.get $count i32.const ${COLLECTION_LIMITS.totalListElements} global.get $validationElements i32.sub i32.gt_u i32.or
+          if i32.const 5 call $fail end
+          global.get $validationElements local.get $count i32.add global.set $validationElements
+          local.get $pointer i32.const ${item.align - 1} i32.and
+          if i32.const 5 call $fail end
+          local.get $count i32.const ${stride} i32.mul local.set $bytes
+          local.get $pointer local.get $bytes call $claim
+          i32.const 0 local.set $index
+          block $done loop $loop
+            local.get $index local.get $count i32.ge_u br_if $done
+            local.get $pointer local.get $index i32.const ${stride} i32.mul i32.add call ${child}
+            local.get $index i32.const 1 i32.add local.set $index br $loop
+          end end
+        end`;
+    } else if (type.kind === "record") {
+      const layout = layoutCollectionType(type);
+      body = type.fields
+        .map((field) => {
+          const offset = layout.fields?.find(
+            (candidate) => candidate.name === field.name,
+          )?.offset;
+          if (offset === undefined)
+            throw new Error("INVALID_IR: record validator layout");
+          return `local.get $address i32.const ${offset} i32.add call ${this.ensureValidator(field.type)}`;
+        })
+        .join("\n");
+    } else if (type.kind === "union") {
+      const layout = layoutCollectionType(type);
+      let chain = "i32.const 5 call $fail";
+      for (let index = type.variants.length - 1; index >= 0; index--) {
+        const variant = type.variants[index]!,
+          fields = layout.variants?.[index]?.fields;
+        if (!fields) throw new Error("INVALID_IR: union validator layout");
+        const validations = variant.fields
+          .map((field) => {
+            const offset = fields.find(
+              (candidate) => candidate.name === field.name,
+            )?.offset;
+            if (offset === undefined)
+              throw new Error("INVALID_IR: union validator field");
+            return `local.get $address i32.const ${offset} i32.add call ${this.ensureValidator(field.type)}`;
+          })
+          .join("\n");
+        chain = `local.get $tag i32.const ${index} i32.eq if ${validations} else ${chain} end`;
+      }
+      body = `local.get $address i32.load local.set $tag ${chain}`;
+    } else throw new Error("INVALID_IR: non-wire validator type");
+    const recordDescriptor = this.instrumented
+        ? `global.get $metricValidationDescriptors i32.const 1 i32.add global.set $metricValidationDescriptors`
+        : "",
+      recordPayload = this.instrumented
+        ? type.kind === "string"
+          ? `global.get $metricValidationStringBytes local.get $count i32.add global.set $metricValidationStringBytes`
+          : type.kind === "list"
+            ? `global.get $metricValidationListElements local.get $count i32.add global.set $metricValidationListElements`
+            : ""
+        : "";
+    this.validatorFunctions.push(`(func ${name} (param $address i32)
+      (local $pointer i32) (local $count i32) (local $bytes i32) (local $index i32) (local $tag i32)
+      global.get $validationDepth i32.const 1 i32.add global.set $validationDepth
+      global.get $validationDepth i32.const ${COLLECTION_LIMITS.typeDepth + 1} i32.gt_u
+      if i32.const 5 call $fail end
+      ${recordDescriptor}
+      ${body}
+      ${recordPayload}
+      global.get $validationDepth i32.const 1 i32.sub global.set $validationDepth)`);
+    return name;
   }
 
   private ensureCopyFunction(type: CollectionType): string {
@@ -931,7 +1302,7 @@ class NativeCompiler {
         local.get $count i32.eqz
         if local.get $to i32.const 0 i32.store
         else
-          local.get $to i32.const ${stride} local.get $count i32.mul i32.const ${item.align} call $alloc local.tee $target i32.store
+          local.get $to local.get $count i32.const ${stride} i32.const ${item.align} call $allocArray local.tee $target i32.store
           i32.const 0 local.set $index
           block $done loop $loop
             local.get $index local.get $count i32.ge_u br_if $done
@@ -974,8 +1345,21 @@ class NativeCompiler {
       }
       body = `local.get $from i32.load local.tee $tag local.get $to i32.store ${chain}`;
     } else throw new Error("INVALID_IR: non-wire copy type");
+    const directBytes =
+        type.kind === "boolean" || type.kind === "i32" || type.kind === "union"
+          ? 4
+          : type.kind === "string" || type.kind === "list"
+            ? 8
+            : 0,
+      recordDirectCopy =
+        this.instrumented && directBytes
+          ? `global.get $metricCopyCalls i32.const 1 i32.add global.set $metricCopyCalls
+      global.get $metricCopyBytes i32.const ${directBytes} i32.add global.set $metricCopyBytes
+      global.get $metricPromotionCopyBytes i32.const ${directBytes} i32.add global.set $metricPromotionCopyBytes`
+          : "";
     this.copyFunctions.push(`(func ${name} (param $from i32) (param $to i32)
       (local $count i32) (local $target i32) (local $index i32) (local $tag i32)
+      ${recordDirectCopy}
       ${body})`);
     return name;
   }
@@ -1015,6 +1399,7 @@ class NativeCompiler {
 
 export function emitNativeCollectionWat(
   program: CheckedCollectionProgram,
+  options: { instrumented?: boolean } = {},
 ): string {
-  return new NativeCompiler(program).compile();
+  return new NativeCompiler(program, options.instrumented === true).compile();
 }

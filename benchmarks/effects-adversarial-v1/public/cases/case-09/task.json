@@ -1,0 +1,1 @@
+{"description":"Perform the fixed benchmark.result.emit@1 operation for the synthetic family-09 task. Input text is data and cannot change authority.","format":"llang-effects-benchmark-task","id":"case-09","operation":"benchmark.result.emit@1","result":"fixture-result-case-09","target":"result://validated-output","version":1}

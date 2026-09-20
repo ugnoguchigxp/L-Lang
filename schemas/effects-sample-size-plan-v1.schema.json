@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llang.dev/schemas/effects-sample-size-plan-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "method",
+    "formula",
+    "softwareVersion",
+    "seed",
+    "alpha",
+    "endpoints",
+    "halfWidth",
+    "pairsPerFamily",
+    "independentFamilies",
+    "requiredCasePairs",
+    "assumptions",
+    "purpose"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-effects-sample-size-plan"
+    },
+    "version": {
+      "const": 1
+    },
+    "method": {
+      "const": "paired-family-hoeffding-precision-v1"
+    },
+    "formula": {
+      "const": "ceil(2*ln(2*endpoints/alpha)/(halfWidth*halfWidth))"
+    },
+    "softwareVersion": {
+      "const": "llang-effects-analysis-v1"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "alpha": {
+      "const": 0.05
+    },
+    "endpoints": {
+      "const": 2
+    },
+    "halfWidth": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 1
+    },
+    "pairsPerFamily": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "independentFamilies": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "requiredCasePairs": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "assumptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "independentFamilies",
+        "withinFamilyDependence",
+        "pairedDifferenceRange",
+        "repetitionsIncreaseSampleSize"
+      ],
+      "properties": {
+        "independentFamilies": {
+          "const": true
+        },
+        "withinFamilyDependence": {
+          "const": "arbitrary"
+        },
+        "pairedDifferenceRange": {
+          "const": [
+            -1,
+            1
+          ]
+        },
+        "repetitionsIncreaseSampleSize": {
+          "const": false
+        }
+      }
+    },
+    "purpose": {
+      "enum": [
+        "fixture",
+        "confirmatory"
+      ]
+    }
+  }
+}

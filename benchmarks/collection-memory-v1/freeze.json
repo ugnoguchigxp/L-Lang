@@ -1,0 +1,22 @@
+{
+  "format": "llang-collection-memory-freeze",
+  "version": 1,
+  "baselineRevision": "f52a0c73d8a6c68f568c94f72e10901f47ba312a",
+  "profile": "module-collection-v1",
+  "abi": "llang-collection-native-v1",
+  "runtime": "Bun 1.4.2",
+  "binaryen": "132.0.0",
+  "protocol": {
+    "warmup": 5,
+    "repetitions": 30,
+    "order": "single-baseline"
+  },
+  "thresholds": {
+    "candidateShare": 0.3,
+    "adoptionReduction": 0.1,
+    "maximumEndToEndRegression": 0.05,
+    "maximumWasmGrowth": 0.2
+  },
+  "decisionRule": "Select at most one candidate. Reject or skip when ownership, semantics, resource outcomes, or thresholds cannot be preserved.",
+  "holdoutPolicy": "The checked-in fixture is regression evidence only; live workload claims require a separately frozen holdout."
+}

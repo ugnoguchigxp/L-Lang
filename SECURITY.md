@@ -33,3 +33,5 @@ compiler、lock、Pilot、Benchmark、互換utilityが信頼境界から読むJS
 Effects attestationはEd25519署名と外部指定のcurrent trust policyを使う。packageへ同梱された発行時policyを自動的にtrust rootへ昇格させない。要求承認者、実行host、監査者の秘密鍵を分離し、repositoryや成果物へコミットしない。署名は鍵の保有とbytesの整合性を示すだけで、自然言語要求、業務結果、host OS、外部service、署名時刻、anti-replayを証明しない。rotation、revocation、紛失、backup、Windows ACLは[鍵運用runbook](./docs/EFFECTS_ATTESTATION_KEY_RUNBOOK.md)に従う。
 
 Effects assurance core v1は、外部dataのsource／sinkと許可flowを署名chainへ固定し、現行IRのcompile時固定requestからauthority-bearing valueをruntime dataで拡張できないことを検査する。これは外部dataが真実または無害であること、許可済みflowが業務上正しいこと、任意TypeScript／Wasmのinformation flow、prompt injection一般への耐性を証明しない。checked-in adversarial fixtureは`evidenceEligible: false`であり、live安全性の根拠にしない。
+
+Effects adversarial benchmarkは、freeze対象をregular fileのexact setとして読み、symlink、hard link、path escape、unknown field、hash差替えを拒否する。TypeScript armはreview済みfixture sourceだけを実行し、禁止API scanと共通host dependency injectionを要求する。Bun workerやこのscannerを任意TypeScriptのOS sandboxとは扱わない。hidden Oracleは全arm終了後に読み、operation logへbody、credential、絶対path、queryを保存しない。fixture／verify／reproduceは外部network、credential、API callを使わない。

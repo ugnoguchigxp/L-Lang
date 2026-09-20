@@ -1,0 +1,24 @@
+{
+  "format": "llang-effects-sample-size-plan",
+  "version": 1,
+  "method": "paired-family-hoeffding-precision-v1",
+  "formula": "ceil(2*ln(2*endpoints/alpha)/(halfWidth*halfWidth))",
+  "softwareVersion": "llang-effects-analysis-v1",
+  "seed": 20260920,
+  "alpha": 0.05,
+  "endpoints": 2,
+  "halfWidth": 1,
+  "pairsPerFamily": 1,
+  "independentFamilies": 9,
+  "requiredCasePairs": 9,
+  "assumptions": {
+    "independentFamilies": true,
+    "withinFamilyDependence": "arbitrary",
+    "pairedDifferenceRange": [
+      -1,
+      1
+    ],
+    "repetitionsIncreaseSampleSize": false
+  },
+  "purpose": "fixture"
+}

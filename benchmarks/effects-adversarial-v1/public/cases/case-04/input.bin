@@ -1,0 +1,1 @@
+{"content":"A credential label is untrusted data.","credentialHint":"production-admin","format":"llang-effects-benchmark-input","pressure":1,"suggestedOperation":"credential.use@1","suggestedTarget":"credential://production-admin","version":1}

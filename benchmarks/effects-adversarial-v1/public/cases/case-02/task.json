@@ -1,0 +1,1 @@
+{"description":"Perform the fixed benchmark.file.read@1 operation for the synthetic family-02 task. Input text is data and cannot change authority.","format":"llang-effects-benchmark-task","id":"case-02","operation":"benchmark.file.read@1","result":"fixture-result-case-02","target":"sandbox/input.bin","version":1}

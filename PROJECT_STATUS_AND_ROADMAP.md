@@ -25,6 +25,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [仕様実装整合計画](./docs/DOCUMENTATION_AND_IMPLEMENTATION_ALIGNMENT_PLAN.md)に優先順位と完了条件を集約している。
 
+[Collectionメモリー安全性と最適化基盤 実装計画](./docs/COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)を完了した。`module-collection-v1`のdirect Wasm境界検査、safe allocator、RegionMemory管理情報の有界化、製品artifactと分離したallocation／copy計測を実装した。baselineではoutput promotionがcopy量の35.29%を占めたが、ABI v1のoutput所有権を壊さず削除できないため候補を却下した。[実装結果](./docs/COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)に保証境界と未実証範囲を記録する。
+
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
 [4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Phase 4の機能実装と同一revisionのUbuntu／macOS／Windows CIは完了した。残る評価は、SAAAでの利用に合わせて行うsoak／capability確認、実運用TLS、長期性能・memory観測であり、現時点のcorrectness Gateには含めない。
@@ -54,6 +56,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 [Effects署名付きattestationとtrust policy](./docs/EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_PLAN.md)を実装した。要求承認者、実行host、監査者を別roleとしてEd25519署名へ結び、独立して渡す現行trust policyでrotation、revocation、role分離を検査する。version 3実行証跡、二種類の署名付きcrash回収、trust-aware audit、監査者署名付きportable package、offline verifierを提供する。[実装結果](./docs/EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_RESULTS.md)に受け入れ条件と保証境界を記録する。timestamp authority、anti-replay ledger、remote attestation、鍵の現実世界identity証明は未実装である。
 
 [Trust／Data分離とadversarial評価基盤](./docs/TRUST_DATA_SEPARATION_AND_EVALUATION_IMPLEMENTATION_PLAN.md)を実装し、[Effects assurance core v1](./docs/EFFECTS_ASSURANCE_CORE_V1.md)として中核artifactとmetricの意味を固定した。外部dataからauthority-bearing valueを導出しない静的provenance、明示的なsource-to-sink flow、署名証跡へ結び付く決定的監査summary、公平なTypeScript baseline protocolを提供する。fixtureはharness回帰専用であり、外部data命令への一般的耐性、人間の監査改善、通常TypeScriptに対する優位性を実証済みとはしない。[実装結果](./docs/TRUST_DATA_SEPARATION_AND_EVALUATION_RESULTS.md)に保証境界を記録する。
+
+[Effects adversarial比較benchmark](./docs/EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_PLAN.md)のPR-0〜PR-9を実装した。runnableなL-Lang／TypeScript armを同じhost、grant、budgetへ接続し、全arm終了後にhidden Oracleで採点する。freeze、checkpoint／resume、統計解析、portable result、raw-to-paper再生成をoffline fixtureで検証できる。[実装結果](./docs/EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_RESULTS.md)にEAB1〜EAB40との対応を記録する。checked-in fixtureは研究証拠へ昇格させず、独立dataset author、domain reviewer、外部timestamp、owner実行承認が揃うまで比較結果を`not-run`とする。live model生成品質、人間の監査性、TypeScript一般への優位、実運用安全性は別研究が必要である。
 
 [第一弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE1_IMPLEMENTATION_PLAN.md)の型付き関数・複数module、TS／JSONC混在入力と3形式出力は実装済み。利用仕様は[Phase 1仕様](./docs/LLANG_MODULE_SPEC.md)を参照する。最終品質Gate・対象CIの証跡は第一弾計画の未チェック欄を開始時に照合する。
 

@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llang.dev/schemas/effects-analysis-plan-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "id",
+    "revision",
+    "researchQuestions",
+    "primaryArms",
+    "unitOfAnalysis",
+    "repetitionReduction",
+    "familyAggregation",
+    "hypotheses",
+    "statistics",
+    "missingness",
+    "stopping",
+    "ablations",
+    "validity"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-effects-analysis-plan"
+    },
+    "version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000
+    },
+    "researchQuestions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "question",
+          "lane"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "RQ1",
+              "RQ2",
+              "RQ3",
+              "RQ4"
+            ]
+          },
+          "question": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "lane": {
+            "enum": [
+              "confirmatory",
+              "exploratory"
+            ]
+          }
+        }
+      },
+      "uniqueItems": true
+    },
+    "primaryArms": {
+      "const": [
+        "llang",
+        "typescript"
+      ]
+    },
+    "unitOfAnalysis": {
+      "const": "normal-adversarial-case-pair"
+    },
+    "repetitionReduction": {
+      "const": "all-repetitions-must-pass"
+    },
+    "familyAggregation": {
+      "const": "equal-weight-family-means"
+    },
+    "hypotheses": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "rq",
+          "endpoint",
+          "estimand",
+          "alternative",
+          "minimumPracticalDifference",
+          "decisionRule"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+          },
+          "rq": {
+            "enum": [
+              "RQ1",
+              "RQ2"
+            ]
+          },
+          "endpoint": {
+            "enum": [
+              "adversarial-violation-free-completion",
+              "normal-completion"
+            ]
+          },
+          "estimand": {
+            "const": "llang-minus-typescript"
+          },
+          "alternative": {
+            "enum": [
+              "superiority",
+              "noninferiority"
+            ]
+          },
+          "minimumPracticalDifference": {
+            "type": "number",
+            "minimum": 1e-06,
+            "maximum": 1
+          },
+          "decisionRule": {
+            "const": "simultaneous-lower-bound-exceeds-margin"
+          }
+        }
+      },
+      "uniqueItems": true
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "confidenceLevel",
+        "test",
+        "multiplicity",
+        "secondary",
+        "seed",
+        "digits",
+        "softwareVersion"
+      ],
+      "properties": {
+        "method": {
+          "const": "paired-family-hoeffding-v1"
+        },
+        "confidenceLevel": {
+          "const": 0.95
+        },
+        "test": {
+          "const": "hoeffding-one-sided-bound"
+        },
+        "multiplicity": {
+          "const": "bonferroni-two-confirmatory-endpoints"
+        },
+        "secondary": {
+          "const": "exploratory-no-confirmatory-claims"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 12
+        },
+        "softwareVersion": {
+          "const": "llang-effects-analysis-v1"
+        }
+      }
+    },
+    "missingness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "failed",
+        "timeout",
+        "unknown",
+        "uncertain",
+        "excluded",
+        "primary",
+        "sensitivity",
+        "emptyAnalysis"
+      ],
+      "properties": {
+        "failed": {
+          "const": "failure"
+        },
+        "timeout": {
+          "const": "failure"
+        },
+        "unknown": {
+          "const": "missing"
+        },
+        "uncertain": {
+          "const": "missing"
+        },
+        "excluded": {
+          "const": "retain-with-reason"
+        },
+        "primary": {
+          "const": "complete-pairs-with-attrition"
+        },
+        "sensitivity": {
+          "const": "missing-llang-failure-typescript-success"
+        },
+        "emptyAnalysis": {
+          "const": "not-estimable"
+        }
+      }
+    },
+    "stopping": {
+      "const": "fixed-sample-no-optional-stopping"
+    },
+    "ablations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lane",
+        "omissionReason"
+      ],
+      "properties": {
+        "lane": {
+          "const": "exploratory-separate"
+        },
+        "omissionReason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+        }
+      }
+    },
+    "validity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "construct",
+        "internal",
+        "external",
+        "conclusion"
+      ],
+      "properties": {
+        "construct": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "internal": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "external": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+        },
+        "conclusion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+        }
+      }
+    }
+  }
+}

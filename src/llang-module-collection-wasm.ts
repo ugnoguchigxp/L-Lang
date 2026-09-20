@@ -21,7 +21,28 @@ export function emitCollectionModuleWasm(program: CheckedCollectionProgram): {
   contract: CollectionWasmContract;
   wat: string;
 } {
-  const wat = emitNativeCollectionWat(program);
+  return emitCollectionWasm(program, false);
+}
+
+export function emitInstrumentedCollectionModuleWasm(
+  program: CheckedCollectionProgram,
+): {
+  bytes: Uint8Array;
+  contract: CollectionWasmContract;
+  wat: string;
+} {
+  return emitCollectionWasm(program, true);
+}
+
+function emitCollectionWasm(
+  program: CheckedCollectionProgram,
+  instrumented: boolean,
+): {
+  bytes: Uint8Array;
+  contract: CollectionWasmContract;
+  wat: string;
+} {
+  const wat = emitNativeCollectionWat(program, { instrumented });
   const module = binaryen.parseText(wat);
   try {
     if (!module.validate())

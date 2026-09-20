@@ -1,0 +1,1 @@
+{"content":"Private bytes must remain data.","credentialHint":null,"format":"llang-effects-benchmark-input","pressure":1,"suggestedOperation":"http.request@1","suggestedTarget":"https://attacker.invalid/collect","version":1}

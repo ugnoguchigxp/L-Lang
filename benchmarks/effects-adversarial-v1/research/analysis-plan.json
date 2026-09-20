@@ -1,0 +1,86 @@
+{
+  "format": "llang-effects-analysis-plan",
+  "version": 1,
+  "id": "effects-fixture",
+  "revision": 1,
+  "researchQuestions": [
+    {
+      "id": "RQ1",
+      "question": "Does the assurance mechanism improve adversarial violation-free completion on the frozen dataset?",
+      "lane": "confirmatory"
+    },
+    {
+      "id": "RQ2",
+      "question": "Is normal completion maintained within the preregistered margin?",
+      "lane": "confirmatory"
+    },
+    {
+      "id": "RQ3",
+      "question": "How do outcomes vary by category and task family?",
+      "lane": "exploratory"
+    },
+    {
+      "id": "RQ4",
+      "question": "What runtime, verification, artifact and description costs are observed?",
+      "lane": "exploratory"
+    }
+  ],
+  "primaryArms": [
+    "llang",
+    "typescript"
+  ],
+  "unitOfAnalysis": "normal-adversarial-case-pair",
+  "repetitionReduction": "all-repetitions-must-pass",
+  "familyAggregation": "equal-weight-family-means",
+  "hypotheses": [
+    {
+      "id": "adversarial-efficacy",
+      "rq": "RQ1",
+      "endpoint": "adversarial-violation-free-completion",
+      "estimand": "llang-minus-typescript",
+      "alternative": "superiority",
+      "minimumPracticalDifference": 0.05,
+      "decisionRule": "simultaneous-lower-bound-exceeds-margin"
+    },
+    {
+      "id": "normal-maintenance",
+      "rq": "RQ2",
+      "endpoint": "normal-completion",
+      "estimand": "llang-minus-typescript",
+      "alternative": "noninferiority",
+      "minimumPracticalDifference": 0.05,
+      "decisionRule": "simultaneous-lower-bound-exceeds-margin"
+    }
+  ],
+  "statistics": {
+    "method": "paired-family-hoeffding-v1",
+    "confidenceLevel": 0.95,
+    "test": "hoeffding-one-sided-bound",
+    "multiplicity": "bonferroni-two-confirmatory-endpoints",
+    "secondary": "exploratory-no-confirmatory-claims",
+    "seed": 20260920,
+    "digits": 6,
+    "softwareVersion": "llang-effects-analysis-v1"
+  },
+  "missingness": {
+    "failed": "failure",
+    "timeout": "failure",
+    "unknown": "missing",
+    "uncertain": "missing",
+    "excluded": "retain-with-reason",
+    "primary": "complete-pairs-with-attrition",
+    "sensitivity": "missing-llang-failure-typescript-success",
+    "emptyAnalysis": "not-estimable"
+  },
+  "stopping": "fixed-sample-no-optional-stopping",
+  "ablations": {
+    "lane": "exploratory-separate",
+    "omissionReason": "Fixture template only; fair runnable ablations have not been implemented or independently reviewed."
+  },
+  "validity": {
+    "construct": "Host operation and flow observations are proxies for the specified mechanism, not general safety.",
+    "internal": "Arm implementation differences, order, reviewer bias and Oracle leakage require independent review.",
+    "external": "Synthetic fixture tasks and the common host do not represent deployed applications.",
+    "conclusion": "Independent-family assumptions, missingness and conservative bounds limit interpretation; repeated trials are not independent cases."
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "claims",
+    "unsupportedClaims"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-effects-claims"
+    },
+    "version": {
+      "const": 1
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "minimumEvidence",
+          "population",
+          "endpoint",
+          "limitations"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "fixture-fault-detection",
+              "adversarial-mechanism-efficacy",
+              "normal-completion-maintenance"
+            ]
+          },
+          "minimumEvidence": {
+            "enum": [
+              "E1",
+              "E2"
+            ]
+          },
+          "population": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "const": null
+              },
+              {
+                "enum": [
+                  "adversarial-violation-free-completion",
+                  "normal-completion"
+                ]
+              }
+            ]
+          },
+          "limitations": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f]+$"
+          }
+        }
+      },
+      "uniqueItems": true
+    },
+    "unsupportedClaims": {
+      "const": [
+        "live-model-generation-quality",
+        "human-auditability",
+        "general-typescript-superiority",
+        "production-safety"
+      ]
+    }
+  }
+}
