@@ -35,3 +35,9 @@ Effects attestationはEd25519署名と外部指定のcurrent trust policyを使�
 Effects assurance core v1は、外部dataのsource／sinkと許可flowを署名chainへ固定し、現行IRのcompile時固定requestからauthority-bearing valueをruntime dataで拡張できないことを検査する。これは外部dataが真実または無害であること、許可済みflowが業務上正しいこと、任意TypeScript／Wasmのinformation flow、prompt injection一般への耐性を証明しない。checked-in adversarial fixtureは`evidenceEligible: false`であり、live安全性の根拠にしない。
 
 Effects adversarial benchmarkは、freeze対象をregular fileのexact setとして読み、symlink、hard link、path escape、unknown field、hash差替えを拒否する。TypeScript armはreview済みfixture sourceだけを実行し、禁止API scanと共通host dependency injectionを要求する。Bun workerやこのscannerを任意TypeScriptのOS sandboxとは扱わない。hidden Oracleは全arm終了後に読み、operation logへbody、credential、絶対path、queryを保存しない。fixture／verify／reproduceは外部network、credential、API callを使わない。
+
+## Value Wasmのmemory境界
+
+`module-value-v1`のgenerated Wasmは、direct callerから渡されたinput／outputのbase、length、capacity、overlapを型付きloadより前に検査する。string descriptorはinput wireへの包含を確認してからUTF-8を読み、booleanと選択されたunion variantを段階的に検査する。不正入力はstatus 1で返し、host codecによる事前検査だけに依存しない。
+
+これは信頼するcompilerが検証済みIRから生成した`llang-value-memory-v1` artifactの保証である。任意Wasm、実行中にmemoryを書き換えるhost、threads、shared memory、memory growthは対象外である。input／output以外のmemoryは内部arenaとして変更され得るため、caller所有領域とは扱わない。保証表とnegative vectorは[Value Wasm Memory Safety Matrix](./docs/VALUE_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。

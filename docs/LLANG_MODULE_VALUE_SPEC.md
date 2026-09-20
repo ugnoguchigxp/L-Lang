@@ -61,6 +61,21 @@ variant payload layout. Padding and inactive payload bytes are zeroed. The
 runtime creates a new instance per call and copies the decoded result before
 discarding it.
 
+The generated `evaluate` validates top-level containment and non-overlap before
+loading the typed root. It then validates booleans and the selected union
+variant in layout order. A string descriptor is loaded only from the contained
+root, and its bytes are scanned as UTF-8 only after the payload is contained in
+the input wire. Malformed direct calls return status 1 before output writes;
+they do not rely on the host codec to prevent an out-of-bounds read.
+
+Unaligned but contained accesses, zero-length string pointers, immutable string
+payload aliases, and nonzero input padding remain accepted for ABI
+compatibility. The encoder still emits an aligned, zero-filled canonical form.
+Memory outside the declared input and output is module-private and may be used
+as the evaluation arena. The caller must not change memory while `evaluate` is
+running. Allocation, zero, and copy helpers check complete ranges before
+mutation; output string copies are bounded by `outputCapacity`.
+
 The build manifest records `interfaceHash` (profile and input/output types),
 `layoutHash` (ABI and layouts), fixed resource limits, toolchain versions, and
 artifact hashes. Portable verification requires only the manifest, Wasm bytes,
@@ -81,3 +96,5 @@ decode errors, traps, and timeouts never satisfy a business-error expectation.
 
 See [`../examples/module-order-line/`](../examples/module-order-line/) for
 equivalent TypeScript and JSONC graphs and a portable suite.
+The direct-call guarantee and its limitations are indexed in the
+[Value Wasm Memory Safety Matrix](./VALUE_WASM_MEMORY_SAFETY_MATRIX.md).

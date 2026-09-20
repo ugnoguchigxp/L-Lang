@@ -1,0 +1,31 @@
+{
+  "format": "llang-value-memory-freeze",
+  "version": 1,
+  "baselineRevision": "a116435f2d890fae6ed16100bbdffb4ddd0ce1e2",
+  "profile": "module-value-v1",
+  "abi": "llang-value-memory-v1",
+  "runtime": "Bun 1.4.2",
+  "binaryen": "132.0.0",
+  "memoryPages": 16,
+  "limits": {
+    "wireBytes": 65536,
+    "stringBytes": 16384,
+    "fuel": 100000
+  },
+  "baselineObservation": {
+    "runtime": "Bun 1.4.2",
+    "originalProbeRuntime": "Bun 1.3.14",
+    "inputPointer": 64,
+    "inputLength": 20,
+    "stringPointer": 4294967295,
+    "stringLength": 1,
+    "outcome": "wasm-trap-out-of-bounds-memory-access"
+  },
+  "baselineArtifact": {
+    "example": "examples/module-order-line/application/quote.llang.jsonc#quote",
+    "sha256": "adc4a3f899a69180cd7578dbb15a7f0b4471cf18fe3ff06e2db7dc80baef6440",
+    "bytes": 2003,
+    "exports": ["memory", "evaluate"]
+  },
+  "compatibilityRule": "Preserve ABI, exports, status codes, resource limits, valid values, safe aliases, and unaligned in-range access while making malformed input fail with status 1 before output writes."
+}

@@ -1,0 +1,30 @@
+{
+  "format": "llang-value-direct-corpus",
+  "version": 1,
+  "canonicalInputs": [
+    { "member": false, "productCode": "", "quantity": 1, "unitPrice": -2147483648 },
+    { "member": true, "productCode": "A¢€😀", "quantity": 3, "unitPrice": 200 },
+    { "member": false, "productCode": "shared", "quantity": 0, "unitPrice": 2147483647 }
+  ],
+  "topLevelCases": [
+    { "id": "input-before-minimum", "input": 0, "inputLength": 20, "output": 131072, "outputCapacity": 65536 },
+    { "id": "input-short-root", "input": 64, "inputLength": 19, "output": 131072, "outputCapacity": 65536 },
+    { "id": "input-length-over-limit", "input": 64, "inputLength": 65537, "output": 131072, "outputCapacity": 65536 },
+    { "id": "input-crosses-memory-end", "input": 1048560, "inputLength": 20, "output": 131072, "outputCapacity": 65536 },
+    { "id": "input-wraparound", "input": 4294967280, "inputLength": 32, "output": 131072, "outputCapacity": 65536 },
+    { "id": "output-before-minimum", "input": 64, "inputLength": 20, "output": 0, "outputCapacity": 65536 },
+    { "id": "output-short-root", "input": 64, "inputLength": 20, "output": 131072, "outputCapacity": 15 },
+    { "id": "output-capacity-over-limit", "input": 64, "inputLength": 20, "output": 131072, "outputCapacity": 65537 },
+    { "id": "output-crosses-memory-end", "input": 64, "inputLength": 20, "output": 1048561, "outputCapacity": 16 },
+    { "id": "output-wraparound", "input": 64, "inputLength": 20, "output": 4294967280, "outputCapacity": 32 },
+    { "id": "complete-overlap", "input": 64, "inputLength": 20, "output": 64, "outputCapacity": 64 },
+    { "id": "partial-overlap", "input": 64, "inputLength": 20, "output": 80, "outputCapacity": 64 },
+    { "id": "one-byte-overlap", "input": 64, "inputLength": 20, "output": 83, "outputCapacity": 64 }
+  ],
+  "stringCases": [
+    { "id": "pointer-before-input", "pointer": 63, "length": 1, "expectedStatus": 1 },
+    { "id": "pointer-at-input-end", "pointer": 88, "length": 1, "expectedStatus": 1 },
+    { "id": "pointer-memory-wraparound", "pointer": 4294967295, "length": 1, "expectedStatus": 1 },
+    { "id": "length-over-limit", "pointer": 84, "length": 16385, "expectedStatus": 1 }
+  ]
+}

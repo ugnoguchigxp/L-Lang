@@ -27,6 +27,10 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [Collectionメモリー安全性と最適化基盤 実装計画](./docs/COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)を完了した。`module-collection-v1`のdirect Wasm境界検査、safe allocator、RegionMemory管理情報の有界化、製品artifactと分離したallocation／copy計測を実装した。baselineではoutput promotionがcopy量の35.29%を占めたが、ABI v1のoutput所有権を壊さず削除できないため候補を却下した。[実装結果](./docs/COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)に保証境界と未実証範囲を記録する。
 
+[Value Wasmメモリー安全性強化](./docs/VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を実装した。`module-value-v1`のdirect callで、string payloadの包含確認より前にUTF-8 validatorが評価されてWasm trapになる問題を、型別staged validatorへ置き換えた。safe allocator／copy、raw ABI differential、七種類のmutation試験を追加し、ABI v1、export、status、resource limitを維持した。[実装結果](./docs/VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)に保証境界と内部arenaの所有範囲を記録する。
+
+次の実装対象として[Effects Wasmメモリー安全性強化](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を策定した。linear／typed continuation ABIのraw `start`／`resume`で、descriptor baseを包含確認前にload／storeしてtrapする境界を閉じ、失敗時にcontinuation stateを消費しないtransactionとして検証する計画である。これは計画段階であり、Effectsの現行実装を修正済みとは扱わない。
+
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
 [4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Phase 4の機能実装と同一revisionのUbuntu／macOS／Windows CIは完了した。残る評価は、SAAAでの利用に合わせて行うsoak／capability確認、実運用TLS、長期性能・memory観測であり、現時点のcorrectness Gateには含めない。

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/value-direct-corpus-v1.schema.json",
+  "title": "L-Lang Value direct ABI corpus v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "canonicalInputs", "topLevelCases", "stringCases"],
+  "properties": {
+    "format": { "const": "llang-value-direct-corpus" },
+    "version": { "const": 1 },
+    "canonicalInputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["member", "productCode", "quantity", "unitPrice"],
+        "properties": {
+          "member": { "type": "boolean" },
+          "productCode": { "type": "string", "maxLength": 16384 },
+          "quantity": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 },
+          "unitPrice": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 }
+        }
+      }
+    },
+    "topLevelCases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "input", "inputLength", "output", "outputCapacity"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "input": { "$ref": "#/$defs/u32" },
+          "inputLength": { "$ref": "#/$defs/u32" },
+          "output": { "$ref": "#/$defs/u32" },
+          "outputCapacity": { "$ref": "#/$defs/u32" }
+        }
+      }
+    },
+    "stringCases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pointer", "length", "expectedStatus"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "pointer": { "$ref": "#/$defs/u32" },
+          "length": { "$ref": "#/$defs/u32" },
+          "expectedStatus": { "const": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "u32": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+  }
+}

@@ -277,6 +277,7 @@ function emitExpression(ctx: EmitContext, expr: ValueExpression): string {
         tag = expr.kind === "variant" ? expr.tag : undefined,
         actions = [
           `(local.set ${temp} (i64.extend_i32_u (call $alloc (i32.const ${layout.size}))))`,
+          `(if (global.get $fault) (then (return (i64.const 0))))`,
           `(call $mem_zero (i32.wrap_i64 (local.get ${temp})) (i32.const ${layout.size}))`,
         ];
       const fields =
@@ -400,46 +401,70 @@ function outputWriter(
   }
   return actions;
 }
-function boolOr(items: string[]): string {
-  return items.length
-    ? items.reduce((a, b) => `(i32.or ${a} ${b})`)
-    : `(i32.const 0)`;
-}
-function invalidInput(type: ValueType, address: string): string {
+type InputValidatorState = { next: number; locals: string[] };
+const rejectInput = (condition: string) =>
+  `(if ${condition} (then (return (i32.const 1))))`;
+function inputValidator(
+  type: ValueType,
+  address: string,
+  state: InputValidatorState,
+): string[] {
   const layout = layoutValueType(type);
   if (type.kind === "boolean")
-    return `(i32.gt_u (i32.load ${address}) (i32.const 1))`;
-  if (type.kind === "i32") return `(i32.const 0)`;
+    return [rejectInput(`(i32.gt_u (i32.load ${address}) (i32.const 1))`)];
+  if (type.kind === "i32") return [];
   if (type.kind === "string") {
-    const pointer = `(i32.load ${address})`,
-      length = `(i32.load offset=4 ${address})`,
-      end = `(i32.add ${pointer} ${length})`;
-    return boolOr([
-      `(i32.gt_u ${length} (i32.const 16384))`,
-      `(i32.lt_u ${pointer} (local.get $input))`,
-      `(i32.lt_u ${end} ${pointer})`,
-      `(i32.gt_u ${end} (i32.add (local.get $input) (local.get $input_len)))`,
-      `(i32.eqz (call $utf8_valid ${pointer} ${length}))`,
-    ]);
+    const id = state.next++,
+      pointer = `$validation_ptr${id}`,
+      length = `$validation_len${id}`;
+    state.locals.push(`(local ${pointer} i32)`, `(local ${length} i32)`);
+    return [
+      `(local.set ${pointer} (i32.load ${address}))`,
+      `(local.set ${length} (i32.load offset=4 ${address}))`,
+      rejectInput(`(i32.gt_u (local.get ${length}) (i32.const 16384))`),
+      rejectInput(`(i32.lt_u (local.get ${pointer}) (local.get $input))`),
+      rejectInput(`(i32.gt_u (local.get ${pointer}) (local.get $input_end))`),
+      rejectInput(
+        `(i32.gt_u (local.get ${length}) (i32.sub (local.get $input_end) (local.get ${pointer})))`,
+      ),
+      rejectInput(
+        `(i32.eqz (call $utf8_valid (local.get ${pointer}) (local.get ${length})))`,
+      ),
+    ];
   }
-  if (type.kind === "record")
-    return boolOr(
-      layout.fields!.map((field) =>
-        invalidInput(
-          field.type,
-          `(i32.add ${address} (i32.const ${field.offset}))`,
-        ),
+  if (type.kind === "record") {
+    if (!layout.fields) throw new Error("record layout is missing fields");
+    return layout.fields.flatMap((field) =>
+      inputValidator(
+        field.type,
+        `(i32.add ${address} (i32.const ${field.offset}))`,
+        state,
       ),
     );
-  const tag = `(i32.load ${address})`,
-    cases = type.variants.map((variant) => {
-      const vl = layout.variants!.find((x) => x.tag === variant.tag)!;
-      return `(if (result i32) (i32.eq ${tag} (i32.const ${vl.index})) (then ${boolOr(vl.fields.map((field) => invalidInput(field.type, `(i32.add ${address} (i32.const ${field.offset}))`)))}) (else (i32.const 0)))`;
-    });
-  return boolOr([
-    `(i32.ge_u ${tag} (i32.const ${type.variants.length}))`,
-    ...cases,
-  ]);
+  }
+  const id = state.next++,
+    tag = `$validation_tag${id}`,
+    variants = layout.variants;
+  if (!variants) throw new Error("union layout is missing variants");
+  state.locals.push(`(local ${tag} i32)`);
+  return [
+    `(local.set ${tag} (i32.load ${address}))`,
+    rejectInput(
+      `(i32.ge_u (local.get ${tag}) (i32.const ${type.variants.length}))`,
+    ),
+    ...type.variants.map((variant) => {
+      const vl = variants.find((x) => x.tag === variant.tag);
+      if (!vl) throw new Error(`missing layout for variant ${variant.tag}`);
+      const checks = vl.fields.flatMap((field) =>
+        inputValidator(
+          field.type,
+          `(i32.add ${address} (i32.const ${field.offset}))`,
+          state,
+        ),
+      );
+      return `(if (i32.eq (local.get ${tag}) (i32.const ${vl.index})) (then ${checks.join(" ")}))`;
+    }),
+  ];
 }
 
 export function emitValueModuleWasm(program: CheckedValueProgram): {
@@ -532,11 +557,16 @@ export function emitValueModuleWasm(program: CheckedValueProgram): {
     `(local.get $result)`,
     `(local.get $output)`,
   );
-  const inputInvalid = invalidInput(program.entryInput, `(local.get $input)`);
+  const validatorState: InputValidatorState = { next: 0, locals: [] },
+    inputValidation = inputValidator(
+      program.entryInput,
+      `(local.get $input)`,
+      validatorState,
+    ).join(" ");
   const constantFunctions = [...constants.values()]
     .map(
       (item) =>
-        `(func ${item.name} (result i64) (local $p i32) (local.set $p (call $alloc (i32.const ${item.bytes.length}))) ${[...item.bytes].map((byte, index) => `(i32.store8 offset=${index} (local.get $p) (i32.const ${byte}))`).join(" ")} (call $pack (local.get $p) (i32.const ${item.bytes.length})))`,
+        `(func ${item.name} (result i64) (local $p i32) (local.set $p (call $alloc (i32.const ${item.bytes.length}))) (if (global.get $fault) (then (return (i64.const 0)))) ${[...item.bytes].map((byte, index) => `(i32.store8 offset=${index} (local.get $p) (i32.const ${byte}))`).join(" ")} (call $pack (local.get $p) (i32.const ${item.bytes.length})))`,
     )
     .join("\n");
   const wat = `(module
@@ -545,8 +575,9 @@ export function emitValueModuleWasm(program: CheckedValueProgram): {
     (func $pack (param $p i32) (param $n i32) (result i64) (i64.or (i64.extend_i32_u (local.get $p)) (i64.shl (i64.extend_i32_u (local.get $n)) (i64.const 32))))
     (func $ptr (param $v i64) (result i32) (i32.wrap_i64 (local.get $v))) (func $len (param $v i64) (result i32) (i32.wrap_i64 (i64.shr_u (local.get $v) (i64.const 32))))
     (func $tick (if (i32.le_s (global.get $fuel) (i32.const 0)) (then (global.set $fault (i32.const 4))) (else (global.set $fuel (i32.sub (global.get $fuel) (i32.const 1))))))
-    (func $mem_copy (param $dst i32) (param $src i32) (param $n i32) (local $i i32) (loop $loop (if (i32.lt_u (local.get $i) (local.get $n)) (then (i32.store8 (i32.add (local.get $dst) (local.get $i)) (i32.load8_u (i32.add (local.get $src) (local.get $i)))) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)))))
-    (func $mem_zero (param $dst i32) (param $n i32) (local $i i32) (loop $loop (if (i32.lt_u (local.get $i) (local.get $n)) (then (i32.store8 (i32.add (local.get $dst) (local.get $i)) (i32.const 0)) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)))))
+    (func $range_in_memory (param $base i32) (param $n i32) (result i32) (if (result i32) (i32.gt_u (local.get $base) (i32.const 1048576)) (then (i32.const 0)) (else (i32.le_u (local.get $n) (i32.sub (i32.const 1048576) (local.get $base))))))
+    (func $mem_copy (param $dst i32) (param $src i32) (param $n i32) (local $i i32) (if (global.get $fault) (then (return))) (if (i32.eqz (call $range_in_memory (local.get $dst) (local.get $n))) (then (global.set $fault (i32.const 5)) (return))) (if (i32.eqz (call $range_in_memory (local.get $src) (local.get $n))) (then (global.set $fault (i32.const 5)) (return))) (loop $loop (if (i32.lt_u (local.get $i) (local.get $n)) (then (i32.store8 (i32.add (local.get $dst) (local.get $i)) (i32.load8_u (i32.add (local.get $src) (local.get $i)))) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)))))
+    (func $mem_zero (param $dst i32) (param $n i32) (local $i i32) (if (global.get $fault) (then (return))) (if (i32.eqz (call $range_in_memory (local.get $dst) (local.get $n))) (then (global.set $fault (i32.const 5)) (return))) (loop $loop (if (i32.lt_u (local.get $i) (local.get $n)) (then (i32.store8 (i32.add (local.get $dst) (local.get $i)) (i32.const 0)) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)))))
     (func $checked (param $v i64) (result i64)
       (if (global.get $fault) (then (return (i64.const 0))))
       (if (i32.or (i64.lt_s (local.get $v) (i64.const -2147483648)) (i64.gt_s (local.get $v) (i64.const 2147483647)))
@@ -559,7 +590,7 @@ export function emitValueModuleWasm(program: CheckedValueProgram): {
       (if (result i64) (local.get $rem)
         (then (i64.rem_s (local.get $a) (local.get $b)))
         (else (call $checked (i64.div_s (local.get $a) (local.get $b))))))
-    (func $alloc (param $n i32) (result i32) (local $p i32) (local.set $p (global.get $arena)) (global.set $arena (i32.and (i32.add (i32.add (global.get $arena) (local.get $n)) (i32.const 3)) (i32.const -4))) (if (i32.gt_u (global.get $arena) (i32.const 1048576)) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (local.get $p))
+    (func $alloc (param $n i32) (result i32) (local $p i32) (local $next i32) (local $padding i32) (if (global.get $fault) (then (return (i32.const 0)))) (local.set $p (global.get $arena)) (if (i32.gt_u (local.get $p) (i32.const 1048576)) (then (global.set $fault (i32.const 5)) (return (i32.const 0)))) (if (i32.gt_u (local.get $n) (i32.sub (i32.const 1048576) (local.get $p))) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (local.set $next (i32.add (local.get $p) (local.get $n))) (local.set $padding (i32.and (i32.sub (i32.const 4) (i32.and (local.get $next) (i32.const 3))) (i32.const 3))) (if (i32.gt_u (local.get $padding) (i32.sub (i32.const 1048576) (local.get $next))) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (global.set $arena (i32.add (local.get $next) (local.get $padding))) (local.get $p))
     (func $str_eq (param $a i64) (param $b i64) (result i32) (local $i i32) (if (result i32) (i32.ne (call $len (local.get $a)) (call $len (local.get $b))) (then (i32.const 0)) (else (block $done (result i32) (loop $loop (if (i32.ge_u (local.get $i) (call $len (local.get $a))) (then (br $done (i32.const 1)))) (if (i32.ne (i32.load8_u (i32.add (call $ptr (local.get $a)) (local.get $i))) (i32.load8_u (i32.add (call $ptr (local.get $b)) (local.get $i)))) (then (br $done (i32.const 0)))) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)) (i32.const 1)))))
     (func $concat (param $a i64) (param $b i64) (result i64) (local $n i32) (local $p i32) (local.set $n (i32.add (call $len (local.get $a)) (call $len (local.get $b)))) (if (i32.gt_u (local.get $n) (i32.const 16384)) (then (global.set $fault (i32.const 4)) (return (i64.const 0)))) (local.set $p (call $alloc (local.get $n))) (call $mem_copy (local.get $p) (call $ptr (local.get $a)) (call $len (local.get $a))) (call $mem_copy (i32.add (local.get $p) (call $len (local.get $a))) (call $ptr (local.get $b)) (call $len (local.get $b))) (call $pack (local.get $p) (local.get $n)))
     (func $scalar_len (param $v i64) (result i32) (local $i i32) (local $n i32) (loop $loop (if (i32.lt_u (local.get $i) (call $len (local.get $v))) (then (if (i32.ne (i32.and (i32.load8_u (i32.add (call $ptr (local.get $v)) (local.get $i))) (i32.const 192)) (i32.const 128)) (then (local.set $n (i32.add (local.get $n) (i32.const 1))))) (local.set $i (i32.add (local.get $i) (i32.const 1))) (br $loop)))) (local.get $n))
@@ -573,7 +604,7 @@ export function emitValueModuleWasm(program: CheckedValueProgram): {
         (if (i32.and (i32.ge_u (local.get $b) (i32.const 224)) (i32.le_u (local.get $b) (i32.const 239))) (then (local.set $width (i32.const 3)) (local.set $min (i32.const 2048)) (local.set $cp (i32.and (local.get $b) (i32.const 15)))))
         (if (i32.and (i32.ge_u (local.get $b) (i32.const 240)) (i32.le_u (local.get $b) (i32.const 244))) (then (local.set $width (i32.const 4)) (local.set $min (i32.const 65536)) (local.set $cp (i32.and (local.get $b) (i32.const 7)))))
         (if (i32.eqz (local.get $width)) (then (return (i32.const 0))))
-        (if (i32.gt_u (i32.add (local.get $i) (local.get $width)) (local.get $n)) (then (return (i32.const 0))))
+        (if (i32.gt_u (local.get $width) (i32.sub (local.get $n) (local.get $i))) (then (return (i32.const 0))))
         (local.set $j (i32.const 1))
         (loop $continuations
           (if (i32.lt_u (local.get $j) (local.get $width)) (then
@@ -586,16 +617,26 @@ export function emitValueModuleWasm(program: CheckedValueProgram): {
         (local.set $i (i32.add (local.get $i) (local.get $width)))
         (br $outer))
       (i32.const 1))
-    (func $out_string (param $v i64) (result i32) (local $p i32) (local.set $p (global.get $out_cursor)) (if (i32.gt_u (i32.add (local.get $p) (call $len (local.get $v))) (global.get $out_end)) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (call $mem_copy (local.get $p) (call $ptr (local.get $v)) (call $len (local.get $v))) (global.set $out_cursor (i32.and (i32.add (i32.add (local.get $p) (call $len (local.get $v))) (i32.const 3)) (i32.const -4))) (local.get $p))
+    (func $out_string (param $v i64) (result i32) (local $p i32) (local $next i32) (local $padding i32) (if (global.get $fault) (then (return (i32.const 0)))) (local.set $p (global.get $out_cursor)) (if (i32.gt_u (local.get $p) (global.get $out_end)) (then (global.set $fault (i32.const 5)) (return (i32.const 0)))) (if (i32.gt_u (call $len (local.get $v)) (i32.sub (global.get $out_end) (local.get $p))) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (local.set $next (i32.add (local.get $p) (call $len (local.get $v)))) (local.set $padding (i32.and (i32.sub (i32.const 4) (i32.and (local.get $next) (i32.const 3))) (i32.const 3))) (if (i32.gt_u (local.get $padding) (i32.sub (global.get $out_end) (local.get $next))) (then (global.set $fault (i32.const 4)) (return (i32.const 0)))) (call $mem_copy (local.get $p) (call $ptr (local.get $v)) (call $len (local.get $v))) (if (global.get $fault) (then (return (i32.const 0)))) (global.set $out_cursor (i32.add (local.get $next) (local.get $padding))) (local.get $p))
     ${constantFunctions}
     ${functionTexts.join("\n")}
-    (func (export "evaluate") (param $input i32) (param $input_len i32) (param $output i32) (param $output_cap i32) (result i32) (local $result i64) (local $copy i32)
+    (func (export "evaluate") (param $input i32) (param $input_len i32) (param $output i32) (param $output_cap i32) (result i32) (local $result i64) (local $copy i32) (local $input_end i32) (local $output_end i32) ${validatorState.locals.join(" ")}
       (global.set $fault (i32.const 0)) (global.set $fuel (i32.const 100000))
-      (if (i32.or (i32.lt_u (local.get $input) (i32.const 64)) (i32.or (i32.lt_u (local.get $input_len) (i32.const ${layoutValueType(program.entryInput).size})) (i32.or (i32.gt_u (local.get $input_len) (i32.const 65536)) (i32.or (i32.lt_u (local.get $output) (i32.const 64)) (i32.or (i32.lt_u (local.get $output_cap) (i32.const ${outputLayout.size})) (i32.gt_u (local.get $output_cap) (i32.const 65536))))))) (then (return (i32.const 1))))
-      (if (i32.or (i32.gt_u (local.get $input) (i32.const 1048576)) (i32.or (i32.gt_u (local.get $input_len) (i32.sub (i32.const 1048576) (local.get $input))) (i32.or (i32.gt_u (local.get $output) (i32.const 1048576)) (i32.gt_u (local.get $output_cap) (i32.sub (i32.const 1048576) (local.get $output)))))) (then (return (i32.const 1))))
-      (if (i32.and (i32.lt_u (local.get $input) (i32.add (local.get $output) (local.get $output_cap))) (i32.lt_u (local.get $output) (i32.add (local.get $input) (local.get $input_len)))) (then (return (i32.const 1))))
-      (if ${inputInvalid} (then (return (i32.const 1))))
-      (global.set $out_cursor (i32.add (local.get $output) (i32.const ${outputLayout.size}))) (global.set $out_end (i32.add (local.get $output) (local.get $output_cap))) (global.set $arena (i32.and (i32.add (if (result i32) (i32.gt_u (i32.add (local.get $input) (local.get $input_len)) (i32.add (local.get $output) (local.get $output_cap))) (then (i32.add (local.get $input) (local.get $input_len))) (else (i32.add (local.get $output) (local.get $output_cap)))) (i32.const 3)) (i32.const -4))) (call $mem_zero (local.get $output) (local.get $output_cap))
+      ${rejectInput(`(i32.lt_u (local.get $input_len) (i32.const ${layoutValueType(program.entryInput).size}))`)}
+      ${rejectInput(`(i32.gt_u (local.get $input_len) (i32.const 65536))`)}
+      ${rejectInput(`(i32.lt_u (local.get $output_cap) (i32.const ${outputLayout.size}))`)}
+      ${rejectInput(`(i32.gt_u (local.get $output_cap) (i32.const 65536))`)}
+      ${rejectInput(`(i32.lt_u (local.get $input) (i32.const 64))`)}
+      ${rejectInput(`(i32.gt_u (local.get $input) (i32.const 1048576))`)}
+      ${rejectInput(`(i32.gt_u (local.get $input_len) (i32.sub (i32.const 1048576) (local.get $input)))`)}
+      ${rejectInput(`(i32.lt_u (local.get $output) (i32.const 64))`)}
+      ${rejectInput(`(i32.gt_u (local.get $output) (i32.const 1048576))`)}
+      ${rejectInput(`(i32.gt_u (local.get $output_cap) (i32.sub (i32.const 1048576) (local.get $output)))`)}
+      (local.set $input_end (i32.add (local.get $input) (local.get $input_len)))
+      (local.set $output_end (i32.add (local.get $output) (local.get $output_cap)))
+      ${rejectInput(`(i32.and (i32.lt_u (local.get $input) (local.get $output_end)) (i32.lt_u (local.get $output) (local.get $input_end)))`)}
+      ${inputValidation}
+      (global.set $out_cursor (i32.add (local.get $output) (i32.const ${outputLayout.size}))) (global.set $out_end (local.get $output_end)) (global.set $arena (i32.and (i32.add (if (result i32) (i32.gt_u (local.get $input_end) (local.get $output_end)) (then (local.get $input_end)) (else (local.get $output_end))) (i32.const 3)) (i32.const -4))) (call $mem_zero (local.get $output) (local.get $output_cap))
       (local.set $result (call ${watName(entry.symbol)} (i64.extend_i32_u (local.get $input))))
       (if (global.get $fault) (then (return (global.get $fault)))) ${writers.join(" ")} (global.get $fault))
   )`;

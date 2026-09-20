@@ -1,0 +1,80 @@
+{
+  "format": "llang-value-memory-safety-matrix",
+  "version": 1,
+  "profile": "module-value-v1",
+  "abi": "llang-value-memory-v1",
+  "entries": [
+    {
+      "id": "VMM1",
+      "subject": "top-level input and output regions",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Lengths are within 64 KiB, ranges are contained in fixed memory, and input and output do not overlap.",
+      "positive": ["canonical and unaligned direct ABI invocation"],
+      "negative": ["short root", "wraparound length", "partial overlap"],
+      "limitation": "The host must not mutate memory concurrently during evaluate."
+    },
+    {
+      "id": "VMM2",
+      "subject": "typed root validation",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Boolean slots, union tags, records, and the selected union payload are checked in layout order.",
+      "positive": ["nested record and every selected variant"],
+      "negative": ["boolean 2", "unknown tag", "invalid selected payload"],
+      "limitation": "Safe immutable payload aliasing and nonzero input padding remain accepted for ABI compatibility."
+    },
+    {
+      "id": "VMM3",
+      "subject": "string containment and UTF-8",
+      "guaranteedBy": "generated-wasm",
+      "condition": "A descriptor is loaded from the contained root, its payload is contained in the input, and only then is UTF-8 read.",
+      "positive": ["empty, ASCII, two-, three-, and four-byte scalar strings"],
+      "negative": ["0xffffffff pointer", "truncated scalar", "overlong encoding", "surrogate"],
+      "limitation": "Valid strings are not Unicode-normalized."
+    },
+    {
+      "id": "VMM4",
+      "subject": "arena allocation",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Requested bytes and alignment padding are compared with remaining memory before arena mutation.",
+      "positive": ["fitting record and string allocations"],
+      "negative": ["constant allocation exhaustion"],
+      "limitation": "The arena is evaluation-scoped and is not a public allocator."
+    },
+    {
+      "id": "VMM5",
+      "subject": "copy, zero, and output capacity",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Whole source and destination ranges are checked before copying or zeroing and output strings reserve aligned capacity.",
+      "positive": ["portable order-line output"],
+      "negative": ["insufficient output capacity", "mutated unchecked copy"],
+      "limitation": "A fault may leave bytes inside the declared output region zeroed or partially constructed, and the disjoint module-private arena may also change."
+    },
+    {
+      "id": "VMM6",
+      "subject": "host value shape and canonical encoding",
+      "guaranteedBy": "host-codec",
+      "condition": "The public runtime accepts exact typed values and writes canonical little-endian wire data.",
+      "positive": ["public runtime evaluation"],
+      "negative": ["extra field", "fractional i32", "lone surrogate"],
+      "limitation": "Host validation does not replace generated-Wasm validation for direct callers."
+    },
+    {
+      "id": "VMM7",
+      "subject": "fault classification and instance lifetime",
+      "guaranteedBy": "generated-wasm",
+      "condition": "Invalid input returns status 1 before writes, runtime faults preserve their first status, and a later valid direct call can reuse the synchronous instance.",
+      "positive": ["valid call after rejected input"],
+      "negative": ["malformed pointer", "resource exhaustion"],
+      "limitation": "The public runtime still creates a fresh instance per evaluation."
+    },
+    {
+      "id": "VMM8",
+      "subject": "linear-memory and artifact shape",
+      "guaranteedBy": "wasm-engine",
+      "condition": "Memory is fixed at 16 pages and the artifact has no imports, start function, shared memory, or growth allowance.",
+      "positive": ["portable artifact verification"],
+      "negative": ["unexpected export", "wrong memory maximum"],
+      "limitation": "Engine bounds alone do not establish typed descriptor semantics."
+    }
+  ]
+}
