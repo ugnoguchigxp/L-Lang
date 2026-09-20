@@ -41,3 +41,9 @@ Effects adversarial benchmarkは、freeze対象をregular fileのexact setとし
 `module-value-v1`のgenerated Wasmは、direct callerから渡されたinput／outputのbase、length、capacity、overlapを型付きloadより前に検査する。string descriptorはinput wireへの包含を確認してからUTF-8を読み、booleanと選択されたunion variantを段階的に検査する。不正入力はstatus 1で返し、host codecによる事前検査だけに依存しない。
 
 これは信頼するcompilerが検証済みIRから生成した`llang-value-memory-v1` artifactの保証である。任意Wasm、実行中にmemoryを書き換えるhost、threads、shared memory、memory growthは対象外である。input／output以外のmemoryは内部arenaとして変更され得るため、caller所有領域とは扱わない。保証表とnegative vectorは[Value Wasm Memory Safety Matrix](./docs/VALUE_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。
+
+## Effects Wasmのmemory／state境界
+
+`module-effects-v1`のgenerated Wasmは、raw `start`／`resume` callerが渡すdescriptor、capacity、typed payloadをload／storeより前にunsigned rangeとして検査する。成功responseではeventとoutput、typed payloadとoutputの重なりを拒否し、typed output／payloadをembedded request dataとresult scratchから分離する。不正なretryable callはcontinuation state、sequence、accumulator／result、terminalを消費せず、同じpending responseを再試行できる。
+
+この検査はexported memoryへのaccess controlではない。hostがWasm呼出し中または呼出し外でmodule-private bytesを直接変更する場合、typed payloadのJSON意味、external adapter、外部副作用、任意Wasmは保証対象外である。保証表とnegative vectorは[Effects Wasm Memory Safety Matrix](./docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。

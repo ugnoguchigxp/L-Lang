@@ -1,0 +1,30 @@
+{
+  "format": "llang-effects-memory-direct-corpus",
+  "version": 1,
+  "abi": "llang-effects-session-v1",
+  "layouts": {
+    "linear": { "requestBytes": 16, "eventBytes": 16, "outputBytes": 4 },
+    "typed": { "requestBytes": 32, "eventBytes": 24, "outputBytes": 12 }
+  },
+  "cases": [
+    { "id": "linear-start-invalid-base", "path": "linear", "phase": "start", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "linear-start-exact-end", "path": "linear", "phase": "start", "expectedStatus": 1, "expectedFault": 0, "state": "accepted" },
+    { "id": "linear-resume-invalid-base", "path": "linear", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "linear-resume-short-event", "path": "linear", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "linear-resume-output-overlap", "path": "linear", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "linear-resume-success-flag-two", "path": "linear", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "linear-resume-host-failure", "path": "linear", "phase": "resume", "expectedStatus": 4, "expectedFault": 6, "state": "terminal" },
+    { "id": "linear-final-small-output", "path": "linear", "phase": "resume", "expectedStatus": 3, "expectedFault": 0, "state": "terminal" },
+    { "id": "typed-start-invalid-base", "path": "typed", "phase": "start", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "typed-start-private-output", "path": "typed", "phase": "start", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "typed-resume-invalid-base", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "typed-resume-payload-wrap", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 8, "state": "retryable" },
+    { "id": "typed-resume-payload-private", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 8, "state": "retryable" },
+    { "id": "typed-resume-output-overlap", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "typed-resume-payload-output-overlap", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 5, "state": "retryable" },
+    { "id": "typed-resume-adjacent", "path": "typed", "phase": "resume", "expectedStatus": 1, "expectedFault": 0, "state": "accepted" },
+    { "id": "typed-resume-maximum-payload", "path": "typed", "phase": "resume", "expectedStatus": 1, "expectedFault": 0, "state": "accepted" },
+    { "id": "typed-final-small-output", "path": "typed", "phase": "resume", "expectedStatus": 3, "expectedFault": 0, "state": "terminal" },
+    { "id": "typed-resume-host-failure", "path": "typed", "phase": "resume", "expectedStatus": 4, "expectedFault": 6, "state": "terminal" }
+  ]
+}

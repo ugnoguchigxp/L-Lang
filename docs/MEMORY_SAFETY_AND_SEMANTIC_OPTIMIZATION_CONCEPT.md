@@ -108,6 +108,65 @@ fuel、call depth、arena 上限の扱いは最適化前に決める。割当や
 
 通常 build は固定 recipe で再現できるようにし、Agent による候補探索は別工程とする。target 別の派生成果物を導入しても portable Wasm を維持する。recipe 検索用 database や embedding は必要性が確認されるまで導入しない。
 
+## LLVM を利用する独立した実験経路
+
+2026-09-20 に提示された「L-Lang LLVM Optimization Backend 実験」を、将来の比較実験として取り込む。以下は未実装・未測定であり、LLVM を標準 backend にする決定ではない。既存の直接 Wasm 生成と Binaryen の経路を維持し、仮称 `llvm-experimental` を独立した候補とする。この名前は L-Lang 内の案であり、既存 CLI の選択肢ではない。
+
+### 責務と接続点
+
+検証済み Semantic IR を接続点の候補とする。実装着手時には profile ごとの検証・lowering・Wasm 生成経路を確認し、共有できる情報と backend 固有の表現を整理する。添付案の概念図を、現行実装に共通 backend interface が存在する証拠とは扱わない。
+
+```text
+検証済み Semantic IR
+  ↓ 意味保存を確認した変換・specialization
+  ├─ 既存の直接 Wasm 生成 → 固定した Binaryen 設定 → Wasm
+  └─ 実験用 LLVM IR 生成 → LLVM 最適化
+                              ├─ Wasm
+                              └─ Native（初回候補: macOS ARM64）
+```
+
+アルゴリズム選択、既知 schema/type/callee による specialization、融合、割当・コピー削減は L-Lang 側で成立条件を検証する。LLVM はその結果を受け取り、SSA、不要処理除去、ループ、インライン化、ベクトル化などの低レベル最適化と target 向けコード生成を担う候補とする。命令選択とレジスタ割当も Native 向けには LLVM のコード生成側の責務であり、Wasm の実行時コンパイルとは分ける。
+
+LLVM は Semantic Optimizer の代替ではない。LLM の提案は検証を経て Semantic IR に反映し、初期実験では LLM による LLVM IR の任意書換えを対象にしない。既存の型別 layout や monomorphized call を活用し、LLVM 導入のために Semantic IR 全体を作り替えない。
+
+### 最初に最後まで通す範囲
+
+最初に scalar、関数、分岐、ループ、List、Record、memory、closure、effects の現行表現を整理し、対応・未対応を明示する。候補 subset は bool/i32/i64/f64、引数・戻り値・局所変数、演算・比較・if・loop・直接 call とするが、一度にすべてを実装しない。現行 profile が表現・検証できる操作から一つ選び、未対応の型や操作は明示的に拒否する。
+
+最小実験は `sum(List<i32>)` 相当または単純な sort kernel 一つを候補とする。List を使う場合は pointer + length の内部表現、要素 layout、境界検査、所有者と寿命を先に定める。現行 IR で表現できない場合は実験用 subset と言語拡張を区別し、既存 profile に未知の操作を追加しない。String、Union、closure、async/effects、session lifetime、resource handle の全面対応は初回対象外とする。
+
+PoC は TypeScript から textual LLVM IR（`.ll`）を出力する小さな emitter と CLI toolchain を候補とする。着手環境で `clang`、`llvm-as`、`opt`、`llc`、`wasm-ld` と Native linker の有無・版・target 対応を確認し、実際に使えたコマンドを保存する。固定の古いコマンド列や全ツールの存在を前提にしない。
+
+まず同じ program から直接 Wasm、Binaryen 最適化 Wasm、LLVM 最適化 Wasm、LLVM 最適化 Native を生成し、結果比較まで通す。Native は macOS ARM64 の executable を初回候補とする。library は次の独立した検証として、小さな scalar 関数の C ABI export と呼出しを確認する。List/Record の公開 ABI、解放責任、エラー表現を scalar の成功だけから一般化しない。他 OS、x86-64、共有・静的 library の拡張は必要性を確認してから進める。C/Rust ソース生成、独自 linker、LLVM C++ custom pass、JIT/ORC、LTO/ThinLTO、PGO は初回には導入しない。
+
+### 意味・メモリー解析から渡せる情報
+
+backend が変わっても、本書の「最適化で保存する意味」を適用する。整数の overflow・除算、浮動小数点、評価順序、境界違反、資源上限、失敗時の状態を明示し、LLVM 側で同じ挙動になる lowering を検証する。Wasm の検査や trap を Native が自動的に引き継ぐとは扱わない。Native には Wasm と同じ sandbox を前提にできないため、生成物の信頼境界と実行条件も別途記録する。
+
+`noalias`、`readonly`、`nonnull`、alignment、range、`noundef`、`dereferenceable`、`lifetime.start/end`、`nsw/nuw` などは、将来検討する属性・metadata・intrinsic・命令フラグの候補である。それぞれの LLVM 上の成立条件を確認し、verifier と memory/escape 解析で保証できる事実だけを渡す。初期 PoC は追加情報を推測せず、正しく動く lowering を優先する。
+
+input という名前だけで `readonly` や `noalias` を付けず、host の変更・共有・再入、他の参照経路も確認する。input/output/scratch の領域名が異なるだけでは非 alias の証明にならない。scratch の call 内寿命と lifetime 情報の対応、output/session へ残る参照の禁止、alignment と参照可能な長さにも根拠が必要となる。checked arithmetic の overflow 検査を `nsw/nuw` の付与で置き換えるなど、契約にない仮定は導入しない。
+
+### 比較条件と採否
+
+backend 差の評価では Semantic IR、アルゴリズム、入力、検証、資源契約を揃える。specialization や融合を追加する実験は別軸とし、backend 変更と同時に混ぜて効果を帰属させない。
+
+| 比較 | 固定する条件・解釈 |
+| --- | --- |
+| 直接 Wasm / Binaryen 最適化 Wasm / LLVM Wasm | 同じ Wasm runtime と host adapter、ABI、features、入力・出力処理で比較する。最適化前の直接出力を取り出せるかも確認する |
+| LLVM O0 / O2 / O3 | 標準設定から始め、実際の pipeline と toolchain 版を記録する。Binaryen の O2/O3 と同じ変換内容だとは扱わない |
+| Wasm / LLVM Native | 同じ計算と意味契約で比較し、host 呼出し、データ変換、検査、実行環境の差を併記する。速度差全体を LLVM optimizer の効果とは呼ばない |
+
+Semantic evaluator、直接 Wasm、LLVM Wasm、LLVM Native の正常結果とエラーを differential test で比較する。境界値、空・最大入力、資源制限も含め、property-based test と探索に使わない評価入力を必要に応じて加える。evaluator が未対応なら、その subset の比較 oracle と保証範囲を先に定める。テスト一致を完全な同値証明とは扱わない。
+
+ビルド時間は IR 生成、LLVM 最適化、target コード生成、link/archive、全体を分ける。実行側は Wasm compile/instantiate または Native の起動・load、kernel、入出力込み時間を分ける。ピーク RSS、linear memory、Native の割当量、作業領域も区別する。library の拡張子だけでビルド費用を推定せず、どの工程が支配するかを測る。
+
+証跡には source/Semantic IR hash、最適化前後の LLVM IR と hash、artifact hash、LLVM・linker の版、target triple・data layout・CPU features、最適化設定、ABI/profile、入力・測定条件を残す。既存 artifact 形式への拡張は verifier/replay との整合性を設計してから行い、実験記録の追加だけで既存 hash の意味を変えない。
+
+初回の完了条件は、現行経路と subset の整理、一つの処理の生成・正しさ比較、工程別ビルド時間・kernel・入出力込み時間、生成 IR の分析、次の仮説と採否が揃うことである。改善しない場合も結果として残す。原因は Semantic IR、lowering、alias 情報、割当・コピー、LLVM pipeline、Wasm runtime に分けて調べ、最適化レベルの引上げだけで対応しない。
+
+採否は「LLVM の対応範囲を広げる」「特定 profile に限る」「現時点では既存経路を維持する」から実測で判断する。添付案の速度倍率は説明用の例であり、目標や実績として採用しない。ビルド費用、保守・配布依存、利用回数を含めて価値を判断する。直接 Wasm の経路を保持し、LLVM 採用を成功条件にしない。この実験は前節の段階 C/D で選べる候補であり、安全性改善や LLM による意味最適化の必須前提にはしない。
+
 ## 将来の実装時に残す証拠
 
 各変更では仮説、適用条件、before/after、実行コマンドと環境、採否、未解決事項を残す。確認対象は正常結果、エラー、境界入力、繰返し呼出し、資源上限である。対象の unit/adversarial/differential tests に加え、変更範囲に対応する replay・artifact verification・portable suite を実行する。

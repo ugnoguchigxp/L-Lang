@@ -1,0 +1,51 @@
+{
+  "format": "llang-effects-memory-freeze",
+  "version": 1,
+  "createdOn": "2026-09-20",
+  "baselineRevision": "a116435f2d890fae6ed16100bbdffb4ddd0ce1e2",
+  "implementationBaseRevision": "2669c7bef6f870c3404f9704db569f4131e3d171",
+  "environment": {
+    "bun": "1.4.2",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3",
+    "os": "darwin",
+    "architecture": "arm64"
+  },
+  "contract": {
+    "profile": "module-effects-v1",
+    "abi": "llang-effects-session-v1",
+    "typedLayout": "typed-wire-v1",
+    "manifestVersion": 5,
+    "memoryPages": { "initial": 512, "maximum": 512 },
+    "exports": ["cancel", "dispose", "fault_code", "memory", "resume", "start"],
+    "imports": 0,
+    "linear": { "requestBytes": 16, "eventBytes": 16, "outputBytes": 4 },
+    "typed": { "requestBytes": 32, "eventBytes": 24, "outputBytes": 12, "maximumPayloadBytes": 2097152 }
+  },
+  "representativePrograms": {
+    "linear": "initial=0; one replace step operation=1 payload=0",
+    "typed": "one i32 await host.value@1 with request=1 and i32 result"
+  },
+  "artifacts": {
+    "baseline": {
+      "linear": { "bytes": 504, "sha256": "06e067c6a2412ea38a7b6092ef6e8c24f606215e6e02392b7af50c6cd905ee0e" },
+      "typed": { "bytes": 686, "sha256": "191dd751e313dc454424546dd5202aca6798ac6ded2ab9af85ac2118ecba7e73" }
+    },
+    "hardened": {
+      "linear": { "bytes": 760, "sha256": "1721b9e0cfd227e54f81c2247ceb0c043831cb3d43d8e44655d518a4dc35c3e4" },
+      "typed": { "bytes": 1126, "sha256": "57130a0f23383558ddcf3d034779c71a7bdc8490ffdfc10ee7217fe84b4dd259" }
+    }
+  },
+  "baselineRawProbes": [
+    { "id": "linear-start-ffffffff", "result": "trap", "message": "Out of bounds memory access" },
+    { "id": "linear-resume-ffffffff", "result": "trap", "message": "Out of bounds memory access" },
+    { "id": "typed-start-ffffffff", "result": "trap", "message": "Out of bounds memory access" },
+    { "id": "typed-resume-ffffffff", "result": "trap", "message": "Out of bounds memory access" }
+  ],
+  "hardenedRawProbes": [
+    { "id": "linear-start-ffffffff", "status": 4, "fault": 5, "trap": false },
+    { "id": "linear-resume-ffffffff", "status": 4, "fault": 5, "trap": false },
+    { "id": "typed-start-ffffffff", "status": 4, "fault": 5, "trap": false },
+    { "id": "typed-resume-ffffffff", "status": 4, "fault": 5, "trap": false }
+  ]
+}

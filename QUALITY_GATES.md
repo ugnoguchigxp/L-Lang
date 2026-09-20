@@ -31,6 +31,8 @@ Effects adversarial benchmarkを変更した場合は、上記に加えてfresh 
 
 `module-value-v1`のWasm emitter、ABI、runtimeを変更した場合は、`src/llang-module-value.test.ts`と`src/llang-module-value-memory.test.ts`を実行し、`bun run value:memory:matrix`後に生成文書の一致を確認する。direct testはraw exportのstatusとtrapを区別し、malformed range、UTF-8、selected union、allocator、output capacityのmutationを検出する。host runtimeだけの成功でdirect ABIを合格にしない。
 
+`module-effects-v1`のWasm emitter、continuation ABI、typed state machineを変更した場合は、`src/llang-effects-wasm.test.ts`、`src/llang-effects-state-machine.test.ts`、`src/llang-effects-memory.test.ts`を実行し、`bun run effects:memory:matrix`後に生成文書の一致を確認する。direct testはraw `start`／`resume`のstatusとtrap、invalid call後の同一sequence retry、event／output／payload alias、module-private領域、whole-range copy、九つのmutationを検査する。
+
 `bun run coverage`はリポジトリ全体でfunctions 90%以上・lines 90%以上、`src/semantic-transaction.ts`でfunctions 95%以上・lines 95%以上を要求する。閾値と解析ロジックの正本は[`src/run-coverage.ts`](./src/run-coverage.ts)である。
 
 `bun run ci:smoke`はAPI keyを空にした状態でread-onlyの`semantic explain`とroot `semantic verify`に加え、JSONC、module、effectsの各smokeを一時ディレクトリで実行する。JSONC smokeはlint・format・build・test・package・移動後verify・mutation-check・fixture修正/replay、module smokeは各profileのbuild/portable実行、effects smokeはversion 5 bundleとtyped replayを確認する。`ci:docs`はリンクに加え、CLI一覧・指定ツール版・smoke登録を照合する。coverage runnerは出力を逐次転送し、同じBun実行ファイルで全テストを動かす。`bun run ci:protected`はSchema Evolutionのfreeze manifestをstrictに検証し、記録済みhashを照合する。各Benchmark固有のrunnerも、実行前にそれぞれのmanifest、freeze、Oracle、hidden caseを検証する。

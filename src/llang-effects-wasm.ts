@@ -10,6 +10,8 @@ export const SESSION_STATUS = Object.freeze({
   CANCELLED: 5,
 });
 
+const EFFECTS_MEMORY_BYTES = 512 * 65_536;
+
 export type LinearEffectStep = Readonly<{
   operation: number;
   payload: number;
@@ -69,7 +71,11 @@ export function emitLinearEffectsWasm(program: LinearEffectsProgram): {
                 : `global.get $accumulator local.get $value i32.add
             global.get $accumulator local.get $value i32.add global.get $accumulator i32.xor i32.const 0 i32.lt_s
             global.get $accumulator local.get $value i32.xor i32.const 0 i32.ge_s i32.and
-            if i32.const 3 global.set $fault i32.const 4 return end
+            if
+              i32.const 3 global.set $fault
+              i32.const 0 global.set $busy
+              i32.const 4 return
+            end
             global.set $accumulator`
             }
           end`,
@@ -84,19 +90,37 @@ export function emitLinearEffectsWasm(program: LinearEffectsProgram): {
     (global $terminal (mut i32) (i32.const 0))
     (global $busy (mut i32) (i32.const 0))
     (global $fault (mut i32) (i32.const 0))
+    (func $range-valid (param $base i32) (param $length i32) (result i32)
+      local.get $base i32.const ${EFFECTS_MEMORY_BYTES} i32.le_u
+      if (result i32)
+        local.get $length i32.const ${EFFECTS_MEMORY_BYTES} local.get $base i32.sub i32.le_u
+      else i32.const 0 end)
+    (func $overlaps
+      (param $left i32) (param $left-length i32)
+      (param $right i32) (param $right-length i32) (result i32)
+      local.get $left-length i32.eqz local.get $right-length i32.eqz i32.or
+      if (result i32) i32.const 0
+      else
+        local.get $left local.get $right local.get $right-length i32.add i32.lt_u
+        local.get $right local.get $left local.get $left-length i32.add i32.lt_u
+        i32.and
+      end)
     (func $yield (param $out i32) (param $capacity i32) (result i32)
-      (local $step i32)
+      (local $step i32) (local $required i32)
       global.get $step local.set $step
       local.get $step i32.const ${program.steps.length} i32.ge_u
+      if i32.const 4 local.set $required
+      else i32.const 16 local.set $required end
+      local.get $capacity local.get $required i32.lt_u
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $step i32.const ${program.steps.length} i32.ge_u
       if
-        local.get $capacity i32.const 4 i32.lt_u
-        if i32.const 5 global.set $fault i32.const 4 return end
         local.get $out global.get $accumulator i32.store
         i32.const 3 global.set $terminal
         i32.const 3 return
       end
-      local.get $capacity i32.const 16 i32.lt_u
-      if i32.const 5 global.set $fault i32.const 4 return end
       global.get $sequence i32.const 1 i32.add global.set $sequence
       ${cases}
       i32.const 5 global.set $fault i32.const 4)
@@ -105,6 +129,11 @@ export function emitLinearEffectsWasm(program: LinearEffectsProgram): {
       if i32.const 5 global.set $fault i32.const 4 return end
       global.get $busy
       if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $capacity i32.const 16 i32.lt_u
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const 4 return end
+      i32.const 0 global.set $fault
       i32.const 1 global.set $busy
       i32.const 0 global.set $step
       i32.const 0 global.set $sequence
@@ -113,27 +142,49 @@ export function emitLinearEffectsWasm(program: LinearEffectsProgram): {
       i32.const 0 global.set $busy)
     (func (export "resume")
       (param $event i32) (param $length i32) (param $out i32) (param $capacity i32)
-      (result i32) (local $value i32) (local $step i32)
+      (result i32)
+      (local $event-generation i32) (local $event-sequence i32)
+      (local $ok i32) (local $value i32) (local $step i32)
+      (local $next-step i32) (local $required i32)
       global.get $terminal i32.eqz i32.eqz
       if i32.const 5 global.set $fault i32.const 4 return end
       global.get $busy
       if i32.const 5 global.set $fault i32.const 4 return end
-      i32.const 1 global.set $busy
       local.get $length i32.const 16 i32.ne
-      local.get $event i32.load global.get $generation i32.ne i32.or
-      local.get $event i32.load offset=4 global.get $sequence i32.ne i32.or
-      if
-        i32.const 5 global.set $fault i32.const 0 global.set $busy i32.const 4 return
-      end
-      local.get $event i32.load offset=8 i32.eqz
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $event local.get $length call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $event i32.load local.set $event-generation
+      local.get $event i32.load offset=4 local.set $event-sequence
+      local.get $event i32.load offset=8 local.set $ok
+      local.get $event i32.load offset=12 local.set $value
+      local.get $event-generation global.get $generation i32.ne
+      local.get $event-sequence global.get $sequence i32.ne i32.or
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $ok i32.const 1 i32.gt_u
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $ok i32.eqz
       if
         i32.const 6 global.set $fault i32.const 4 global.set $terminal
-        i32.const 0 global.set $busy i32.const 4 return
+        i32.const 4 return
       end
-      local.get $event i32.load offset=12 local.set $value
       global.get $step local.set $step
+      local.get $step i32.const ${program.steps.length} i32.ge_u
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $step i32.const 1 i32.add local.set $next-step
+      local.get $next-step i32.const ${program.steps.length} i32.ge_u
+      if i32.const 4 local.set $required
+      else i32.const 16 local.set $required end
+      local.get $capacity local.get $required i32.lt_u
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const 4 return end
+      local.get $event local.get $length local.get $out local.get $capacity call $overlaps
+      if i32.const 5 global.set $fault i32.const 4 return end
+      i32.const 0 global.set $fault
+      i32.const 1 global.set $busy
       ${combines}
-      global.get $step i32.const 1 i32.add global.set $step
+      local.get $next-step global.set $step
       local.get $out local.get $capacity call $yield
       i32.const 0 global.set $busy)
     (func (export "cancel") (result i32)

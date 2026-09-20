@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/effects-memory-direct-corpus-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "abi", "layouts", "cases"],
+  "properties": {
+    "format": { "const": "llang-effects-memory-direct-corpus" },
+    "version": { "const": 1 },
+    "abi": { "const": "llang-effects-session-v1" },
+    "layouts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["linear", "typed"],
+      "properties": {
+        "linear": { "$ref": "#/$defs/layout" },
+        "typed": { "$ref": "#/$defs/layout" }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "$defs": {
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestBytes", "eventBytes", "outputBytes"],
+      "properties": {
+        "requestBytes": { "type": "integer", "minimum": 1 },
+        "eventBytes": { "type": "integer", "minimum": 1 },
+        "outputBytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "phase", "expectedStatus", "expectedFault", "state"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "path": { "enum": ["linear", "typed"] },
+        "phase": { "enum": ["start", "resume"] },
+        "expectedStatus": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "expectedFault": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "state": { "enum": ["accepted", "retryable", "terminal"] }
+      }
+    }
+  }
+}

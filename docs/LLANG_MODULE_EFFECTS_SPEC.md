@@ -67,6 +67,22 @@ uses the structured scope and shared ledger; stream execution permits one
 outstanding pull, closes the producer at EOF or cancellation, and enforces the
 declared chunk count.
 
+Raw callers are checked inside Wasm. `start` validates the complete output
+range before initializing continuation state. `resume` validates the exact
+event descriptor before loading it, then checks generation, sequence, a 0/1
+success flag, typed response tag and payload, required output capacity, and
+half-open range overlap before committing state. Retryable boundary failures
+return `FAILED` with fault 5 or 8 without consuming the pending sequence. A
+valid retry clears that boundary fault. Host failure (`ok=0`) remains terminal
+fault 6 and does not require a typed payload or output buffer.
+
+Typed response payloads and output buffers cannot overlap embedded request
+data or the result scratch region. The copy helper validates its complete
+source and target ranges and rejects overlap before entering the byte loop.
+These rules protect ABI calls; exported memory does not prevent a host from
+directly changing module-private bytes. See the
+[Effects Wasm Memory Safety Matrix](./EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md).
+
 An effects graph may import relative `.ts` and `.llang.jsonc` modules in either
 direction. Every imported module must declare the same profile and expected
 module name; cycles, duplicate modules, operation signature conflicts,

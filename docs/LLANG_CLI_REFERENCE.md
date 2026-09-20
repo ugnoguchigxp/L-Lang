@@ -64,6 +64,8 @@ bun run llang module verify-attestation <module-build.json> --requirements <effe
 
 Value Wasmのdirect-call保証表は`bun run value:memory:matrix`でmachine-readable JSONから再生成する。このscriptは検証資料の保守用で、artifactのbuild／実行commandではない。生成Wasmの利用契約は[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、保証境界は[Value Wasm Memory Safety Matrix](./VALUE_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。
 
+Effects Wasmのdirect continuation保証表は`bun run effects:memory:matrix`でmachine-readable JSONから再生成する。このscriptも検証資料の保守用で、artifactのbuild／実行commandではない。生成Wasmの利用契約は[Effects仕様](./LLANG_MODULE_EFFECTS_SPEC.md)、保証境界は[Effects Wasm Memory Safety Matrix](./EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。
+
 `module inspect`はversion 5のtyped `module-effects-v1` bundleに限定し、`--target all`で同梱されたflattened JSONCを検査してTypeScriptとWasmを再生成する。interface、operation、TypeScript/Wasm bytes、Wasm contract/stateがmanifestと一致した場合だけ成功する。`--out-dir`指定時はbundle外部の新規directoryへ`program.inspection.ts`と`effects-inspection.json`を保存する。元source本文はbundleにないため再検査せず、Wasm・生成TS・adapterを実行しない。manifestのeffect要求はruntime grantではなく、credential、実行transcript、真正性、要求充足、安全性を確認したとは表示しない。
 
 `module execute`は同じ静的検査をpreflightとして実行し、検査したbundle内の`wasm/program.wasm`そのものを実行する。grantはformat `llang-effects-grant` version 1で、bundle identity、operation、file logical root、HTTP origin/method/header/network、wall clock、deadline、既定値以下のresource limitを固定する。出力先はbundleとfile adapter rootの外側にある新規directoryでなければならない。

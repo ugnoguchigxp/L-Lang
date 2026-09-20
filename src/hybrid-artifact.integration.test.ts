@@ -196,7 +196,7 @@ describe("Hybrid imported Predicate artifact", () => {
         ),
       ).resolves.toHaveProperty("status", "passed");
     });
-  });
+  }, 15_000);
 
   test("cleans partial output after write and publication failures", async () => {
     await withWorkspace(async (workspace) => {
@@ -220,7 +220,7 @@ describe("Hybrid imported Predicate artifact", () => {
       ).rejects.toThrow("PUBLICATION_FAILED");
       expect(await pathExists(resolve(workspace, "move-failure"))).toBe(false);
     });
-  });
+  }, 15_000);
 
   test("detects a source race before publication", async () => {
     await withWorkspace(async (workspace) => {

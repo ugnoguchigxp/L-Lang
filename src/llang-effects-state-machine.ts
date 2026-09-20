@@ -17,9 +17,11 @@ import { fingerprintFor } from "./stable-hash";
 export const TYPED_REQUEST_BYTES = 32;
 export const TYPED_EVENT_BYTES = 24;
 export const TYPED_OUTPUT_BYTES = 12;
-const DATA_START = 4096;
-const RESULT_START = 2 * 1024 * 1024;
-const EVENT_PAYLOAD_START = RESULT_START + MAX_EFFECT_WIRE_BYTES;
+export const TYPED_DATA_START = 4096;
+export const TYPED_RESULT_START = 2 * 1024 * 1024;
+export const TYPED_EVENT_PAYLOAD_START =
+  TYPED_RESULT_START + MAX_EFFECT_WIRE_BYTES;
+export const TYPED_MEMORY_BYTES = 512 * 65_536;
 
 export type LoweredEffectState = Readonly<{
   kind: "await" | "task" | "stream";
@@ -132,13 +134,13 @@ export function emitTypedEffectsWasm(
   states: readonly LoweredEffectState[];
 } {
   const states = lowerTypedEffectsProgram(program, operations);
-  let cursor = DATA_START;
+  let cursor = TYPED_DATA_START;
   const data = states.map((state) => {
     const address = cursor;
     cursor += state.payload.length;
     return { address, bytes: state.payload };
   });
-  if (cursor > RESULT_START)
+  if (cursor > TYPED_RESULT_START)
     throw new Error("RESOURCE_LIMIT: embedded effect requests");
   const cases = states
     .map((state, index) => {
@@ -180,67 +182,153 @@ export function emitTypedEffectsWasm(
     (global $fault (mut i32) (i32.const 0))
     (global $result-length (mut i32) (i32.const 0))
     (global $result-type (mut i32) (i32.const 0))
-    (func $copy (param $source i32) (param $target i32) (param $length i32)
+    (func $range-valid (param $base i32) (param $length i32) (result i32)
+      local.get $base i32.const ${TYPED_MEMORY_BYTES} i32.le_u
+      if (result i32)
+        local.get $length i32.const ${TYPED_MEMORY_BYTES} local.get $base i32.sub i32.le_u
+      else i32.const 0 end)
+    (func $overlaps
+      (param $left i32) (param $left-length i32)
+      (param $right i32) (param $right-length i32) (result i32)
+      local.get $left-length i32.eqz local.get $right-length i32.eqz i32.or
+      if (result i32) i32.const 0
+      else
+        local.get $left local.get $right local.get $right-length i32.add i32.lt_u
+        local.get $right local.get $left local.get $left-length i32.add i32.lt_u
+        i32.and
+      end)
+    (func $private-free (param $base i32) (param $length i32) (result i32)
+      local.get $base local.get $length
+      i32.const ${TYPED_DATA_START} i32.const ${cursor - TYPED_DATA_START}
+      call $overlaps
+      if (result i32) i32.const 0
+      else
+        local.get $base local.get $length
+        i32.const ${TYPED_RESULT_START} i32.const ${MAX_EFFECT_WIRE_BYTES}
+        call $overlaps i32.eqz
+      end)
+    (func $copy (param $source i32) (param $target i32) (param $length i32) (result i32)
       (local $index i32)
+      local.get $source local.get $length call $range-valid i32.eqz
+      local.get $target local.get $length call $range-valid i32.eqz i32.or
+      if i32.const 8 global.set $fault i32.const 0 return end
+      local.get $source local.get $length local.get $target local.get $length call $overlaps
+      if i32.const 8 global.set $fault i32.const 0 return end
       block $done loop $copy-loop
         local.get $index local.get $length i32.ge_u br_if $done
         local.get $target local.get $index i32.add
         local.get $source local.get $index i32.add i32.load8_u i32.store8
         local.get $index i32.const 1 i32.add local.set $index
         br $copy-loop
-      end end)
+      end end
+      i32.const 1)
     (func $yield (param $out i32) (param $capacity i32) (result i32)
-      (local $state i32)
+      (local $state i32) (local $required i32)
       global.get $state local.set $state
       local.get $state i32.const ${states.length} i32.ge_u
+      if i32.const ${TYPED_OUTPUT_BYTES} local.set $required
+      else i32.const ${TYPED_REQUEST_BYTES} local.set $required end
+      local.get $capacity local.get $required i32.lt_u
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $private-free i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $state i32.const ${states.length} i32.ge_u
       if
-        local.get $capacity i32.const ${TYPED_OUTPUT_BYTES} i32.lt_u
-        if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
         local.get $out global.get $result-type i32.store
-        local.get $out i32.const ${RESULT_START} i32.store offset=4
+        local.get $out i32.const ${TYPED_RESULT_START} i32.store offset=4
         local.get $out global.get $result-length i32.store offset=8
         i32.const ${SESSION_STATUS.DONE} global.set $terminal
         i32.const ${SESSION_STATUS.DONE} return
       end
-      local.get $capacity i32.const ${TYPED_REQUEST_BYTES} i32.lt_u
-      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
       global.get $sequence i32.const 1 i32.add global.set $sequence
       ${cases}
       i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED})
     (func (export "start") (param $out i32) (param $capacity i32) (result i32)
       global.get $terminal i32.eqz i32.eqz global.get $busy i32.or
       if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $capacity i32.const ${TYPED_REQUEST_BYTES} i32.lt_u
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $private-free i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      i32.const 0 global.set $fault
       i32.const 1 global.set $busy
       i32.const 0 global.set $state
       i32.const 0 global.set $sequence
+      i32.const 0 global.set $result-length
+      i32.const 0 global.set $result-type
       local.get $out local.get $capacity call $yield
       i32.const 0 global.set $busy)
     (func (export "resume")
       (param $event i32) (param $length i32) (param $out i32) (param $capacity i32)
-      (result i32) (local $payload i32) (local $payload-length i32) (local $expected i32) (local $state i32)
+      (result i32)
+      (local $event-generation i32) (local $event-sequence i32)
+      (local $ok i32) (local $actual-type i32)
+      (local $payload i32) (local $payload-length i32)
+      (local $expected i32) (local $state i32) (local $next-state i32)
+      (local $required i32)
       global.get $terminal i32.eqz i32.eqz global.get $busy i32.or
       if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
-      i32.const 1 global.set $busy
       local.get $length i32.const ${TYPED_EVENT_BYTES} i32.ne
-      local.get $event i32.load global.get $generation i32.ne i32.or
-      local.get $event i32.load offset=4 global.get $sequence i32.ne i32.or
-      if i32.const 5 global.set $fault i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
-      local.get $event i32.load offset=8 i32.eqz
-      if i32.const 6 global.set $fault i32.const ${SESSION_STATUS.FAILED} global.set $terminal i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
-      global.get $state local.set $state
-      ${expectedTypes}
-      local.get $event i32.load offset=12 local.get $expected i32.ne
-      if i32.const 7 global.set $fault i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $event local.get $length call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $event i32.load local.set $event-generation
+      local.get $event i32.load offset=4 local.set $event-sequence
+      local.get $event i32.load offset=8 local.set $ok
+      local.get $event i32.load offset=12 local.set $actual-type
       local.get $event i32.load offset=16 local.set $payload
       local.get $event i32.load offset=20 local.set $payload-length
+      local.get $event-generation global.get $generation i32.ne
+      local.get $event-sequence global.get $sequence i32.ne i32.or
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $ok i32.const 1 i32.gt_u
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $ok i32.eqz
+      if
+        i32.const 6 global.set $fault
+        i32.const ${SESSION_STATUS.FAILED} global.set $terminal
+        i32.const ${SESSION_STATUS.FAILED} return
+      end
+      global.get $state local.set $state
+      local.get $state i32.const ${states.length} i32.ge_u
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      ${expectedTypes}
+      local.get $actual-type local.get $expected i32.ne
+      if i32.const 7 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
       local.get $payload-length i32.const ${MAX_EFFECT_WIRE_BYTES} i32.gt_u
-      local.get $payload i32.const ${512 * 65536} i32.gt_u i32.or
-      local.get $payload-length i32.const ${512 * 65536} local.get $payload i32.sub i32.gt_u i32.or
-      if i32.const 8 global.set $fault i32.const 0 global.set $busy i32.const ${SESSION_STATUS.FAILED} return end
-      local.get $payload i32.const ${RESULT_START} local.get $payload-length call $copy
+      if i32.const 8 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $payload local.get $payload-length call $range-valid i32.eqz
+      if i32.const 8 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $payload local.get $payload-length call $private-free i32.eqz
+      if i32.const 8 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $state i32.const 1 i32.add local.set $next-state
+      local.get $next-state i32.const ${states.length} i32.ge_u
+      if i32.const ${TYPED_OUTPUT_BYTES} local.set $required
+      else i32.const ${TYPED_REQUEST_BYTES} local.set $required end
+      local.get $capacity local.get $required i32.lt_u
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $range-valid i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $out local.get $capacity call $private-free i32.eqz
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $event local.get $length local.get $out local.get $capacity call $overlaps
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      local.get $payload local.get $payload-length local.get $out local.get $capacity call $overlaps
+      if i32.const 5 global.set $fault i32.const ${SESSION_STATUS.FAILED} return end
+      i32.const 0 global.set $fault
+      i32.const 1 global.set $busy
+      local.get $payload i32.const ${TYPED_RESULT_START} local.get $payload-length call $copy i32.eqz
+      if
+        i32.const 0 global.set $busy
+        i32.const ${SESSION_STATUS.FAILED} return
+      end
       local.get $payload-length global.set $result-length
       local.get $expected global.set $result-type
-      global.get $state i32.const 1 i32.add global.set $state
+      local.get $next-state global.set $state
       local.get $out local.get $capacity call $yield
       i32.const 0 global.set $busy)
     (func (export "cancel") (result i32)
@@ -312,7 +400,7 @@ export class TypedEffectsRuntime {
   readonly #states: readonly LoweredEffectState[];
   readonly #requestAddress = 64;
   readonly #eventAddress = 128;
-  readonly #eventPayloadAddress = EVENT_PAYLOAD_START;
+  readonly #eventPayloadAddress = TYPED_EVENT_PAYLOAD_START;
   #started = false;
   #disposed = false;
   #pending: TypedHostRequest | undefined;

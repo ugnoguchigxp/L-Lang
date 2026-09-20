@@ -1,0 +1,56 @@
+{
+  "format": "llang-effects-memory-safety-matrix",
+  "version": 1,
+  "profile": "module-effects-v1",
+  "abi": "llang-effects-session-v1",
+  "entries": [
+    {
+      "id": "EM1",
+      "subject": "Top-level descriptors",
+      "guaranteedBy": "Unsigned subtraction-form range validation before every descriptor load or store",
+      "positive": ["exact-end", "unaligned"],
+      "negative": ["invalid-base", "short-capacity", "wraparound"],
+      "limitation": "The host must not mutate exported memory during a synchronous call."
+    },
+    {
+      "id": "EM2",
+      "subject": "Continuation transaction",
+      "guaranteedBy": "Event and output validation precedes busy, state, sequence, accumulator, and result commits",
+      "positive": ["valid-retry", "same-sequence-retry"],
+      "negative": ["invalid-event", "invalid-output", "non-boolean-success"],
+      "limitation": "Terminal host failure, cancellation, disposal, and numeric faults retain their existing semantics."
+    },
+    {
+      "id": "EM3",
+      "subject": "Caller aliasing",
+      "guaranteedBy": "Contained half-open ranges reject event/output and typed payload/output overlap",
+      "positive": ["adjacent-ranges", "zero-length-payload"],
+      "negative": ["complete-overlap", "partial-overlap", "one-byte-overlap"],
+      "limitation": "Caller input ranges may alias each other when no write is performed through them."
+    },
+    {
+      "id": "EM4",
+      "subject": "Typed module-private memory",
+      "guaranteedBy": "Output and response payload ranges exclude embedded request data and result scratch",
+      "positive": ["event-payload-region", "maximum-payload"],
+      "negative": ["embedded-data-alias", "result-scratch-alias"],
+      "limitation": "The exported memory is not an access-control boundary against direct host stores."
+    },
+    {
+      "id": "EM5",
+      "subject": "Typed copy",
+      "guaranteedBy": "The copy helper validates complete source and target ranges and rejects overlap before its loop",
+      "positive": ["zero-length-copy", "maximum-contained-copy"],
+      "negative": ["invalid-source", "invalid-target", "overlapping-copy"],
+      "limitation": "Payload syntax and canonical encoding remain host-codec responsibilities."
+    },
+    {
+      "id": "EM6",
+      "subject": "Portable ABI compatibility",
+      "guaranteedBy": "Existing exports, imports, fixed memory, layouts, statuses, manifest version, and runtime sequences are retained",
+      "positive": ["public-runtime", "portable-replay", "direct-abi"],
+      "negative": ["nine-validator-mutants"],
+      "limitation": "Artifact bytes change because guards are added; byte identity is not an ABI promise."
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 # Effects Wasm メモリー安全性強化 実装計画
 
-作成日: 2026-09-20。状態: 実装前。基点revision: `a116435f2d890fae6ed16100bbdffb4ddd0ce1e2`。
+作成日: 2026-09-20。状態: 実装完了。基点revision: `a116435f2d890fae6ed16100bbdffb4ddd0ce1e2`。実装結果は[結果文書](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)を参照する。
 
-作成時のworktreeにはValue Wasm安全性強化の未コミット差分があるが、Effects emitter／runtime自体は基点revisionから未変更である。実装開始時は既存差分を保持し、Effects対象ファイルだけをbaseline artifactと比較する。
+作成時のworktreeにはValue Wasm安全性強化の未コミット差分があったが、Effects emitter／runtime自体は基点revisionから未変更だった。実装ではValue差分を保持し、Effects対象ファイルだけをbaseline artifactと比較した。
 
 ## 目的
 

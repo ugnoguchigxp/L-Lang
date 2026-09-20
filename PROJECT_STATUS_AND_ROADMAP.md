@@ -29,7 +29,7 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [Value Wasmメモリー安全性強化](./docs/VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を実装した。`module-value-v1`のdirect callで、string payloadの包含確認より前にUTF-8 validatorが評価されてWasm trapになる問題を、型別staged validatorへ置き換えた。safe allocator／copy、raw ABI differential、七種類のmutation試験を追加し、ABI v1、export、status、resource limitを維持した。[実装結果](./docs/VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)に保証境界と内部arenaの所有範囲を記録する。
 
-次の実装対象として[Effects Wasmメモリー安全性強化](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を策定した。linear／typed continuation ABIのraw `start`／`resume`で、descriptor baseを包含確認前にload／storeしてtrapする境界を閉じ、失敗時にcontinuation stateを消費しないtransactionとして検証する計画である。これは計画段階であり、Effectsの現行実装を修正済みとは扱わない。
+[Effects Wasmメモリー安全性強化](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を実装した。linear／typed continuation ABIのraw `start`／`resume`で、descriptor baseを包含確認前にload／storeしてtrapする境界を閉じ、失敗時にcontinuation stateを消費しないtransaction、typed payloadとmodule-private領域、whole-range copyを検証する。[Memory Safety Matrix](./docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)と[実装結果](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)に保証境界を記録する。
 
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
