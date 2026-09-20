@@ -27,3 +27,9 @@ LLM出力は信頼済みコードではありません。通常の`semantic buil
 compiler、lock、Pilot、Benchmark、互換utilityが信頼境界から読むJSONにはbyte上限と用途別のstrict parserがあり、未知field、path escape、freeze不一致をfail-closedで拒否します。新しい外部入力経路にも同じbounded parseとknown-key検査を追加してください。promotionはworkspace lock、previous/next snapshot、transaction journalを使用します。未知hashを検出した回復処理は`manual-recovery-required`として停止し、推測でartifactを上書きしません。L-Lang以外のprocessから見た複数fileの同時可視性は保証されないため、promotion中の生成物を直接監視しないでください。
 
 認可、暗号、金額、DB transaction、network副作用、secretアクセスをSemantic Generationへ委譲しないでください。
+
+## Effects署名鍵
+
+Effects attestationはEd25519署名と外部指定のcurrent trust policyを使う。packageへ同梱された発行時policyを自動的にtrust rootへ昇格させない。要求承認者、実行host、監査者の秘密鍵を分離し、repositoryや成果物へコミットしない。署名は鍵の保有とbytesの整合性を示すだけで、自然言語要求、業務結果、host OS、外部service、署名時刻、anti-replayを証明しない。rotation、revocation、紛失、backup、Windows ACLは[鍵運用runbook](./docs/EFFECTS_ATTESTATION_KEY_RUNBOOK.md)に従う。
+
+Effects assurance core v1は、外部dataのsource／sinkと許可flowを署名chainへ固定し、現行IRのcompile時固定requestからauthority-bearing valueをruntime dataで拡張できないことを検査する。これは外部dataが真実または無害であること、許可済みflowが業務上正しいこと、任意TypeScript／Wasmのinformation flow、prompt injection一般への耐性を証明しない。checked-in adversarial fixtureは`evidenceEligible: false`であり、live安全性の根拠にしない。

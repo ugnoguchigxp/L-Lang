@@ -52,8 +52,21 @@ import {
   readStableRegularFile,
   readStableRegularFileSnapshot,
 } from "./llang-effects-stable-file";
+import { readEffectsSigningKey } from "./llang-effects-attestation-crypto";
+import {
+  assertEffectsTrustRole,
+  readEffectsTrustPolicy,
+} from "./llang-effects-trust-policy";
+import { readAndVerifyEffectsRequirementApproval } from "./llang-effects-requirement-approval";
+import { createEffectsExecutionAttestation } from "./llang-effects-execution-attestation";
+import {
+  effectsObservedFlowSummary,
+  readEffectsTrustBoundary,
+} from "./llang-effects-trust-boundary";
 
 export const LLANG_EFFECTS_EXECUTION_VERSION = 2 as const;
+export const LLANG_EFFECTS_SIGNED_EXECUTION_VERSION = 3 as const;
+export const LLANG_EFFECTS_ASSURED_EXECUTION_VERSION = 4 as const;
 
 type CredentialState = Readonly<{
   headers: ReadonlyMap<string, Readonly<Record<string, string>>>;
@@ -253,6 +266,10 @@ export async function executeEffectsModuleBundle(options: {
   grantPath: string;
   outputDirectory: string;
   requirementsPath?: string;
+  approvalPath?: string;
+  trustPolicyPath?: string;
+  hostSigningKeyPath?: string;
+  trustBoundaryPath?: string;
   credentialEnvironmentPath?: string;
   execute?: TypedOperationExecutor;
   openStream?: (
@@ -263,6 +280,17 @@ export async function executeEffectsModuleBundle(options: {
   signal?: AbortSignal;
   now?: () => number;
 }): Promise<EffectsExecutionReport> {
+  const signedOptionCount = [
+    options.approvalPath,
+    options.trustPolicyPath,
+    options.hostSigningKeyPath,
+  ].filter(Boolean).length;
+  if (signedOptionCount !== 0 && signedOptionCount !== 3)
+    throw new Error("INCOMPLETE_EFFECTS_ATTESTATION_OPTIONS");
+  if (signedOptionCount && !options.requirementsPath)
+    throw new Error("SIGNED_EXECUTION_REQUIRES_REQUIREMENTS");
+  if (options.trustBoundaryPath && signedOptionCount !== 3)
+    throw new Error("TRUST_BOUNDARY_REQUIRES_SIGNED_EXECUTION");
   const snapshot = await readVerifiedEffectsExecutionSnapshot(
       options.manifestPath,
     ),
@@ -282,6 +310,64 @@ export async function executeEffectsModuleBundle(options: {
     assertGrantWithinRequirement(grant, requirements);
     await assertRequirementOutsideWritableGrant(requirements, grant);
   }
+  const signed = signedOptionCount === 3,
+    boundary =
+      options.trustBoundaryPath && requirements
+        ? await readEffectsTrustBoundary(
+            options.trustBoundaryPath,
+            requirements,
+            snapshot.graph,
+          )
+        : undefined,
+    issuancePolicy = signed
+      ? await readEffectsTrustPolicy(options.trustPolicyPath as string)
+      : undefined,
+    hostSigningKey = signed
+      ? await readEffectsSigningKey(options.hostSigningKeyPath as string)
+      : undefined;
+  if (issuancePolicy && hostSigningKey)
+    assertEffectsTrustRole(
+      issuancePolicy,
+      "executionHosts",
+      hostSigningKey.keyId,
+    );
+  const approval =
+      signed && issuancePolicy && requirements
+        ? await readAndVerifyEffectsRequirementApproval({
+            approvalPath: options.approvalPath as string,
+            snapshot,
+            requirements,
+            policy: issuancePolicy,
+            ...(boundary ? { boundary } : {}),
+          })
+        : undefined,
+    approvalBytes = approval
+      ? await readStableRegularFileSnapshot(
+          approval.path,
+          1024 * 1024,
+          "EFFECTS_REQUIREMENT_APPROVAL_CHANGED",
+        )
+      : undefined,
+    policyBytes = issuancePolicy
+      ? await readStableRegularFileSnapshot(
+          issuancePolicy.path,
+          1024 * 1024,
+          "EFFECTS_TRUST_POLICY_CHANGED",
+        )
+      : undefined,
+    boundaryBytes = boundary
+      ? await readStableRegularFileSnapshot(
+          boundary.path,
+          1024 * 1024,
+          "EFFECTS_TRUST_BOUNDARY_CHANGED",
+        )
+      : undefined;
+  if (
+    (approvalBytes && sha256(approvalBytes.bytes) !== approval?.sourceHash) ||
+    (policyBytes && sha256(policyBytes.bytes) !== issuancePolicy?.sourceHash) ||
+    (boundaryBytes && sha256(boundaryBytes.bytes) !== boundary?.sourceHash)
+  )
+    throw new Error("EFFECTS_ATTESTATION_INPUT_CHANGED");
   const credentials = await readCredentialEnvironment(
       options.credentialEnvironmentPath,
       new Set(grant.document.http?.origins ?? []),
@@ -298,6 +384,11 @@ export async function executeEffectsModuleBundle(options: {
     intentPath = resolve(output.path, "execution-intent.json"),
     transcriptPath = resolve(output.path, "effects-transcript.jsonl"),
     reportPath = resolve(output.path, "effects-execution.json"),
+    approvalCopyPath = resolve(output.path, "requirements-approval.json"),
+    policyCopyPath = resolve(output.path, "issuance-trust-policy.json"),
+    attestationPath = resolve(output.path, "execution-attestation.json"),
+    boundaryCopyPath = resolve(output.path, "trust-data-boundary.json"),
+    provenancePath = resolve(output.path, "static-provenance.json"),
     ownerToken = randomUUID(),
     lock = {
       format: "llang-effects-execution-lock",
@@ -309,7 +400,7 @@ export async function executeEffectsModuleBundle(options: {
     },
     intent = {
       format: "llang-effects-execution-intent",
-      version: requirements ? 2 : 1,
+      version: boundary ? 4 : signed ? 3 : requirements ? 2 : 1,
       executionId,
       bundleIdentityHash: snapshot.bundleIdentityHash,
       grantSourceHash: grant.sourceHash,
@@ -333,9 +424,54 @@ export async function executeEffectsModuleBundle(options: {
             },
           }
         : {}),
+      ...(signed && approval && issuancePolicy && hostSigningKey
+        ? {
+            attestation: {
+              approvalSourceHash: approval.sourceHash,
+              approvalPayloadHash: approval.document.payloadHash,
+              approvalKeyId: approval.document.keyId,
+              issuancePolicyId: issuancePolicy.document.id,
+              issuancePolicyRevision: issuancePolicy.document.revision,
+              issuancePolicySourceHash: issuancePolicy.sourceHash,
+              issuancePolicyCommitmentHash: issuancePolicy.commitmentHash,
+              hostKeyId: hostSigningKey.keyId,
+            },
+          }
+        : {}),
+      ...(boundary
+        ? {
+            boundary: {
+              id: boundary.document.id,
+              revision: boundary.document.revision,
+              sourceHash: boundary.sourceHash,
+              commitmentHash: boundary.commitmentHash,
+              provenanceHash: boundary.provenanceHash,
+            },
+          }
+        : {}),
     },
     intentText = `${stableJson(intent)}\n`;
   await durableCreateText(lockPath, `${stableJson(lock)}\n`);
+  if (approvalBytes && policyBytes) {
+    await durableCreateText(
+      approvalCopyPath,
+      decodeUtf8(approvalBytes.bytes, options.approvalPath as string),
+    );
+    await durableCreateText(
+      policyCopyPath,
+      decodeUtf8(policyBytes.bytes, options.trustPolicyPath as string),
+    );
+  }
+  if (boundaryBytes && boundary) {
+    await durableCreateText(
+      boundaryCopyPath,
+      decodeUtf8(boundaryBytes.bytes, boundary.path),
+    );
+    await durableCreateText(
+      provenancePath,
+      `${stableJson(boundary.provenance)}\n`,
+    );
+  }
   await durableCreateText(intentPath, intentText);
   const lockIdentity = await lstat(lockPath),
     intentIdentity = await lstat(intentPath);
@@ -524,6 +660,10 @@ export async function executeEffectsModuleBundle(options: {
   });
   await recorder.close();
   const transcript = await readEffectsTranscript(transcriptPath);
+  const observedFlow = boundary
+      ? effectsObservedFlowSummary(boundary, transcript.events)
+      : undefined,
+    observedFlowHash = observedFlow ? fingerprintFor(observedFlow) : undefined;
   cleanupFailures = [
     ...cleanupFailures,
     ...transcript.events
@@ -545,7 +685,13 @@ export async function executeEffectsModuleBundle(options: {
     ).length,
     base = {
       format: "llang-effects-execution",
-      version: requirements ? LLANG_EFFECTS_EXECUTION_VERSION : 1,
+      version: boundary
+        ? LLANG_EFFECTS_ASSURED_EXECUTION_VERSION
+        : signed
+          ? LLANG_EFFECTS_SIGNED_EXECUTION_VERSION
+          : requirements
+            ? LLANG_EFFECTS_EXECUTION_VERSION
+            : 1,
       executionId,
       status: resultStatus.status,
       bundle: {
@@ -634,9 +780,29 @@ export async function executeEffectsModuleBundle(options: {
         typescript: "5.9.3",
       },
       authenticity: {
-        attestation: "not-signed",
+        attestation: signed ? "detached-ed25519" : "not-signed",
         retention: "caller-managed",
+        ...(hostSigningKey ? { signerKeyId: hostSigningKey.keyId } : {}),
       },
+      ...(boundary && observedFlow && observedFlowHash
+        ? {
+            trustData: {
+              boundary: {
+                id: boundary.document.id,
+                revision: boundary.document.revision,
+                sourceHash: boundary.sourceHash,
+                commitmentHash: boundary.commitmentHash,
+              },
+              staticProvenanceHash: boundary.provenanceHash,
+              staticFlowStatus: "passed",
+              observedFlowStatus: "matched",
+              observedFlow,
+              observedFlowHash,
+              authorityDerivation: "static-not-data-derived",
+              rawExternalDataRecorded: false,
+            },
+          }
+        : {}),
       limitations: [
         "host-and-service-authenticity-not-proven",
         "business-correctness-not-proven",
@@ -662,6 +828,143 @@ export async function executeEffectsModuleBundle(options: {
   await assertOwnedFile(lockPath, lockIdentity);
   await assertOwnedFile(intentPath, intentIdentity, intentText);
   await assertOwnedFile(reportPath, reportIdentity, reportText);
+  if (signed && approval && issuancePolicy && hostSigningKey && requirements) {
+    const [currentApproval, currentPolicy, copiedApproval, copiedPolicy] =
+      await Promise.all([
+        readStableRegularFileSnapshot(
+          approval.path,
+          1024 * 1024,
+          "EFFECTS_ATTESTATION_INPUT_CHANGED",
+        ),
+        readStableRegularFileSnapshot(
+          issuancePolicy.path,
+          1024 * 1024,
+          "EFFECTS_ATTESTATION_INPUT_CHANGED",
+        ),
+        readStableRegularFileSnapshot(
+          approvalCopyPath,
+          1024 * 1024,
+          "EXECUTION_EVIDENCE_FILE_CHANGED",
+        ),
+        readStableRegularFileSnapshot(
+          policyCopyPath,
+          1024 * 1024,
+          "EXECUTION_EVIDENCE_FILE_CHANGED",
+        ),
+      ]);
+    if (
+      !approvalBytes ||
+      !policyBytes ||
+      currentApproval.dev !== approvalBytes.dev ||
+      currentApproval.ino !== approvalBytes.ino ||
+      sha256(currentApproval.bytes) !== approval.sourceHash ||
+      currentPolicy.dev !== policyBytes.dev ||
+      currentPolicy.ino !== policyBytes.ino ||
+      sha256(currentPolicy.bytes) !== issuancePolicy.sourceHash ||
+      sha256(copiedApproval.bytes) !== approval.sourceHash ||
+      sha256(copiedPolicy.bytes) !== issuancePolicy.sourceHash
+    )
+      throw new Error("EFFECTS_ATTESTATION_INPUT_CHANGED");
+    if (boundary && boundaryBytes) {
+      const [currentBoundary, copiedBoundary, copiedProvenance] =
+        await Promise.all([
+          readStableRegularFileSnapshot(
+            boundary.path,
+            1024 * 1024,
+            "EFFECTS_ATTESTATION_INPUT_CHANGED",
+          ),
+          readStableRegularFileSnapshot(
+            boundaryCopyPath,
+            1024 * 1024,
+            "EXECUTION_EVIDENCE_FILE_CHANGED",
+          ),
+          readStableRegularFileSnapshot(
+            provenancePath,
+            1024 * 1024,
+            "EXECUTION_EVIDENCE_FILE_CHANGED",
+          ),
+        ]);
+      if (
+        currentBoundary.dev !== boundaryBytes.dev ||
+        currentBoundary.ino !== boundaryBytes.ino ||
+        sha256(currentBoundary.bytes) !== boundary.sourceHash ||
+        sha256(copiedBoundary.bytes) !== boundary.sourceHash ||
+        decodeUtf8(copiedProvenance.bytes, provenancePath) !==
+          `${stableJson(boundary.provenance)}\n`
+      )
+        throw new Error("EFFECTS_ATTESTATION_INPUT_CHANGED");
+    }
+    const attestation = createEffectsExecutionAttestation(
+        {
+          format: "llang-effects-execution-attestation",
+          version: boundary ? 2 : 1,
+          executionId,
+          phase: "normal",
+          approval: {
+            sourceHash: approval.sourceHash,
+            payloadHash: approval.document.payloadHash,
+            keyId: approval.document.keyId,
+          },
+          issuancePolicy: {
+            id: issuancePolicy.document.id,
+            revision: issuancePolicy.document.revision,
+            sourceHash: issuancePolicy.sourceHash,
+            commitmentHash: issuancePolicy.commitmentHash,
+          },
+          intentHash: sha256(intentText),
+          bundle: {
+            bundleIdentityHash: snapshot.bundleIdentityHash,
+            bundledWasmHash: sha256(snapshot.wasmBytes),
+          },
+          requirements: {
+            sourceHash: requirements.sourceHash,
+            commitmentHash: requirements.commitmentHash,
+            authorityCommitmentHash: requirements.authorityCommitmentHash,
+          },
+          grant: {
+            sourceHash: grant.sourceHash,
+            commitmentHash: grant.commitmentHash,
+          },
+          transcript: {
+            fileHash: transcript.hash,
+            finalHash: transcript.finalHash,
+            events: transcript.events.length,
+          },
+          execution: {
+            reportHash: sha256(reportText),
+            evidenceHash,
+            status: resultStatus.status,
+            certainty: resultStatus.certainty,
+            cleanupCommitmentHash: fingerprintFor(
+              report.cleanup as Readonly<Record<string, unknown>>,
+            ),
+            resourceCommitmentHash: fingerprintFor(
+              report.resource as Readonly<Record<string, unknown>>,
+            ),
+            replayedOperations: 0,
+          },
+          ...(boundary && observedFlowHash
+            ? {
+                boundary: {
+                  sourceHash: boundary.sourceHash,
+                  commitmentHash: boundary.commitmentHash,
+                  provenanceHash: boundary.provenanceHash,
+                  observedFlowHash,
+                },
+              }
+            : {}),
+        },
+        hostSigningKey,
+      ),
+      attestationText = `${stableJson(attestation)}\n`;
+    await durableCreateText(attestationPath, attestationText);
+    const attestationIdentity = await lstat(attestationPath);
+    await assertOwnedFile(
+      attestationPath,
+      attestationIdentity,
+      attestationText,
+    );
+  }
   await unlink(lockPath);
   return report;
 }

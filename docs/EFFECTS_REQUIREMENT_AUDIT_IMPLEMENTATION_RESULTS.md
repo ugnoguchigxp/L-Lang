@@ -58,4 +58,4 @@ Ubuntu、Windowsとremote CIはこのローカル実装作業では未実行で�
 
 `passed`は、自然言語要求の意味が正しいこと、bindingが意味的に同値であること、外部serviceの応答や業務結果が正しいことを示しません。要求、bundle、host、evidence、auditの発行主体も認証しません。成果物は`not-signed`かつ`caller-managed`であり、exactly-once、rollback、分散transactionも提供しません。
 
-次の実装候補は、要求契約からaudit reportまでを同じ署名対象にする署名付きattestationとtrust policyです。自然言語要求の意味評価、人間の監査性能、外部データによる命令注入、通常TypeScript baselineとの比較は、署名機能とは分けて実測する必要があります。
+次の実装候補は、要求契約からaudit reportまでを同じ署名対象にする[Effects署名付きattestationとtrust policy](./EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_PLAN.md)です。自然言語要求の意味評価、人間の監査性能、外部データによる命令注入、通常TypeScript baselineとの比較は、署名機能とは分けて実測する必要があります。

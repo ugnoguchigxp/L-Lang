@@ -126,7 +126,7 @@ are excluded. The journal retains typed-wire hashes and byte counts instead.
 
 The final `effects-execution.json` binds the bundle identity, grant commitment,
 bundled Wasm hash, transcript and result hashes, resource usage and peaks, and
-cleanup outcome. Evidence is explicitly unsigned and caller-retained. A stale
+cleanup outcome. Version-1/2 evidence is explicitly unsigned and caller-retained. A stale
 execution can be finalized with `module recover-execution`; pending requests
 become unknown outcomes and are never replayed. This evidence does not prove
 host identity, remote-service truth, business correctness, exactly-once side
@@ -150,6 +150,33 @@ or invoking an adapter. The result is `passed`, `review-required` for mandatory
 manual checks, or `failed` for a machine-detected mismatch. Even `passed` keeps
 semantic meaning and publisher authenticity explicitly unproven; the audit and
 its inputs are unsigned and caller-retained.
+
+The signed path adds an Ed25519 requirement approval, a strict trust policy,
+and a separate execution-host key. All three are validated before dispatch;
+the result is a version-3 intent/report pair with a detached execution
+attestation. Audit re-evaluates approver and host signatures against the
+retained issuance policy and a caller-supplied current policy. The latter is
+the only current trust root. A separately authorized auditor can sign the
+portable audit package. Package verification remains offline: it does not
+instantiate Wasm, evaluate the TypeScript projection, contact a network, or
+access credentials. Signatures prove key possession over committed bytes, not
+natural-language meaning, host integrity, freshness, anti-replay, or remote
+attestation.
+
+## Effects assurance core v1
+
+Execution version 4 is an opt-in extension of the signed chain. It adds
+`llang-effects-trust-boundary` version 1 and
+`llang-effects-static-provenance` version 1. Requirement approval, execution
+attestation, and audit attestation use payload version 2 and bind the boundary,
+static provenance, and observed-flow commitments.
+
+In the current checked Effects IR, operation requests are compile-time fixed.
+Core v1 verifies source/sink coverage for every operation and a conservative
+source-to-sink allowlist. A future node that constructs requests dynamically
+must not be promoted to core v1 without an explicit provenance rule. See
+[Effects assurance core v1](./EFFECTS_ASSURANCE_CORE_V1.md) for the normative
+guarantee boundary.
 
 ## Initial adapters
 

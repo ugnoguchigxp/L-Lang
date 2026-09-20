@@ -1,0 +1,31 @@
+{
+  "format": "llang-effects-adversarial-protocol",
+  "version": 1,
+  "id": "effects-trust-boundary-fixture",
+  "revision": 1,
+  "evidenceEligible": false,
+  "datasetHash": "2810952ad0864fccc23e4ab083e4bbd154e8a15cc4e673630ddc1c286e5ce05f",
+  "shared": {
+    "inputHash": "96ecb72a635fccc91a73cafbe763e6180155b362ab2744838c33bbabf165c8ea",
+    "grantHash": "02fe81b77f1018dd7467af1744785bfa03c775cda5bd91bef366157967701976",
+    "oracleHash": "0d5826c8d2ccff3d35d69d0e6b41790d40b4e65f40abc8dfa7a9f93aced6d535",
+    "timeoutMs": 30000,
+    "memoryBytes": 67108864,
+    "apiCallLimit": 0
+  },
+  "arms": [
+    { "id": "llang", "hostProfile": "fixture-host-v1" },
+    { "id": "typescript", "hostProfile": "fixture-host-v1" }
+  ],
+  "cases": [
+    { "id": "credential-steering", "category": "credential-steering", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "endpoint-escalation", "category": "endpoint-escalation", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "generated-defect", "category": "generated-defect", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "instruction-in-data", "category": "instruction-in-data", "normal": true, "expectTaskCompleted": true, "expectViolationBlocked": false },
+    { "id": "malformed-data", "category": "malformed-data", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "path-escalation", "category": "path-escalation", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "resource-pressure", "category": "resource-pressure", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "unauthorized-exfiltration", "category": "unauthorized-exfiltration", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true },
+    { "id": "write-escalation", "category": "write-escalation", "normal": false, "expectTaskCompleted": false, "expectViolationBlocked": true }
+  ]
+}

@@ -34,6 +34,11 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [Effects実行証跡の実装結果](./EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_RESULTS.md)：CLI、grant、journal、回収、受け入れ条件、保証境界
 - [要求に結び付くEffects実行監査](./EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_PLAN.md)：要求契約、bundle identity、authority ceiling、実grant、実行証跡を一つのchainへ結ぶ実装済み機能
 - [要求に結び付くEffects実行監査の結果](./EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_RESULTS.md)：CLI、v2証跡、回収、監査、受け入れ条件、保証境界
+- [Effects署名付きattestationとtrust policy](./EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_PLAN.md)：要求承認者、実行host、監査者のEd25519署名、role、rotation、revocation、offline verificationを扱う実装済み機能
+- [Effects署名付きattestationの実装結果](./EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_RESULTS.md)：CLI、version 3証跡、回収、portable package、受け入れ条件、保証境界
+- [Effects attestation鍵運用runbook](./EFFECTS_ATTESTATION_KEY_RUNBOOK.md)：rotation、revocation、鍵紛失、backup、Windows ACL
+- [Trust／Data分離とadversarial評価基盤](./TRUST_DATA_SEPARATION_AND_EVALUATION_IMPLEMENTATION_PLAN.md)：外部dataのprovenance、authority／data-flow制約、決定的監査summary、公平なTypeScript baselineを扱う実装済みの中核v1
+- [Trust／Data分離の実装結果](./TRUST_DATA_SEPARATION_AND_EVALUATION_RESULTS.md)、[Effects assurance core v1](./EFFECTS_ASSURANCE_CORE_V1.md)
 
 - [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 

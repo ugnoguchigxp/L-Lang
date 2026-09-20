@@ -19,6 +19,13 @@ import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
 import { auditEffectsExecution } from "./llang-effects-execution-audit";
 import { executeEffectsModuleBundle } from "./llang-effects-execution-evidence";
 import { recoverEffectsExecution } from "./llang-effects-execution-recovery";
+import { generateEffectsAttestationKeyPair } from "./llang-effects-attestation-crypto";
+import { createEffectsRequirementApproval } from "./llang-effects-requirement-approval";
+import {
+  attestEffectsAudit,
+  verifyEffectsAttestationPackage,
+} from "./llang-effects-audit-attestation";
+import { explainEffectsAttestation } from "./llang-effects-attestation-summary";
 import {
   decodeUtf8,
   formatLlangJsonc,
@@ -74,15 +81,43 @@ export const LLANG_HELP = `usage: llang <command> [arguments]
   module test <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --suite <cases.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
   module verify <module-build.json> --suite <cases.json>
   module inspect <module-build.json> [--out-dir <new-directory>]
-  module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-directory> [--requirements <effects-requirements.json>] [--credential-env <mapping.json>] [--json]
-  module recover-execution <evidence-directory> [--json]
-  module audit-execution <module-build.json> --requirements <effects-requirements.json> --evidence <evidence-directory> [--out-dir <new-directory>] [--json]
+  module attestation-keygen <new-directory>
+  module approve-requirements <module-build.json> --requirements <effects-requirements.json> [--trust-boundary <boundary.json>] --signing-key <private-key.pem> --out <approval.json>
+  module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-directory> [--requirements <effects-requirements.json>] [--approval <approval.json> --trust-policy <policy.json> --host-signing-key <private-key.pem>] [--credential-env <mapping.json>] [--json]
+  module recover-execution <evidence-directory> [--trust-policy <policy.json> --host-signing-key <private-key.pem>] [--json]
+  module audit-execution <module-build.json> --requirements <effects-requirements.json> --evidence <evidence-directory> [--trust-policy <policy.json>] [--require-attestation] [--out-dir <new-directory>] [--json]
+  module attest-audit <module-build.json> --requirements <effects-requirements.json> --audit <audit-directory> --trust-policy <policy.json> --signing-key <private-key.pem> --out-dir <new-directory>
+  module verify-attestation <module-build.json> --requirements <effects-requirements.json> --package <package-directory> --trust-policy <policy.json>
+  module explain-attestation <module-build.json> --requirements <effects-requirements.json> --package <package-directory> --trust-policy <policy.json> --out-dir <new-directory>
 Global: --help, --json (machine-readable errors and results)
 Exit codes: 0 success; 1 validation/test failure; 2 usage, I/O or execution error.
 TypeScript sources: bun run hybrid -- see examples/source-output-matrix/README.md`;
 
 function usage(): never {
   throw Object.assign(new Error(LLANG_HELP), { code: "INVALID_ARGUMENT" });
+}
+
+const TRUST_REJECTION_CODES = new Set([
+  "INVALID_EFFECTS_REQUIREMENT_APPROVAL_SIGNATURE",
+  "INVALID_EFFECTS_EXECUTION_ATTESTATION_SIGNATURE",
+  "INVALID_EFFECTS_AUDIT_ATTESTATION_SIGNATURE",
+  "EFFECTS_ATTESTATION_UNTRUSTED_ROLE",
+  "EFFECTS_TRUST_POLICY_ROLLBACK",
+  "EFFECTS_ATTESTATION_BINDING_MISMATCH",
+]);
+
+function trustRejection(error: unknown) {
+  if (!(error instanceof Error) || !TRUST_REJECTION_CODES.has(error.message))
+    return undefined;
+  return Object.freeze({
+    format: "llang-effects-trust-rejection",
+    version: 1,
+    status: "failed",
+    signatureStatus: error.message.includes("SIGNATURE") ? "invalid" : "valid",
+    auditStatus: "not-evaluated",
+    trustDecision: "rejected",
+    reason: error.message,
+  });
 }
 
 async function readSource(path: string) {
@@ -147,7 +182,18 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       return { exitCode: 0, output: LLANG_HELP };
     if (args.length === 3 && args[2] === "--help")
       return { exitCode: 0, output: LLANG_HELP };
-    const [subcommand, source, ...rawOptions] = args.slice(1);
+    const [subcommand, source, ...rawOptionInput] = args.slice(1),
+      rawOptions: string[] = [];
+    for (let index = 0; index < rawOptionInput.length; index += 1) {
+      const value = rawOptionInput[index] as string;
+      rawOptions.push(value);
+      if (
+        value === "--require-attestation" &&
+        (index + 1 === rawOptionInput.length ||
+          rawOptionInput[index + 1]?.startsWith("--"))
+      )
+        rawOptions.push("true");
+    }
     if (!subcommand || !source || rawOptions.length % 2) usage();
     const options: Record<string, string> = {};
     for (let index = 0; index < rawOptions.length; index += 2) {
@@ -156,6 +202,112 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       if (!key.startsWith("--") || !value || Object.hasOwn(options, key))
         usage();
       options[key] = value;
+    }
+    if (subcommand === "attestation-keygen") {
+      if (Object.keys(options).length) usage();
+      return {
+        exitCode: 0,
+        output: await generateEffectsAttestationKeyPair(source),
+      };
+    }
+    if (subcommand === "approve-requirements") {
+      if (
+        !options["--requirements"] ||
+        !options["--signing-key"] ||
+        !options["--out"] ||
+        Object.keys(options).some(
+          (key) =>
+            ![
+              "--requirements",
+              "--trust-boundary",
+              "--signing-key",
+              "--out",
+            ].includes(key),
+        )
+      )
+        usage();
+      return {
+        exitCode: 0,
+        output: await createEffectsRequirementApproval({
+          manifestPath: source,
+          requirementsPath: options["--requirements"],
+          signingKeyPath: options["--signing-key"],
+          outputPath: options["--out"],
+          ...(options["--trust-boundary"]
+            ? { trustBoundaryPath: options["--trust-boundary"] }
+            : {}),
+        }),
+      };
+    }
+    if (subcommand === "attest-audit") {
+      const required = [
+        "--requirements",
+        "--audit",
+        "--trust-policy",
+        "--signing-key",
+        "--out-dir",
+      ];
+      if (
+        required.some((key) => !options[key]) ||
+        Object.keys(options).some((key) => !required.includes(key))
+      )
+        usage();
+      return {
+        exitCode: 0,
+        output: await attestEffectsAudit({
+          manifestPath: source,
+          requirementsPath: options["--requirements"] as string,
+          auditDirectory: options["--audit"] as string,
+          trustPolicyPath: options["--trust-policy"] as string,
+          signingKeyPath: options["--signing-key"] as string,
+          outputDirectory: options["--out-dir"] as string,
+        }),
+      };
+    }
+    if (subcommand === "verify-attestation") {
+      const required = ["--requirements", "--package", "--trust-policy"];
+      if (
+        required.some((key) => !options[key]) ||
+        Object.keys(options).some((key) => !required.includes(key))
+      )
+        usage();
+      let report: Awaited<ReturnType<typeof verifyEffectsAttestationPackage>>;
+      try {
+        report = await verifyEffectsAttestationPackage({
+          manifestPath: source,
+          requirementsPath: options["--requirements"] as string,
+          packageDirectory: options["--package"] as string,
+          trustPolicyPath: options["--trust-policy"] as string,
+        });
+      } catch (error) {
+        const rejection = trustRejection(error);
+        if (!rejection) throw error;
+        return { exitCode: 1, output: rejection };
+      }
+      return { exitCode: report.status === "trusted" ? 0 : 1, output: report };
+    }
+    if (subcommand === "explain-attestation") {
+      const required = [
+        "--requirements",
+        "--package",
+        "--trust-policy",
+        "--out-dir",
+      ];
+      if (
+        required.some((key) => !options[key]) ||
+        Object.keys(options).some((key) => !required.includes(key))
+      )
+        usage();
+      return {
+        exitCode: 0,
+        output: await explainEffectsAttestation({
+          manifestPath: source,
+          requirementsPath: options["--requirements"] as string,
+          packageDirectory: options["--package"] as string,
+          trustPolicyPath: options["--trust-policy"] as string,
+          outputDirectory: options["--out-dir"] as string,
+        }),
+      };
     }
     if (subcommand === "verify") {
       if (Object.keys(options).join() !== "--suite") usage();
@@ -213,6 +365,10 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
               "--out-dir",
               "--requirements",
               "--credential-env",
+              "--approval",
+              "--trust-policy",
+              "--host-signing-key",
+              "--trust-boundary",
             ].includes(key),
         )
       )
@@ -227,6 +383,18 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         ...(options["--credential-env"]
           ? { credentialEnvironmentPath: options["--credential-env"] }
           : {}),
+        ...(options["--approval"]
+          ? { approvalPath: options["--approval"] }
+          : {}),
+        ...(options["--trust-policy"]
+          ? { trustPolicyPath: options["--trust-policy"] }
+          : {}),
+        ...(options["--host-signing-key"]
+          ? { hostSigningKeyPath: options["--host-signing-key"] }
+          : {}),
+        ...(options["--trust-boundary"]
+          ? { trustBoundaryPath: options["--trust-boundary"] }
+          : {}),
       });
       return {
         exitCode: report.status === "completed" ? 0 : 1,
@@ -234,10 +402,24 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
       };
     }
     if (subcommand === "recover-execution") {
-      if (Object.keys(options).length) usage();
+      if (
+        Object.keys(options).some(
+          (key) => !["--trust-policy", "--host-signing-key"].includes(key),
+        ) ||
+        Boolean(options["--trust-policy"]) !==
+          Boolean(options["--host-signing-key"])
+      )
+        usage();
       return {
         exitCode: 1,
-        output: await recoverEffectsExecution(source),
+        output: await recoverEffectsExecution(source, {
+          ...(options["--trust-policy"]
+            ? { trustPolicyPath: options["--trust-policy"] }
+            : {}),
+          ...(options["--host-signing-key"]
+            ? { hostSigningKeyPath: options["--host-signing-key"] }
+            : {}),
+        }),
       };
     }
     if (subcommand === "audit-execution") {
@@ -245,19 +427,50 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         !options["--requirements"] ||
         !options["--evidence"] ||
         Object.keys(options).some(
-          (key) => !["--requirements", "--evidence", "--out-dir"].includes(key),
+          (key) =>
+            ![
+              "--requirements",
+              "--evidence",
+              "--out-dir",
+              "--trust-policy",
+              "--require-attestation",
+            ].includes(key),
         )
       )
         usage();
-      const report = await auditEffectsExecution({
-        manifestPath: source,
-        requirementsPath: options["--requirements"],
-        evidenceDirectory: options["--evidence"],
-        ...(options["--out-dir"]
-          ? { outputDirectory: options["--out-dir"] }
-          : {}),
-      });
-      return { exitCode: report.status === "failed" ? 1 : 0, output: report };
+      if (
+        options["--require-attestation"] !== undefined &&
+        options["--require-attestation"] !== "true"
+      )
+        usage();
+      let report: Awaited<ReturnType<typeof auditEffectsExecution>>;
+      try {
+        report = await auditEffectsExecution({
+          manifestPath: source,
+          requirementsPath: options["--requirements"],
+          evidenceDirectory: options["--evidence"],
+          ...(options["--out-dir"]
+            ? { outputDirectory: options["--out-dir"] }
+            : {}),
+          ...(options["--trust-policy"]
+            ? { trustPolicyPath: options["--trust-policy"] }
+            : {}),
+          ...(options["--require-attestation"]
+            ? { requireAttestation: true }
+            : {}),
+        });
+      } catch (error) {
+        const rejection = trustRejection(error);
+        if (!rejection) throw error;
+        return { exitCode: 1, output: rejection };
+      }
+      return {
+        exitCode:
+          report.status === "failed" || report.trustDecision === "rejected"
+            ? 1
+            : 0,
+        output: report,
+      };
     }
     const root = options["--root"],
       entryName = options["--entry"],

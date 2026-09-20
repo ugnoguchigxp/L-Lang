@@ -6,7 +6,9 @@ export async function readStableRegularFileSnapshot(
   path: string,
   maximumBytes: number,
   invalidCode: string,
-): Promise<Readonly<{ bytes: Uint8Array; dev: number; ino: number }>> {
+): Promise<
+  Readonly<{ bytes: Uint8Array; dev: number; ino: number; mode: number }>
+> {
   let handle: FileHandle | undefined;
   try {
     handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
@@ -31,7 +33,12 @@ export async function readStableRegularFileSnapshot(
       current.size !== before.size
     )
       throw new Error(invalidCode);
-    return Object.freeze({ bytes, dev: before.dev, ino: before.ino });
+    return Object.freeze({
+      bytes,
+      dev: before.dev,
+      ino: before.ino,
+      mode: before.mode,
+    });
   } catch (error) {
     if (error instanceof Error && error.message === invalidCode) throw error;
     throw new Error(invalidCode, { cause: error });

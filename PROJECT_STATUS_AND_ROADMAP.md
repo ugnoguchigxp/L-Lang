@@ -1,6 +1,6 @@
 # 現在の実装状況とロードマップ
 
-更新：2026-09-18。[入出力の対応](./docs/guides/language-routes.md) · [文書一覧](./docs/README.md)
+更新：2026-09-20。[入出力の対応](./docs/guides/language-routes.md) · [文書一覧](./docs/README.md)
 
 ## 実装されている経路
 
@@ -47,9 +47,13 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 `module-effects-v1`のall-target bundleを実行せずに再構築・検査する[Effects Bundle事後検査](./docs/EFFECTS_BUNDLE_INSPECTION_IMPLEMENTATION_PLAN.md)を実装した。静的なbundle整合を対象とし、実行時grantやtranscriptの証跡化は後続へ分離している。
 
-検査済みbundleの実Wasm、hostが与えたgrant、redacted transcript、結果・失敗・取消・cleanupを結び付ける[Effects実行証跡](./docs/EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)を実装した。CLIは実行前intent、hash chain journal、最終report、再実行しないcrash回収を提供する。署名によるhost真正性とremote attestationは、unsigned evidenceからさらに分離する。
+検査済みbundleの実Wasm、hostが与えたgrant、redacted transcript、結果・失敗・取消・cleanupを結び付ける[Effects実行証跡](./docs/EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)を実装した。CLIは実行前intent、hash chain journal、最終report、再実行しないcrash回収を提供する。unsigned version 1/2は互換のまま維持する。
 
-[要求に結び付くEffects実行監査](./docs/EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_PLAN.md)を実装した。利用者または上位hostが実行前に固定した要求契約、authority ceiling、bundle identity、実grant、version 2実行証跡を一つのchainへ結び、非実行の事後監査で機械検査できる対応と人間判断が残る対応を分離する。要求なしversion 1実行と非replay回収は互換を維持する。結果と保証境界は[実装結果](./docs/EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_RESULTS.md)に記録する。次の大きな実装候補は署名付きattestationとtrust policyであり、自然言語の意味評価、人間監査、adversarial比較は独立した研究評価として残る。
+[要求に結び付くEffects実行監査](./docs/EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_PLAN.md)を実装した。利用者または上位hostが実行前に固定した要求契約、authority ceiling、bundle identity、実grant、version 2実行証跡を一つのchainへ結び、非実行の事後監査で機械検査できる対応と人間判断が残る対応を分離する。要求なしversion 1実行と非replay回収は互換を維持する。結果と保証境界は[実装結果](./docs/EFFECTS_REQUIREMENT_AUDIT_IMPLEMENTATION_RESULTS.md)に記録する。
+
+[Effects署名付きattestationとtrust policy](./docs/EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_PLAN.md)を実装した。要求承認者、実行host、監査者を別roleとしてEd25519署名へ結び、独立して渡す現行trust policyでrotation、revocation、role分離を検査する。version 3実行証跡、二種類の署名付きcrash回収、trust-aware audit、監査者署名付きportable package、offline verifierを提供する。[実装結果](./docs/EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_RESULTS.md)に受け入れ条件と保証境界を記録する。timestamp authority、anti-replay ledger、remote attestation、鍵の現実世界identity証明は未実装である。
+
+[Trust／Data分離とadversarial評価基盤](./docs/TRUST_DATA_SEPARATION_AND_EVALUATION_IMPLEMENTATION_PLAN.md)を実装し、[Effects assurance core v1](./docs/EFFECTS_ASSURANCE_CORE_V1.md)として中核artifactとmetricの意味を固定した。外部dataからauthority-bearing valueを導出しない静的provenance、明示的なsource-to-sink flow、署名証跡へ結び付く決定的監査summary、公平なTypeScript baseline protocolを提供する。fixtureはharness回帰専用であり、外部data命令への一般的耐性、人間の監査改善、通常TypeScriptに対する優位性を実証済みとはしない。[実装結果](./docs/TRUST_DATA_SEPARATION_AND_EVALUATION_RESULTS.md)に保証境界を記録する。
 
 [第一弾の実装計画](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE1_IMPLEMENTATION_PLAN.md)の型付き関数・複数module、TS／JSONC混在入力と3形式出力は実装済み。利用仕様は[Phase 1仕様](./docs/LLANG_MODULE_SPEC.md)を参照する。最終品質Gate・対象CIの証跡は第一弾計画の未チェック欄を開始時に照合する。
 

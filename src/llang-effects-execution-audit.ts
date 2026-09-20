@@ -27,6 +27,17 @@ import {
   EFFECTS_TRANSCRIPT_GENESIS,
   parseEffectsTranscript,
 } from "./llang-effects-transcript-writer";
+import {
+  assertCurrentPolicyForIssuance,
+  assertEffectsTrustRole,
+  readEffectsTrustPolicy,
+} from "./llang-effects-trust-policy";
+import { readAndVerifyEffectsRequirementApproval } from "./llang-effects-requirement-approval";
+import { readAndVerifyEffectsExecutionAttestation } from "./llang-effects-execution-attestation";
+import {
+  effectsObservedFlowSummary,
+  readEffectsTrustBoundary,
+} from "./llang-effects-trust-boundary";
 
 const HASH = /^[0-9a-f]{64}$/;
 const MAX_EVIDENCE_BYTES = 16 * 1024 * 1024;
@@ -54,10 +65,12 @@ function assertStringArray(value: unknown): asserts value is string[] {
     throw new Error("INVALID_EFFECTS_EXECUTION_REPORT");
 }
 
-function assertExecutionEvidenceShape(
+export function assertExecutionEvidenceShape(
   intent: Record<string, unknown>,
   execution: Record<string, unknown>,
 ): void {
+  const signed = intent.version === 3 || intent.version === 4,
+    assured = intent.version === 4;
   if (
     !exact(intent, [
       "format",
@@ -73,6 +86,8 @@ function assertExecutionEvidenceShape(
       "credentialHeaderNames",
       "grantSummary",
       "requirements",
+      ...(signed ? ["attestation"] : []),
+      ...(assured ? ["boundary"] : []),
     ])
   )
     throw new Error("INVALID_EFFECTS_EXECUTION_REPORT");
@@ -83,6 +98,25 @@ function assertExecutionEvidenceShape(
     "commitmentHash",
     "authorityCommitmentHash",
   ]);
+  if (signed)
+    exactChild(intent, "attestation", [
+      "approvalSourceHash",
+      "approvalPayloadHash",
+      "approvalKeyId",
+      "issuancePolicyId",
+      "issuancePolicyRevision",
+      "issuancePolicySourceHash",
+      "issuancePolicyCommitmentHash",
+      "hostKeyId",
+    ]);
+  if (assured)
+    exactChild(intent, "boundary", [
+      "id",
+      "revision",
+      "sourceHash",
+      "commitmentHash",
+      "provenanceHash",
+    ]);
   assertStringArray(intent.credentialHeaderNames);
 
   const recovered = execution.recovered === true;
@@ -107,6 +141,7 @@ function assertExecutionEvidenceShape(
             "credential",
             "authenticity",
             "limitations",
+            ...(assured ? ["trustData"] : []),
           ]
         : [
             "format",
@@ -127,6 +162,7 @@ function assertExecutionEvidenceShape(
             "provenance",
             "authenticity",
             "limitations",
+            ...(assured ? ["trustData"] : []),
           ],
     )
   )
@@ -318,8 +354,36 @@ function assertExecutionEvidenceShape(
   exactChild(execution, "authenticity", [
     "attestation",
     "retention",
+    ...(signed ? ["signerKeyId"] : []),
     "evidenceHash",
   ]);
+  if (assured) {
+    const trustData = exactChild(execution, "trustData", [
+      "boundary",
+      "staticProvenanceHash",
+      "staticFlowStatus",
+      "observedFlowStatus",
+      "observedFlow",
+      "observedFlowHash",
+      "authorityDerivation",
+      "rawExternalDataRecorded",
+    ]);
+    exactChild(trustData, "boundary", [
+      "id",
+      "revision",
+      "sourceHash",
+      "commitmentHash",
+    ]);
+    if (
+      trustData.staticFlowStatus !== "passed" ||
+      !["matched", "incomplete"].includes(
+        String(trustData.observedFlowStatus),
+      ) ||
+      trustData.authorityDerivation !== "static-not-data-derived" ||
+      trustData.rawExternalDataRecorded !== false
+    )
+      throw new Error("INVALID_EFFECTS_EXECUTION_REPORT");
+  }
   assertStringArray(execution.limitations);
   if (
     fingerprintFor({ limitations: execution.limitations }) !==
@@ -382,7 +446,7 @@ async function readJsonSnapshot(path: string) {
   return Object.freeze({ ...snapshot, value });
 }
 
-function evidenceHashFor(
+export function executionEvidenceHashFor(
   report: Record<string, unknown>,
   intentHash: string,
   transcriptHash: string,
@@ -466,6 +530,8 @@ export async function auditEffectsExecution(options: {
   requirementsPath: string;
   evidenceDirectory: string;
   outputDirectory?: string;
+  trustPolicyPath?: string;
+  requireAttestation?: boolean;
 }): Promise<EffectsExecutionAuditReport> {
   const snapshot = await readVerifiedEffectsExecutionSnapshot(
       options.manifestPath,
@@ -496,6 +562,7 @@ export async function auditEffectsExecution(options: {
     intent = intentSnapshot.value,
     execution = executionSnapshot.value,
     failures: string[] = [],
+    policyRejections: string[] = [],
     transcriptEvents = parseEffectsTranscript(
       decodeUtf8(transcriptSnapshot.bytes, transcriptPath),
     ),
@@ -507,13 +574,20 @@ export async function auditEffectsExecution(options: {
         transcriptEvents.at(-1)?.eventHash ?? EFFECTS_TRANSCRIPT_GENESIS,
     });
 
+  const signed =
+      [3, 4].includes(Number(intent.version)) &&
+      execution.version === intent.version,
+    assured = intent.version === 4;
   if (
     intent.format !== "llang-effects-execution-intent" ||
-    intent.version !== 2 ||
+    ![2, 3, 4].includes(Number(intent.version)) ||
     execution.format !== "llang-effects-execution" ||
-    execution.version !== 2
+    execution.version !== intent.version ||
+    (options.requireAttestation && !signed)
   )
     throw new Error("EFFECTS_EXECUTION_REQUIREMENTS_NOT_BOUND");
+  if (signed !== Boolean(options.trustPolicyPath))
+    throw new Error("SIGNED_AUDIT_REQUIRES_TRUST_POLICY");
   assertExecutionEvidenceShape(intent, execution);
 
   const intentRequirements = child(intent, "requirements"),
@@ -535,7 +609,288 @@ export async function auditEffectsExecution(options: {
     reportTiming = object(execution.timing) ? execution.timing : undefined,
     reportRecovery = object(execution.recovery)
       ? execution.recovery
+      : undefined,
+    reportTrustData = object(execution.trustData)
+      ? execution.trustData
+      : undefined,
+    boundary = assured
+      ? await readEffectsTrustBoundary(
+          resolve(evidenceDirectory, "trust-data-boundary.json"),
+          requirements,
+          snapshot.graph,
+        )
+      : undefined,
+    observedFlow = boundary
+      ? effectsObservedFlowSummary(boundary, transcript.events)
       : undefined;
+  if (boundary && observedFlow) {
+    const intentBoundary = child(intent, "boundary"),
+      checkedTrustData = child(execution, "trustData"),
+      reportBoundary = child(checkedTrustData, "boundary"),
+      provenancePath = resolve(evidenceDirectory, "static-provenance.json"),
+      provenanceSnapshot = await readJsonSnapshot(provenancePath);
+    if (
+      intentBoundary.id !== boundary.document.id ||
+      intentBoundary.revision !== boundary.document.revision ||
+      intentBoundary.sourceHash !== boundary.sourceHash ||
+      intentBoundary.commitmentHash !== boundary.commitmentHash ||
+      intentBoundary.provenanceHash !== boundary.provenanceHash ||
+      reportBoundary.id !== boundary.document.id ||
+      reportBoundary.revision !== boundary.document.revision ||
+      reportBoundary.sourceHash !== boundary.sourceHash ||
+      reportBoundary.commitmentHash !== boundary.commitmentHash ||
+      checkedTrustData.staticProvenanceHash !== boundary.provenanceHash ||
+      checkedTrustData.observedFlowHash !== fingerprintFor(observedFlow) ||
+      !object(checkedTrustData.observedFlow) ||
+      fingerprintFor(checkedTrustData.observedFlow) !==
+        fingerprintFor(observedFlow) ||
+      fingerprintFor(provenanceSnapshot.value) !==
+        fingerprintFor(boundary.provenance)
+    )
+      throw new Error("EFFECTS_TRUST_BOUNDARY_BINDING_MISMATCH");
+  }
+  const signedTrust = signed
+    ? await (async () => {
+        const issuancePolicyPath = resolve(
+            evidenceDirectory,
+            "issuance-trust-policy.json",
+          ),
+          approvalPath = resolve(
+            evidenceDirectory,
+            "requirements-approval.json",
+          ),
+          attestationPath = resolve(
+            evidenceDirectory,
+            "execution-attestation.json",
+          ),
+          issuancePolicy = await readEffectsTrustPolicy(issuancePolicyPath),
+          currentPolicy = await readEffectsTrustPolicy(
+            options.trustPolicyPath as string,
+          );
+        assertCurrentPolicyForIssuance(issuancePolicy, currentPolicy);
+        const approval = await readAndVerifyEffectsRequirementApproval({
+          approvalPath,
+          snapshot,
+          requirements,
+          policy: issuancePolicy,
+          ...(boundary ? { boundary } : {}),
+        });
+        assertEffectsTrustRole(
+          currentPolicy,
+          "requirementApprovers",
+          approval.document.keyId,
+        );
+        const approvalCurrent = await readAndVerifyEffectsRequirementApproval({
+          approvalPath,
+          snapshot,
+          requirements,
+          policy: currentPolicy,
+          ...(boundary ? { boundary } : {}),
+        });
+        const attestation = await readAndVerifyEffectsExecutionAttestation({
+          path: attestationPath,
+          policy: issuancePolicy,
+        });
+        assertEffectsTrustRole(
+          currentPolicy,
+          "executionHosts",
+          attestation.document.keyId,
+        );
+        await readAndVerifyEffectsExecutionAttestation({
+          path: attestationPath,
+          policy: currentPolicy,
+        });
+        const intentAttestation = child(intent, "attestation"),
+          expectedPayload = {
+            format: "llang-effects-execution-attestation",
+            version: boundary ? 2 : 1,
+            executionId: String(execution.executionId),
+            phase: recovered
+              ? "recovery-incomplete"
+              : attestation.payload.phase,
+            approval: {
+              sourceHash: approval.sourceHash,
+              payloadHash: approval.document.payloadHash,
+              keyId: approval.document.keyId,
+            },
+            issuancePolicy: {
+              id: issuancePolicy.document.id,
+              revision: issuancePolicy.document.revision,
+              sourceHash: issuancePolicy.sourceHash,
+              commitmentHash: issuancePolicy.commitmentHash,
+            },
+            intentHash: sha256(intentSnapshot.bytes),
+            bundle: {
+              bundleIdentityHash: String(reportBundle.bundleIdentityHash),
+              bundledWasmHash: String(reportBundle.bundledWasmHash),
+            },
+            requirements: {
+              sourceHash: String(reportRequirements.sourceHash),
+              commitmentHash: String(reportRequirements.commitmentHash),
+              authorityCommitmentHash: String(
+                reportRequirements.authorityCommitmentHash,
+              ),
+            },
+            grant: {
+              sourceHash: String(reportGrant.sourceHash),
+              commitmentHash: String(reportGrant.commitmentHash),
+            },
+            transcript: {
+              fileHash: transcript.hash,
+              finalHash: transcript.finalHash,
+              events: transcript.events.length,
+            },
+            execution: {
+              reportHash: sha256(executionSnapshot.bytes),
+              evidenceHash: String(reportAuthenticity.evidenceHash),
+              status: execution.status,
+              certainty: reportResult.certainty,
+              cleanupCommitmentHash: fingerprintFor(
+                (execution.cleanup ?? {}) as object,
+              ),
+              resourceCommitmentHash: fingerprintFor(
+                (execution.resource ?? {}) as object,
+              ),
+              replayedOperations: recovered
+                ? Number(reportRecovery?.replayedOperations)
+                : 0,
+            },
+            ...(boundary && observedFlow
+              ? {
+                  boundary: {
+                    sourceHash: boundary.sourceHash,
+                    commitmentHash: boundary.commitmentHash,
+                    provenanceHash: boundary.provenanceHash,
+                    observedFlowHash: fingerprintFor(observedFlow),
+                  },
+                }
+              : {}),
+          };
+        if (
+          fingerprintFor(attestation.payload) !==
+            fingerprintFor(expectedPayload) ||
+          (recovered
+            ? attestation.payload.phase !== "recovery-incomplete"
+            : !["normal", "recovery-after-report"].includes(
+                attestation.payload.phase,
+              )) ||
+          intentAttestation.approvalSourceHash !== approval.sourceHash ||
+          intentAttestation.approvalPayloadHash !==
+            approval.document.payloadHash ||
+          intentAttestation.approvalKeyId !== approval.document.keyId ||
+          intentAttestation.issuancePolicyId !== issuancePolicy.document.id ||
+          intentAttestation.issuancePolicyRevision !==
+            issuancePolicy.document.revision ||
+          intentAttestation.issuancePolicySourceHash !==
+            issuancePolicy.sourceHash ||
+          intentAttestation.issuancePolicyCommitmentHash !==
+            issuancePolicy.commitmentHash ||
+          intentAttestation.hostKeyId !== attestation.document.keyId ||
+          approvalCurrent.document.payloadHash !== approval.document.payloadHash
+        )
+          throw new Error("EFFECTS_ATTESTATION_BINDING_MISMATCH");
+        return Object.freeze({
+          issuancePolicy,
+          currentPolicy,
+          approval,
+          attestation,
+          paths: Object.freeze({
+            issuancePolicyPath,
+            approvalPath,
+            attestationPath,
+          }),
+        });
+      })()
+    : undefined;
+  const signedInputSnapshots = signedTrust
+    ? new Map(
+        await Promise.all(
+          [
+            ["requirements-approval.json", signedTrust.paths.approvalPath],
+            [
+              "issuance-trust-policy.json",
+              signedTrust.paths.issuancePolicyPath,
+            ],
+            ["execution-attestation.json", signedTrust.paths.attestationPath],
+            ...(boundary
+              ? [
+                  [
+                    "trust-data-boundary.json",
+                    resolve(evidenceDirectory, "trust-data-boundary.json"),
+                  ],
+                  [
+                    "static-provenance.json",
+                    resolve(evidenceDirectory, "static-provenance.json"),
+                  ],
+                ]
+              : []),
+          ].map(
+            async ([name, path]) =>
+              [
+                name as string,
+                await readStableRegularFileSnapshot(
+                  path as string,
+                  MAX_EVIDENCE_BYTES,
+                  "EFFECTS_AUDIT_INPUT_CHANGED",
+                ),
+              ] as const,
+          ),
+        ),
+      )
+    : undefined;
+  const currentPolicySnapshot = signedTrust
+    ? await readStableRegularFileSnapshot(
+        signedTrust.currentPolicy.path,
+        MAX_EVIDENCE_BYTES,
+        "EFFECTS_AUDIT_INPUT_CHANGED",
+      )
+    : undefined;
+  if (
+    signedTrust &&
+    signedInputSnapshots &&
+    currentPolicySnapshot &&
+    (signedInputSnapshots.get("requirements-approval.json")?.dev !==
+      signedTrust.approval.fileIdentity.dev ||
+      signedInputSnapshots.get("requirements-approval.json")?.ino !==
+        signedTrust.approval.fileIdentity.ino ||
+      signedInputSnapshots.get("issuance-trust-policy.json")?.dev !==
+        signedTrust.issuancePolicy.fileIdentity.dev ||
+      signedInputSnapshots.get("issuance-trust-policy.json")?.ino !==
+        signedTrust.issuancePolicy.fileIdentity.ino ||
+      signedInputSnapshots.get("execution-attestation.json")?.dev !==
+        signedTrust.attestation.fileIdentity.dev ||
+      signedInputSnapshots.get("execution-attestation.json")?.ino !==
+        signedTrust.attestation.fileIdentity.ino ||
+      currentPolicySnapshot.dev !==
+        signedTrust.currentPolicy.fileIdentity.dev ||
+      currentPolicySnapshot.ino !==
+        signedTrust.currentPolicy.fileIdentity.ino ||
+      sha256(
+        signedInputSnapshots.get("requirements-approval.json")?.bytes ?? "",
+      ) !== signedTrust.approval.sourceHash ||
+      sha256(
+        signedInputSnapshots.get("issuance-trust-policy.json")?.bytes ?? "",
+      ) !== signedTrust.issuancePolicy.sourceHash ||
+      sha256(
+        signedInputSnapshots.get("execution-attestation.json")?.bytes ?? "",
+      ) !== signedTrust.attestation.sourceHash ||
+      (boundary &&
+        (signedInputSnapshots.get("trust-data-boundary.json")?.dev !==
+          boundary.fileIdentity.dev ||
+          signedInputSnapshots.get("trust-data-boundary.json")?.ino !==
+            boundary.fileIdentity.ino ||
+          sha256(
+            signedInputSnapshots.get("trust-data-boundary.json")?.bytes ?? "",
+          ) !== boundary.sourceHash ||
+          decodeUtf8(
+            signedInputSnapshots.get("static-provenance.json")?.bytes ??
+              new Uint8Array(),
+            "static-provenance.json",
+          ) !== `${stableJson(boundary.provenance)}\n`)) ||
+      sha256(currentPolicySnapshot.bytes) !==
+        signedTrust.currentPolicy.sourceHash)
+  )
+    throw new Error("EFFECTS_AUDIT_INPUT_CHANGED");
   const requirementComparisons: [unknown, unknown, string][] = [
     [intent.executionId, execution.executionId, "execution-id"],
     [
@@ -668,7 +1023,7 @@ export async function auditEffectsExecution(options: {
   )
     failures.push("transcript-identity");
   const intentHash = sha256(intentSnapshot.bytes),
-    calculatedEvidenceHash = evidenceHashFor(
+    calculatedEvidenceHash = executionEvidenceHashFor(
       execution,
       intentHash,
       transcript.hash,
@@ -679,10 +1034,17 @@ export async function auditEffectsExecution(options: {
   )
     failures.push("evidence-hash");
   if (
-    reportAuthenticity.attestation !== "not-signed" ||
+    reportAuthenticity.attestation !==
+      (signed ? "detached-ed25519" : "not-signed") ||
     reportAuthenticity.retention !== "caller-managed"
   )
     failures.push("execution-authenticity-report");
+  if (
+    signed &&
+    (!signedTrust ||
+      reportAuthenticity.signerKeyId !== signedTrust.attestation.document.keyId)
+  )
+    failures.push("execution-attestation-report");
   if (
     reportCredential.values !== "not-recorded" ||
     !Array.isArray(reportCredential.headerNames) ||
@@ -845,8 +1207,7 @@ export async function auditEffectsExecution(options: {
   ).length;
   if (
     !recovered &&
-    (!reportCleanup ||
-      reportCleanup.attempted !== true ||
+    (reportCleanup?.attempted !== true ||
       !Array.isArray(reportCleanup.failures) ||
       !reportCleanup.failures.every((failure) => typeof failure === "string") ||
       reportCleanup.completed !== (reportCleanup.failures.length === 0) ||
@@ -862,8 +1223,7 @@ export async function auditEffectsExecution(options: {
         certainty: "unknown",
       }));
     if (
-      !reportRecovery ||
-      reportRecovery.replayedOperations !== 0 ||
+      reportRecovery?.replayedOperations !== 0 ||
       execution.status !== "incomplete" ||
       execution.incompleteReason !==
         (expectedPending.length
@@ -984,6 +1344,18 @@ export async function auditEffectsExecution(options: {
         });
       },
     );
+  if (
+    signedTrust &&
+    requirements.coverage.reviewRequired &&
+    !signedTrust.currentPolicy.document.rules.allowReviewRequired
+  )
+    policyRejections.push("trust-policy-review-required");
+  if (
+    signedTrust &&
+    recovered &&
+    !signedTrust.currentPolicy.document.rules.allowRecoveredExecution
+  )
+    policyRejections.push("trust-policy-recovered-execution");
   const status = failures.length
       ? "failed"
       : requirements.coverage.reviewRequired
@@ -993,6 +1365,13 @@ export async function auditEffectsExecution(options: {
       format: "llang-effects-execution-audit",
       version: 1,
       status,
+      signatureStatus: signed ? "valid" : "missing",
+      auditStatus: status,
+      trustDecision: signedTrust
+        ? failures.length || policyRejections.length
+          ? "rejected"
+          : "trusted"
+        : "not-evaluated",
       requirements: {
         id: requirements.document.id,
         revision: requirements.document.revision,
@@ -1035,9 +1414,10 @@ export async function auditEffectsExecution(options: {
       },
       checks: {
         failures,
+        policyRejections,
         machineChecks: failures.length ? "failed" : "passed",
         semanticMeaning: "not-proven",
-        publisherAuthenticity: "not-proven",
+        publisherAuthenticity: signed ? "trusted-key" : "not-proven",
         apiCalls: 0,
       },
       evidence: {
@@ -1045,6 +1425,65 @@ export async function auditEffectsExecution(options: {
         executionReportHash: sha256(executionSnapshot.bytes),
         executionEvidenceHash: reportAuthenticity.evidenceHash,
       },
+      ...(boundary && observedFlow
+        ? {
+            trustData: {
+              boundary: {
+                id: boundary.document.id,
+                revision: boundary.document.revision,
+                sourceHash: boundary.sourceHash,
+                commitmentHash: boundary.commitmentHash,
+              },
+              staticProvenanceHash: boundary.provenanceHash,
+              observedFlowHash: fingerprintFor(observedFlow),
+              authorityDerivation: "static-not-data-derived",
+              staticFlowStatus: "passed",
+              observedFlowStatus:
+                reportTrustData?.observedFlowStatus === "incomplete"
+                  ? "incomplete"
+                  : "matched",
+              rawExternalDataRecorded: false,
+              sources: boundary.document.sources.map(({ id, operation }) => ({
+                id,
+                operation,
+              })),
+              sinks: boundary.document.sinks.map(({ id, operation }) => ({
+                id,
+                operation,
+              })),
+              allowedFlows: boundary.document.allowedFlows,
+            },
+          }
+        : {}),
+      trust: signedTrust
+        ? {
+            decision:
+              failures.length || policyRejections.length
+                ? "rejected"
+                : "trusted",
+            policy: {
+              id: signedTrust.currentPolicy.document.id,
+              revision: signedTrust.currentPolicy.document.revision,
+              sourceHash: signedTrust.currentPolicy.sourceHash,
+              commitmentHash: signedTrust.currentPolicy.commitmentHash,
+            },
+            issuancePolicy: {
+              revision: signedTrust.issuancePolicy.document.revision,
+              sourceHash: signedTrust.issuancePolicy.sourceHash,
+              commitmentHash: signedTrust.issuancePolicy.commitmentHash,
+            },
+            requirementApprover: {
+              keyId: signedTrust.approval.document.keyId,
+              signature: "verified",
+            },
+            executionHost: {
+              keyId: signedTrust.attestation.document.keyId,
+              signature: "verified",
+              phase: signedTrust.attestation.payload.phase,
+            },
+            signatureChecks: "verified",
+          }
+        : { decision: "not-evaluated" },
       authenticity: {
         attestation: "not-signed",
         retention: "caller-managed",
@@ -1077,6 +1516,42 @@ export async function auditEffectsExecution(options: {
     assertInputSnapshot(intentPath, intentSnapshot),
     assertInputSnapshot(executionPath, executionSnapshot),
     assertInputSnapshot(transcriptPath, transcriptSnapshot),
+    ...(signedTrust && signedInputSnapshots
+      ? [
+          assertInputSnapshot(
+            signedTrust.paths.approvalPath,
+            signedInputSnapshots.get("requirements-approval.json") as {
+              dev: number;
+              ino: number;
+              bytes: Uint8Array;
+            },
+          ),
+          assertInputSnapshot(
+            signedTrust.paths.issuancePolicyPath,
+            signedInputSnapshots.get("issuance-trust-policy.json") as {
+              dev: number;
+              ino: number;
+              bytes: Uint8Array;
+            },
+          ),
+          assertInputSnapshot(
+            signedTrust.paths.attestationPath,
+            signedInputSnapshots.get("execution-attestation.json") as {
+              dev: number;
+              ino: number;
+              bytes: Uint8Array;
+            },
+          ),
+        ]
+      : []),
+    ...(signedTrust && currentPolicySnapshot
+      ? [
+          assertInputSnapshot(
+            signedTrust.currentPolicy.path,
+            currentPolicySnapshot,
+          ),
+        ]
+      : []),
   ]);
   const currentEvidence = await lstat(evidenceDirectory);
   if (
@@ -1112,6 +1587,35 @@ export async function auditEffectsExecution(options: {
         executionText,
       );
       await durableCreateText(
+        resolve(output.path, "execution-intent.json"),
+        decodeUtf8(intentSnapshot.bytes, intentPath),
+      );
+      if (signedTrust && signedInputSnapshots)
+        for (const [name, input] of [
+          ["requirements-approval.json", signedTrust.paths.approvalPath],
+          ["issuance-trust-policy.json", signedTrust.paths.issuancePolicyPath],
+          ["execution-attestation.json", signedTrust.paths.attestationPath],
+          ...(boundary
+            ? [
+                [
+                  "trust-data-boundary.json",
+                  resolve(evidenceDirectory, "trust-data-boundary.json"),
+                ],
+                [
+                  "static-provenance.json",
+                  resolve(evidenceDirectory, "static-provenance.json"),
+                ],
+              ]
+            : []),
+        ] as const) {
+          const source = signedInputSnapshots.get(name);
+          if (!source) throw new Error("EFFECTS_AUDIT_INPUT_CHANGED");
+          await durableCreateText(
+            resolve(output.path, name),
+            decodeUtf8(source.bytes, input),
+          );
+        }
+      await durableCreateText(
         resolve(output.path, "execution-audit.json"),
         reportText,
       );
@@ -1134,6 +1638,7 @@ export async function auditEffectsExecution(options: {
         ["program.inspection.ts", projectionText],
         ["effects-transcript.jsonl", transcriptText],
         ["effects-execution.json", executionText],
+        ["execution-intent.json", decodeUtf8(intentSnapshot.bytes, intentPath)],
         ["execution-audit.json", reportText],
       ] as const) {
         const published = await readStableRegularFileSnapshot(
@@ -1144,6 +1649,16 @@ export async function auditEffectsExecution(options: {
         if (decodeUtf8(published.bytes, name) !== expected)
           throw new Error("EFFECTS_AUDIT_OUTPUT_CHANGED");
       }
+      if (signedInputSnapshots)
+        for (const [name, expected] of signedInputSnapshots) {
+          const published = await readStableRegularFileSnapshot(
+            resolve(output.path, name),
+            MAX_EVIDENCE_BYTES,
+            "EFFECTS_AUDIT_OUTPUT_CHANGED",
+          );
+          if (sha256(published.bytes) !== sha256(expected.bytes))
+            throw new Error("EFFECTS_AUDIT_OUTPUT_CHANGED");
+        }
     } catch (error) {
       try {
         await assertDirectoryIdentity(output);

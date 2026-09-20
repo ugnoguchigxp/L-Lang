@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeLlangCli } from "./llang-cli";
@@ -16,6 +16,13 @@ import { DEFAULT_EFFECTS_LIMITS } from "./llang-effects-contract";
 import { EFFECTS_TRANSCRIPT_GENESIS } from "./llang-effects-transcript-writer";
 import { buildEffectsModuleProgram } from "./llang-module-effects-build";
 import { fingerprintFor, sha256, stableJson } from "./stable-hash";
+import { generateEffectsAttestationKeyPair } from "./llang-effects-attestation-crypto";
+import { createEffectsRequirementApproval } from "./llang-effects-requirement-approval";
+import {
+  attestEffectsAudit,
+  verifyEffectsAttestationPackage,
+} from "./llang-effects-audit-attestation";
+import { explainEffectsAttestation } from "./llang-effects-attestation-summary";
 
 const temporary: string[] = [];
 afterEach(async () => {
@@ -245,6 +252,612 @@ async function rewriteExecutionReport(
 }
 
 describe("requirement-bound effects execution audit", () => {
+  test("creates and audits policy-bound signed execution evidence", async () => {
+    const item = await fixture(),
+      approverDirectory = join(item.root, "approver-key"),
+      hostDirectory = join(item.root, "host-key"),
+      auditorDirectory = join(item.root, "auditor-key");
+    await generateEffectsAttestationKeyPair(approverDirectory);
+    await generateEffectsAttestationKeyPair(hostDirectory);
+    await generateEffectsAttestationKeyPair(auditorDirectory);
+    const publicKeys = await Promise.all(
+        [approverDirectory, hostDirectory, auditorDirectory].map(
+          async (directory) =>
+            JSON.parse(
+              await readFile(join(directory, "public-key.json"), "utf8"),
+            ) as {
+              keyId: string;
+              algorithm: "Ed25519";
+              publicKeySpki: string;
+            },
+        ),
+      ),
+      policyPath = join(item.root, "trust-policy.json"),
+      policy = {
+        format: "llang-effects-trust-policy",
+        version: 1,
+        id: "test.policy",
+        revision: 1,
+        keys: publicKeys
+          .map(({ keyId, algorithm, publicKeySpki }) => ({
+            keyId,
+            algorithm,
+            publicKeySpki,
+          }))
+          .sort((left, right) => left.keyId.localeCompare(right.keyId)),
+        roles: {
+          requirementApprovers: [publicKeys[0]?.keyId],
+          executionHosts: [publicKeys[1]?.keyId],
+          auditors: [publicKeys[2]?.keyId],
+        },
+        revokedKeyIds: [],
+        rules: {
+          distinctRoleKeys: true,
+          allowReviewRequired: false,
+          allowRecoveredExecution: false,
+        },
+      },
+      approvalPath = join(item.root, "approval.json"),
+      evidence = join(item.root, "signed-evidence"),
+      auditOutput = join(item.root, "signed-audit"),
+      packageOutput = join(item.root, "attestation-package");
+    await writeFile(policyPath, `${stableJson(policy)}\n`);
+    await createEffectsRequirementApproval({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      signingKeyPath: join(approverDirectory, "private-key.pem"),
+      outputPath: approvalPath,
+    });
+    const execution = await executeEffectsModuleBundle({
+      manifestPath: item.manifestPath,
+      grantPath: item.grantPath,
+      requirementsPath: item.requirementsPath,
+      approvalPath,
+      trustPolicyPath: policyPath,
+      hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+      outputDirectory: evidence,
+      execute: async () => 1n,
+    });
+    expect(execution.status).toBe("completed");
+    expect(
+      JSON.parse(
+        await readFile(join(evidence, "execution-attestation.json"), "utf8"),
+      ).artifactKind,
+    ).toBe("execution-attestation");
+    const failedEvidence = join(item.root, "signed-failed-evidence"),
+      failedExecution = await executeEffectsModuleBundle({
+        manifestPath: item.manifestPath,
+        grantPath: item.grantPath,
+        requirementsPath: item.requirementsPath,
+        approvalPath,
+        trustPolicyPath: policyPath,
+        hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+        outputDirectory: failedEvidence,
+        execute: async () => {
+          throw new Error("fixture failure");
+        },
+      }),
+      cancelledEvidence = join(item.root, "signed-cancelled-evidence"),
+      cancelledController = new AbortController();
+    cancelledController.abort(new Error("CANCELLED"));
+    const cancelledExecution = await executeEffectsModuleBundle({
+      manifestPath: item.manifestPath,
+      grantPath: item.grantPath,
+      requirementsPath: item.requirementsPath,
+      approvalPath,
+      trustPolicyPath: policyPath,
+      hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+      outputDirectory: cancelledEvidence,
+      signal: cancelledController.signal,
+      execute: async () => 1n,
+    });
+    expect(failedExecution.status).toBe("failed");
+    expect(cancelledExecution.status).toBe("cancelled");
+    for (const [directory, status] of [
+      [failedEvidence, "failed"],
+      [cancelledEvidence, "cancelled"],
+    ] as const) {
+      const signed = JSON.parse(
+        await readFile(join(directory, "execution-attestation.json"), "utf8"),
+      ) as { payload: { execution: { status: string } } };
+      expect(signed.payload.execution.status).toBe(status);
+    }
+    const audit = await auditEffectsExecution({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      evidenceDirectory: evidence,
+      trustPolicyPath: policyPath,
+      requireAttestation: true,
+      outputDirectory: auditOutput,
+    });
+    expect(audit.status).toBe("passed");
+    expect((audit.trust as { decision: string }).decision).toBe("trusted");
+    expect(
+      await readFile(join(auditOutput, "execution-attestation.json"), "utf8"),
+    ).toBe(
+      await readFile(join(evidence, "execution-attestation.json"), "utf8"),
+    );
+    await attestEffectsAudit({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      auditDirectory: auditOutput,
+      trustPolicyPath: policyPath,
+      signingKeyPath: join(auditorDirectory, "private-key.pem"),
+      outputDirectory: packageOutput,
+    });
+    const verification = await verifyEffectsAttestationPackage({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      packageDirectory: packageOutput,
+      trustPolicyPath: policyPath,
+    });
+    expect(verification).toMatchObject({
+      status: "trusted",
+      auditStatus: "passed",
+      semanticMeaning: "not-proven",
+      freshness: "not-proven",
+      antiReplay: "not-provided",
+      remoteAttestation: "not-provided",
+      apiCalls: 0,
+    });
+    const assuredSnapshot = await readVerifiedEffectsExecutionSnapshot(
+        item.manifestPath,
+      ),
+      assuredRequirements = await readEffectsRequirementContract(
+        item.requirementsPath,
+        assuredSnapshot.bundleIdentityHash,
+        assuredSnapshot.graph,
+      ),
+      boundaryPath = join(item.root, "trust-data-boundary.json"),
+      assuredApprovalPath = join(item.root, "assured-approval.json"),
+      assuredEvidence = join(item.root, "assured-evidence"),
+      assuredAudit = join(item.root, "assured-audit"),
+      assuredPackage = join(item.root, "assured-package"),
+      assuredSummary = join(item.root, "assured-summary"),
+      assuredSummaryCopy = join(item.root, "assured-summary-copy");
+    await writeFile(
+      boundaryPath,
+      `${stableJson({
+        format: "llang-effects-trust-boundary",
+        version: 1,
+        id: "test.boundary",
+        revision: 1,
+        requirements: {
+          id: assuredRequirements.document.id,
+          revision: assuredRequirements.document.revision,
+          commitmentHash: assuredRequirements.commitmentHash,
+        },
+        sources: [
+          {
+            id: "host-response",
+            operation: "host.echo@1",
+            responsePath: [],
+            classification: "untrusted-data",
+          },
+        ],
+        sinks: [
+          {
+            id: "host-request",
+            operation: "host.echo@1",
+            requestPath: [],
+            classification: "external-output",
+          },
+        ],
+        allowedFlows: [
+          {
+            source: "host-response",
+            sink: "host-request",
+            purpose: "fixture-roundtrip",
+          },
+        ],
+        rules: {
+          denyUnlistedFlows: true,
+          denyDataDerivedAuthority: true,
+          rawExternalDataInAudit: false,
+        },
+      })}\n`,
+    );
+    await createEffectsRequirementApproval({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      signingKeyPath: join(approverDirectory, "private-key.pem"),
+      outputPath: assuredApprovalPath,
+      trustBoundaryPath: boundaryPath,
+    });
+    const changedBoundaryPath = join(item.root, "changed-boundary.json"),
+      changedBoundary = JSON.parse(await readFile(boundaryPath, "utf8"));
+    changedBoundary.allowedFlows[0].purpose = "changed-purpose";
+    await writeFile(changedBoundaryPath, `${stableJson(changedBoundary)}\n`);
+    await expect(
+      executeEffectsModuleBundle({
+        manifestPath: item.manifestPath,
+        grantPath: item.grantPath,
+        requirementsPath: item.requirementsPath,
+        approvalPath: assuredApprovalPath,
+        trustPolicyPath: policyPath,
+        hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+        trustBoundaryPath: changedBoundaryPath,
+        outputDirectory: join(item.root, "changed-boundary-evidence"),
+        execute: async () => 7n,
+      }),
+    ).rejects.toThrow("EFFECTS_REQUIREMENT_APPROVAL_MISMATCH");
+    const assuredExecution = await executeEffectsModuleBundle({
+      manifestPath: item.manifestPath,
+      grantPath: item.grantPath,
+      requirementsPath: item.requirementsPath,
+      approvalPath: assuredApprovalPath,
+      trustPolicyPath: policyPath,
+      hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+      trustBoundaryPath: boundaryPath,
+      outputDirectory: assuredEvidence,
+      execute: async () => 7n,
+    });
+    expect(assuredExecution.version).toBe(4);
+    expect(assuredExecution).toMatchObject({
+      trustData: {
+        staticFlowStatus: "passed",
+        observedFlowStatus: "matched",
+        rawExternalDataRecorded: false,
+      },
+    });
+    const assuredAuditReport = await auditEffectsExecution({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      evidenceDirectory: assuredEvidence,
+      trustPolicyPath: policyPath,
+      requireAttestation: true,
+      outputDirectory: assuredAudit,
+    });
+    expect(assuredAuditReport.status).toBe("passed");
+    await attestEffectsAudit({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      auditDirectory: assuredAudit,
+      trustPolicyPath: policyPath,
+      signingKeyPath: join(auditorDirectory, "private-key.pem"),
+      outputDirectory: assuredPackage,
+    });
+    expect(
+      (
+        await verifyEffectsAttestationPackage({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          packageDirectory: assuredPackage,
+          trustPolicyPath: policyPath,
+        })
+      ).status,
+    ).toBe("trusted");
+    await explainEffectsAttestation({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      packageDirectory: assuredPackage,
+      trustPolicyPath: policyPath,
+      outputDirectory: assuredSummary,
+    });
+    expect(
+      await executeLlangCli([
+        "module",
+        "explain-attestation",
+        item.manifestPath,
+        "--requirements",
+        item.requirementsPath,
+        "--package",
+        assuredPackage,
+        "--trust-policy",
+        policyPath,
+        "--out-dir",
+        assuredSummaryCopy,
+        "--json",
+      ]),
+    ).toMatchObject({
+      exitCode: 0,
+      output: { status: "trusted", apiCalls: 0 },
+    });
+    for (const name of [
+      "attestation-summary.json",
+      "attestation-summary.md",
+      "program.inspection.ts",
+    ]) {
+      const original = await readFile(join(assuredSummary, name));
+      expect(original).toEqual(await readFile(join(assuredSummaryCopy, name)));
+      if (name !== "program.inspection.ts") {
+        expect(original.toString()).not.toContain("private-request-body");
+        expect(original.toString()).not.toContain(item.root);
+      }
+    }
+    await expect(
+      explainEffectsAttestation({
+        manifestPath: item.manifestPath,
+        requirementsPath: item.requirementsPath,
+        packageDirectory: assuredPackage,
+        trustPolicyPath: policyPath,
+        outputDirectory: join(assuredPackage, "overlapping-summary"),
+      }),
+    ).rejects.toThrow("EFFECTS_SUMMARY_OUTPUT_OVERLAP");
+    expect(
+      JSON.parse(
+        await readFile(
+          join(assuredSummary, "attestation-summary.json"),
+          "utf8",
+        ),
+      ),
+    ).toMatchObject({
+      verification: { status: "trusted", apiCalls: 0 },
+      trustData: {
+        authorityDerivation: "static-not-data-derived",
+        rawExternalDataRecorded: false,
+      },
+    });
+    const replacedPolicyPath = join(item.root, "replaced-policy.json");
+    await writeFile(
+      replacedPolicyPath,
+      `${stableJson({
+        ...policy,
+        rules: { ...policy.rules, allowReviewRequired: true },
+      })}\n`,
+    );
+    await expect(
+      verifyEffectsAttestationPackage({
+        manifestPath: item.manifestPath,
+        requirementsPath: item.requirementsPath,
+        packageDirectory: packageOutput,
+        trustPolicyPath: replacedPolicyPath,
+      }),
+    ).rejects.toThrow("EFFECTS_TRUST_POLICY_ROLLBACK");
+    const nextHostDirectory = join(item.root, "next-host-key");
+    await generateEffectsAttestationKeyPair(nextHostDirectory);
+    const nextHostPublic = JSON.parse(
+        await readFile(join(nextHostDirectory, "public-key.json"), "utf8"),
+      ) as {
+        keyId: string;
+        algorithm: "Ed25519";
+        publicKeySpki: string;
+      },
+      transitionPolicyPath = join(item.root, "transition-policy.json"),
+      transitionPolicy = {
+        ...policy,
+        revision: 2,
+        keys: [
+          ...policy.keys,
+          {
+            keyId: nextHostPublic.keyId,
+            algorithm: nextHostPublic.algorithm,
+            publicKeySpki: nextHostPublic.publicKeySpki,
+          },
+        ].sort((left, right) => left.keyId.localeCompare(right.keyId)),
+        roles: {
+          ...policy.roles,
+          executionHosts: [publicKeys[1]?.keyId, nextHostPublic.keyId].sort(),
+        },
+      };
+    await writeFile(transitionPolicyPath, `${stableJson(transitionPolicy)}\n`);
+    const transitionAudit = await auditEffectsExecution({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      evidenceDirectory: evidence,
+      trustPolicyPath: transitionPolicyPath,
+      requireAttestation: true,
+    });
+    expect(transitionAudit.status).toBe("passed");
+    expect(transitionAudit.trustDecision).toBe("trusted");
+    expect(
+      (
+        await verifyEffectsAttestationPackage({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          packageDirectory: packageOutput,
+          trustPolicyPath: transitionPolicyPath,
+        })
+      ).status,
+    ).toBe("trusted");
+    expect(
+      (
+        await verifyEffectsAttestationPackage({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          packageDirectory: assuredPackage,
+          trustPolicyPath: transitionPolicyPath,
+        })
+      ).status,
+    ).toBe("trusted");
+    const retiredPolicyPath = join(item.root, "retired-policy.json");
+    await writeFile(
+      retiredPolicyPath,
+      `${stableJson({
+        ...transitionPolicy,
+        revision: 3,
+        roles: {
+          ...transitionPolicy.roles,
+          executionHosts: [nextHostPublic.keyId],
+        },
+        revokedKeyIds: [publicKeys[1]?.keyId],
+      })}\n`,
+    );
+    expect(
+      await executeLlangCli([
+        "module",
+        "audit-execution",
+        item.manifestPath,
+        "--requirements",
+        item.requirementsPath,
+        "--evidence",
+        evidence,
+        "--trust-policy",
+        retiredPolicyPath,
+        "--require-attestation",
+        "--json",
+      ]),
+    ).toMatchObject({
+      exitCode: 1,
+      output: { trustDecision: "rejected" },
+    });
+    const relocated = join(item.root, "relocated-attestation");
+    await mkdir(relocated);
+    await Promise.all([
+      cp(join(item.root, "bundle"), join(relocated, "bundle"), {
+        recursive: true,
+      }),
+      cp(item.requirementsPath, join(relocated, "requirements.json")),
+      cp(policyPath, join(relocated, "trust-policy.json")),
+      cp(packageOutput, join(relocated, "package"), { recursive: true }),
+      cp(assuredPackage, join(relocated, "assured-package"), {
+        recursive: true,
+      }),
+    ]);
+    await rm(join(item.root, "main.llang.jsonc"));
+    expect(
+      (
+        await verifyEffectsAttestationPackage({
+          manifestPath: join(relocated, "bundle/module-build.json"),
+          requirementsPath: join(relocated, "requirements.json"),
+          packageDirectory: join(relocated, "package"),
+          trustPolicyPath: join(relocated, "trust-policy.json"),
+        })
+      ).status,
+    ).toBe("trusted");
+    expect(
+      (
+        await verifyEffectsAttestationPackage({
+          manifestPath: join(relocated, "bundle/module-build.json"),
+          requirementsPath: join(relocated, "requirements.json"),
+          packageDirectory: join(relocated, "assured-package"),
+          trustPolicyPath: join(relocated, "trust-policy.json"),
+        })
+      ).status,
+    ).toBe("trusted");
+    for (const name of [
+      "requirements-approval.json",
+      "execution-intent.json",
+      "effects-transcript.jsonl",
+      "effects-execution.json",
+      "execution-audit.json",
+    ]) {
+      const tamperedPackage = join(
+        item.root,
+        `tampered-${name.replaceAll(".", "-")}`,
+      );
+      await cp(packageOutput, tamperedPackage, { recursive: true });
+      await writeFile(join(tamperedPackage, name), " ", { flag: "a" });
+      await expect(
+        verifyEffectsAttestationPackage({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          packageDirectory: tamperedPackage,
+          trustPolicyPath: policyPath,
+        }),
+      ).rejects.toThrow();
+    }
+    for (const name of [
+      "program.inspection.ts",
+      "effects-transcript.jsonl",
+      "effects-execution.json",
+      "execution-intent.json",
+      "requirements-approval.json",
+      "issuance-trust-policy.json",
+      "execution-attestation.json",
+      "execution-audit.json",
+      "trust-data-boundary.json",
+      "static-provenance.json",
+      "audit-attestation.json",
+    ]) {
+      const tamperedPackage = join(
+        item.root,
+        `tampered-assured-${name.replaceAll(".", "-")}`,
+      );
+      await cp(assuredPackage, tamperedPackage, { recursive: true });
+      await writeFile(join(tamperedPackage, name), " ", { flag: "a" });
+      await expect(
+        verifyEffectsAttestationPackage({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          packageDirectory: tamperedPackage,
+          trustPolicyPath: policyPath,
+        }),
+      ).rejects.toThrow();
+    }
+    const rejectedSummaryPackage = join(item.root, "rejected-summary-package"),
+      rejectedSummaryOutput = join(item.root, "rejected-summary-output");
+    await cp(assuredPackage, rejectedSummaryPackage, { recursive: true });
+    await writeFile(
+      join(rejectedSummaryPackage, "trust-data-boundary.json"),
+      " ",
+      { flag: "a" },
+    );
+    expect(
+      await executeLlangCli([
+        "module",
+        "explain-attestation",
+        item.manifestPath,
+        "--requirements",
+        item.requirementsPath,
+        "--package",
+        rejectedSummaryPackage,
+        "--trust-policy",
+        policyPath,
+        "--out-dir",
+        rejectedSummaryOutput,
+        "--json",
+      ]),
+    ).toMatchObject({ exitCode: 2, output: { ok: false } });
+    await expect(readFile(rejectedSummaryOutput)).rejects.toThrow();
+    const forgedRecovery = join(item.root, "forged-recovery-evidence");
+    await cp(evidence, forgedRecovery, { recursive: true });
+    await rm(join(forgedRecovery, "execution-attestation.json"));
+    await rewriteExecutionReport(forgedRecovery, (report) => {
+      (report.grant as Record<string, unknown>).sourceHash = "0".repeat(64);
+    });
+    await writeFile(
+      join(forgedRecovery, "execution.lock"),
+      `${stableJson({
+        format: "llang-effects-execution-lock",
+        version: 1,
+        executionId: execution.executionId,
+        ownerToken: "forged-report",
+        pid: 2_147_483_647,
+        startedAt: (execution.timing as { startedAt: number }).startedAt,
+      })}\n`,
+    );
+    await expect(
+      recoverEffectsExecution(forgedRecovery, {
+        trustPolicyPath: policyPath,
+        hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+      }),
+    ).rejects.toThrow("INVALID_SIGNED_RECOVERY_REPORT");
+    await expect(
+      readFile(join(forgedRecovery, "execution-attestation.json")),
+    ).rejects.toThrow();
+    await rm(join(evidence, "execution-attestation.json"));
+    await writeFile(
+      join(evidence, "execution.lock"),
+      `${stableJson({
+        format: "llang-effects-execution-lock",
+        version: 1,
+        executionId: execution.executionId,
+        ownerToken: "crashed-after-report",
+        pid: 2_147_483_647,
+        startedAt: (execution.timing as { startedAt: number }).startedAt,
+      })}\n`,
+    );
+    await recoverEffectsExecution(evidence, {
+      trustPolicyPath: policyPath,
+      hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+    });
+    const recoveredAttestation = JSON.parse(
+      await readFile(join(evidence, "execution-attestation.json"), "utf8"),
+    ) as { payload: { phase: string } };
+    expect(recoveredAttestation.payload.phase).toBe("recovery-after-report");
+    expect(
+      (
+        await auditEffectsExecution({
+          manifestPath: item.manifestPath,
+          requirementsPath: item.requirementsPath,
+          evidenceDirectory: evidence,
+          trustPolicyPath: policyPath,
+          requireAttestation: true,
+        })
+      ).status,
+    ).toBe("passed");
+  }, 30_000);
   test("binds requirements before execution and publishes a portable audit", async () => {
     const item = await fixture(),
       evidence = join(item.root, "evidence"),
@@ -764,10 +1377,224 @@ describe("requirement-bound effects execution audit", () => {
     ).toContain("execution-recovery-consistency");
   });
 
+  test("signs an incomplete version 4 recovery without replay", async () => {
+    const item = await fixture(),
+      snapshot = await readVerifiedEffectsExecutionSnapshot(item.manifestPath),
+      requirements = requirementDocument(snapshot.bundleIdentityHash, {
+        terminalStatus: "incomplete",
+      }),
+      approverDirectory = join(item.root, "recovery-approver-key"),
+      hostDirectory = join(item.root, "recovery-host-key"),
+      auditorDirectory = join(item.root, "recovery-auditor-key"),
+      evidence = join(item.root, "signed-crash-evidence"),
+      counter = join(item.root, "signed-dispatch-count.txt"),
+      policyPath = join(item.root, "recovery-policy.json"),
+      approvalPath = join(item.root, "recovery-approval.json"),
+      boundaryPath = join(item.root, "recovery-boundary.json");
+    await writeFile(item.requirementsPath, JSON.stringify(requirements));
+    await generateEffectsAttestationKeyPair(approverDirectory);
+    await generateEffectsAttestationKeyPair(hostDirectory);
+    await generateEffectsAttestationKeyPair(auditorDirectory);
+    const publicKeys = await Promise.all(
+      [approverDirectory, hostDirectory, auditorDirectory].map(
+        async (directory) =>
+          JSON.parse(
+            await readFile(join(directory, "public-key.json"), "utf8"),
+          ) as {
+            keyId: string;
+            algorithm: "Ed25519";
+            publicKeySpki: string;
+          },
+      ),
+    );
+    await writeFile(
+      policyPath,
+      `${stableJson({
+        format: "llang-effects-trust-policy",
+        version: 1,
+        id: "test.recovery-policy",
+        revision: 1,
+        keys: publicKeys
+          .map(({ keyId, algorithm, publicKeySpki }) => ({
+            keyId,
+            algorithm,
+            publicKeySpki,
+          }))
+          .sort((left, right) => left.keyId.localeCompare(right.keyId)),
+        roles: {
+          requirementApprovers: [publicKeys[0]?.keyId],
+          executionHosts: [publicKeys[1]?.keyId],
+          auditors: [publicKeys[2]?.keyId],
+        },
+        revokedKeyIds: [],
+        rules: {
+          distinctRoleKeys: true,
+          allowReviewRequired: false,
+          allowRecoveredExecution: true,
+        },
+      })}\n`,
+    );
+    const parsedRequirements = await readEffectsRequirementContract(
+      item.requirementsPath,
+      snapshot.bundleIdentityHash,
+      snapshot.graph,
+    );
+    await writeFile(
+      boundaryPath,
+      `${stableJson({
+        format: "llang-effects-trust-boundary",
+        version: 1,
+        id: "test.recovery-boundary",
+        revision: 1,
+        requirements: {
+          id: parsedRequirements.document.id,
+          revision: parsedRequirements.document.revision,
+          commitmentHash: parsedRequirements.commitmentHash,
+        },
+        sources: [
+          {
+            id: "host-response",
+            operation: "host.echo@1",
+            responsePath: [],
+            classification: "untrusted-data",
+          },
+        ],
+        sinks: [
+          {
+            id: "host-request",
+            operation: "host.echo@1",
+            requestPath: [],
+            classification: "external-output",
+          },
+        ],
+        allowedFlows: [
+          {
+            source: "host-response",
+            sink: "host-request",
+            purpose: "fixture-roundtrip",
+          },
+        ],
+        rules: {
+          denyUnlistedFlows: true,
+          denyDataDerivedAuthority: true,
+          rawExternalDataInAudit: false,
+        },
+      })}\n`,
+    );
+    await createEffectsRequirementApproval({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      signingKeyPath: join(approverDirectory, "private-key.pem"),
+      outputPath: approvalPath,
+      trustBoundaryPath: boundaryPath,
+    });
+    const childProcess = Bun.spawn(
+      [
+        process.execPath,
+        join(import.meta.dir, "llang-effects-execution-crash-fixture.ts"),
+        item.manifestPath,
+        item.grantPath,
+        evidence,
+        counter,
+        item.requirementsPath,
+        approvalPath,
+        policyPath,
+        join(hostDirectory, "private-key.pem"),
+        boundaryPath,
+      ],
+      { cwd: process.cwd(), stdout: "pipe", stderr: "pipe" },
+    );
+    expect(await childProcess.exited).not.toBe(0);
+    expect(await new Response(childProcess.stderr).text()).toBe("");
+    const recovered = await recoverEffectsExecution(evidence, {
+      trustPolicyPath: policyPath,
+      hostSigningKeyPath: join(hostDirectory, "private-key.pem"),
+    });
+    expect(recovered).toMatchObject({
+      version: 4,
+      status: "incomplete",
+      recovery: { replayedOperations: 0 },
+      trustData: { observedFlowStatus: "incomplete" },
+    });
+    expect(await readFile(counter, "utf8")).toBe("1");
+    const attestation = JSON.parse(
+      await readFile(join(evidence, "execution-attestation.json"), "utf8"),
+    ) as { payload: { phase: string } };
+    expect(attestation.payload.phase).toBe("recovery-incomplete");
+    const acceptedRecovery = await auditEffectsExecution({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      evidenceDirectory: evidence,
+      trustPolicyPath: policyPath,
+      requireAttestation: true,
+    });
+    expect(acceptedRecovery.status).toBe("passed");
+    expect(acceptedRecovery.trustDecision).toBe("trusted");
+    const rejectRecoveredPolicy = join(
+      item.root,
+      "reject-recovered-policy.json",
+    );
+    await writeFile(
+      rejectRecoveredPolicy,
+      `${stableJson({
+        format: "llang-effects-trust-policy",
+        version: 1,
+        id: "test.recovery-policy",
+        revision: 2,
+        keys: publicKeys
+          .map(({ keyId, algorithm, publicKeySpki }) => ({
+            keyId,
+            algorithm,
+            publicKeySpki,
+          }))
+          .sort((left, right) => left.keyId.localeCompare(right.keyId)),
+        roles: {
+          requirementApprovers: [publicKeys[0]?.keyId],
+          executionHosts: [publicKeys[1]?.keyId],
+          auditors: [publicKeys[2]?.keyId],
+        },
+        revokedKeyIds: [],
+        rules: {
+          distinctRoleKeys: true,
+          allowReviewRequired: false,
+          allowRecoveredExecution: false,
+        },
+      })}\n`,
+    );
+    const rejectedRecovery = await auditEffectsExecution({
+      manifestPath: item.manifestPath,
+      requirementsPath: item.requirementsPath,
+      evidenceDirectory: evidence,
+      trustPolicyPath: rejectRecoveredPolicy,
+      requireAttestation: true,
+    });
+    expect(rejectedRecovery.status).toBe("passed");
+    expect(rejectedRecovery.auditStatus).toBe("passed");
+    expect(rejectedRecovery.trustDecision).toBe("rejected");
+  });
+
   test("exposes strict CLI execution and audit options", async () => {
     const item = await fixture(),
       evidence = join(item.root, "cli-evidence"),
-      auditOutput = join(item.root, "cli-audit");
+      auditOutput = join(item.root, "cli-audit"),
+      partialOutput = join(item.root, "partial-signed-evidence");
+    expect(
+      await executeLlangCli([
+        "module",
+        "execute",
+        item.manifestPath,
+        "--grant",
+        item.grantPath,
+        "--requirements",
+        item.requirementsPath,
+        "--approval",
+        join(item.root, "unused-approval.json"),
+        "--out-dir",
+        partialOutput,
+        "--json",
+      ]),
+    ).toMatchObject({ exitCode: 2, output: { ok: false } });
+    await expect(readFile(partialOutput)).rejects.toThrow();
     expect(
       await executeLlangCli([
         "module",

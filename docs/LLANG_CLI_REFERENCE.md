@@ -35,6 +35,11 @@
 | module execute | JSON | 実行完了と証跡report公開 | failed/cancelled/incompleteの有効な証跡 | preflight・grant・出力・証跡I/O等 |
 | module audit-execution | JSON | passedまたはreview-required | 機械的不一致を示すfailed report | 不正入力・未対応version・出力・I/O等 |
 | module recover-execution | JSON | 使用しない | crash後のincomplete report公開 | live owner・改変・既存report・I/O等 |
+| module attestation-keygen | JSON | Ed25519鍵pairを新規作成 | 使用しない | 既存出力・権限・I/O等 |
+| module approve-requirements | JSON | 要求承認署名を新規作成 | 使用しない | bundle・要求・鍵・出力不正 |
+| module attest-audit | JSON | 監査者署名付きpackageを新規作成 | 使用しない | role・署名・監査・出力不正 |
+| module verify-attestation | JSON | 全chainと現行policyがtrusted | policy判定がrejected | 改変・role・policy・I/O等 |
+| module explain-attestation | JSON | 検証済みpackageから決定的summaryを新規作成 | packageのtrust判定がrejected | 改変・role・policy・出力・I/O等 |
 
 正常なbooleanの`false`はCLIエラーとは別。`test`の期待値不一致は終了1、実行障害は終了2なので、reportと終了値を併せて読む。
 
@@ -46,9 +51,13 @@ bun run llang module build <entry.ts|entry.llang.jsonc> --root <root> --entry <e
 bun run llang module test <entry.ts|entry.llang.jsonc> --root <root> --entry <export> --suite <suite.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1] --json
 bun run llang module verify <module-build.json> --suite <suite.json> --json
 bun run llang module inspect <module-build.json> [--out-dir <new-directory>] --json
-bun run llang module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-evidence-directory> [--requirements <effects-requirements.json>] [--credential-env <mapping.json>] --json
-bun run llang module audit-execution <module-build.json> --requirements <effects-requirements.json> --evidence <evidence-directory> [--out-dir <new-audit-directory>] --json
-bun run llang module recover-execution <evidence-directory> --json
+bun run llang module attestation-keygen <new-key-directory>
+bun run llang module approve-requirements <module-build.json> --requirements <effects-requirements.json> --signing-key <private-key.pem> --out <approval.json>
+bun run llang module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-evidence-directory> [--requirements <effects-requirements.json>] [--approval <approval.json> --trust-policy <policy.json> --host-signing-key <private-key.pem>] [--credential-env <mapping.json>] --json
+bun run llang module audit-execution <module-build.json> --requirements <effects-requirements.json> --evidence <evidence-directory> [--trust-policy <policy.json>] [--require-attestation] [--out-dir <new-audit-directory>] --json
+bun run llang module recover-execution <evidence-directory> [--trust-policy <policy.json> --host-signing-key <private-key.pem>] --json
+bun run llang module attest-audit <module-build.json> --requirements <effects-requirements.json> --audit <audit-directory> --trust-policy <policy.json> --signing-key <private-key.pem> --out-dir <new-package-directory>
+bun run llang module verify-attestation <module-build.json> --requirements <effects-requirements.json> --package <package-directory> --trust-policy <policy.json>
 ```
 
 `module-bool-v1`の型付き関数・複数moduleに加え、`module-value-v1`はi32、string、record、tagged union等、`module-collection-v1`はList・loop・closure等を扱う。`module-effects-v1`は互換用の線形i32形式と、bytes／i64／f64／decimal、await／task／stream、file／HTTP専用nodeを持つtyped graph形式を扱う。graphはTS/JSONCを相互にimportでき、全TS・全JSONC・混在2方向からTypeScript/JSONC/Wasmを生成する。version 5 suiteは旧i32 replayに加え、`mode: "typed"`でoperation、version、canonical request/responseと最終値をreplayする。lint/build/testのentryはroot相対、verifyのmanifestとsuiteはcwd相対である。pure profileのtestはreference evaluator、生成TypeScript、再生成JSONC、Wasmを同じ固定suiteで比較する。buildは既存出力directoryを上書きせず、manifestを最後に公開する。詳細は[Typed modules Phase 1仕様](./LLANG_MODULE_SPEC.md)、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)、[Collection仕様](./LLANG_MODULE_COLLECTION_SPEC.md)、[Effects仕様](./LLANG_MODULE_EFFECTS_SPEC.md)を参照。
@@ -61,9 +70,25 @@ bun run llang module recover-execution <evidence-directory> --json
 
 `--requirements`を指定すると、format `llang-effects-requirements` version 1の要求契約をbundle identityへ固定し、実grantが契約のoperation、file、HTTP、wall clock、deadline、resource上限を超えないことをdispatch前に検査する。この経路は要求IDと契約hashを持つversion 2 intent/reportを作る。未指定時はversion 1証跡を維持する。要求本文は実行証跡へ複製しない。
 
-`module audit-execution`は要求契約付きversion 2証跡だけを対象に、bundle、要求契約、intent、transcript、reportのidentity/hash chain、grant上限、binding、terminal statusを再検査する。Wasm、生成TypeScript、adapter、networkは実行しない。`passed`は機械検査成功、`review-required`は必須manual項目あり、`failed`は機械的不一致を意味する。いずれも自然言語の意味、業務的正しさ、発行者の真正性を証明しない。`--out-dir`指定時は検査済みprojection、transcript、execution reportと`execution-audit.json`を新規directoryへ保存する。
+`--approval`、`--trust-policy`、`--host-signing-key`を三つとも指定するとversion 3署名modeになる。一部だけの指定はdispatch前に拒否する。承認署名、発行時policy、host roleを検証し、承認とpolicyの正確なbytesを証跡へ保持して、Ed25519の`execution-attestation.json`をreport公開後に作る。
 
-`module recover-execution`はlive ownerがいない未完了directoryだけを処理し、hash chainを検査してresponseのないrequestを`certainty: "unknown"`とした終了1のreportを作る。operationの再送、Wasmの再開、file commitは行わない。既存の最終reportは上書きしない。
+`module audit-execution`は要求契約付きversion 2または3証跡を対象に、bundle、要求契約、intent、transcript、reportのidentity/hash chain、grant上限、binding、terminal statusを再検査する。version 3では外部から指定した現行policyだけをtrust rootとし、同梱した発行時policy、承認者・host署名、rotation/revocation、policy ruleも検査する。Wasm、生成TypeScript、adapter、networkは実行しない。署名は自然言語の意味や業務的正しさを証明しない。
+
+`attest-audit`は自己完結した監査directoryを再検査し、全file hashと監査状態を監査者鍵で署名した新規packageを作る。`verify-attestation`はbundleと要求、三つの署名、全hash、role、現行policy ruleをofflineで再検査する。package内のpolicyを現在のtrust rootへ昇格させない。
+
+`module recover-execution`はlive ownerがいない未完了directoryだけを処理し、hash chainを検査してresponseのないrequestを`certainty: "unknown"`とした終了1のreportを作る。operationの再送、Wasmの再開、file commitは行わない。version 3では`recovery-incomplete`を署名し、reportだけが残った場合はreportを変更せず`recovery-after-report`署名だけを補完する。version 1/2の既存report拒否は維持する。
+
+`approve-requirements`と`execute`へ`--trust-boundary <boundary.json>`を加えると、boundaryを要求承認へ固定したexecution version 4を使用する。boundary指定時はrequirements、approval、trust policy、host signing keyをすべて必要とする。version 4は`trust-data-boundary.json`と`static-provenance.json`を証跡・監査・最終packageへ含める。
+
+```sh
+bun run llang module explain-attestation <module-build.json> \
+  --requirements <effects-requirements.json> \
+  --package <attestation-package> \
+  --trust-policy <current-policy.json> \
+  --out-dir <new-summary-directory> --json
+```
+
+`explain-attestation`はfull-chain検証に成功したpackageだけから、`attestation-summary.json`、`attestation-summary.md`、検査済み`program.inspection.ts`を新規directoryへ出力する。LLM、Wasm、projection、adapter、network、credentialを実行せず、外部data本文や秘密値をsummaryへ複製しない。
 
 ## lint
 

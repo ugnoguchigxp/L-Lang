@@ -3,7 +3,7 @@ import type { FileHandle } from "node:fs/promises";
 import type { TypedEffectsRuntimeRecorder } from "./llang-effects-typed-runtime";
 import { classifyIoError } from "./llang-effects-session";
 import { fingerprintFor, sha256, stableJson } from "./stable-hash";
-import { readStableRegularFile } from "./llang-effects-stable-file";
+import { readStableRegularFileSnapshot } from "./llang-effects-stable-file";
 
 export const EFFECTS_TRANSCRIPT_GENESIS = sha256("llang-effects-transcript-v1");
 
@@ -302,11 +302,12 @@ export function parseEffectsTranscript(
 }
 
 export async function readEffectsTranscript(path: string) {
-  const bytes = await readStableRegularFile(
-    path,
-    16 * 1024 * 1024,
-    "INVALID_EFFECTS_TRANSCRIPT_FILE",
-  );
+  const snapshot = await readStableRegularFileSnapshot(
+      path,
+      16 * 1024 * 1024,
+      "INVALID_EFFECTS_TRANSCRIPT_FILE",
+    ),
+    bytes = snapshot.bytes;
   const events = parseEffectsTranscript(
     new TextDecoder("utf-8", { fatal: true }).decode(bytes),
   );
@@ -315,5 +316,6 @@ export async function readEffectsTranscript(path: string) {
     bytes: bytes.length,
     hash: sha256(bytes),
     finalHash: events.at(-1)?.eventHash ?? EFFECTS_TRANSCRIPT_GENESIS,
+    fileIdentity: Object.freeze({ dev: snapshot.dev, ino: snapshot.ino }),
   });
 }

@@ -1,7 +1,10 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
+import {
+  inspectEffectsModuleBundle,
+  readVerifiedEffectsExecutionSnapshot,
+} from "./llang-effects-bundle-inspection";
 import { auditEffectsExecution } from "./llang-effects-execution-audit";
 import { executeEffectsModuleBundle } from "./llang-effects-execution-evidence";
 import {
@@ -18,6 +21,15 @@ import {
 } from "./llang-effects-wasm";
 import { LocalFileAdapter } from "./llang-io-file-adapter";
 import { buildEffectsModuleProgram } from "./llang-module-effects-build";
+import { generateEffectsAttestationKeyPair } from "./llang-effects-attestation-crypto";
+import { createEffectsRequirementApproval } from "./llang-effects-requirement-approval";
+import {
+  attestEffectsAudit,
+  verifyEffectsAttestationPackage,
+} from "./llang-effects-audit-attestation";
+import { stableJson } from "./stable-hash";
+import { readEffectsRequirementContract } from "./llang-effects-requirement-contract";
+import { explainEffectsAttestation } from "./llang-effects-attestation-summary";
 
 const emitted = emitLinearEffectsWasm({
     initial: 2,
@@ -101,6 +113,7 @@ const root = await mkdtemp(join(tmpdir(), "llang-effects-smoke-"));
 let bundleIdentityHash = "";
 let executionEvidenceHash = "";
 let executionAuditHash = "";
+let signedAttestationAuditHash = "";
 try {
   const files = await LocalFileAdapter.create(root),
     handle = await files.openWrite("result.bin", { replace: false }),
@@ -248,6 +261,171 @@ try {
   executionAuditHash = String(
     (audit.authenticity as Record<string, unknown>).auditHash,
   );
+  const approverKey = join(root, "approver-key"),
+    hostKey = join(root, "host-key"),
+    auditorKey = join(root, "auditor-key");
+  await generateEffectsAttestationKeyPair(approverKey);
+  await generateEffectsAttestationKeyPair(hostKey);
+  await generateEffectsAttestationKeyPair(auditorKey);
+  const publicKeys = await Promise.all(
+      [approverKey, hostKey, auditorKey].map(
+        async (directory) =>
+          JSON.parse(
+            await readFile(join(directory, "public-key.json"), "utf8"),
+          ) as {
+            keyId: string;
+            algorithm: "Ed25519";
+            publicKeySpki: string;
+          },
+      ),
+    ),
+    trustPolicyPath = join(root, "trust-policy.json"),
+    approvalPath = join(root, "requirements-approval.json"),
+    boundaryPath = join(root, "trust-data-boundary.json");
+  await writeFile(
+    trustPolicyPath,
+    `${stableJson({
+      format: "llang-effects-trust-policy",
+      version: 1,
+      id: "smoke.policy",
+      revision: 1,
+      keys: publicKeys
+        .map(({ keyId, algorithm, publicKeySpki }) => ({
+          keyId,
+          algorithm,
+          publicKeySpki,
+        }))
+        .sort((left, right) => left.keyId.localeCompare(right.keyId)),
+      roles: {
+        requirementApprovers: [publicKeys[0]?.keyId],
+        executionHosts: [publicKeys[1]?.keyId],
+        auditors: [publicKeys[2]?.keyId],
+      },
+      revokedKeyIds: [],
+      rules: {
+        distinctRoleKeys: true,
+        allowReviewRequired: false,
+        allowRecoveredExecution: false,
+      },
+    })}\n`,
+  );
+  const assuredSnapshot = await readVerifiedEffectsExecutionSnapshot(
+      join(root, "inspection-bundle/module-build.json"),
+    ),
+    assuredRequirements = await readEffectsRequirementContract(
+      join(root, "execution-requirements.json"),
+      assuredSnapshot.bundleIdentityHash,
+      assuredSnapshot.graph,
+    ),
+    operations = [
+      ...new Set(
+        assuredSnapshot.graph.program.nodes.flatMap((node) =>
+          node.kind === "task"
+            ? node.tasks.map((task) => `${task.operation}@${task.version}`)
+            : [`${node.operation}@${node.version}`],
+        ),
+      ),
+    ].sort(),
+    sources = operations.map((operation, index) => ({
+      id: `source-${index}`,
+      operation,
+      responsePath: [],
+      classification: "untrusted-data",
+    })),
+    sinks = operations.map((operation, index) => ({
+      id: `sink-${index}`,
+      operation,
+      requestPath: [],
+      classification: "external-output",
+    }));
+  await writeFile(
+    boundaryPath,
+    `${stableJson({
+      format: "llang-effects-trust-boundary",
+      version: 1,
+      id: "smoke.boundary",
+      revision: 1,
+      requirements: {
+        id: assuredRequirements.document.id,
+        revision: assuredRequirements.document.revision,
+        commitmentHash: assuredRequirements.commitmentHash,
+      },
+      sources,
+      sinks,
+      allowedFlows: sources
+        .flatMap((source) =>
+          sinks.map((sink) => ({
+            source: source.id,
+            sink: sink.id,
+            purpose: "smoke-flow",
+          })),
+        )
+        .sort((left, right) =>
+          `${left.source}\0${left.sink}\0${left.purpose}`.localeCompare(
+            `${right.source}\0${right.sink}\0${right.purpose}`,
+          ),
+        ),
+      rules: {
+        denyUnlistedFlows: true,
+        denyDataDerivedAuthority: true,
+        rawExternalDataInAudit: false,
+      },
+    })}\n`,
+  );
+  await createEffectsRequirementApproval({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    signingKeyPath: join(approverKey, "private-key.pem"),
+    outputPath: approvalPath,
+    trustBoundaryPath: boundaryPath,
+  });
+  const signedExecution = await executeEffectsModuleBundle({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    grantPath: join(root, "execution-grant.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    approvalPath,
+    trustPolicyPath,
+    hostSigningKeyPath: join(hostKey, "private-key.pem"),
+    trustBoundaryPath: boundaryPath,
+    outputDirectory: join(root, "signed-execution-evidence"),
+    execute: async () => 42n,
+  });
+  if (signedExecution.status !== "completed" || signedExecution.version !== 4)
+    throw new Error("signed effects execution smoke mismatch");
+  const signedAudit = await auditEffectsExecution({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    evidenceDirectory: join(root, "signed-execution-evidence"),
+    trustPolicyPath,
+    requireAttestation: true,
+    outputDirectory: join(root, "signed-execution-audit"),
+  });
+  if (signedAudit.status !== "passed")
+    throw new Error("signed effects audit smoke mismatch");
+  await attestEffectsAudit({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    auditDirectory: join(root, "signed-execution-audit"),
+    trustPolicyPath,
+    signingKeyPath: join(auditorKey, "private-key.pem"),
+    outputDirectory: join(root, "signed-attestation-package"),
+  });
+  const signedVerification = await verifyEffectsAttestationPackage({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    packageDirectory: join(root, "signed-attestation-package"),
+    trustPolicyPath,
+  });
+  if (signedVerification.status !== "trusted")
+    throw new Error("signed effects package smoke mismatch");
+  await explainEffectsAttestation({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    packageDirectory: join(root, "signed-attestation-package"),
+    trustPolicyPath,
+    outputDirectory: join(root, "attestation-summary"),
+  });
+  signedAttestationAuditHash = String(signedVerification.auditHash);
 } finally {
   await rm(root, { recursive: true, force: true });
 }
@@ -265,5 +443,6 @@ console.log(
     bundleIdentityHash,
     executionEvidenceHash,
     executionAuditHash,
+    signedAttestationAuditHash,
   }),
 );

@@ -9,6 +9,10 @@ const [
   outputDirectory,
   counterPath,
   requirementsPath,
+  approvalPath,
+  trustPolicyPath,
+  hostSigningKeyPath,
+  trustBoundaryPath,
 ] = process.argv;
 if (!manifestPath || !grantPath || !outputDirectory || !counterPath)
   throw new Error("INVALID_CRASH_FIXTURE_ARGUMENTS");
@@ -18,6 +22,10 @@ await executeEffectsModuleBundle({
   grantPath,
   outputDirectory,
   ...(requirementsPath ? { requirementsPath } : {}),
+  ...(approvalPath ? { approvalPath } : {}),
+  ...(trustPolicyPath ? { trustPolicyPath } : {}),
+  ...(hostSigningKeyPath ? { hostSigningKeyPath } : {}),
+  ...(trustBoundaryPath ? { trustBoundaryPath } : {}),
   execute: async () => {
     const current = Number(
       await readFile(counterPath, "utf8").catch(() => "0"),

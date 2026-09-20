@@ -312,7 +312,7 @@ coverageとUbuntu、macOS、Windowsは既存CI matrixで確認し、ローカル
 - SAAAの受け入れ・配備API、実domain、実利用者を使う評価。
 - exactly-once、外部副作用rollback、分散transaction。
 
-次の実装候補は、今回完成させるchain全体を署名対象にする「署名付き監査attestation」です。要求契約を結ぶ前にexecution reportだけを署名すると、発行主体は示せても「何を頼んだ実行か」が署名対象から欠けるため、この順序にします。
+次の実装候補は、今回完成させるchain全体を署名対象にする[Effects署名付きattestationとtrust policy](./EFFECTS_SIGNED_ATTESTATION_IMPLEMENTATION_PLAN.md)です。要求契約を結ぶ前にexecution reportだけを署名すると、発行主体は示せても「何を頼んだ実行か」が署名対象から欠けるため、この順序にします。
 
 ## コンセプト全体の現在地
 

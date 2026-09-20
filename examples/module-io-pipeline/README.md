@@ -50,6 +50,39 @@ an upper bound, not a grant. The audit exits successfully for both `passed` and
 status. A passed audit confirms structural and integrity checks, not the natural
 language meaning or publisher identity.
 
+For a local three-role signed fixture, generate three independent keys and a
+strict policy. The helper reads only the generated public-key documents; no
+private key is copied into the policy.
+
+```sh
+bun run llang module attestation-keygen artifacts/keys/approver
+bun run llang module attestation-keygen artifacts/keys/host
+bun run llang module attestation-keygen artifacts/keys/auditor
+bun run examples/module-io-pipeline/create-attestation-policy.ts artifacts/trust-policy.json artifacts/keys/approver/public-key.json artifacts/keys/host/public-key.json artifacts/keys/auditor/public-key.json
+bun run llang module approve-requirements artifacts/module-io-inspection-bundle/module-build.json --requirements effects-requirements.json --signing-key artifacts/keys/approver/private-key.pem --out artifacts/requirements-approval.json
+bun run llang module execute artifacts/module-io-inspection-bundle/module-build.json --grant effects-grant.json --requirements effects-requirements.json --approval artifacts/requirements-approval.json --trust-policy artifacts/trust-policy.json --host-signing-key artifacts/keys/host/private-key.pem --out-dir artifacts/signed-execution --json
+bun run llang module audit-execution artifacts/module-io-inspection-bundle/module-build.json --requirements effects-requirements.json --evidence artifacts/signed-execution --trust-policy artifacts/trust-policy.json --require-attestation --out-dir artifacts/signed-audit --json
+bun run llang module attest-audit artifacts/module-io-inspection-bundle/module-build.json --requirements effects-requirements.json --audit artifacts/signed-audit --trust-policy artifacts/trust-policy.json --signing-key artifacts/keys/auditor/private-key.pem --out-dir artifacts/attestation-package
+bun run llang module verify-attestation artifacts/module-io-inspection-bundle/module-build.json --requirements effects-requirements.json --package artifacts/attestation-package --trust-policy artifacts/trust-policy.json
+```
+
+Use throwaway keys only for this local fixture. Production rotation,
+revocation, backup, key loss, and Windows ACL handling are described in the
+[key runbook](../../docs/EFFECTS_ATTESTATION_KEY_RUNBOOK.md).
+
+For Effects assurance core v1, create a trust/data boundary after the
+requirements contract. The helper emits a conservative draft that permits all
+operation pairs; a domain owner must remove unnecessary flows before approval.
+
+```sh
+bun run examples/module-io-pipeline/create-trust-boundary.ts artifacts/module-io-inspection-bundle/module-build.json effects-requirements.json artifacts/trust-data-boundary.json
+```
+
+Pass the same `--trust-boundary` to `approve-requirements` and `execute` to
+create version 4 evidence. After `attest-audit`, `module explain-attestation`
+can render deterministic JSON and Markdown summaries without copying external
+data bodies or credentials.
+
 This is the current operational starting point: local files and deterministic
 fixtures require no external credentials, while HTTP access is granted by the
 embedding host. The example is not a soak, TLS deployment, or performance
