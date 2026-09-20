@@ -1,6 +1,8 @@
 import { link, lstat, open, unlink } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
+import { assertEffectsGrantSummaryShape } from "./llang-effects-requirement-contract";
+import { decodeUtf8, parseStrictJsonObject } from "./llang-jsonc";
 import { fingerprintFor, sha256, stableJson } from "./stable-hash";
 import { readEffectsTranscript } from "./llang-effects-transcript-writer";
 import {
@@ -9,6 +11,10 @@ import {
 } from "./llang-effects-stable-file";
 
 const HASH = /^[0-9a-f]{64}$/;
+const ID = /^[a-z][a-z0-9]*(?:[._/-][a-z0-9]+)*$/;
+const HEADER = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+const object = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
 const exact = (value: Record<string, unknown>, keys: readonly string[]) =>
   Object.keys(value).length === keys.length &&
   Object.keys(value).every((key) => keys.includes(key));
@@ -19,7 +25,10 @@ const regularBytes = (path: string, maximum = 16 * 1024 * 1024) =>
 const jsonObject = (bytes: Uint8Array): Record<string, unknown> => {
   let value: unknown;
   try {
-    value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    value = parseStrictJsonObject(
+      decodeUtf8(bytes, "execution evidence"),
+      "execution evidence",
+    );
   } catch {
     throw new Error("INVALID_EXECUTION_EVIDENCE_JSON");
   }
@@ -108,9 +117,12 @@ export async function recoverEffectsExecution(
     lockBytes = lockSnapshot.bytes;
   const intent = jsonObject(intentBytes),
     lock = jsonObject(lockBytes),
-    lockHash = sha256(lockBytes);
-  if (
-    !exact(intent, [
+    lockHash = sha256(lockBytes),
+    intentVersion = intent.version,
+    requirementBinding = object(intent.requirements)
+      ? intent.requirements
+      : undefined,
+    intentKeys = [
       "format",
       "version",
       "executionId",
@@ -122,9 +134,12 @@ export async function recoverEffectsExecution(
       "deadlineMs",
       "credentialInjection",
       "credentialHeaderNames",
-    ]) ||
+      ...(intentVersion === 2 ? ["grantSummary", "requirements"] : []),
+    ];
+  if (
+    !exact(intent, intentKeys) ||
     intent.format !== "llang-effects-execution-intent" ||
-    intent.version !== 1 ||
+    (intentVersion !== 1 && intentVersion !== 2) ||
     typeof intent.executionId !== "string" ||
     !intent.executionId ||
     !HASH.test(String(intent.bundleIdentityHash)) ||
@@ -133,15 +148,41 @@ export async function recoverEffectsExecution(
     !HASH.test(String(intent.bundledWasmHash)) ||
     typeof intent.startedAt !== "number" ||
     !Number.isFinite(intent.startedAt) ||
+    intent.startedAt < 0 ||
     !Number.isSafeInteger(intent.deadlineMs) ||
     Number(intent.deadlineMs) < 1 ||
+    Number(intent.deadlineMs) > 86_400_000 ||
     !["host-provided-not-recorded", "not-needed"].includes(
       String(intent.credentialInjection),
     ) ||
     !Array.isArray(intent.credentialHeaderNames) ||
     !intent.credentialHeaderNames.every(
-      (item) => typeof item === "string" && item.length > 0,
+      (item) =>
+        typeof item === "string" &&
+        item === item.toLowerCase() &&
+        HEADER.test(item),
     ) ||
+    intent.credentialHeaderNames.length !==
+      new Set(intent.credentialHeaderNames).size ||
+    intent.credentialHeaderNames.join("\0") !==
+      [...intent.credentialHeaderNames].sort().join("\0") ||
+    (intentVersion === 2 &&
+      (!object(intent.grantSummary) ||
+        !requirementBinding ||
+        !exact(requirementBinding, [
+          "id",
+          "revision",
+          "sourceHash",
+          "commitmentHash",
+          "authorityCommitmentHash",
+        ]) ||
+        typeof requirementBinding.id !== "string" ||
+        !ID.test(requirementBinding.id) ||
+        !Number.isSafeInteger(requirementBinding.revision) ||
+        Number(requirementBinding.revision) < 1 ||
+        !HASH.test(String(requirementBinding.sourceHash)) ||
+        !HASH.test(String(requirementBinding.commitmentHash)) ||
+        !HASH.test(String(requirementBinding.authorityCommitmentHash)))) ||
     !exact(lock, [
       "format",
       "version",
@@ -162,6 +203,7 @@ export async function recoverEffectsExecution(
     !Number.isFinite(lock.startedAt)
   )
     throw new Error("INVALID_EXECUTION_EVIDENCE_OWNER");
+  if (intentVersion === 2) assertEffectsGrantSummaryShape(intent.grantSummary);
   if (processIsLive(lock.pid)) throw new Error("EXECUTION_OWNER_IS_LIVE");
 
   const pending = new Map<string, string>();
@@ -174,7 +216,7 @@ export async function recoverEffectsExecution(
   const recoveredAt = Date.now(),
     base = {
       format: "llang-effects-execution",
-      version: 1,
+      version: intentVersion,
       executionId: intent.executionId,
       status: "incomplete",
       recovered: true,
@@ -188,7 +230,28 @@ export async function recoverEffectsExecution(
       grant: {
         sourceHash: intent.grantSourceHash,
         commitmentHash: intent.grantCommitmentHash,
+        ...(intentVersion === 2 ? { summary: intent.grantSummary } : {}),
       },
+      ...(intentVersion === 2 && requirementBinding
+        ? {
+            requirements: {
+              status: "bound",
+              id: requirementBinding.id,
+              revision: requirementBinding.revision,
+              sourceHash: requirementBinding.sourceHash,
+              commitmentHash: requirementBinding.commitmentHash,
+              authorityCommitmentHash:
+                requirementBinding.authorityCommitmentHash,
+              bundleIdentityHash: intent.bundleIdentityHash,
+              semanticMeaning: "not-proven",
+            },
+            authority: {
+              ceilingCommitmentHash: requirementBinding.authorityCommitmentHash,
+              grantWithinCeiling: true,
+              exceededRules: [],
+            },
+          }
+        : {}),
       transcript: {
         format: "llang-effects-transcript",
         version: 1,
@@ -217,7 +280,11 @@ export async function recoverEffectsExecution(
         replayedOperations: 0,
       },
       credential: {
-        status: intent.credentialInjection,
+        status:
+          intentVersion === 2 &&
+          intent.credentialInjection === "host-provided-not-recorded"
+            ? "accessed"
+            : intent.credentialInjection,
         headerNames: intent.credentialHeaderNames,
         values: "not-recorded",
       },

@@ -1,7 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { link, lstat, mkdir, open, realpath, unlink } from "node:fs/promises";
 import { arch, platform } from "node:os";
-import { basename, dirname, resolve } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import {
   assertEffectsBundleIdentity,
   readVerifiedEffectsExecutionSnapshot,
@@ -15,6 +22,12 @@ import {
   readEffectsExecutionGrant,
   type ParsedEffectsExecutionGrant,
 } from "./llang-effects-execution-grant";
+import {
+  assertEffectsRequirementIdentity,
+  assertGrantWithinRequirement,
+  readEffectsRequirementContract,
+  type ParsedEffectsRequirementContract,
+} from "./llang-effects-requirement-contract";
 import {
   createTypedIoExecutor,
   runTypedEffectsSnapshot,
@@ -40,7 +53,7 @@ import {
   readStableRegularFileSnapshot,
 } from "./llang-effects-stable-file";
 
-export const LLANG_EFFECTS_EXECUTION_VERSION = 1 as const;
+export const LLANG_EFFECTS_EXECUTION_VERSION = 2 as const;
 
 type CredentialState = Readonly<{
   headers: ReadonlyMap<string, Readonly<Record<string, string>>>;
@@ -166,6 +179,27 @@ async function prepareOutput(
   return Object.freeze({ path: target, dev: info.dev, ino: info.ino });
 }
 
+async function assertRequirementOutsideWritableGrant(
+  requirements: ParsedEffectsRequirementContract,
+  grant: ParsedEffectsExecutionGrant,
+) {
+  if (!grant.adapterRoot || !grant.document.file?.replace) return;
+  const requirementPath = await realpath(requirements.path),
+    relativePath = relative(grant.adapterRoot, requirementPath);
+  if (
+    relativePath === "" ||
+    relativePath === ".." ||
+    relativePath.startsWith(`..${sep}`) ||
+    isAbsolute(relativePath)
+  )
+    return;
+  const logicalPath = relativePath.split(sep).join("/"),
+    writable = grant.document.file.logicalRoots.some(
+      (root) => logicalPath === root || logicalPath.startsWith(`${root}/`),
+    );
+  if (writable) throw new Error("REQUIREMENTS_INSIDE_WRITABLE_FILE_GRANT");
+}
+
 async function assertOutputIdentity(output: {
   path: string;
   dev: number;
@@ -218,6 +252,7 @@ export async function executeEffectsModuleBundle(options: {
   manifestPath: string;
   grantPath: string;
   outputDirectory: string;
+  requirementsPath?: string;
   credentialEnvironmentPath?: string;
   execute?: TypedOperationExecutor;
   openStream?: (
@@ -236,7 +271,18 @@ export async function executeEffectsModuleBundle(options: {
       snapshot.bundleIdentityHash,
       snapshot.graph.manifest,
     ),
-    credentials = await readCredentialEnvironment(
+    requirements = options.requirementsPath
+      ? await readEffectsRequirementContract(
+          options.requirementsPath,
+          snapshot.bundleIdentityHash,
+          snapshot.graph,
+        )
+      : undefined;
+  if (requirements) {
+    assertGrantWithinRequirement(grant, requirements);
+    await assertRequirementOutsideWritableGrant(requirements, grant);
+  }
+  const credentials = await readCredentialEnvironment(
       options.credentialEnvironmentPath,
       new Set(grant.document.http?.origins ?? []),
     ),
@@ -263,7 +309,7 @@ export async function executeEffectsModuleBundle(options: {
     },
     intent = {
       format: "llang-effects-execution-intent",
-      version: 1,
+      version: requirements ? 2 : 1,
       executionId,
       bundleIdentityHash: snapshot.bundleIdentityHash,
       grantSourceHash: grant.sourceHash,
@@ -275,6 +321,18 @@ export async function executeEffectsModuleBundle(options: {
         ? "host-provided-not-recorded"
         : "not-needed",
       credentialHeaderNames: credentials.names,
+      ...(requirements
+        ? {
+            grantSummary: grant.summary,
+            requirements: {
+              id: requirements.document.id,
+              revision: requirements.document.revision,
+              sourceHash: requirements.sourceHash,
+              commitmentHash: requirements.commitmentHash,
+              authorityCommitmentHash: requirements.authorityCommitmentHash,
+            },
+          }
+        : {}),
     },
     intentText = `${stableJson(intent)}\n`;
   await durableCreateText(lockPath, `${stableJson(lock)}\n`);
@@ -441,6 +499,22 @@ export async function executeEffectsModuleBundle(options: {
       certainty: "known",
     });
   }
+  let requirementsChangedAfterStart = false;
+  if (requirements)
+    try {
+      await assertEffectsRequirementIdentity(
+        requirements,
+        snapshot.bundleIdentityHash,
+        snapshot.graph,
+      );
+    } catch {
+      requirementsChangedAfterStart = true;
+      resultStatus = Object.freeze({
+        status: "failed",
+        errorCode: "requirements-changed",
+        certainty: "known",
+      });
+    }
   await recorder.append({
     kind: "terminal",
     outcome: {
@@ -471,7 +545,7 @@ export async function executeEffectsModuleBundle(options: {
     ).length,
     base = {
       format: "llang-effects-execution",
-      version: LLANG_EFFECTS_EXECUTION_VERSION,
+      version: requirements ? LLANG_EFFECTS_EXECUTION_VERSION : 1,
       executionId,
       status: resultStatus.status,
       bundle: {
@@ -490,6 +564,27 @@ export async function executeEffectsModuleBundle(options: {
         summary: grant.summary,
         changedAfterStart: grantChangedAfterStart,
       },
+      ...(requirements
+        ? {
+            requirements: {
+              status: "bound",
+              id: requirements.document.id,
+              revision: requirements.document.revision,
+              sourceHash: requirements.sourceHash,
+              commitmentHash: requirements.commitmentHash,
+              authorityCommitmentHash: requirements.authorityCommitmentHash,
+              bundleIdentityHash: requirements.document.bundleIdentityHash,
+              coverage: requirements.coverage,
+              changedAfterStart: requirementsChangedAfterStart,
+              semanticMeaning: "not-proven",
+            },
+            authority: {
+              ceilingCommitmentHash: requirements.authorityCommitmentHash,
+              grantWithinCeiling: true,
+              exceededRules: [],
+            },
+          }
+        : {}),
       runtime: {
         bundledWasmHash: sha256(snapshot.wasmBytes),
         stateContractHash: fingerprintFor(snapshot.manifest.wasm?.states ?? []),

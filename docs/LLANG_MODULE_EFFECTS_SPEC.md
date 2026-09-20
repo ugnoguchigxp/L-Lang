@@ -132,6 +132,25 @@ become unknown outcomes and are never replayed. This evidence does not prove
 host identity, remote-service truth, business correctness, exactly-once side
 effects, or rollback.
 
+An optional strict `llang-effects-requirements` version-1 contract binds a
+human-readable requirement set and structural bindings to the bundle identity.
+Its machine-readable authority ceiling covers operations, file and HTTP
+capabilities, wall clock, deadline, and resource limits. `module execute
+--requirements` rejects a wider grant before creating evidence or dispatching a
+host operation, and emits version-2 intent and execution reports containing the
+requirement and authority commitments. Execution rechecks the requirement file
+before final publication; the requirement body is not copied into execution
+evidence. Executions without this option retain the version-1 evidence format.
+
+`module audit-execution` accepts the bundle, the same requirement contract, and
+version-2 evidence. It rechecks the bundle projection and Wasm, evidence and
+transcript hashes, authority subset, observed-operation bindings, and terminal
+status without instantiating Wasm, evaluating TypeScript, accessing credentials,
+or invoking an adapter. The result is `passed`, `review-required` for mandatory
+manual checks, or `failed` for a machine-detected mismatch. Even `passed` keeps
+semantic meaning and publisher authenticity explicitly unproven; the audit and
+its inputs are unsigned and caller-retained.
+
 ## Initial adapters
 
 The local file adapter uses handle-based reads. Writes go to an exclusive

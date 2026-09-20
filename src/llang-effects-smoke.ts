@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
+import { auditEffectsExecution } from "./llang-effects-execution-audit";
 import { executeEffectsModuleBundle } from "./llang-effects-execution-evidence";
 import {
   effectsManifest,
@@ -99,6 +100,7 @@ if (hosted.result !== 10 || hosted.ledger.used("hostRequests") !== 2)
 const root = await mkdtemp(join(tmpdir(), "llang-effects-smoke-"));
 let bundleIdentityHash = "";
 let executionEvidenceHash = "";
+let executionAuditHash = "";
 try {
   const files = await LocalFileAdapter.create(root),
     handle = await files.openWrite("result.bin", { replace: false }),
@@ -173,16 +175,78 @@ try {
       limits: {},
     }),
   );
+  await writeFile(
+    join(root, "execution-requirements.json"),
+    JSON.stringify({
+      format: "llang-effects-requirements",
+      version: 1,
+      id: "smoke-inspection",
+      revision: 1,
+      body: "Execute the inspected host operation and complete.",
+      bundleIdentityHash,
+      requirements: [
+        {
+          id: "complete",
+          level: "must",
+          statement: "The execution must complete.",
+          verification: "outcome",
+        },
+        {
+          id: "invoke-host",
+          level: "must",
+          statement: "Invoke the declared host operation.",
+          verification: "structure",
+        },
+      ],
+      bindings: [
+        {
+          requirementId: "complete",
+          nodes: [],
+          operations: [],
+          authorityRules: [],
+          terminalStatuses: ["completed"],
+        },
+        {
+          requirementId: "invoke-host",
+          nodes: [0],
+          operations: ["host.echo@1"],
+          authorityRules: [],
+          terminalStatuses: [],
+        },
+      ],
+      authorityCeiling: {
+        operations: ["host.echo@1"],
+        file: null,
+        http: null,
+        wallClock: false,
+        deadlineMs: 30_000,
+        limits: {},
+      },
+      expectedTerminalStatuses: ["completed"],
+    }),
+  );
   const execution = await executeEffectsModuleBundle({
     manifestPath: join(root, "inspection-bundle/module-build.json"),
     grantPath: join(root, "execution-grant.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
     outputDirectory: join(root, "execution-evidence"),
     execute: async () => 42n,
   });
-  if (execution.status !== "completed")
+  if (execution.status !== "completed" || execution.version !== 2)
     throw new Error("effects execution evidence smoke mismatch");
   executionEvidenceHash = String(
     (execution.authenticity as Record<string, unknown>).evidenceHash,
+  );
+  const audit = await auditEffectsExecution({
+    manifestPath: join(root, "inspection-bundle/module-build.json"),
+    requirementsPath: join(root, "execution-requirements.json"),
+    evidenceDirectory: join(root, "execution-evidence"),
+    outputDirectory: join(root, "execution-audit"),
+  });
+  if (audit.status !== "passed")
+    throw new Error("effects execution audit smoke mismatch");
+  executionAuditHash = String(
+    (audit.authenticity as Record<string, unknown>).auditHash,
   );
 } finally {
   await rm(root, { recursive: true, force: true });
@@ -200,5 +264,6 @@ console.log(
     wasmBytes: emitted.bytes.length,
     bundleIdentityHash,
     executionEvidenceHash,
+    executionAuditHash,
   }),
 );

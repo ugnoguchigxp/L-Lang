@@ -26,10 +26,12 @@ TypeScript and Wasm artifacts. It reports declared file operations, but does
 not grant file access, invoke an adapter, execute Wasm, or create a runtime
 transcript.
 
-An all-target typed bundle can also be executed under an identity-bound grant:
+An all-target typed bundle can also be executed under an identity-bound grant
+and a requirement contract fixed before dispatch:
 
 ```sh
-bun run llang module execute artifacts/module-io-inspection-bundle/module-build.json --grant effects-grant.json --out-dir artifacts/module-io-execution --json
+bun run llang module execute artifacts/module-io-inspection-bundle/module-build.json --grant effects-grant.json --requirements effects-requirements.json --out-dir artifacts/module-io-execution --json
+bun run llang module audit-execution artifacts/module-io-inspection-bundle/module-build.json --requirements effects-requirements.json --evidence artifacts/module-io-execution --out-dir artifacts/module-io-audit --json
 ```
 
 `effects-grant.json` must use format `llang-effects-grant`, version 1, and the
@@ -38,6 +40,15 @@ resolved relative to the grant file; `logicalRoots` name only the relative
 paths visible to the program. The evidence directory must be outside both the
 bundle and adapter root. The resulting intent, hash-chained transcript, and
 final report contain hashes and byte counts rather than file contents.
+
+`effects-requirements.json` uses format `llang-effects-requirements`, version 1,
+and the same inspected `bundleIdentityHash`. Its sorted requirement records bind
+stable IDs to graph node indexes, `operation@version`, authority rules, or
+terminal statuses. `authorityCeiling` uses the grant capability shapes but is
+an upper bound, not a grant. The audit exits successfully for both `passed` and
+`review-required`; automation that forbids manual review must inspect the JSON
+status. A passed audit confirms structural and integrity checks, not the natural
+language meaning or publisher identity.
 
 This is the current operational starting point: local files and deterministic
 fixtures require no external credentials, while HTTP access is granted by the

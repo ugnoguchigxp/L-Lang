@@ -16,6 +16,7 @@ import {
 } from "./llang-development";
 import type { LlangDiagnosticReport } from "./llang-diagnostics";
 import { inspectEffectsModuleBundle } from "./llang-effects-bundle-inspection";
+import { auditEffectsExecution } from "./llang-effects-execution-audit";
 import { executeEffectsModuleBundle } from "./llang-effects-execution-evidence";
 import { recoverEffectsExecution } from "./llang-effects-execution-recovery";
 import {
@@ -73,8 +74,9 @@ export const LLANG_HELP = `usage: llang <command> [arguments]
   module test <entry.ts|entry.llang.jsonc> --root <directory> --entry <export> --suite <cases.json> [--profile module-bool-v1|module-value-v1|module-collection-v1|module-effects-v1]
   module verify <module-build.json> --suite <cases.json>
   module inspect <module-build.json> [--out-dir <new-directory>]
-  module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-directory> [--credential-env <mapping.json>] [--json]
+  module execute <module-build.json> --grant <effects-grant.json> --out-dir <new-directory> [--requirements <effects-requirements.json>] [--credential-env <mapping.json>] [--json]
   module recover-execution <evidence-directory> [--json]
+  module audit-execution <module-build.json> --requirements <effects-requirements.json> --evidence <evidence-directory> [--out-dir <new-directory>] [--json]
 Global: --help, --json (machine-readable errors and results)
 Exit codes: 0 success; 1 validation/test failure; 2 usage, I/O or execution error.
 TypeScript sources: bun run hybrid -- see examples/source-output-matrix/README.md`;
@@ -205,7 +207,13 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         !options["--grant"] ||
         !options["--out-dir"] ||
         Object.keys(options).some(
-          (key) => !["--grant", "--out-dir", "--credential-env"].includes(key),
+          (key) =>
+            ![
+              "--grant",
+              "--out-dir",
+              "--requirements",
+              "--credential-env",
+            ].includes(key),
         )
       )
         usage();
@@ -213,6 +221,9 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         manifestPath: source,
         grantPath: options["--grant"],
         outputDirectory: options["--out-dir"],
+        ...(options["--requirements"]
+          ? { requirementsPath: options["--requirements"] }
+          : {}),
         ...(options["--credential-env"]
           ? { credentialEnvironmentPath: options["--credential-env"] }
           : {}),
@@ -228,6 +239,25 @@ export async function runLlangCli(args: string[]): Promise<CliResult> {
         exitCode: 1,
         output: await recoverEffectsExecution(source),
       };
+    }
+    if (subcommand === "audit-execution") {
+      if (
+        !options["--requirements"] ||
+        !options["--evidence"] ||
+        Object.keys(options).some(
+          (key) => !["--requirements", "--evidence", "--out-dir"].includes(key),
+        )
+      )
+        usage();
+      const report = await auditEffectsExecution({
+        manifestPath: source,
+        requirementsPath: options["--requirements"],
+        evidenceDirectory: options["--evidence"],
+        ...(options["--out-dir"]
+          ? { outputDirectory: options["--out-dir"] }
+          : {}),
+      });
+      return { exitCode: report.status === "failed" ? 1 : 0, output: report };
     }
     const root = options["--root"],
       entryName = options["--entry"],

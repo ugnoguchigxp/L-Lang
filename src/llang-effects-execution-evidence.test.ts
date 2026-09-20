@@ -533,6 +533,82 @@ describe("effects execution evidence", () => {
     await expect(readFile(output)).rejects.toThrow();
   });
 
+  test("rejects a requirement contract inside its writable file grant", async () => {
+    const item = await fileWriteFixture(),
+      snapshot = await readVerifiedEffectsExecutionSnapshot(item.manifestPath),
+      requirementsPath = join(item.sandbox, "requirements.json"),
+      output = join(item.root, "requirements-overlap-evidence"),
+      requirements = {
+        format: "llang-effects-requirements",
+        version: 1,
+        id: "protected-requirements",
+        revision: 1,
+        body: "The program must not be able to replace this contract.",
+        bundleIdentityHash: snapshot.bundleIdentityHash,
+        requirements: [
+          {
+            id: "write",
+            level: "must",
+            statement: "Run the declared write operation.",
+            verification: "structure",
+          },
+        ],
+        bindings: [
+          {
+            requirementId: "write",
+            nodes: [0],
+            operations: ["file.write@1"],
+            authorityRules: [],
+            terminalStatuses: [],
+          },
+        ],
+        authorityCeiling: {
+          operations: ["file.write@1"],
+          file: {
+            logicalRoots: ["requirements.json"],
+            read: false,
+            write: true,
+            replace: true,
+          },
+          http: null,
+          wallClock: false,
+          deadlineMs: 30_000,
+          limits: {},
+        },
+        expectedTerminalStatuses: ["completed"],
+      };
+    await writeFile(requirementsPath, JSON.stringify(requirements));
+    await writeFile(
+      item.grantPath,
+      JSON.stringify({
+        format: "llang-effects-grant",
+        version: 1,
+        bundleIdentityHash: snapshot.bundleIdentityHash,
+        operations: ["file.write@1"],
+        file: {
+          adapterRoot: "./sandbox",
+          logicalRoots: ["requirements.json"],
+          read: false,
+          write: true,
+          replace: true,
+        },
+        http: null,
+        wallClock: false,
+        deadlineMs: 30_000,
+        limits: {},
+      }),
+    );
+    await expect(
+      executeEffectsModuleBundle({
+        manifestPath: item.manifestPath,
+        grantPath: item.grantPath,
+        requirementsPath,
+        outputDirectory: output,
+      }),
+    ).rejects.toThrow("REQUIREMENTS_INSIDE_WRITABLE_FILE_GRANT");
+    await expect(readFile(output)).rejects.toThrow();
+  });
+
   test("records an ignored host cancellation as an unknown timeout", async () => {
     const item = await fixture(),
       grant = { ...item.grant, deadlineMs: 1 };
