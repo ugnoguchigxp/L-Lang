@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-bottleneck-observation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "createdOn",
+    "canonical",
+    "environment",
+    "sourceCorpusHash",
+    "sourceFreezeHash",
+    "benchmarkHash",
+    "workloadHash",
+    "programs",
+    "cases",
+    "samples",
+    "summary"
+  ],
+  "properties": {
+    "format": { "const": "llang-collection-bottleneck-observation" },
+    "version": { "const": 1 },
+    "createdOn": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "canonical": { "const": true },
+    "environment": { "$ref": "#/$defs/environment" },
+    "sourceCorpusHash": { "$ref": "#/$defs/hash" },
+    "sourceFreezeHash": { "$ref": "#/$defs/hash" },
+    "benchmarkHash": { "$ref": "#/$defs/hash" },
+    "workloadHash": { "$ref": "#/$defs/hash" },
+    "programs": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/program" }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 23,
+      "maxItems": 23,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/case" }
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 207,
+      "maxItems": 207,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/sample" }
+    },
+    "summary": {
+      "type": "array",
+      "minItems": 23,
+      "maxItems": 23,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/summary" }
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "nonnegativeInteger": { "type": "integer", "minimum": 0 },
+    "positiveInteger": { "type": "integer", "minimum": 1 },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bun", "binaryen", "platform", "arch", "osRelease", "cpu"],
+      "properties": {
+        "bun": { "const": "1.4.2" },
+        "binaryen": { "const": "132.0.0" },
+        "platform": { "const": "darwin" },
+        "arch": { "const": "arm64" },
+        "osRelease": { "type": "string", "minLength": 1 },
+        "cpu": { "type": "string", "minLength": 1 }
+      }
+    },
+    "staticMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "functionCount",
+        "statementCount",
+        "expressionCount",
+        "loopCount",
+        "callCount",
+        "intrinsicCount",
+        "closureCount",
+        "genericInstanceCount",
+        "watFunctionCount",
+        "watBlockCount",
+        "watLoopCount",
+        "watCallCount",
+        "watLoadCount",
+        "watStoreCount",
+        "watCopyCallCount",
+        "watAllocationCallCount",
+        "watValidationCallCount",
+        "watInstructionCount"
+      ],
+      "properties": {
+        "functionCount": { "$ref": "#/$defs/positiveInteger" },
+        "statementCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "expressionCount": { "$ref": "#/$defs/positiveInteger" },
+        "loopCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "callCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "intrinsicCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "closureCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "genericInstanceCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watFunctionCount": { "$ref": "#/$defs/positiveInteger" },
+        "watBlockCount": { "$ref": "#/$defs/positiveInteger" },
+        "watLoopCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watCallCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watLoadCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watStoreCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watCopyCallCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watAllocationCallCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watValidationCallCount": { "$ref": "#/$defs/nonnegativeInteger" },
+        "watInstructionCount": { "$ref": "#/$defs/positiveInteger" }
+      }
+    },
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "programId",
+        "programHash",
+        "loweredHash",
+        "interfaceHash",
+        "layoutHash",
+        "wasmHash",
+        "wasmBytes",
+        "memoryInitialPages",
+        "memoryMaximumPages",
+        "metrics",
+        "metricsHash"
+      ],
+      "properties": {
+        "programId": { "$ref": "#/$defs/id" },
+        "programHash": { "$ref": "#/$defs/hash" },
+        "loweredHash": { "$ref": "#/$defs/hash" },
+        "interfaceHash": { "$ref": "#/$defs/hash" },
+        "layoutHash": { "$ref": "#/$defs/hash" },
+        "wasmHash": { "$ref": "#/$defs/hash" },
+        "wasmBytes": { "$ref": "#/$defs/positiveInteger" },
+        "memoryInitialPages": { "const": 128 },
+        "memoryMaximumPages": { "const": 128 },
+        "metrics": { "$ref": "#/$defs/staticMetrics" },
+        "metricsHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "programId",
+        "size",
+        "arenaPeakBytes",
+        "allocationCalls",
+        "allocationBytes",
+        "copyCalls",
+        "copyBytes",
+        "metricsHash"
+      ],
+      "properties": {
+        "caseId": { "$ref": "#/$defs/id" },
+        "programId": { "$ref": "#/$defs/id" },
+        "size": { "$ref": "#/$defs/positiveInteger" },
+        "arenaPeakBytes": { "$ref": "#/$defs/nonnegativeInteger" },
+        "allocationCalls": { "$ref": "#/$defs/nonnegativeInteger" },
+        "allocationBytes": { "$ref": "#/$defs/nonnegativeInteger" },
+        "copyCalls": { "$ref": "#/$defs/nonnegativeInteger" },
+        "copyBytes": { "$ref": "#/$defs/nonnegativeInteger" },
+        "metricsHash": { "$ref": "#/$defs/hash" }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "programId",
+        "partition",
+        "size",
+        "sample",
+        "clockOverheadNs",
+        "compileNs",
+        "instantiateNs",
+        "encodeNs",
+        "hostValidationNs",
+        "evaluateNs",
+        "decodeNs",
+        "totalNs",
+        "accountedNs",
+        "unattributedNs",
+        "cachedInstantiateNs",
+        "cachedEncodeNs",
+        "cachedHostValidationNs",
+        "cachedEvaluateNs",
+        "cachedDecodeNs",
+        "cachedTotalNs",
+        "cachedUnattributedNs",
+        "inputBytes",
+        "outputBytes"
+      ],
+      "properties": {
+        "caseId": { "$ref": "#/$defs/id" },
+        "programId": { "$ref": "#/$defs/id" },
+        "partition": { "enum": ["exploration", "holdout"] },
+        "size": { "$ref": "#/$defs/positiveInteger" },
+        "sample": { "$ref": "#/$defs/nonnegativeInteger" },
+        "clockOverheadNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "compileNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "instantiateNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "encodeNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "hostValidationNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "evaluateNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "decodeNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "totalNs": { "$ref": "#/$defs/positiveInteger" },
+        "accountedNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "unattributedNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedInstantiateNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedEncodeNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedHostValidationNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedEvaluateNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedDecodeNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "cachedTotalNs": { "$ref": "#/$defs/positiveInteger" },
+        "cachedUnattributedNs": { "$ref": "#/$defs/nonnegativeInteger" },
+        "inputBytes": { "$ref": "#/$defs/positiveInteger" },
+        "outputBytes": { "$ref": "#/$defs/positiveInteger" }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["median", "mad", "p95", "bootstrap95"],
+      "properties": {
+        "median": { "type": "number", "minimum": 0 },
+        "mad": { "type": "number", "minimum": 0 },
+        "p95": { "type": "number", "minimum": 0 },
+        "bootstrap95": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "shareMetric": {
+      "allOf": [
+        { "$ref": "#/$defs/metric" },
+        {
+          "type": "object",
+          "properties": {
+            "median": { "type": "number", "maximum": 1 },
+            "mad": { "type": "number", "maximum": 1 },
+            "p95": { "type": "number", "maximum": 1 },
+            "bootstrap95": {
+              "type": "array",
+              "items": { "type": "number", "maximum": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "shares": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startup", "host-input", "wasm-evaluate", "host-output"],
+      "properties": {
+        "startup": { "$ref": "#/$defs/shareMetric" },
+        "host-input": { "$ref": "#/$defs/shareMetric" },
+        "wasm-evaluate": { "$ref": "#/$defs/shareMetric" },
+        "host-output": { "$ref": "#/$defs/shareMetric" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "programId",
+        "partition",
+        "size",
+        "totalNs",
+        "cachedTotalNs",
+        "compileNs",
+        "instantiateNs",
+        "encodeNs",
+        "hostValidationNs",
+        "evaluateNs",
+        "decodeNs",
+        "unattributedShare",
+        "shares",
+        "inputBytes",
+        "outputBytes"
+      ],
+      "properties": {
+        "caseId": { "$ref": "#/$defs/id" },
+        "programId": { "$ref": "#/$defs/id" },
+        "partition": { "enum": ["exploration", "holdout"] },
+        "size": { "$ref": "#/$defs/positiveInteger" },
+        "totalNs": { "$ref": "#/$defs/metric" },
+        "cachedTotalNs": { "$ref": "#/$defs/metric" },
+        "compileNs": { "$ref": "#/$defs/metric" },
+        "instantiateNs": { "$ref": "#/$defs/metric" },
+        "encodeNs": { "$ref": "#/$defs/metric" },
+        "hostValidationNs": { "$ref": "#/$defs/metric" },
+        "evaluateNs": { "$ref": "#/$defs/metric" },
+        "decodeNs": { "$ref": "#/$defs/metric" },
+        "unattributedShare": { "$ref": "#/$defs/shareMetric" },
+        "shares": { "$ref": "#/$defs/shares" },
+        "inputBytes": { "$ref": "#/$defs/positiveInteger" },
+        "outputBytes": { "$ref": "#/$defs/positiveInteger" }
+      }
+    }
+  }
+}

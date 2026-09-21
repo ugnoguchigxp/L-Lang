@@ -1,0 +1,26 @@
+{
+  "format": "llang-collection-bottleneck-benchmark",
+  "version": 1,
+  "seed": 20260921,
+  "warmup": 2,
+  "samples": 9,
+  "canonicalEnvironment": {
+    "bun": "1.4.2",
+    "binaryen": "132.0.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuIncludes": "Apple M4"
+  },
+  "limits": {
+    "childTimeoutMs": 30000,
+    "artifactBytes": 4194304,
+    "jsonBytes": 1048576
+  },
+  "decision": {
+    "maximumUnattributedShare": 0.2,
+    "maximumRelativeMad": 0.25,
+    "minimumMedianShare": 0.3,
+    "minimumIntervalShare": 0.2,
+    "minimumRobustCases": 3
+  }
+}

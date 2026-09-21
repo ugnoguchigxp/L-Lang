@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-bottleneck-workload-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "version", "sourceCorpus", "cases", "mix"],
+  "properties": {
+    "format": { "const": "llang-collection-bottleneck-workload" },
+    "version": { "const": 1 },
+    "sourceCorpus": { "const": "benchmarks/collection-binaryen-v1/corpus.json" },
+    "cases": { "type": "array", "minItems": 23, "maxItems": 23, "uniqueItems": true, "items": { "$ref": "#/$defs/case" } },
+    "mix": { "type": "array", "minItems": 9, "maxItems": 9, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } }
+  },
+  "$defs": {
+    "case": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "programId", "partition", "size", "pattern"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "programId": { "enum": ["fold", "map", "filter", "closure", "sort", "composite", "string", "generic", "union"] },
+        "partition": { "enum": ["exploration", "holdout"] },
+        "size": { "type": "integer", "minimum": 1, "maximum": 16384 },
+        "pattern": { "enum": ["ascending", "reverse", "cycle", "alternating", "duplicates", "string", "scalar", "union"] }
+      }
+    }
+  }
+}

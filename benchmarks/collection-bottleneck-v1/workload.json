@@ -1,0 +1,41 @@
+{
+  "format": "llang-collection-bottleneck-workload",
+  "version": 1,
+  "sourceCorpus": "benchmarks/collection-binaryen-v1/corpus.json",
+  "cases": [
+    { "id": "fold-small-a", "programId": "fold", "partition": "exploration", "size": 64, "pattern": "cycle" },
+    { "id": "fold-medium-b", "programId": "fold", "partition": "holdout", "size": 1024, "pattern": "alternating" },
+    { "id": "fold-maximum-c", "programId": "fold", "partition": "holdout", "size": 4096, "pattern": "cycle" },
+    { "id": "map-small-a", "programId": "map", "partition": "exploration", "size": 64, "pattern": "ascending" },
+    { "id": "map-medium-b", "programId": "map", "partition": "holdout", "size": 1024, "pattern": "alternating" },
+    { "id": "map-maximum-c", "programId": "map", "partition": "holdout", "size": 4096, "pattern": "reverse" },
+    { "id": "filter-small-a", "programId": "filter", "partition": "exploration", "size": 64, "pattern": "cycle" },
+    { "id": "filter-medium-b", "programId": "filter", "partition": "holdout", "size": 1024, "pattern": "alternating" },
+    { "id": "filter-maximum-c", "programId": "filter", "partition": "holdout", "size": 4096, "pattern": "duplicates" },
+    { "id": "closure-small-a", "programId": "closure", "partition": "exploration", "size": 64, "pattern": "cycle" },
+    { "id": "closure-medium-b", "programId": "closure", "partition": "holdout", "size": 1024, "pattern": "alternating" },
+    { "id": "closure-maximum-c", "programId": "closure", "partition": "holdout", "size": 4096, "pattern": "ascending" },
+    { "id": "sort-small-a", "programId": "sort", "partition": "exploration", "size": 64, "pattern": "cycle" },
+    { "id": "sort-medium-b", "programId": "sort", "partition": "holdout", "size": 256, "pattern": "reverse" },
+    { "id": "sort-maximum-c", "programId": "sort", "partition": "holdout", "size": 512, "pattern": "duplicates" },
+    { "id": "composite-small-a", "programId": "composite", "partition": "exploration", "size": 64, "pattern": "cycle" },
+    { "id": "composite-medium-b", "programId": "composite", "partition": "holdout", "size": 256, "pattern": "alternating" },
+    { "id": "composite-maximum-c", "programId": "composite", "partition": "holdout", "size": 512, "pattern": "reverse" },
+    { "id": "string-small-a", "programId": "string", "partition": "exploration", "size": 16, "pattern": "string" },
+    { "id": "string-medium-b", "programId": "string", "partition": "holdout", "size": 1024, "pattern": "string" },
+    { "id": "string-maximum-c", "programId": "string", "partition": "holdout", "size": 16384, "pattern": "string" },
+    { "id": "generic-control", "programId": "generic", "partition": "holdout", "size": 1, "pattern": "scalar" },
+    { "id": "union-control", "programId": "union", "partition": "holdout", "size": 1, "pattern": "union" }
+  ],
+  "mix": [
+    "fold-medium-b",
+    "map-medium-b",
+    "filter-medium-b",
+    "composite-medium-b",
+    "sort-medium-b",
+    "closure-medium-b",
+    "generic-control",
+    "string-medium-b",
+    "union-control"
+  ]
+}

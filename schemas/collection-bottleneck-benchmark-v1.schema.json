@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-bottleneck-benchmark-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "seed", "warmup", "samples", "canonicalEnvironment", "limits", "decision"],
+  "properties": {
+    "format": { "const": "llang-collection-bottleneck-benchmark" },
+    "version": { "const": 1 },
+    "seed": { "const": 20260921 },
+    "warmup": { "const": 2 },
+    "samples": { "const": 9 },
+    "canonicalEnvironment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bun", "binaryen", "platform", "arch", "cpuIncludes"],
+      "properties": {
+        "bun": { "const": "1.4.2" }, "binaryen": { "const": "132.0.0" },
+        "platform": { "const": "darwin" }, "arch": { "const": "arm64" },
+        "cpuIncludes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["childTimeoutMs", "artifactBytes", "jsonBytes"],
+      "properties": {
+        "childTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 120000 },
+        "artifactBytes": { "type": "integer", "minimum": 1, "maximum": 16777216 },
+        "jsonBytes": { "type": "integer", "minimum": 1024, "maximum": 1048576 }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["maximumUnattributedShare", "maximumRelativeMad", "minimumMedianShare", "minimumIntervalShare", "minimumRobustCases"],
+      "properties": {
+        "maximumUnattributedShare": { "const": 0.2 },
+        "maximumRelativeMad": { "const": 0.25 },
+        "minimumMedianShare": { "const": 0.3 },
+        "minimumIntervalShare": { "const": 0.2 },
+        "minimumRobustCases": { "const": 3 }
+      }
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "format": "llang-collection-bottleneck-decision",
+  "version": 1,
+  "outcome": "inconclusive",
+  "selectedTarget": null,
+  "diagnosticLabel": null,
+  "dataQuality": false,
+  "qualityReasons": [
+    "timing-variation"
+  ],
+  "mixWinner": "startup",
+  "caseVoteWinner": "startup",
+  "mixRankConsistent": true,
+  "candidates": [
+    {
+      "category": "startup",
+      "qualifyingCases": 16,
+      "qualifyingCaseIds": [
+        "closure-maximum-c",
+        "closure-medium-b",
+        "composite-maximum-c",
+        "composite-medium-b",
+        "filter-maximum-c",
+        "filter-medium-b",
+        "fold-maximum-c",
+        "fold-medium-b",
+        "generic-control",
+        "map-maximum-c",
+        "map-medium-b",
+        "sort-maximum-c",
+        "sort-medium-b",
+        "string-maximum-c",
+        "string-medium-b",
+        "union-control"
+      ],
+      "robustCases": 16,
+      "robustCaseIds": [
+        "closure-maximum-c",
+        "closure-medium-b",
+        "composite-maximum-c",
+        "composite-medium-b",
+        "filter-maximum-c",
+        "filter-medium-b",
+        "fold-maximum-c",
+        "fold-medium-b",
+        "generic-control",
+        "map-maximum-c",
+        "map-medium-b",
+        "sort-maximum-c",
+        "sort-medium-b",
+        "string-maximum-c",
+        "string-medium-b",
+        "union-control"
+      ],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "map",
+        "sort",
+        "string"
+      ],
+      "mixShare": 0.764727,
+      "medianShare": 0.667835,
+      "intervalFloor": 0.571386,
+      "absoluteNs": 1776308.22312,
+      "eligible": false,
+      "rejectionReasons": [
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "host-input",
+      "qualifyingCases": 0,
+      "qualifyingCaseIds": [],
+      "robustCases": 0,
+      "robustCaseIds": [],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "filter",
+        "fold"
+      ],
+      "mixShare": 0.082448,
+      "medianShare": 0.06137,
+      "intervalFloor": 0.036205,
+      "absoluteNs": 204795.056382,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "insufficient-robust-cases",
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "wasm-evaluate",
+      "qualifyingCases": 3,
+      "qualifyingCaseIds": [
+        "composite-maximum-c",
+        "sort-maximum-c",
+        "sort-medium-b"
+      ],
+      "robustCases": 3,
+      "robustCaseIds": [
+        "composite-maximum-c",
+        "sort-maximum-c",
+        "sort-medium-b"
+      ],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "closure",
+        "composite",
+        "filter",
+        "fold"
+      ],
+      "mixShare": 0.117279,
+      "medianShare": 0.120344,
+      "intervalFloor": 0.098191,
+      "absoluteNs": 374833.604007,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "host-output",
+      "qualifyingCases": 0,
+      "qualifyingCaseIds": [],
+      "robustCases": 0,
+      "robustCaseIds": [],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "closure",
+        "composite",
+        "filter"
+      ],
+      "mixShare": 0.008986,
+      "medianShare": 0.009773,
+      "intervalFloor": 0.007991,
+      "absoluteNs": 28279.543446,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "insufficient-robust-cases",
+        "scaling-inconsistent"
+      ]
+    }
+  ],
+  "rationale": "No single category passed every frozen data-quality and attribution gate.",
+  "createdOn": "2026-09-21",
+  "canonical": true
+}

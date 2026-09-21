@@ -35,6 +35,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [Collection Binaryen最適化レシピ選定](./docs/COLLECTION_BINARYEN_RECIPE_SELECTION_IMPLEMENTATION_PLAN.md)を実装した。固定した5候補をprocess隔離して生成し、9 programの公開ABI、memory safety、再現性と、15 case・675 sampleの製品end-to-end性能をexploration／holdoutで評価した。[実装結果](./docs/COLLECTION_BINARYEN_RECIPE_SELECTION_RESULTS.md)では全候補が安全性Gateを通過して多くのholdoutで改善したが、95% intervalを使う5%退行Gateに違反したため、baselineを維持した。製品既定artifact、ABI、manifestは変更していない。
 
+[Collection end-to-endボトルネック特定](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_IMPLEMENTATION_PLAN.md)を実装した。製品baselineの一回の実行を加算可能なphaseへ分解し、wire bytes、allocation／copy、IR形状と合わせて23 case・207 sampleを評価した。[実装結果](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_RESULTS.md)ではstartupが最有力だったが、fold mediumの時間変動が事前Gateを超えたため`inconclusive`とし、製品最適化やABI変更は行っていない。
+
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
 [4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Phase 4の機能実装と同一revisionのUbuntu／macOS／Windows CIは完了した。残る評価は、SAAAでの利用に合わせて行うsoak／capability確認、実運用TLS、長期性能・memory観測であり、現時点のcorrectness Gateには含めない。
