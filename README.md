@@ -1,12 +1,14 @@
 # L-Lang
 
-新しい実行例：[TypeScript/JSONC → TypeScript/Wasmの4通り](./examples/source-output-matrix/README.md) · [要件変更・修正・配備・切戻し](./examples/capability-lifecycle/README.md)
+実行例：[TypeScript/JSONC → TypeScript/Wasmの4通り](./examples/source-output-matrix/README.md) · [要件変更・修正・配備・切戻し](./examples/capability-lifecycle/README.md)
 
 [English](./README.en.md) · [ドキュメント一覧](./docs/README.md) · [現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md) · [品質Gate](./QUALITY_GATES.md)
 
 L-Langは、要求や型に基づく判定処理を、制限されたIRとテストで検証し、再現できる成果物へ変換する研究プロジェクトです。**TypeScriptとJSONCの両方を扱います。** 用途に応じて入力形式と出力形式を選びます。
 
 入力言語と出力形式は別の軸です。通常のTypeScriptを生成する経路、実行可能なJSONCを生成・変換する経路、Wasmへコンパイルする経路があります。すべての入力と出力の組合せに対応しているわけではありません。
+
+現在は研究段階です。npm公開やSAAAへの本配備は行っていません。実装済みの経路、評価済みの証拠、残る検証は[現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)で区別しています。
 
 ## 研究の中心コンセプト
 
@@ -55,6 +57,13 @@ bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --reques
 
 生成を含む手順は[TypeScriptガイド](./docs/guides/semantic-typescript.md)と[JSONCの例](./examples/jsonc-enabled-user/README.md)を参照してください。fixture・保存済みlock・JSONCのlint/build/testはAPI認証なしで実行できます。実モデルによる生成を選ぶ場合は、利用する経路の認証が必要です。
 
+変更後の通常検証は次のコマンドで実行します。coverage、smoke、保護対象入力の検証を含む全項目は[品質Gate](./QUALITY_GATES.md)を参照してください。
+
+```sh
+bun run check
+bun run ci:docs
+```
+
 ## 保証する範囲
 
 限定されたBoolean Predicateに加え、`module-effects-v1`ではbytes、i64、有限f64、decimal、型付きIO、await、structured task、pull streamをTypeScript／JSONCからWasmへlowerできます。これは制限されたIRと登録済みhost operationによる実行系であり、任意のTypeScript、任意の外部API、汎用package ecosystemを提供するものではありません。
@@ -62,6 +71,8 @@ bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --reques
 制限IR、型・入力契約、独立テスト、hash、replayで不正な入力や改変を検査します。hashは署名ではなく、テスト合格は自然言語要求の完全な充足を証明しません。部品検証とSAAAによる受け入れ・配備も別工程です。詳しくは[セキュリティ](./SECURITY.md)を参照してください。
 
 実モデル評価・性能計測は経路と条件ごとの結果です。TypeScript経路の評価をJSONC経路の精度証拠へ読み替えず、fixture成功を実モデル評価とは扱いません。[現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)から各証跡を確認できます。
+
+Collection性能探索では、memory safety、LLVM最小比較、Binaryenレシピ、end-to-end計測を段階的に評価しました。最終の6 block・1,380 sampleではstartupが全blockで最大要因でしたが、事前に定めた変動Gateを満たさなかったため、製品設定は`retain-baseline`としました。これはWasmが遅い、または改善候補がないという結論ではなく、観測した改善を安定した製品既定値として採用できる証拠が不足したという判断です。条件と未実証範囲は[Collection runtime安定性の結果](./docs/COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_RESULTS.md)に記録しています。
 
 Phase 4はローカルfile、許可済みHTTP、fixture/replay、loopback統合を対象に実装・検証済みです。SAAAでのsoak／capability評価、実ネットワークのTLS運用試験、長期の性能・memory評価は、利用期間と観測条件を確保してから別証跡として実施します。[Phase 4結果](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md)に現在の完了範囲と保留した運用評価を記録しています。
 
@@ -76,7 +87,7 @@ Phase 4はローカルfile、許可済みHTTP、fixture/replay、loopback統合�
 | `benchmarks/`・`pilots/` | 評価入力、freeze、保存済み証跡 |
 | `schemas/` | 公開する構造化データのschema |
 
-開発手順は[Contributing](./CONTRIBUTING.md)、検証項目は[品質Gate](./QUALITY_GATES.md)、今回の整理と残る差分の作業計画は[整合計画](./docs/DOCUMENTATION_AND_IMPLEMENTATION_ALIGNMENT_PLAN.md)を参照してください。
+開発手順は[Contributing](./CONTRIBUTING.md)、検証項目は[品質Gate](./QUALITY_GATES.md)、現在の実装状況と未実証事項は[現在地とロードマップ](./PROJECT_STATUS_AND_ROADMAP.md)を参照してください。
 
 ## License
 

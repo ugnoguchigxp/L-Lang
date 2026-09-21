@@ -6,11 +6,15 @@ Runnable examples: [TypeScript/JSONC → TypeScript/Wasm matrix](./examples/sour
 
 L-Lang is a research project for validating predicates through restricted IR and tests, then producing reproducible artifacts. **TypeScript and JSONC coexist.** Input languages and output formats are separate choices.
 
+The project is still in the research stage. It has not been published to npm or deployed to SAAA for production use. The [status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md) distinguishes implemented routes, recorded evidence, and work that still requires external validation.
+
 ## Research concept
 
 L-Lang anticipates a setting where LLM-generated executable binaries are used without mandatory human source-code review. Its research goal is to preserve the connection between requirements and executable behavior, while allowing people to inspect that behavior through TypeScript derived from a shared, checked semantic representation. Protecting trusted instructions from untrusted data is combined with independently defined permissions and runtime enforcement.
 
 These are research goals, not established guarantees. Current supported paths compile checked intermediate representations to Wasm; they do not establish the safety of arbitrary directly generated binaries or complete agreement with natural-language requirements. See the [main concept (Japanese)](./MAIN_CONCEPT.md) for the proposed approach and open research questions.
+
+## Choose a route
 
 | Task | Input → output | Guide |
 | --- | --- | --- |
@@ -39,11 +43,20 @@ bun run llang test examples/jsonc-enabled-user/enabled-user.llang.jsonc --reques
 
 These checks need no API credentials. See the TypeScript guide for fixture-based generation and the JSONC example for build, package, and verification. Live agent generation requires the selected route's authentication.
 
+After making changes, run the regular code and documentation checks below. The [quality gates](./QUALITY_GATES.md) list the complete checks, including coverage, smoke tests, and protected inputs.
+
+```sh
+bun run check
+bun run ci:docs
+```
+
 ## Scope and evidence
 
 In addition to restricted Boolean predicates, `module-effects-v1` lowers bytes, i64, finite f64, decimal, typed I/O, await, structured tasks, and pull streams from TypeScript or JSONC to Wasm. This remains a restricted IR with registered host operations; it does not accept arbitrary TypeScript, arbitrary external APIs, or a general package ecosystem. Input validation, tests, hashes, and replay help detect invalid inputs and tampering; hashes are not signatures, and passing tests does not prove complete compliance with natural-language requirements. Package verification is separate from SAAA acceptance and deployment. See [Security](./SECURITY.md).
 
 Evidence applies to its recorded route and conditions. TypeScript results do not establish JSONC generation accuracy; fixtures do not measure live model accuracy. See [Status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md).
+
+The Collection performance work evaluated memory safety, a minimal LLVM comparison, Binaryen recipes, and end-to-end timing in stages. In the final six-block, 1,380-sample run, startup was the largest component in every block, but the measurements failed the predefined variability gates. The product decision is therefore `retain-baseline`. This does not establish that Wasm is slow or that no improvement exists; it means the observed gains were not stable enough to adopt as a product default. See the [Collection runtime stability results](./docs/COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_RESULTS.md) for the conditions and limits.
 
 Phase 4 is implemented and verified for local files, granted HTTP requests, fixture replay, and loopback integration. SAAA soak and capability evaluation, operational TLS testing, and long-running performance and memory evidence are intentionally deferred until representative usage data exists. See the [Phase 4 results](./docs/GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_RESULTS.md).
 
@@ -56,7 +69,7 @@ Phase 4 is implemented and verified for local files, granted HTTP requests, fixt
 - `benchmarks/` and `pilots/`: evaluation inputs and evidence.
 - `schemas/`: published structured-data schemas.
 
-See [Contributing](./CONTRIBUTING.md), [Quality gates](./QUALITY_GATES.md), and the [alignment plan](./docs/DOCUMENTATION_AND_IMPLEMENTATION_ALIGNMENT_PLAN.md).
+See [Contributing](./CONTRIBUTING.md), [Quality gates](./QUALITY_GATES.md), and the [status and roadmap](./PROJECT_STATUS_AND_ROADMAP.md).
 
 ## License
 
