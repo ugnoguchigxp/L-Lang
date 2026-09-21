@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-runtime-stability-workload-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "version", "sourceWorkload", "sourceWorkloadHash", "orders"],
+  "properties": {
+    "format": { "const": "llang-collection-runtime-stability-workload" },
+    "version": { "const": 1 },
+    "sourceWorkload": { "const": "benchmarks/collection-bottleneck-v1/workload.json" },
+    "sourceWorkloadHash": { "$ref": "#/$defs/hash" },
+    "orders": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "$ref": "#/$defs/order" } }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "order": {
+      "type": "object", "additionalProperties": false,
+      "required": ["blockId", "orderId", "direction", "caseIds", "caseOrderHash"],
+      "properties": {
+        "blockId": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "orderId": { "type": "string", "pattern": "^order-[0-5]$" },
+        "direction": { "enum": ["forward", "reverse"] },
+        "caseIds": { "type": "array", "minItems": 23, "maxItems": 23, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "caseOrderHash": { "$ref": "#/$defs/hash" }
+      }
+    }
+  }
+}

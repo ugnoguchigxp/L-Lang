@@ -35,7 +35,9 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [Collection Binaryen最適化レシピ選定](./docs/COLLECTION_BINARYEN_RECIPE_SELECTION_IMPLEMENTATION_PLAN.md)を実装した。固定した5候補をprocess隔離して生成し、9 programの公開ABI、memory safety、再現性と、15 case・675 sampleの製品end-to-end性能をexploration／holdoutで評価した。[実装結果](./docs/COLLECTION_BINARYEN_RECIPE_SELECTION_RESULTS.md)では全候補が安全性Gateを通過して多くのholdoutで改善したが、95% intervalを使う5%退行Gateに違反したため、baselineを維持した。製品既定artifact、ABI、manifestは変更していない。
 
-[Collection end-to-endボトルネック特定](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_IMPLEMENTATION_PLAN.md)を実装した。製品baselineの一回の実行を加算可能なphaseへ分解し、wire bytes、allocation／copy、IR形状と合わせて23 case・207 sampleを評価した。[実装結果](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_RESULTS.md)ではstartupが最有力だったが、fold mediumの時間変動が事前Gateを超えたため`inconclusive`とし、製品最適化やABI変更は行っていない。
+[Collection end-to-endボトルネック特定](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_IMPLEMENTATION_PLAN.md)を実装した。製品baselineの一回の実行を加算可能なphaseへ分解し、wire bytes、allocation／copy、IR形状と合わせて23 case・207 sampleを評価した。[実装結果](./docs/COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_RESULTS.md)ではstartupが最有力だったが、sort maximumの時間変動が事前Gateを超えたため`inconclusive`とし、製品最適化やABI変更は行っていない。
+
+[Collection runtime計測安定化と最終方針](./docs/COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_IMPLEMENTATION_PLAN.md)を実装した。同じ23 caseとthresholdを維持し、6独立block、case順序反転、cold／cached lane counterbalanceで1380 sampleを記録した。[実装結果](./docs/COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_RESULTS.md)ではstartupが全blockで首位となりprepared laneの改善も観測したが、overall、block間、forward／reverseの変動Gateを超えたため`retain-baseline`を最終判断とした。製品artifact、ABI、manifestは変更せず、repository内のCollection性能探索を終了した。
 
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 

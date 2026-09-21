@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-runtime-stability-benchmark-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "seed", "blocks", "warmup", "samples", "canonicalEnvironment", "limits", "decision"],
+  "properties": {
+    "format": { "const": "llang-collection-runtime-stability-benchmark" },
+    "version": { "const": 1 },
+    "seed": { "const": 20260921 },
+    "blocks": { "const": 6 },
+    "warmup": { "const": 5 },
+    "samples": { "const": 5 },
+    "canonicalEnvironment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bun", "binaryen", "platform", "arch", "cpuIncludes"],
+      "properties": {
+        "bun": { "const": "1.4.2" }, "binaryen": { "const": "132.0.0" },
+        "platform": { "const": "darwin" }, "arch": { "const": "arm64" },
+        "cpuIncludes": { "const": "Apple M4" }
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["childTimeoutMs", "artifactBytes", "jsonBytes"],
+      "properties": {
+        "childTimeoutMs": { "const": 120000 }, "artifactBytes": { "const": 4194304 },
+        "jsonBytes": { "const": 1048576 }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["maximumUnattributedShare", "maximumRelativeMad", "minimumMedianShare", "minimumIntervalShare", "minimumRobustCases", "maximumBlockMedianRelativeMad", "maximumOrderDifference", "minimumWinningBlocks", "minimumPreparedReduction", "minimumPreparedIntervalReduction", "maximumPreparedRatioUpper"],
+      "properties": {
+        "maximumUnattributedShare": { "const": 0.2 }, "maximumRelativeMad": { "const": 0.25 },
+        "minimumMedianShare": { "const": 0.3 }, "minimumIntervalShare": { "const": 0.2 },
+        "minimumRobustCases": { "const": 3 }, "maximumBlockMedianRelativeMad": { "const": 0.15 },
+        "maximumOrderDifference": { "const": 0.2 }, "minimumWinningBlocks": { "const": 5 },
+        "minimumPreparedReduction": { "const": 0.3 }, "minimumPreparedIntervalReduction": { "const": 0.2 },
+        "maximumPreparedRatioUpper": { "const": 1.05 }
+      }
+    }
+  }
+}

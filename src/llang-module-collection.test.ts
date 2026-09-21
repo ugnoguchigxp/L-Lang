@@ -157,6 +157,23 @@ const source = {
 };
 
 describe("module-collection-v1", () => {
+  test("reuses a compiled runtime while isolating every evaluation instance", async () => {
+    const program = await loadCollectionModuleProgram(
+        "programs/fold.ts",
+        "benchmarks/collection-binaryen-v1",
+        "evaluate",
+      ),
+      native = emitCollectionModuleWasm(program),
+      first = instantiateCollectionModule(native.contract, native.bytes),
+      second = instantiateCollectionModule(native.contract, native.bytes);
+    expect(first.evaluate({ values: [1, 2, 3] })).toEqual({ total: 6 });
+    expect(() => first.evaluate({ values: [2_147_483_647, 1, -1] })).toThrow(
+      "ARITHMETIC_OVERFLOW",
+    );
+    expect(first.evaluate({ values: [4, 5] })).toEqual({ total: 9 });
+    expect(second.evaluate({ values: [7, 8] })).toEqual({ total: 15 });
+  });
+
   test("List callbacks, capture, fold and stable sort agree across reference, generated TS and Wasm contract", async () => {
     const root = await mkdtemp(join(tmpdir(), "llang-collection-"));
     try {

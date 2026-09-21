@@ -1,0 +1,187 @@
+{
+  "format": "llang-collection-runtime-stability-decision",
+  "version": 1,
+  "outcome": "retain-baseline",
+  "reason": "insufficient-stability",
+  "dataQuality": false,
+  "qualityReasons": [
+    "overall-variation",
+    "block-variation",
+    "order-bias"
+  ],
+  "selectedTarget": null,
+  "blockVotes": {
+    "startup": 6,
+    "host-input": 0,
+    "wasm-evaluate": 0,
+    "host-output": 0
+  },
+  "blockStable": false,
+  "candidates": [
+    {
+      "category": "startup",
+      "qualifyingCases": 16,
+      "qualifyingCaseIds": [
+        "closure-maximum-c",
+        "closure-medium-b",
+        "composite-maximum-c",
+        "composite-medium-b",
+        "filter-maximum-c",
+        "filter-medium-b",
+        "fold-maximum-c",
+        "fold-medium-b",
+        "generic-control",
+        "map-maximum-c",
+        "map-medium-b",
+        "sort-maximum-c",
+        "sort-medium-b",
+        "string-maximum-c",
+        "string-medium-b",
+        "union-control"
+      ],
+      "robustCases": 16,
+      "robustCaseIds": [
+        "closure-maximum-c",
+        "closure-medium-b",
+        "composite-maximum-c",
+        "composite-medium-b",
+        "filter-maximum-c",
+        "filter-medium-b",
+        "fold-maximum-c",
+        "fold-medium-b",
+        "generic-control",
+        "map-maximum-c",
+        "map-medium-b",
+        "sort-maximum-c",
+        "sort-medium-b",
+        "string-maximum-c",
+        "string-medium-b",
+        "union-control"
+      ],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "closure",
+        "composite",
+        "fold"
+      ],
+      "mixShare": 0.746508,
+      "medianShare": 0.67514,
+      "intervalFloor": 0.627837,
+      "absoluteNs": 1615577.792634,
+      "eligible": false,
+      "rejectionReasons": [
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "host-input",
+      "qualifyingCases": 0,
+      "qualifyingCaseIds": [],
+      "robustCases": 0,
+      "robustCaseIds": [],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "composite",
+        "filter",
+        "map"
+      ],
+      "mixShare": 0.060957,
+      "medianShare": 0.063279,
+      "intervalFloor": 0.047106,
+      "absoluteNs": 138169.01401,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "insufficient-robust-cases",
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "wasm-evaluate",
+      "qualifyingCases": 3,
+      "qualifyingCaseIds": [
+        "composite-maximum-c",
+        "sort-maximum-c",
+        "sort-medium-b"
+      ],
+      "robustCases": 3,
+      "robustCaseIds": [
+        "composite-maximum-c",
+        "sort-maximum-c",
+        "sort-medium-b"
+      ],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "filter",
+        "map"
+      ],
+      "mixShare": 0.139168,
+      "medianShare": 0.158845,
+      "intervalFloor": 0.133867,
+      "absoluteNs": 396435.268134,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "scaling-inconsistent"
+      ]
+    },
+    {
+      "category": "host-output",
+      "qualifyingCases": 0,
+      "qualifyingCaseIds": [],
+      "robustCases": 0,
+      "robustCaseIds": [],
+      "scalingConsistent": false,
+      "scalingFailures": [
+        "filter",
+        "fold",
+        "map"
+      ],
+      "mixShare": 0.010858,
+      "medianShare": 0.01154,
+      "intervalFloor": 0.009916,
+      "absoluteNs": 34779.718753,
+      "eligible": false,
+      "rejectionReasons": [
+        "insufficient-majority",
+        "insufficient-robust-cases",
+        "scaling-inconsistent"
+      ]
+    }
+  ],
+  "mixWinner": "startup",
+  "caseVoteWinner": "startup",
+  "prepared": {
+    "evaluated": false,
+    "majorityReduction": true,
+    "robustCases": [
+      "closure-maximum-c",
+      "closure-medium-b",
+      "composite-maximum-c",
+      "composite-medium-b",
+      "filter-maximum-c",
+      "filter-medium-b",
+      "fold-maximum-c",
+      "fold-medium-b",
+      "map-maximum-c",
+      "map-medium-b",
+      "sort-maximum-c",
+      "sort-medium-b",
+      "string-maximum-c",
+      "string-medium-b",
+      "union-control"
+    ],
+    "noRegression": true
+  },
+  "rationale": "The frozen final gates require retaining the product baseline.",
+  "createdOn": "2026-09-21",
+  "canonical": true,
+  "lifecycleSafety": {
+    "normalReuse": true,
+    "faultIsolation": true,
+    "runtimeIsolation": true,
+    "memoryPages": 128,
+    "abi": "llang-collection-native-v1",
+    "artifactStable": true
+  }
+}

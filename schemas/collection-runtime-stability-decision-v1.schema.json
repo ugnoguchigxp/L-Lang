@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-runtime-stability-decision-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "version", "outcome", "reason", "dataQuality", "qualityReasons", "selectedTarget", "blockVotes", "blockStable", "candidates", "mixWinner", "caseVoteWinner", "prepared", "rationale", "createdOn", "canonical", "lifecycleSafety"],
+  "properties": {
+    "format": { "const": "llang-collection-runtime-stability-decision" }, "version": { "const": 1 },
+    "outcome": { "enum": ["adopt-prepared-lifecycle", "retain-baseline"] },
+    "reason": { "enum": ["insufficient-stability", "dominance-gate", "prepared-lifecycle-passed", "prepared-lifecycle-gate"] },
+    "dataQuality": { "type": "boolean" }, "qualityReasons": { "type": "array", "uniqueItems": true, "items": { "enum": ["unattributed-share", "overall-variation", "block-variation", "order-bias"] } },
+    "selectedTarget": { "anyOf": [{ "$ref": "#/$defs/category" }, { "type": "null" }] },
+    "blockVotes": { "type": "object", "additionalProperties": false, "required": ["startup", "host-input", "wasm-evaluate", "host-output"], "properties": { "startup": { "$ref": "#/$defs/vote" }, "host-input": { "$ref": "#/$defs/vote" }, "wasm-evaluate": { "$ref": "#/$defs/vote" }, "host-output": { "$ref": "#/$defs/vote" } } },
+    "blockStable": { "type": "boolean" }, "candidates": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "type": "object" } },
+    "mixWinner": { "anyOf": [{ "$ref": "#/$defs/category" }, { "type": "null" }] }, "caseVoteWinner": { "anyOf": [{ "$ref": "#/$defs/category" }, { "type": "null" }] },
+    "prepared": { "type": "object", "additionalProperties": false, "required": ["evaluated", "majorityReduction", "robustCases", "noRegression"], "properties": { "evaluated": { "type": "boolean" }, "majorityReduction": { "type": "boolean" }, "robustCases": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }, "noRegression": { "type": "boolean" } } },
+    "rationale": { "type": "string", "minLength": 1 }, "createdOn": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }, "canonical": { "const": true },
+    "lifecycleSafety": {
+      "type": "object", "additionalProperties": false,
+      "required": ["normalReuse", "faultIsolation", "runtimeIsolation", "memoryPages", "abi", "artifactStable"],
+      "properties": {
+        "normalReuse": { "const": true }, "faultIsolation": { "const": true },
+        "runtimeIsolation": { "const": true }, "memoryPages": { "const": 128 },
+        "abi": { "const": "llang-collection-native-v1" }, "artifactStable": { "const": true }
+      }
+    }
+  },
+  "$defs": { "category": { "enum": ["startup", "host-input", "wasm-evaluate", "host-output"] }, "vote": { "type": "integer", "minimum": 0, "maximum": 6 }, "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } }
+}

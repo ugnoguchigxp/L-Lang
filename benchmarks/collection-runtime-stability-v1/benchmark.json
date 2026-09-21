@@ -1,0 +1,33 @@
+{
+  "format": "llang-collection-runtime-stability-benchmark",
+  "version": 1,
+  "seed": 20260921,
+  "blocks": 6,
+  "warmup": 5,
+  "samples": 5,
+  "canonicalEnvironment": {
+    "bun": "1.4.2",
+    "binaryen": "132.0.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuIncludes": "Apple M4"
+  },
+  "limits": {
+    "childTimeoutMs": 120000,
+    "artifactBytes": 4194304,
+    "jsonBytes": 1048576
+  },
+  "decision": {
+    "maximumUnattributedShare": 0.2,
+    "maximumRelativeMad": 0.25,
+    "minimumMedianShare": 0.3,
+    "minimumIntervalShare": 0.2,
+    "minimumRobustCases": 3,
+    "maximumBlockMedianRelativeMad": 0.15,
+    "maximumOrderDifference": 0.2,
+    "minimumWinningBlocks": 5,
+    "minimumPreparedReduction": 0.3,
+    "minimumPreparedIntervalReduction": 0.2,
+    "maximumPreparedRatioUpper": 1.05
+  }
+}

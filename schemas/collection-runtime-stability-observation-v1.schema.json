@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-runtime-stability-observation-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "version", "createdOn", "canonical", "environment", "sourceObservationHash", "benchmarkHash", "workloadHash", "programs", "cases", "blockEnvironments", "resources", "samples", "summary", "lifecycleSafety"],
+  "properties": {
+    "format": { "const": "llang-collection-runtime-stability-observation" }, "version": { "const": 1 },
+    "createdOn": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }, "canonical": { "const": true },
+    "environment": { "$ref": "#/$defs/environment" }, "sourceObservationHash": { "$ref": "#/$defs/hash" },
+    "benchmarkHash": { "$ref": "#/$defs/hash" }, "workloadHash": { "$ref": "#/$defs/hash" },
+    "programs": { "type": "array", "minItems": 9, "maxItems": 9, "items": { "type": "object" } },
+    "cases": { "type": "array", "minItems": 23, "maxItems": 23, "items": { "type": "object" } },
+    "blockEnvironments": { "type": "array", "minItems": 6, "maxItems": 6, "items": { "$ref": "#/$defs/blockEnvironment" } },
+    "resources": { "type": "array", "minItems": 138, "maxItems": 138, "items": { "$ref": "#/$defs/resource" } },
+    "samples": { "type": "array", "minItems": 1380, "maxItems": 1380, "items": { "$ref": "#/$defs/sample" } },
+    "summary": { "type": "array", "minItems": 23, "maxItems": 23, "items": { "type": "object" } },
+    "lifecycleSafety": { "$ref": "#/$defs/lifecycle" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }, "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "nonnegative": { "type": "integer", "minimum": 0 }, "positive": { "type": "integer", "minimum": 1 },
+    "environment": { "type": "object", "additionalProperties": false, "required": ["bun", "binaryen", "platform", "arch", "osRelease", "cpu"], "properties": {
+      "bun": { "const": "1.4.2" }, "binaryen": { "const": "132.0.0" }, "platform": { "const": "darwin" }, "arch": { "const": "arm64" },
+      "osRelease": { "type": "string", "minLength": 1 }, "cpu": { "type": "string", "minLength": 1 }
+    } },
+    "blockEnvironment": { "type": "object", "additionalProperties": false, "required": ["blockId", "bun", "binaryen", "platform", "arch", "osRelease", "cpu"], "properties": {
+      "blockId": { "type": "integer", "minimum": 0, "maximum": 5 },
+      "bun": { "const": "1.4.2" }, "binaryen": { "const": "132.0.0" }, "platform": { "const": "darwin" }, "arch": { "const": "arm64" },
+      "osRelease": { "type": "string", "minLength": 1 }, "cpu": { "type": "string", "minLength": 1 }
+    } },
+    "resource": { "type": "object", "additionalProperties": false, "required": ["blockId", "orderId", "orderIndex", "caseId", "laneOrder", "startRssBytes", "afterWarmupRssBytes", "endRssBytes", "userCpuMicros", "systemCpuMicros", "clockOverheadNs"], "properties": {
+      "blockId": { "type": "integer", "minimum": 0, "maximum": 5 }, "orderId": { "type": "string", "pattern": "^order-[0-5]$" }, "orderIndex": { "type": "integer", "minimum": 0, "maximum": 22 }, "caseId": { "$ref": "#/$defs/id" },
+      "laneOrder": { "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": { "enum": ["cold", "module-cached"] } },
+      "startRssBytes": { "$ref": "#/$defs/positive" }, "afterWarmupRssBytes": { "$ref": "#/$defs/positive" }, "endRssBytes": { "$ref": "#/$defs/positive" },
+      "userCpuMicros": { "$ref": "#/$defs/nonnegative" }, "systemCpuMicros": { "$ref": "#/$defs/nonnegative" }, "clockOverheadNs": { "$ref": "#/$defs/nonnegative" }
+    } },
+    "sample": { "type": "object", "additionalProperties": false, "required": ["blockId", "orderId", "orderIndex", "caseId", "programId", "partition", "size", "lane", "sample", "clockOverheadNs", "compileNs", "instantiateNs", "encodeNs", "hostValidationNs", "evaluateNs", "decodeNs", "totalNs", "accountedNs", "unattributedNs", "inputBytes", "outputBytes"], "properties": {
+      "blockId": { "type": "integer", "minimum": 0, "maximum": 5 }, "orderId": { "type": "string", "pattern": "^order-[0-5]$" }, "orderIndex": { "type": "integer", "minimum": 0, "maximum": 22 },
+      "caseId": { "$ref": "#/$defs/id" }, "programId": { "$ref": "#/$defs/id" }, "partition": { "enum": ["exploration", "holdout"] }, "size": { "$ref": "#/$defs/positive" },
+      "lane": { "enum": ["cold", "module-cached"] }, "sample": { "type": "integer", "minimum": 0, "maximum": 4 },
+      "clockOverheadNs": { "$ref": "#/$defs/nonnegative" }, "compileNs": { "$ref": "#/$defs/nonnegative" }, "instantiateNs": { "$ref": "#/$defs/nonnegative" }, "encodeNs": { "$ref": "#/$defs/nonnegative" }, "hostValidationNs": { "$ref": "#/$defs/nonnegative" }, "evaluateNs": { "$ref": "#/$defs/nonnegative" }, "decodeNs": { "$ref": "#/$defs/nonnegative" }, "totalNs": { "$ref": "#/$defs/positive" }, "accountedNs": { "$ref": "#/$defs/nonnegative" }, "unattributedNs": { "$ref": "#/$defs/nonnegative" }, "inputBytes": { "$ref": "#/$defs/positive" }, "outputBytes": { "$ref": "#/$defs/positive" }
+    } },
+    "lifecycle": { "type": "object", "additionalProperties": false, "required": ["normalReuse", "faultIsolation", "runtimeIsolation", "memoryPages", "abi", "artifactStable"], "properties": {
+      "normalReuse": { "const": true }, "faultIsolation": { "const": true }, "runtimeIsolation": { "const": true }, "memoryPages": { "const": 128 }, "abi": { "const": "llang-collection-native-v1" }, "artifactStable": { "const": true }
+    } }
+  }
+}

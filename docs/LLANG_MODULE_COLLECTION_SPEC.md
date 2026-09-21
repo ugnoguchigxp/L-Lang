@@ -91,6 +91,14 @@ source and destination containment before reading or writing. Validator claim
 storage is a bounded module-private work region selected outside the declared
 input and output regions.
 
+`instantiateCollectionModule` validates and compiles one trusted artifact when
+the runtime object is created. Callers that evaluate the same artifact more
+than once may keep that runtime object and call `evaluate` repeatedly. Every
+call creates a fresh `WebAssembly.Instance`, memory, allocator state, and fault
+state. Runtime objects do not share instance state. Callers must create a new
+runtime object when the artifact bytes or contract change; the API does not
+provide a global artifact cache or an instance pool.
+
 Instrumented Collection builds are available only to the internal cost
 benchmark. They add metric exports and therefore are not portable product
 artifacts. Normal builds retain exactly `memory`, `evaluate`, and `fault_code`.

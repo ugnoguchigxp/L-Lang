@@ -47,6 +47,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [Collectionメモリー安全性Matrix](./COLLECTION_MEMORY_SAFETY_MATRIX.md)、[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)：Wasm自身の境界検査、allocator、RegionMemory有界化、決定的cost観測と最適化判断
 - [Collection Binaryen最適化レシピ選定 実装計画](./COLLECTION_BINARYEN_RECIPE_SELECTION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_BINARYEN_RECIPE_SELECTION_RESULTS.md)：固定候補の隔離生成とholdout評価を完了し、事前Gateによりbaseline維持を決定
 - [Collection end-to-endボトルネック特定 実装計画](./COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_END_TO_END_BOTTLENECK_ATTRIBUTION_RESULTS.md)：製品baselineを加算可能なphaseへ分解し、startupを最有力と観測したが品質Gateにより`inconclusive`と判定
+- [Collection runtime計測安定化と最終方針 実装計画](./COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_RUNTIME_STABILITY_AND_FINAL_DISPOSITION_RESULTS.md)：6独立block・1380 sampleで最終Gateを評価し、計測安定性不足によりbaseline維持とrepository内Collection性能探索の終了を決定
 - [Value Wasmメモリー安全性強化 実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)：`module-value-v1`のdirect ABI検証順序、UTF-8境界、allocator／copy、differential／mutation試験を完了した計画
 - [Value Wasm Memory Safety Matrix](./VALUE_WASM_MEMORY_SAFETY_MATRIX.md)、[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)：direct callerに対する保証層、negative vector、ABI互換性、内部arenaの制限
 - [Effects Wasmメモリー安全性強化 実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)：linear／typed continuation ABIのraw descriptor、payload、module-private memory、失敗時state transactionを完了した計画
