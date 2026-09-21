@@ -1,0 +1,246 @@
+{
+  "format": "llang-collection-binaryen-decision",
+  "version": 1,
+  "outcome": "retain-baseline",
+  "selectedRecipeId": null,
+  "config": {
+    "baselineRecipeId": "baseline-v1",
+    "maximumRegressionPercent": 5,
+    "requiredImprovementPercent": 10,
+    "maximumArtifactRatio": 1.5,
+    "maximumMemoryRegressionPercent": 10
+  },
+  "candidates": [
+    {
+      "recipeId": "binaryen-o2-v1",
+      "verification": {
+        "recipeId": "binaryen-o2-v1",
+        "correctness": true,
+        "rawAbi": true,
+        "reproducible": true
+      },
+      "comparisons": [
+        {
+          "caseId": "closure-maximum",
+          "changePercent": -19.342787,
+          "conservativeChangePercent": -2.403122
+        },
+        {
+          "caseId": "composite-maximum",
+          "changePercent": -21.138069,
+          "conservativeChangePercent": 8.411171
+        },
+        {
+          "caseId": "filter-medium",
+          "changePercent": -27.336996,
+          "conservativeChangePercent": 8.93063
+        },
+        {
+          "caseId": "fold-maximum",
+          "changePercent": -22.04279,
+          "conservativeChangePercent": -3.972727
+        },
+        {
+          "caseId": "fold-medium",
+          "changePercent": 2.983357,
+          "conservativeChangePercent": 181.698986
+        },
+        {
+          "caseId": "generic-medium",
+          "changePercent": -34.592752,
+          "conservativeChangePercent": 1.724057
+        },
+        {
+          "caseId": "map-maximum",
+          "changePercent": -13.593385,
+          "conservativeChangePercent": -1.044721
+        },
+        {
+          "caseId": "sort-maximum",
+          "changePercent": -19.866677,
+          "conservativeChangePercent": -6.99897
+        }
+      ],
+      "artifactRatio": 0.720434,
+      "maximumMemoryRegressionPercent": 0,
+      "geometricSpeedup": 1.249743,
+      "buildMs": 358.15975,
+      "eligible": false,
+      "status": "rejected-regression"
+    },
+    {
+      "recipeId": "binaryen-o3-v1",
+      "verification": {
+        "recipeId": "binaryen-o3-v1",
+        "correctness": true,
+        "rawAbi": true,
+        "reproducible": true
+      },
+      "comparisons": [
+        {
+          "caseId": "closure-maximum",
+          "changePercent": -22.688704,
+          "conservativeChangePercent": -16.166963
+        },
+        {
+          "caseId": "composite-maximum",
+          "changePercent": -21.565587,
+          "conservativeChangePercent": -8.010574
+        },
+        {
+          "caseId": "filter-medium",
+          "changePercent": -27.24982,
+          "conservativeChangePercent": 13.097318
+        },
+        {
+          "caseId": "fold-maximum",
+          "changePercent": -27.156945,
+          "conservativeChangePercent": 4.185101
+        },
+        {
+          "caseId": "fold-medium",
+          "changePercent": -28.502453,
+          "conservativeChangePercent": -10.87036
+        },
+        {
+          "caseId": "generic-medium",
+          "changePercent": -30.098415,
+          "conservativeChangePercent": -7.351262
+        },
+        {
+          "caseId": "map-maximum",
+          "changePercent": -19.261371,
+          "conservativeChangePercent": -1.085329
+        },
+        {
+          "caseId": "sort-maximum",
+          "changePercent": -26.818563,
+          "conservativeChangePercent": -12.424921
+        }
+      ],
+      "artifactRatio": 0.721183,
+      "maximumMemoryRegressionPercent": 1.229183,
+      "geometricSpeedup": 1.342289,
+      "buildMs": 431.159125,
+      "eligible": false,
+      "status": "rejected-regression"
+    },
+    {
+      "recipeId": "binaryen-o2s-v1",
+      "verification": {
+        "recipeId": "binaryen-o2s-v1",
+        "correctness": true,
+        "rawAbi": true,
+        "reproducible": true
+      },
+      "comparisons": [
+        {
+          "caseId": "closure-maximum",
+          "changePercent": -19.311486,
+          "conservativeChangePercent": -6.312199
+        },
+        {
+          "caseId": "composite-maximum",
+          "changePercent": -19.231564,
+          "conservativeChangePercent": 1.101699
+        },
+        {
+          "caseId": "filter-medium",
+          "changePercent": -24.687203,
+          "conservativeChangePercent": 13.173196
+        },
+        {
+          "caseId": "fold-maximum",
+          "changePercent": -21.059975,
+          "conservativeChangePercent": 8.254246
+        },
+        {
+          "caseId": "fold-medium",
+          "changePercent": -21.665222,
+          "conservativeChangePercent": 1.638992
+        },
+        {
+          "caseId": "generic-medium",
+          "changePercent": -31.507332,
+          "conservativeChangePercent": -4.881769
+        },
+        {
+          "caseId": "map-maximum",
+          "changePercent": -20.335517,
+          "conservativeChangePercent": -11.142071
+        },
+        {
+          "caseId": "sort-maximum",
+          "changePercent": -14.631417,
+          "conservativeChangePercent": 3.56143
+        }
+      ],
+      "artifactRatio": 0.710329,
+      "maximumMemoryRegressionPercent": 0.052868,
+      "geometricSpeedup": 1.277034,
+      "buildMs": 440.423999,
+      "eligible": false,
+      "status": "rejected-regression"
+    },
+    {
+      "recipeId": "binaryen-o2sz-v1",
+      "verification": {
+        "recipeId": "binaryen-o2sz-v1",
+        "correctness": true,
+        "rawAbi": true,
+        "reproducible": true
+      },
+      "comparisons": [
+        {
+          "caseId": "closure-maximum",
+          "changePercent": -8.557753,
+          "conservativeChangePercent": 21.130578
+        },
+        {
+          "caseId": "composite-maximum",
+          "changePercent": -15.244163,
+          "conservativeChangePercent": 2.144394
+        },
+        {
+          "caseId": "filter-medium",
+          "changePercent": -21.625939,
+          "conservativeChangePercent": 3.364667
+        },
+        {
+          "caseId": "fold-maximum",
+          "changePercent": -21.902077,
+          "conservativeChangePercent": -8.699383
+        },
+        {
+          "caseId": "fold-medium",
+          "changePercent": -27.578639,
+          "conservativeChangePercent": -6.153476
+        },
+        {
+          "caseId": "generic-medium",
+          "changePercent": -30.748706,
+          "conservativeChangePercent": 3.214929
+        },
+        {
+          "caseId": "map-maximum",
+          "changePercent": -18.320096,
+          "conservativeChangePercent": -8.582565
+        },
+        {
+          "caseId": "sort-maximum",
+          "changePercent": -20.015855,
+          "conservativeChangePercent": -10.275421
+        }
+      ],
+      "artifactRatio": 0.711078,
+      "maximumMemoryRegressionPercent": 0.898758,
+      "geometricSpeedup": 1.261994,
+      "buildMs": 393.778542,
+      "eligible": false,
+      "status": "rejected-regression"
+    }
+  ],
+  "rationale": "No frozen recipe passed every safety, reproducibility, holdout performance, size, and memory gate.",
+  "createdOn": "2026-09-21",
+  "canonical": true
+}

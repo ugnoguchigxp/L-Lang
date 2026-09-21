@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-recipes-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "recipes"],
+  "properties": {
+    "format": { "const": "llang-collection-binaryen-recipes" },
+    "version": { "const": 1 },
+    "recipes": { "type": "array", "minItems": 5, "maxItems": 5, "items": { "$ref": "collection-binaryen-recipe-v1.schema.json" } }
+  }
+}

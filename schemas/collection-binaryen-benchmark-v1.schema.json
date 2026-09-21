@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-benchmark-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "version", "seed", "warmup", "iterations", "samples", "canonicalEnvironment", "limits", "decision"],
+  "properties": {
+    "format": { "const": "llang-collection-binaryen-benchmark" },
+    "version": { "const": 1 },
+    "seed": { "type": "integer" },
+    "warmup": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "iterations": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "samples": { "type": "integer", "minimum": 3, "maximum": 1000 },
+    "canonicalEnvironment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bun", "binaryen", "platform", "arch", "cpuIncludes"],
+      "properties": {
+        "bun": { "const": "1.4.2" }, "binaryen": { "const": "132.0.0" },
+        "platform": { "const": "darwin" }, "arch": { "const": "arm64" },
+        "cpuIncludes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["optimizerTimeoutMs", "artifactBytes"],
+      "properties": {
+        "optimizerTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 120000 },
+        "artifactBytes": { "type": "integer", "minimum": 1024, "maximum": 4194304 }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["baselineRecipeId", "maximumRegressionPercent", "requiredImprovementPercent", "maximumArtifactRatio", "maximumMemoryRegressionPercent"],
+      "properties": {
+        "baselineRecipeId": { "const": "baseline-v1" },
+        "maximumRegressionPercent": { "type": "number", "minimum": 0 },
+        "requiredImprovementPercent": { "type": "number", "minimum": 0 },
+        "maximumArtifactRatio": { "type": "number", "minimum": 1 },
+        "maximumMemoryRegressionPercent": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

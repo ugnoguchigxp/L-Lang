@@ -1,0 +1,498 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-observation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "createdOn",
+    "canonical",
+    "environment",
+    "benchmark",
+    "samples",
+    "summary"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-collection-binaryen-observation"
+    },
+    "version": {
+      "const": 1
+    },
+    "createdOn": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "canonical": {
+      "type": "boolean"
+    },
+    "environment": {
+      "$ref": "#/$defs/environment"
+    },
+    "benchmark": {
+      "$ref": "#/$defs/benchmark"
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 675,
+      "items": {
+        "$ref": "#/$defs/sample"
+      },
+      "maxItems": 675,
+      "uniqueItems": true
+    },
+    "summary": {
+      "type": "array",
+      "minItems": 75,
+      "items": {
+        "$ref": "#/$defs/summary"
+      },
+      "maxItems": 75,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bun",
+        "binaryen",
+        "platform",
+        "arch",
+        "osRelease",
+        "cpu"
+      ],
+      "properties": {
+        "bun": {
+          "type": "string"
+        },
+        "binaryen": {
+          "const": "132.0.0"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "osRelease": {
+          "type": "string"
+        },
+        "cpu": {
+          "type": "string"
+        }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "version",
+        "seed",
+        "warmup",
+        "iterations",
+        "samples",
+        "canonicalEnvironment",
+        "limits",
+        "decision"
+      ],
+      "properties": {
+        "format": {
+          "const": "llang-collection-binaryen-benchmark"
+        },
+        "version": {
+          "const": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "warmup": {
+          "type": "integer"
+        },
+        "iterations": {
+          "type": "integer"
+        },
+        "samples": {
+          "type": "integer"
+        },
+        "canonicalEnvironment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bun",
+            "binaryen",
+            "platform",
+            "arch",
+            "cpuIncludes"
+          ],
+          "properties": {
+            "bun": {
+              "type": "string"
+            },
+            "binaryen": {
+              "type": "string"
+            },
+            "platform": {
+              "type": "string"
+            },
+            "arch": {
+              "type": "string"
+            },
+            "cpuIncludes": {
+              "type": "string"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "optimizerTimeoutMs",
+            "artifactBytes"
+          ],
+          "properties": {
+            "optimizerTimeoutMs": {
+              "type": "integer"
+            },
+            "artifactBytes": {
+              "type": "integer"
+            }
+          }
+        },
+        "decision": {
+          "$ref": "#/$defs/config"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baselineRecipeId",
+        "maximumRegressionPercent",
+        "requiredImprovementPercent",
+        "maximumArtifactRatio",
+        "maximumMemoryRegressionPercent"
+      ],
+      "properties": {
+        "baselineRecipeId": {
+          "const": "baseline-v1"
+        },
+        "maximumRegressionPercent": {
+          "type": "number"
+        },
+        "requiredImprovementPercent": {
+          "type": "number"
+        },
+        "maximumArtifactRatio": {
+          "type": "number"
+        },
+        "maximumMemoryRegressionPercent": {
+          "type": "number"
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "median",
+        "mad",
+        "p95",
+        "bootstrap95"
+      ],
+      "properties": {
+        "median": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "p95": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bootstrap95": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "partition",
+        "recipeId",
+        "sample",
+        "buildMs",
+        "loadMs",
+        "emitMs",
+        "optimizerReadMs",
+        "optimizerPreValidationMs",
+        "optimizerCoreMs",
+        "optimizerPostValidationMs",
+        "optimizerEmitMs",
+        "compileMs",
+        "instantiateMs",
+        "encodeMs",
+        "hostValidationMs",
+        "evaluateMs",
+        "decodeMs",
+        "endToEndMs",
+        "artifactBytes",
+        "linearMemoryBytes",
+        "arenaPeakBytes",
+        "allocationCalls",
+        "allocationBytes",
+        "copyCalls",
+        "copyBytes",
+        "peakRssBytes"
+      ],
+      "properties": {
+        "caseId": {
+          "type": "string"
+        },
+        "partition": {
+          "enum": [
+            "exploration",
+            "holdout"
+          ]
+        },
+        "recipeId": {
+          "type": "string"
+        },
+        "sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "buildMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "compileMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "instantiateMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "evaluateMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "endToEndMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "artifactBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "linearMemoryBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "peakRssBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "encodeMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hostValidationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "decodeMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arenaPeakBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allocationCalls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allocationBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "copyCalls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "copyBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "loadMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "emitMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimizerReadMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimizerPreValidationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimizerCoreMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimizerPostValidationMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "optimizerEmitMs": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "partition",
+        "recipeId",
+        "buildMs",
+        "loadMs",
+        "emitMs",
+        "optimizerReadMs",
+        "optimizerPreValidationMs",
+        "optimizerCoreMs",
+        "optimizerPostValidationMs",
+        "optimizerEmitMs",
+        "compileMs",
+        "instantiateMs",
+        "encodeMs",
+        "hostValidationMs",
+        "evaluateMs",
+        "decodeMs",
+        "endToEndMs",
+        "artifactBytes",
+        "linearMemoryBytes",
+        "arenaPeakBytes",
+        "allocationCalls",
+        "allocationBytes",
+        "copyCalls",
+        "copyBytes",
+        "peakRssBytes"
+      ],
+      "properties": {
+        "caseId": {
+          "type": "string"
+        },
+        "partition": {
+          "enum": [
+            "exploration",
+            "holdout"
+          ]
+        },
+        "recipeId": {
+          "type": "string"
+        },
+        "buildMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "compileMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "instantiateMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "evaluateMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "endToEndMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "artifactBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "linearMemoryBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "peakRssBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "encodeMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "hostValidationMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "decodeMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "arenaPeakBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allocationCalls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allocationBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "copyCalls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "copyBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "loadMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "emitMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "optimizerReadMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "optimizerPreValidationMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "optimizerCoreMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "optimizerPostValidationMs": {
+          "$ref": "#/$defs/metric"
+        },
+        "optimizerEmitMs": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    }
+  }
+}

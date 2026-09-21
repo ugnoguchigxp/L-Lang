@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-freeze-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "createdOn",
+    "baselineRevision",
+    "inputs",
+    "recipes",
+    "programs",
+    "artifacts",
+    "verification"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-collection-binaryen-freeze"
+    },
+    "version": {
+      "const": 1
+    },
+    "createdOn": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "baselineRevision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipesHash",
+        "corpusHash",
+        "benchmarkHash"
+      ],
+      "properties": {
+        "recipesHash": {
+          "$ref": "#/$defs/hash"
+        },
+        "corpusHash": {
+          "$ref": "#/$defs/hash"
+        },
+        "benchmarkHash": {
+          "$ref": "#/$defs/hash"
+        }
+      }
+    },
+    "recipes": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "recipeId",
+          "recipeHash"
+        ],
+        "properties": {
+          "recipeId": {
+            "type": "string"
+          },
+          "recipeHash": {
+            "$ref": "#/$defs/hash"
+          }
+        }
+      },
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "programs": {
+      "type": "array",
+      "minItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "programHash",
+          "loweredHash",
+          "interfaceHash",
+          "layoutHash"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "programHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "loweredHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "interfaceHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "layoutHash": {
+            "$ref": "#/$defs/hash"
+          }
+        }
+      },
+      "maxItems": 9,
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 45,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "programId",
+          "recipeId",
+          "recipeHash",
+          "wasmHash",
+          "bytes"
+        ],
+        "properties": {
+          "programId": {
+            "type": "string"
+          },
+          "recipeId": {
+            "type": "string"
+          },
+          "recipeHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "wasmHash": {
+            "$ref": "#/$defs/hash"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4194304
+          }
+        }
+      },
+      "maxItems": 45,
+      "uniqueItems": true
+    },
+    "verification": {
+      "type": "array",
+      "minItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "recipeId",
+          "correctness",
+          "rawAbi",
+          "reproducible"
+        ],
+        "properties": {
+          "recipeId": {
+            "type": "string"
+          },
+          "correctness": {
+            "const": true
+          },
+          "rawAbi": {
+            "const": true
+          },
+          "reproducible": {
+            "const": true
+          }
+        }
+      },
+      "maxItems": 5,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

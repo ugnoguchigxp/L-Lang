@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-recipe-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "schemaVersion",
+    "recipeId",
+    "binaryenVersion",
+    "optimizeLevel",
+    "shrinkLevel",
+    "debugInfo",
+    "lowMemoryUnused",
+    "passes"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-collection-binaryen-recipe"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "recipeId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$"
+    },
+    "binaryenVersion": {
+      "const": "132.0.0"
+    },
+    "optimizeLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "shrinkLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "debugInfo": {
+      "const": false
+    },
+    "lowMemoryUnused": {
+      "const": false
+    },
+    "passes": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "recipeId": {
+          "const": "baseline-v1"
+        },
+        "optimizeLevel": {
+          "const": 0
+        },
+        "shrinkLevel": {
+          "const": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "recipeId": {
+          "const": "binaryen-o2-v1"
+        },
+        "optimizeLevel": {
+          "const": 2
+        },
+        "shrinkLevel": {
+          "const": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "recipeId": {
+          "const": "binaryen-o3-v1"
+        },
+        "optimizeLevel": {
+          "const": 3
+        },
+        "shrinkLevel": {
+          "const": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "recipeId": {
+          "const": "binaryen-o2s-v1"
+        },
+        "optimizeLevel": {
+          "const": 2
+        },
+        "shrinkLevel": {
+          "const": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "recipeId": {
+          "const": "binaryen-o2sz-v1"
+        },
+        "optimizeLevel": {
+          "const": 2
+        },
+        "shrinkLevel": {
+          "const": 2
+        }
+      }
+    }
+  ]
+}

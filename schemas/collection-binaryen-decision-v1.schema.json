@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-decision-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "outcome",
+    "selectedRecipeId",
+    "config",
+    "candidates",
+    "rationale",
+    "createdOn",
+    "canonical"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-collection-binaryen-decision"
+    },
+    "version": {
+      "const": 1
+    },
+    "outcome": {
+      "enum": [
+        "adopt",
+        "retain-baseline"
+      ]
+    },
+    "selectedRecipeId": {
+      "anyOf": [
+        {
+          "enum": [
+            "binaryen-o2-v1",
+            "binaryen-o3-v1",
+            "binaryen-o2s-v1",
+            "binaryen-o2sz-v1"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "config": {
+      "$ref": "#/$defs/config"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/candidate"
+      },
+      "uniqueItems": true
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "createdOn": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "canonical": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baselineRecipeId",
+        "maximumRegressionPercent",
+        "requiredImprovementPercent",
+        "maximumArtifactRatio",
+        "maximumMemoryRegressionPercent"
+      ],
+      "properties": {
+        "baselineRecipeId": {
+          "const": "baseline-v1"
+        },
+        "maximumRegressionPercent": {
+          "type": "number",
+          "minimum": 0
+        },
+        "requiredImprovementPercent": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximumArtifactRatio": {
+          "type": "number",
+          "minimum": 1
+        },
+        "maximumMemoryRegressionPercent": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeId",
+        "correctness",
+        "rawAbi",
+        "reproducible"
+      ],
+      "properties": {
+        "recipeId": {
+          "enum": [
+            "binaryen-o2-v1",
+            "binaryen-o3-v1",
+            "binaryen-o2s-v1",
+            "binaryen-o2sz-v1"
+          ]
+        },
+        "correctness": {
+          "type": "boolean"
+        },
+        "rawAbi": {
+          "type": "boolean"
+        },
+        "reproducible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "caseId",
+        "changePercent",
+        "conservativeChangePercent"
+      ],
+      "properties": {
+        "caseId": {
+          "type": "string"
+        },
+        "changePercent": {
+          "type": "number"
+        },
+        "conservativeChangePercent": {
+          "type": "number"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recipeId",
+        "verification",
+        "comparisons",
+        "artifactRatio",
+        "maximumMemoryRegressionPercent",
+        "geometricSpeedup",
+        "buildMs",
+        "eligible",
+        "status"
+      ],
+      "properties": {
+        "recipeId": {
+          "enum": [
+            "binaryen-o2-v1",
+            "binaryen-o3-v1",
+            "binaryen-o2s-v1",
+            "binaryen-o2sz-v1"
+          ]
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        },
+        "comparisons": {
+          "type": "array",
+          "minItems": 8,
+          "items": {
+            "$ref": "#/$defs/comparison"
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "artifactRatio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maximumMemoryRegressionPercent": {
+          "type": "number"
+        },
+        "geometricSpeedup": {
+          "type": "number",
+          "minimum": 0
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "rejected-safety",
+            "rejected-regression",
+            "inconclusive",
+            "rejected-size",
+            "rejected-memory",
+            "eligible"
+          ]
+        },
+        "buildMs": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "eligible": {
+                "const": true
+              }
+            },
+            "required": [
+              "eligible"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "eligible"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "eligible": {
+                "const": false
+              }
+            },
+            "required": [
+              "eligible"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "not": {
+                  "const": "eligible"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "adopt"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "selectedRecipeId": {
+            "enum": [
+              "binaryen-o2-v1",
+              "binaryen-o3-v1",
+              "binaryen-o2s-v1",
+              "binaryen-o2sz-v1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "retain-baseline"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "selectedRecipeId": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -21,6 +21,16 @@ export function emitCollectionModuleWasm(program: CheckedCollectionProgram): {
   contract: CollectionWasmContract;
   wat: string;
 } {
+  return emitUnoptimizedCollectionModuleWasm(program);
+}
+
+export function emitUnoptimizedCollectionModuleWasm(
+  program: CheckedCollectionProgram,
+): {
+  bytes: Uint8Array;
+  contract: CollectionWasmContract;
+  wat: string;
+} {
   return emitCollectionWasm(program, false);
 }
 

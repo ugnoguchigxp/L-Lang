@@ -1,0 +1,40 @@
+{
+  "language": "l-lang",
+  "version": 4,
+  "kind": "module",
+  "profile": "module-collection-v1",
+  "imports": [],
+  "types": [
+    {
+      "name": "Input",
+      "export": true,
+      "kind": "union",
+      "typeParameters": [],
+      "variants": [
+        { "tag": "Value", "fields": [{ "name": "text", "type": "string" }] },
+        { "tag": "Empty", "fields": [] }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "evaluate",
+      "export": true,
+      "typeParameters": [],
+      "parameters": [{ "name": "input", "type": { "ref": "Input" } }],
+      "returns": "i32",
+      "body": {
+        "statements": [
+          {
+            "kind": "match",
+            "value": { "kind": "local", "name": "input" },
+            "cases": [
+              { "tag": "Value", "body": [{ "kind": "return", "value": { "kind": "literal", "type": "i32", "value": 1 } }] },
+              { "tag": "Empty", "body": [{ "kind": "return", "value": { "kind": "literal", "type": "i32", "value": 0 } }] }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

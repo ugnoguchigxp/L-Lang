@@ -1,0 +1,11 @@
+{
+  "format": "llang-collection-binaryen-benchmark",
+  "version": 1,
+  "seed": 20260921,
+  "warmup": 3,
+  "iterations": 5,
+  "samples": 9,
+  "canonicalEnvironment": { "bun": "1.4.2", "binaryen": "132.0.0", "platform": "darwin", "arch": "arm64", "cpuIncludes": "Apple M4" },
+  "limits": { "optimizerTimeoutMs": 30000, "artifactBytes": 4194304 },
+  "decision": { "baselineRecipeId": "baseline-v1", "maximumRegressionPercent": 5, "requiredImprovementPercent": 10, "maximumArtifactRatio": 1.5, "maximumMemoryRegressionPercent": 10 }
+}

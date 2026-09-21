@@ -1,0 +1,42 @@
+{
+  "language": "l-lang",
+  "version": 4,
+  "kind": "module",
+  "profile": "module-collection-v1",
+  "imports": [],
+  "types": [
+    {
+      "name": "Input",
+      "export": true,
+      "kind": "record",
+      "typeParameters": [],
+      "fields": [{ "name": "value", "type": "i32" }]
+    }
+  ],
+  "functions": [
+    {
+      "name": "identity",
+      "export": false,
+      "typeParameters": ["T"],
+      "parameters": [{ "name": "value", "type": { "ref": "T" } }],
+      "returns": { "ref": "T" },
+      "body": { "statements": [], "result": { "kind": "local", "name": "value" } }
+    },
+    {
+      "name": "evaluate",
+      "export": true,
+      "typeParameters": [],
+      "parameters": [{ "name": "input", "type": { "ref": "Input" } }],
+      "returns": "i32",
+      "body": {
+        "statements": [],
+        "result": {
+          "kind": "call",
+          "callee": "identity",
+          "typeArguments": ["i32"],
+          "arguments": [{ "kind": "field", "base": { "kind": "local", "name": "input" }, "name": "value" }]
+        }
+      }
+    }
+  ]
+}

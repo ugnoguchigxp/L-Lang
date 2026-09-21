@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.local/schemas/collection-binaryen-corpus-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "programs",
+    "cases"
+  ],
+  "properties": {
+    "format": {
+      "const": "llang-collection-binaryen-corpus"
+    },
+    "version": {
+      "const": 1
+    },
+    "programs": {
+      "type": "array",
+      "minItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "entry",
+          "entryName",
+          "inputShape"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "entry": {
+            "type": "string",
+            "minLength": 1
+          },
+          "root": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entryName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputShape": {
+            "enum": [
+              "values",
+              "threshold",
+              "delta",
+              "scalar",
+              "string",
+              "union"
+            ]
+          }
+        }
+      },
+      "maxItems": 9,
+      "uniqueItems": true
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 17,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "programId",
+          "partition",
+          "size",
+          "pattern"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "programId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "partition": {
+            "enum": [
+              "correctness",
+              "exploration",
+              "holdout"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4096
+          },
+          "pattern": {
+            "enum": [
+              "ascending",
+              "reverse",
+              "cycle",
+              "alternating",
+              "duplicates",
+              "scalar"
+            ]
+          }
+        }
+      },
+      "maxItems": 17,
+      "uniqueItems": true
+    }
+  }
+}

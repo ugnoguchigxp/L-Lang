@@ -22,7 +22,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | JSONC | [Predicate v1仕様](./LLANG_JSONC_SPEC.md) |
 | Typed modules | [Phase 1仕様](./LLANG_MODULE_SPEC.md)：boolean module、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)：値・制御・型付き結果 |
 | Wasm | [コンパイラ構想](./WASM_COMPILER_CONCEPT.md)、[Effects runtime仕様](./LLANG_MODULE_EFFECTS_SPEC.md) |
-| メモリー安全性・最適化 | [段階的検証のコンセプト](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md)、[Collection実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)、[Value Wasm実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[Effects Wasm実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[LLVM実験backend 最小比較 実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)と[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md) |
+| メモリー安全性・最適化 | [段階的検証のコンセプト](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md)、[Collection実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)、[Collection Binaryenレシピ選定計画](./COLLECTION_BINARYEN_RECIPE_SELECTION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_BINARYEN_RECIPE_SELECTION_RESULTS.md)、[Value Wasm実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[Effects Wasm実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[LLVM実験backend 最小比較 実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)と[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md) |
 | Hybrid | [コンパイラ構想](./HYBRID_COMPILER_CONCEPT.md) |
 | Prompt Source | [v2設計提案](./PROMPT_SOURCE_V2_DESIGN.md)。採用状態はJSONC仕様を参照 |
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
@@ -45,6 +45,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [Effects adversarial benchmark実装結果](./EFFECTS_ADVERSARIAL_BENCHMARK_IMPLEMENTATION_RESULTS.md)：PR-0〜PR-9、EAB1〜EAB40のoffline fixture基盤と未実証範囲。
 - [Collectionメモリー安全性と最適化基盤 実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)：direct Wasm境界、safe allocator、RegionMemory metadata、cost計測、一候補だけの条件付き最適化を完了した計画
 - [Collectionメモリー安全性Matrix](./COLLECTION_MEMORY_SAFETY_MATRIX.md)、[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)：Wasm自身の境界検査、allocator、RegionMemory有界化、決定的cost観測と最適化判断
+- [Collection Binaryen最適化レシピ選定 実装計画](./COLLECTION_BINARYEN_RECIPE_SELECTION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_BINARYEN_RECIPE_SELECTION_RESULTS.md)：固定候補の隔離生成とholdout評価を完了し、事前Gateによりbaseline維持を決定
 - [Value Wasmメモリー安全性強化 実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)：`module-value-v1`のdirect ABI検証順序、UTF-8境界、allocator／copy、differential／mutation試験を完了した計画
 - [Value Wasm Memory Safety Matrix](./VALUE_WASM_MEMORY_SAFETY_MATRIX.md)、[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)：direct callerに対する保証層、negative vector、ABI互換性、内部arenaの制限
 - [Effects Wasmメモリー安全性強化 実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)：linear／typed continuation ABIのraw descriptor、payload、module-private memory、失敗時state transactionを完了した計画

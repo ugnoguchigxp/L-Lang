@@ -1,0 +1,11 @@
+{
+  "format": "llang-collection-binaryen-recipes",
+  "version": 1,
+  "recipes": [
+    { "format": "llang-collection-binaryen-recipe", "schemaVersion": 1, "recipeId": "baseline-v1", "binaryenVersion": "132.0.0", "optimizeLevel": 0, "shrinkLevel": 0, "debugInfo": false, "lowMemoryUnused": false, "passes": [] },
+    { "format": "llang-collection-binaryen-recipe", "schemaVersion": 1, "recipeId": "binaryen-o2-v1", "binaryenVersion": "132.0.0", "optimizeLevel": 2, "shrinkLevel": 0, "debugInfo": false, "lowMemoryUnused": false, "passes": [] },
+    { "format": "llang-collection-binaryen-recipe", "schemaVersion": 1, "recipeId": "binaryen-o3-v1", "binaryenVersion": "132.0.0", "optimizeLevel": 3, "shrinkLevel": 0, "debugInfo": false, "lowMemoryUnused": false, "passes": [] },
+    { "format": "llang-collection-binaryen-recipe", "schemaVersion": 1, "recipeId": "binaryen-o2s-v1", "binaryenVersion": "132.0.0", "optimizeLevel": 2, "shrinkLevel": 1, "debugInfo": false, "lowMemoryUnused": false, "passes": [] },
+    { "format": "llang-collection-binaryen-recipe", "schemaVersion": 1, "recipeId": "binaryen-o2sz-v1", "binaryenVersion": "132.0.0", "optimizeLevel": 2, "shrinkLevel": 2, "debugInfo": false, "lowMemoryUnused": false, "passes": [] }
+  ]
+}
