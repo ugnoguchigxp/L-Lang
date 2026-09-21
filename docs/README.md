@@ -22,7 +22,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | JSONC | [Predicate v1仕様](./LLANG_JSONC_SPEC.md) |
 | Typed modules | [Phase 1仕様](./LLANG_MODULE_SPEC.md)：boolean module、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)：値・制御・型付き結果 |
 | Wasm | [コンパイラ構想](./WASM_COMPILER_CONCEPT.md)、[Effects runtime仕様](./LLANG_MODULE_EFFECTS_SPEC.md) |
-| メモリー安全性・最適化 | [段階的検証のコンセプト](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md)、[Collection実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)、[Value Wasm実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[Effects Wasm実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md) |
+| メモリー安全性・最適化 | [段階的検証のコンセプト](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md)、[Collection実装計画](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_IMPLEMENTATION_PLAN.md)と[実装結果](./COLLECTION_MEMORY_SAFETY_AND_OPTIMIZATION_RESULTS.md)、[Value Wasm実装計画](./VALUE_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[Effects Wasm実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)と[実装結果](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)、[LLVM実験backend 最小比較 実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)と[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md) |
 | Hybrid | [コンパイラ構想](./HYBRID_COMPILER_CONCEPT.md) |
 | Prompt Source | [v2設計提案](./PROMPT_SOURCE_V2_DESIGN.md)。採用状態はJSONC仕様を参照 |
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
@@ -49,6 +49,7 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [Value Wasm Memory Safety Matrix](./VALUE_WASM_MEMORY_SAFETY_MATRIX.md)、[実装結果](./VALUE_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)：direct callerに対する保証層、negative vector、ABI互換性、内部arenaの制限
 - [Effects Wasmメモリー安全性強化 実装計画](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)：linear／typed continuation ABIのraw descriptor、payload、module-private memory、失敗時state transactionを完了した計画
 - [Effects Wasm Memory Safety Matrix](./EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)、[実装結果](./EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)：direct callerに対するrange、alias、retry、copy、ABI互換性の保証境界
+- [LLVM実験backend 最小比較 実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)と[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)：checked `sum(List<i32>)`を全laneで比較し、現行backend維持を決定した実験
 
 - [第四弾の実装計画](./GENERAL_PURPOSE_LANGUAGE_PHASE4_IMPLEMENTATION_PLAN.md)：native Wasm補完、IO・非同期・権限・bytes・数値・並行処理・stream（実装完了）
 

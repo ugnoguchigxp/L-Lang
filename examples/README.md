@@ -19,6 +19,7 @@
 | Prompt Sourceの部品検証 | [capability-access](./capability-access/README.md) | パッケージ作成・検証 |
 | Prompt Sourceのテスト・実装製造 | [capability-development](./capability-development/README.md) | 独立テスト、最大1回修正、replay |
 | Host接続 | [saaa-host](./saaa-host/README.md) | 単発Wasm実行キット |
+| LLVM checked sum比較 | [llvm-sum-i32](./llvm-sum-i32/README.md) | TS/JSONCから同一kernel planを抽出し、direct/LLVM Wasm/Nativeを比較 |
 | 用途別ソート実験 | [wasm-json-sort](./wasm-json-sort/README.md) | 実験用JSONCからTS/Wasmを生成・比較。標準Predicate profileとは別 |
 | 用途別UIデモ | [saaa-world-clock](./saaa-world-clock/README.md) | 専用ABIとtimezone adapter。一般Predicate言語の拡張ではない |
 

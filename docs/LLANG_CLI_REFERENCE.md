@@ -223,3 +223,13 @@ bun run effects:benchmark reproduce <result-package.json> --out-dir <new-directo
 `run`は新規directoryを排他的に作り、trialごとにJSONLとcheckpointを更新する。`--resume`は同じstudy／freeze／trial orderを再検査し、completed trialを再実行しない。uncertain trialがあれば人のreviewまで停止する。
 
 `analyze`はraw observationと同梱Oracleからprimary、worst-case sensitivity、table／figure CSVを再生成する。`verify`と`reproduce`はarm source、Wasm、networkを実行しない。fixture、candidate、pilotは常に`evidenceEligible: false`であり、live model品質、人間の監査性、TypeScript一般への優位、実運用安全性を示さない。
+
+## LLVM実験backend（開発用script）
+
+```sh
+bun run llvm:experiment:verify
+bun run llvm:experiment:benchmark
+bun run llvm:experiment:record
+```
+
+checked `sum(List<i32>)`に限定し、reference、製品Collection Wasm、direct kernel Wasm、LLVM Wasm O0/O2/O3、LLVM Native O0/O2/O3を比較する。通常の`llang` CLIや製品backendの選択肢ではない。`verify`は意味・境界・二重buildを検査し、`benchmark`は保存せず測定、`record`はschema検証後にfreeze、raw observation、decisionを更新する。LLVM/LLD toolchainがない場合はskipしない。固定環境、採否、保証範囲は[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)を参照する。

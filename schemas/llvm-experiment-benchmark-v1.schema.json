@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llvm-experiment-benchmark-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "seed", "warmup", "iterations", "samples", "partitions", "optimizations", "limits", "decision"],
+  "properties": {
+    "format": { "const": "llang-llvm-experiment-benchmark" },
+    "version": { "const": 1 },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+    "warmup": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+    "iterations": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+    "samples": { "type": "integer", "minimum": 3, "maximum": 1000 },
+    "partitions": { "const": ["exploration", "holdout"] },
+    "optimizations": { "const": ["O0", "O2", "O3"] },
+    "limits": { "type": "object", "additionalProperties": false, "required": ["toolTimeoutMs", "nativeTimeoutMs", "outputBytes", "artifactBytes"], "properties": { "toolTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 300000 }, "nativeTimeoutMs": { "type": "integer", "minimum": 1, "maximum": 300000 }, "outputBytes": { "type": "integer", "minimum": 1, "maximum": 1048576 }, "artifactBytes": { "type": "integer", "minimum": 1, "maximum": 1048576 } } },
+    "decision": { "type": "object", "additionalProperties": false, "required": ["maximumMedianRegressionPercent", "requiredImprovementPercent", "maximumArtifactRatio"], "properties": { "maximumMedianRegressionPercent": { "type": "number", "minimum": 0, "maximum": 100 }, "requiredImprovementPercent": { "type": "number", "minimum": 0, "maximum": 100 }, "maximumArtifactRatio": { "type": "number", "minimum": 1, "maximum": 16 } } }
+  }
+}

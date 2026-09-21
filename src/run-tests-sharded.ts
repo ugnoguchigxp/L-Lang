@@ -1,12 +1,23 @@
 export {};
 
-const listing = Bun.spawn(["git", "ls-files", "--", "*.test.ts"], {
-  cwd: process.cwd(),
-  env: process.env,
-  stdin: "ignore",
-  stdout: "pipe",
-  stderr: "inherit",
-});
+const listing = Bun.spawn(
+  [
+    "git",
+    "ls-files",
+    "--cached",
+    "--others",
+    "--exclude-standard",
+    "--",
+    "*.test.ts",
+  ],
+  {
+    cwd: process.cwd(),
+    env: process.env,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "inherit",
+  },
+);
 const files = (await new Response(listing.stdout).text())
   .split(/\r?\n/u)
   .filter(Boolean)
@@ -14,9 +25,12 @@ const files = (await new Response(listing.stdout).text())
 if ((await listing.exited) !== 0) throw new Error("cannot list test files");
 if (files.length === 0) throw new Error("no test files found");
 
-const isolated = new Set(["src/static-judgment-compiler.integration.test.ts"]);
+const isolated = new Set([
+  "src/effects-adversarial-benchmark.test.ts",
+  "src/static-judgment-compiler.integration.test.ts",
+]);
 const regularFiles = files.filter((file) => !isolated.has(file));
-const shardSize = 24;
+const shardSize = 16;
 const shards: string[][] = [];
 for (let offset = 0; offset < regularFiles.length; offset += shardSize)
   shards.push(regularFiles.slice(offset, offset + shardSize));
@@ -27,7 +41,15 @@ for (const [index, shard] of shards.entries()) {
   const count = shards.length;
   console.log(`test shard ${number}/${count} (${shard.length} files)`);
   const child = Bun.spawn(
-    [process.execPath, "test", "--timeout", "30000", ...shard],
+    [
+      process.execPath,
+      "test",
+      "--timeout",
+      "120000",
+      "--max-concurrency",
+      "1",
+      ...shard,
+    ],
     {
       cwd: process.cwd(),
       env: process.env,

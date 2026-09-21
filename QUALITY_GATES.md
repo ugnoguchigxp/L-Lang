@@ -20,7 +20,7 @@ bun run format:check
 bun run lint
 bun run ci:docs
 bun run typecheck
-bun test
+bun run test
 bun run coverage
 bun run ci:smoke
 bun run ci:protected
@@ -55,3 +55,15 @@ CLIや環境の契約変更時は[CLIリファレンス](./docs/LLANG_CLI_REFERE
 correctness Gateは短時間で再現できる回帰検査である。SAAA soak、実運用TLS、長期の性能・memory評価は代表workloadと観測期間を別途固定し、通常CIの成功から推定しない。
 
 文書確認の直近記録と全ファイルの分類は[文書メンテナンス記録](./docs/MAINTENANCE_STATUS.md)を参照する。文書確認の成功を全体テスト・coverage・remote CIの成功として報告しない。
+
+## LLVM実験backend
+
+`src/llang-llvm-*`、`examples/llvm-sum-i32`、`benchmarks/llvm-backend-v1`を変更した場合は、通常Gateに加えて次を実行する。
+
+```sh
+bun run llvm:experiment:verify
+bun run llvm:experiment:record
+bun test src/llang-llvm-kernel-ir.test.ts src/llang-llvm-emitter.test.ts src/llang-llvm-experiment.test.ts
+```
+
+外部LLVMがない環境ではskipせず失敗する。通常の`bun run check`と製品build/runtimeはLLVMを要求しない。`record`は二つのrootでIR/artifact hashを照合し、15 semantic case、Wasm ABI境界、O0/O2/O3、Native隔離runnerを検査する。性能値はfreezeと同じOS、CPU、Bun、LLVM/LLD、SDKに限定して扱う。

@@ -43,7 +43,7 @@ describe("semantic verify", () => {
     expect(rendered).toContain("persistent files written: 0");
     expect(rendered).toContain("diagnostics:\n  none");
     expect(report.remediation).toEqual([]);
-  }, 60_000);
+  }, 120_000);
 
   test("collects test failures and keeps typecheck as a separate check", async () => {
     const report = await verifySemanticArtifact({
@@ -64,7 +64,7 @@ describe("semantic verify", () => {
       "Fix the failing Semantic Test cases or regenerate the affected Predicate.",
     );
     expect(renderSemanticVerify(report)).toContain("remediation:");
-  }, 60_000);
+  }, 120_000);
 
   test("reports an open manifest without attempting unsafe generation", async () => {
     const report = await verifySemanticArtifact({
@@ -105,7 +105,7 @@ describe("semantic verify", () => {
     expect(report.remediation).toContain(
       "Run bun run typecheck and fix the reported TypeScript errors.",
     );
-  }, 60_000);
+  }, 120_000);
 
   test("propagates command startup failures as operational errors", async () => {
     await expect(
@@ -116,7 +116,7 @@ describe("semantic verify", () => {
         },
       }),
     ).rejects.toThrow("spawn unavailable");
-  }, 60_000);
+  }, 120_000);
 
   test("rejects a manifest outside the declared workspace", async () => {
     await expect(

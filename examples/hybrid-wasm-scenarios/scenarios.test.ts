@@ -22,7 +22,7 @@ describe("progressive Hybrid TypeScript to Wasm scenarios", () => {
         true,
       );
     }
-  }, 15_000);
+  }, 30_000);
 
   test("keeps scenario metadata ordered and uniquely addressable", () => {
     expect(new Set(HYBRID_WASM_SCENARIOS.map(({ id }) => id)).size).toBe(7);

@@ -1,0 +1,78 @@
+{
+  "language": "l-lang",
+  "version": 4,
+  "kind": "module",
+  "profile": "module-collection-v1",
+  "imports": [
+    {
+      "from": "../domain/types.llang.jsonc",
+      "bindings": [
+        { "kind": "type", "name": "Input", "as": "Input" },
+        { "kind": "type", "name": "Output", "as": "Output" }
+      ]
+    }
+  ],
+  "types": [],
+  "functions": [
+    {
+      "name": "evaluate",
+      "export": true,
+      "typeParameters": [],
+      "parameters": [{ "name": "input", "type": { "ref": "Input" } }],
+      "returns": { "ref": "Output" },
+      "body": {
+        "statements": [
+          {
+            "kind": "const",
+            "name": "total",
+            "type": "i32",
+            "value": {
+              "kind": "intrinsic",
+              "name": "fold",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "field",
+                  "base": { "kind": "local", "name": "input" },
+                  "name": "values"
+                },
+                { "kind": "literal", "type": "i32", "value": 0 },
+                {
+                  "kind": "lambda",
+                  "parameters": [
+                    { "name": "sum", "type": "i32" },
+                    { "name": "value", "type": "i32" }
+                  ],
+                  "returns": "i32",
+                  "body": {
+                    "statements": [],
+                    "result": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": { "kind": "local", "name": "sum" },
+                      "right": { "kind": "local", "name": "value" }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "record",
+              "type": "Output",
+              "typeArguments": [],
+              "fields": [
+                {
+                  "name": "total",
+                  "value": { "kind": "local", "name": "total" }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

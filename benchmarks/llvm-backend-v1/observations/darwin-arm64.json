@@ -1,0 +1,3432 @@
+{
+  "format": "llang-llvm-experiment-observation",
+  "version": 1,
+  "createdOn": "2026-09-21",
+  "environment": {
+    "bun": "1.3.14",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3",
+    "os": "darwin",
+    "architecture": "arm64",
+    "cpu": "Apple M4"
+  },
+  "source": {
+    "programHash": "535378de8cac356701c701712b526e20e68f387ed2766364b6211dd0d334d083",
+    "loweredHash": "f65ae0d3d33f04a525fcdec2b79cb9b6c9f60408d6e7d48693592cf9ac48152f",
+    "interfaceHash": "3a194295efe23d3305d1cbd0b3e3acaa257331317dae721bc59bad6f281c1e4c",
+    "layoutHash": "97a0603062aa0c2124c00a76960ba4c257cc59e6029d3edef08c630cf354ffcd",
+    "kernelPlanHash": "d3faeb4a4551787ca0df661c0d69630fdca48afa505c1b1da4b2e6c246c75d4a"
+  },
+  "benchmark": {
+    "format": "llang-llvm-experiment-benchmark",
+    "version": 1,
+    "seed": 20260921,
+    "warmup": 20,
+    "iterations": 100,
+    "samples": 7,
+    "partitions": [
+      "exploration",
+      "holdout"
+    ],
+    "optimizations": [
+      "O0",
+      "O2",
+      "O3"
+    ],
+    "limits": {
+      "toolTimeoutMs": 30000,
+      "nativeTimeoutMs": 10000,
+      "outputBytes": 1048576,
+      "artifactBytes": 1048576
+    },
+    "decision": {
+      "maximumMedianRegressionPercent": 5,
+      "requiredImprovementPercent": 10,
+      "maximumArtifactRatio": 2
+    }
+  },
+  "samples": [
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 774.58,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 660.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 806.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33783808,
+      "processNs": 25901209
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 864.17,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35897344,
+      "processNs": 26033333
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 936.67,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33669120,
+      "processNs": 28527041
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 65218.75
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 3272702.08
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 900.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 717.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1164.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 967.08,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33800192,
+      "processNs": 28889125
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 947.5,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35864576,
+      "processNs": 28057500
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 893.75,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33734656,
+      "processNs": 29062667
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 60648.33
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 4240023.33
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 985.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1106.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 517.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 920,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35946496,
+      "processNs": 28928208
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 929.59,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33734656,
+      "processNs": 27032042
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1029.16,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33767424,
+      "processNs": 29217500
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 49803.75
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 3913734.16
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 920.41,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 690,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 504.59,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 902.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 954.17,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35995648,
+      "processNs": 28235708
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1023.75,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33734656,
+      "processNs": 28697209
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 55895
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 3933906.66
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 823.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 486.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 512.09,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1077.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1181.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33767424,
+      "processNs": 29560542
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1007.08,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33865728,
+      "processNs": 28669625
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 64672.09
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 6367942.92
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1018.33,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1445,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 906.66,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 381.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1340.42,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33751040,
+      "processNs": 32524000
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1135.42,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33718272,
+      "processNs": 31305625
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 68947.08
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 4474172.91
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2285,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1716.66,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 869.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 993.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1689.17,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33783808,
+      "processNs": 50687250
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2183.75,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33865728,
+      "processNs": 49117542
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1378.33,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33767424,
+      "processNs": 48035042
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 4557507.92
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1123.33,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1542.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 538.34,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1067.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1929.58,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33751040,
+      "processNs": 36104083
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1391.66,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33849344,
+      "processNs": 39021417
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1903.75,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35880960,
+      "processNs": 34481625
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 67878.34
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 4164.58,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2415.41,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1823.34,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36519936,
+      "processNs": 36130083
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2300,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36339712,
+      "processNs": 41973417
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1770.42,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36503552,
+      "processNs": 43252333
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 426557.92
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 8795437.91
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1982.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 3679.16,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2137.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1331.25,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36405248,
+      "processNs": 36195500
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1314.17,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36454400,
+      "processNs": 33920458
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1450.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36487168,
+      "processNs": 36430000
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 295294.58
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 6753064.59
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 4362.09,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 4666.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 4308.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 2622.5,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36356096,
+      "processNs": 53045000
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 2423.33,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36339712,
+      "processNs": 48732209
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3037.08,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36290560,
+      "processNs": 59102542
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 543818.34
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 6110179.58
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3866.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4672.09,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4612.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4639.59,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1660.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36519936,
+      "processNs": 44355000
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1913.75,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36470784,
+      "processNs": 37503208
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 311893.75
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 5046611.67
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2842.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 4671.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 3201.66,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2267.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1597.5,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36569088,
+      "processNs": 35034125
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1511.67,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36356096,
+      "processNs": 35862042
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 390180.83
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 6505681.66
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2115,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 4623.33,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2369.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2713.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1385,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36470784,
+      "processNs": 35935542
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1437.5,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36274176,
+      "processNs": 34303209
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 311028.75
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 4497844.16
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1895,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 4333.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2362.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2626.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1457.08,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36421632,
+      "processNs": 34117875
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2037.5,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36552704,
+      "processNs": 35215791
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1356.25,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36339712,
+      "processNs": 35950708
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 3772288.75
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 3445.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 4562.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 3953.34,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 3995.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1779.59,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36438016,
+      "processNs": 37607875
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 3078.75,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36569088,
+      "processNs": 37759500
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1610.42,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36487168,
+      "processNs": 35133375
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 279695.84
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 755.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 735.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1100,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35946496,
+      "processNs": 30910250
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1242.92,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33783808,
+      "processNs": 29415167
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1212.08,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33816576,
+      "processNs": 31322667
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 37477.92
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 4335864.17
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 30667.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 300.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 382.91,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2938.33,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 36044800,
+      "processNs": 68406417
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1165.42,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33816576,
+      "processNs": 37826833
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1059.58,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33800192,
+      "processNs": 29814792
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 62411.25
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 4399129.59
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 598.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1327.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 521.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1061.67,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33800192,
+      "processNs": 30624458
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1051.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35979264,
+      "processNs": 31250583
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1051.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33734656,
+      "processNs": 31793750
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 64508.33
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 7412744.58
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 552.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 619.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 706.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 513.34,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1448.34,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33783808,
+      "processNs": 37871041
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1266.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35815424,
+      "processNs": 34966375
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 66962.08
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 4202894.58
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 233.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 950.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 480.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 141.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1374.16,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35962880,
+      "processNs": 32468750
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1642.5,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35848192,
+      "processNs": 33935417
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 64123.33
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 5179002.92
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 596.66,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 897.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1069.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2626.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1247.5,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35880960,
+      "processNs": 37547291
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1345.41,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33832960,
+      "processNs": 44082584
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 74013.34
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 5253519.17
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1162.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 832.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1181.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1850.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2124.17,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33800192,
+      "processNs": 50094709
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1879.58,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33865728,
+      "processNs": 44602917
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2391.25,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33816576,
+      "processNs": 39395834
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 4401650
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 139.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 827.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 585.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 845,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1293.33,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35897344,
+      "processNs": 34577750
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1513.34,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 33734656,
+      "processNs": 33550000
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1362.5,
+      "nativeBufferBytes": 260,
+      "peakRssBytes": 35880960,
+      "processNs": 32324042
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 66173.33
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2485.41,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2697.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2180.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36372480,
+      "processNs": 32868792
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 1486.25,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36749312,
+      "processNs": 34414208
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 3439.58,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36241408,
+      "processNs": 33141917
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 256761.67
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 3280832.09
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2604.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2522.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2077.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1155.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36487168,
+      "processNs": 29557292
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1184.17,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36438016,
+      "processNs": 28579042
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 1439.58,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36290560,
+      "processNs": 31839333
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 249773.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 3983648.33
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2209.58,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 3319.58,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 4241.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1840.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36306944,
+      "processNs": 36915791
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1603.33,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36536320,
+      "processNs": 35319583
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 1641.25,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36290560,
+      "processNs": 32908625
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 307060.83
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 6178502.08
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3327.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4425.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 2782.09,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 2628.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1818.75,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36470784,
+      "processNs": 35308875
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 1285,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36421632,
+      "processNs": 31975958
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 283317.5
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 5736581.66
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 3450.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 4555.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 4112.09,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2799.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2573.75,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36552704,
+      "processNs": 42704834
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2295.41,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36241408,
+      "processNs": 47891208
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 363631.66
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 4638656.66
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2183.33,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 3079.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2895.84,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 3055.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1475.41,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36732928,
+      "processNs": 31930791
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 1419.58,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36405248,
+      "processNs": 31075334
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 261330.84
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 4105783.33
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 3530,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2855,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 4306.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 2878.33,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1792.91,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36405248,
+      "processNs": 31054917
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1498.33,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36257792,
+      "processNs": 28441250
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 1276.25,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36683776,
+      "processNs": 29473667
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 12429213.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 2547.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 6568.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 3450.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 4685.42,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1720.83,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36552704,
+      "processNs": 43562750
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1691.66,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36569088,
+      "processNs": 37117750
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 1449.17,
+      "nativeBufferBytes": 4100,
+      "peakRssBytes": 36716544,
+      "processNs": 36720666
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 306925.83
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 9710.84,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 7388.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 3058.33,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37322752,
+      "processNs": 38081625
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2719.58,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37453824,
+      "processNs": 36660084
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 2516.25,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37322752,
+      "processNs": 37796125
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 1130264.58
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 0,
+      "scope": "end-to-end",
+      "nsPerIteration": 4342557.92
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 5239.58,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 0,
+      "scope": "kernel",
+      "nsPerIteration": 4936.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 6377.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2548.75,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37355520,
+      "processNs": 36276875
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 2250.83,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37289984,
+      "processNs": 31796000
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 3222.5,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37289984,
+      "processNs": 33842209
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 1410046.25
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 1,
+      "scope": "end-to-end",
+      "nsPerIteration": 4869737.91
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 6279.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 4804.17,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 1,
+      "scope": "kernel",
+      "nsPerIteration": 6183.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3484.17,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37339136,
+      "processNs": 38891042
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3054.58,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37355520,
+      "processNs": 42393250
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 2798.34,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37224448,
+      "processNs": 39674708
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 1247627.5
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 2,
+      "scope": "end-to-end",
+      "nsPerIteration": 4595994.16
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4446.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 3727.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 6092.91,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 2,
+      "scope": "kernel",
+      "nsPerIteration": 4816.67,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2594.58,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37437440,
+      "processNs": 35083292
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2379.58,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37273600,
+      "processNs": 35996375
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 1021160.84
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 3,
+      "scope": "end-to-end",
+      "nsPerIteration": 5765859.17
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 7081.25,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 4532.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 6830.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 5302.91,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 3,
+      "scope": "kernel",
+      "nsPerIteration": 2245.41,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37339136,
+      "processNs": 33272583
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2315,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37322752,
+      "processNs": 33482958
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 1104200.42
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 4,
+      "scope": "end-to-end",
+      "nsPerIteration": 6590141.67
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 7474.59,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 5090.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 6545.83,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 7252.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2519.16,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37388288,
+      "processNs": 39432791
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 4,
+      "scope": "kernel",
+      "nsPerIteration": 2928.33,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37421056,
+      "processNs": 42158667
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 1180155.42
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 5,
+      "scope": "end-to-end",
+      "nsPerIteration": 6218897.92
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 9125,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 8772.92,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 7643.34,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 10777.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 3785.83,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37339136,
+      "processNs": 53567333
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 4203.33,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37224448,
+      "processNs": 115991208
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 5,
+      "scope": "kernel",
+      "nsPerIteration": 5883.75,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37076992,
+      "processNs": 153055917
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 5805742.92
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 6445.84,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 4048.75,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 6732.08,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 4967.5,
+      "linearMemoryBytes": 131072
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 2892.08,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37273600,
+      "processNs": 35022000
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 2337.5,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37339136,
+      "processNs": 34242250
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "sample": 6,
+      "scope": "kernel",
+      "nsPerIteration": 2295.41,
+      "nativeBufferBytes": 16388,
+      "peakRssBytes": 37355520,
+      "processNs": 34922708
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "sample": 6,
+      "scope": "end-to-end",
+      "nsPerIteration": 1032983.33
+    }
+  ],
+  "summary": [
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "scope": "kernel",
+      "medianNs": 2842.5,
+      "madNs": 860,
+      "p95Ns": 4362.09
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "scope": "kernel",
+      "medianNs": 1597.5,
+      "madNs": 212.5,
+      "p95Ns": 2622.5
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "scope": "kernel",
+      "medianNs": 2037.5,
+      "madNs": 385.83,
+      "p95Ns": 3078.75
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "scope": "kernel",
+      "medianNs": 1610.42,
+      "madNs": 160,
+      "p95Ns": 3037.08
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "scope": "kernel",
+      "medianNs": 4623.33,
+      "madNs": 48.76,
+      "p95Ns": 4672.09
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "scope": "kernel",
+      "medianNs": 3953.34,
+      "madNs": 659.58,
+      "p95Ns": 4612.92
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "scope": "kernel",
+      "medianNs": 2626.67,
+      "madNs": 359.59,
+      "p95Ns": 4639.59
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "scope": "end-to-end",
+      "medianNs": 6110179.58,
+      "madNs": 1063567.91,
+      "p95Ns": 8795437.91
+    },
+    {
+      "caseId": "exploration-medium",
+      "partition": "exploration",
+      "lane": "reference",
+      "scope": "end-to-end",
+      "medianNs": 311893.75,
+      "madNs": 32197.91,
+      "p95Ns": 543818.34
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "direct-wasm",
+      "scope": "kernel",
+      "medianNs": 985.42,
+      "madNs": 84.59,
+      "p95Ns": 2285
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O0",
+      "scope": "kernel",
+      "medianNs": 1181.25,
+      "madNs": 261.25,
+      "p95Ns": 1929.58
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O2",
+      "scope": "kernel",
+      "medianNs": 954.17,
+      "madNs": 90,
+      "p95Ns": 2183.75
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-native-O3",
+      "scope": "kernel",
+      "medianNs": 1023.75,
+      "madNs": 87.08,
+      "p95Ns": 1903.75
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O0",
+      "scope": "kernel",
+      "medianNs": 1106.67,
+      "madNs": 416.67,
+      "p95Ns": 1716.66
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O2",
+      "scope": "kernel",
+      "medianNs": 538.34,
+      "madNs": 33.75,
+      "p95Ns": 906.66
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "llvm-wasm-O3",
+      "scope": "kernel",
+      "medianNs": 993.75,
+      "madNs": 91.25,
+      "p95Ns": 1164.17
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "product-wasm",
+      "scope": "end-to-end",
+      "medianNs": 4240023.33,
+      "madNs": 317484.59,
+      "p95Ns": 6367942.92
+    },
+    {
+      "caseId": "exploration-small",
+      "partition": "exploration",
+      "lane": "reference",
+      "scope": "end-to-end",
+      "medianNs": 64672.09,
+      "madNs": 4023.76,
+      "p95Ns": 68947.08
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "scope": "kernel",
+      "medianNs": 6445.84,
+      "madNs": 1028.75,
+      "p95Ns": 9125
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "scope": "kernel",
+      "medianNs": 2892.08,
+      "madNs": 372.92,
+      "p95Ns": 3785.83
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "scope": "kernel",
+      "medianNs": 2719.58,
+      "madNs": 335,
+      "p95Ns": 4203.33
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "scope": "kernel",
+      "medianNs": 2516.25,
+      "madNs": 220.84,
+      "p95Ns": 5883.75
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "scope": "kernel",
+      "medianNs": 4804.17,
+      "madNs": 286.66,
+      "p95Ns": 8772.92
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "scope": "kernel",
+      "medianNs": 6732.08,
+      "madNs": 548.33,
+      "p95Ns": 9710.84
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "scope": "kernel",
+      "medianNs": 6377.08,
+      "madNs": 1074.17,
+      "p95Ns": 10777.08
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "scope": "end-to-end",
+      "medianNs": 5765859.17,
+      "madNs": 824282.5,
+      "p95Ns": 6590141.67
+    },
+    {
+      "caseId": "holdout-maximum",
+      "partition": "holdout",
+      "lane": "reference",
+      "scope": "end-to-end",
+      "medianNs": 1130264.58,
+      "madNs": 97281.25,
+      "p95Ns": 1410046.25
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "scope": "kernel",
+      "medianNs": 2604.17,
+      "madNs": 420.84,
+      "p95Ns": 3530
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "scope": "kernel",
+      "medianNs": 1792.91,
+      "madNs": 317.5,
+      "p95Ns": 2573.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "scope": "kernel",
+      "medianNs": 1498.33,
+      "madNs": 105,
+      "p95Ns": 1818.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "scope": "kernel",
+      "medianNs": 1449.17,
+      "madNs": 172.92,
+      "p95Ns": 3439.58
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "scope": "kernel",
+      "medianNs": 3319.58,
+      "madNs": 797.08,
+      "p95Ns": 6568.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "scope": "kernel",
+      "medianNs": 3450.42,
+      "madNs": 668.33,
+      "p95Ns": 4306.67
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "scope": "kernel",
+      "medianNs": 2799.17,
+      "madNs": 170.42,
+      "p95Ns": 4685.42
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "scope": "end-to-end",
+      "medianNs": 4638656.66,
+      "madNs": 1097925,
+      "p95Ns": 12429213.75
+    },
+    {
+      "caseId": "holdout-medium",
+      "partition": "holdout",
+      "lane": "reference",
+      "scope": "end-to-end",
+      "medianNs": 283317.5,
+      "madNs": 23743.33,
+      "p95Ns": 363631.66
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "direct-wasm",
+      "scope": "kernel",
+      "medianNs": 596.66,
+      "madNs": 362.91,
+      "p95Ns": 30667.5
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O0",
+      "scope": "kernel",
+      "medianNs": 1293.33,
+      "madNs": 193.33,
+      "p95Ns": 2938.33
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O2",
+      "scope": "kernel",
+      "medianNs": 1345.41,
+      "madNs": 167.93,
+      "p95Ns": 1879.58
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-native-O3",
+      "scope": "kernel",
+      "medianNs": 1266.25,
+      "madNs": 206.67,
+      "p95Ns": 2391.25
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O0",
+      "scope": "kernel",
+      "medianNs": 832.5,
+      "madNs": 117.92,
+      "p95Ns": 1327.5
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O2",
+      "scope": "kernel",
+      "medianNs": 706.67,
+      "madNs": 185.42,
+      "p95Ns": 1181.25
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "llvm-wasm-O3",
+      "scope": "kernel",
+      "medianNs": 735.83,
+      "madNs": 352.92,
+      "p95Ns": 2626.25
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "product-wasm",
+      "scope": "end-to-end",
+      "medianNs": 4401650,
+      "madNs": 198755.42,
+      "p95Ns": 7412744.58
+    },
+    {
+      "caseId": "holdout-small",
+      "partition": "holdout",
+      "lane": "reference",
+      "scope": "end-to-end",
+      "medianNs": 64508.33,
+      "madNs": 2097.08,
+      "p95Ns": 74013.34
+    }
+  ]
+}

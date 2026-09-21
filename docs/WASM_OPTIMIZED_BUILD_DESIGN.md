@@ -99,4 +99,4 @@ manifest の最適化設定はバージョン付きで拡張する。現行の�
 3. **最適化ビルド**: 固定レシピ、バージョン付き設定、正しさ検証、再現ビルドをコンパイラに組み込む。
 4. **探索**: 上限付きの候補評価、保留データ評価、採否レポートを追加する。自動配備は実運用の契約が決まってから扱う。
 
-代替案には現状の Binaryen のみ、Semantic IR から LLVM IR を直接生成する実験 backend、C / LLVM バックエンド、Rust / LLVM バックエンドがある。C/Rust ソース生成を必要としない直接 LLVM 案の範囲・意味保存・比較条件は、[LLVM を利用する独立した実験経路](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md#llvm-を利用する独立した実験経路)に整理した。いずれも未実装の提案であり、既存の直接 Wasm 経路を維持して代表処理一つから比較する。実行時間・実メモリ・ビルド時間・配布依存を合わせて判断し、LLVM を使っても JSON 変換やコピーの負担は別途評価する。
+代替案には現状の Binaryen のみ、Semantic IR から LLVM IR を直接生成する実験 backend、C / LLVM バックエンド、Rust / LLVM バックエンドがある。C/Rust ソース生成を必要としない直接 LLVM 案の範囲・意味保存・比較条件は、[LLVM を利用する独立した実験経路](./MEMORY_SAFETY_AND_SEMANTIC_OPTIMIZATION_CONCEPT.md#llvm-を利用する独立した実験経路)に整理した。最初の具体的な比較は[LLVM実験backend 最小比較 実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)に従って完了し、[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)では現行backend維持とした。一般backend化は未実装であり、既存の直接Wasm経路を維持する。実行時間・実メモリ・ビルド時間・配布依存を合わせて判断し、LLVM を使っても JSON 変換やコピーの負担は別途評価する。

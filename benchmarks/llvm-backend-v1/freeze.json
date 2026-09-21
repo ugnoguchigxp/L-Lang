@@ -1,0 +1,154 @@
+{
+  "format": "llang-llvm-experiment-freeze",
+  "version": 1,
+  "createdOn": "2026-09-21",
+  "baselineRevision": "fc72c1164db17049f2f934119d3376e46e5bf916",
+  "environment": {
+    "bun": "1.3.14",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3",
+    "os": "darwin",
+    "architecture": "arm64",
+    "cpu": "Apple M4"
+  },
+  "toolchain": {
+    "version": "23.1.1",
+    "toolVersions": {
+      "clang": "23.1.1",
+      "llvmAs": "23.1.1",
+      "opt": "23.1.1",
+      "llc": "23.1.1",
+      "wasmLd": "23.1.1"
+    },
+    "bin": "/opt/homebrew/Cellar/llvm/23.1.1/bin",
+    "lldBin": "/opt/homebrew/Cellar/lld/23.1.1/bin",
+    "clang": "/opt/homebrew/Cellar/llvm/23.1.1/bin/clang",
+    "llvmAs": "/opt/homebrew/Cellar/llvm/23.1.1/bin/llvm-as",
+    "opt": "/opt/homebrew/Cellar/llvm/23.1.1/bin/opt",
+    "llc": "/opt/homebrew/Cellar/llvm/23.1.1/bin/llc",
+    "wasmLd": "/opt/homebrew/Cellar/lld/23.1.1/bin/wasm-ld",
+    "wasmTriple": "wasm32-unknown-unknown",
+    "wasmDataLayout": "e-m:e-p:32:32-p10:8:8-p20:8:8-i64:64-i128:128-n32:64-S128-ni:1:10:20",
+    "nativeTriple": "arm64-apple-macosx26.0.0",
+    "nativeDataLayout": "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-n32:64-S128-Fn32",
+    "macosSdkPath": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+    "macosSdkVersion": "26.2"
+  },
+  "source": {
+    "programHash": "535378de8cac356701c701712b526e20e68f387ed2766364b6211dd0d334d083",
+    "loweredHash": "f65ae0d3d33f04a525fcdec2b79cb9b6c9f60408d6e7d48693592cf9ac48152f",
+    "interfaceHash": "3a194295efe23d3305d1cbd0b3e3acaa257331317dae721bc59bad6f281c1e4c",
+    "layoutHash": "97a0603062aa0c2124c00a76960ba4c257cc59e6029d3edef08c630cf354ffcd",
+    "kernelPlanHash": "d3faeb4a4551787ca0df661c0d69630fdca48afa505c1b1da4b2e6c246c75d4a"
+  },
+  "inputs": {
+    "corpusHash": "9684ca86ff902914cc9145f8d61a14a0699869e6f448ed97710daa8ba15855e6",
+    "benchmarkHash": "cc37962b32435dc53d0d99f69a601d49a38902d3c6a34579c621664e662c16de"
+  },
+  "artifacts": [
+    {
+      "lane": "product-wasm",
+      "hash": "bdab7f6d0a31b4ab7de1a43e9788730fb2e19114dcde6ed40049f95109d85f29",
+      "bytes": 2004
+    },
+    {
+      "lane": "direct-wasm",
+      "hash": "01acde6474edebaebd02a21fdb7eb3f5e7398bff5e5a25b0ce08644fba4d8f95",
+      "bytes": 260
+    },
+    {
+      "lane": "llvm-wasm-O0",
+      "hash": "ac4a2be366fb69553377d80ebae1a3be17ad6c2ae874050429897ffdd4b09bb8",
+      "bytes": 271,
+      "rawIrHash": "c949cd003c92a370573c103e70f51eefea5d5c04be1325344ab014c1fed99b13",
+      "optimizedIrHash": "150919b8b5688385d767b4a9ab0b5b639fcc8226a87bc95c8424063a6e59f2e1",
+      "phasesMs": {
+        "emit": 0.6895840000001954,
+        "assemble": 22.966875000000073,
+        "optimize": 22.38820799999985,
+        "reassemble": 22.53495900000007,
+        "codegen": 29.44870800000035,
+        "link": 44.47875000000022
+      }
+    },
+    {
+      "lane": "llvm-wasm-O2",
+      "hash": "19fbdf4f60f1d015306fa07996f567e93fd1d604442da7308960dab760475917",
+      "bytes": 250,
+      "rawIrHash": "c949cd003c92a370573c103e70f51eefea5d5c04be1325344ab014c1fed99b13",
+      "optimizedIrHash": "7d2f233dfe20c9616c0b2806e12efd1edc72d4bcb9c2d374ff2bc26df64b5e31",
+      "phasesMs": {
+        "emit": 0.29683399999976245,
+        "assemble": 20.55841700000019,
+        "optimize": 36.39979100000073,
+        "reassemble": 23.153166999999485,
+        "codegen": 26.827541999999994,
+        "link": 49.96495800000048
+      }
+    },
+    {
+      "lane": "llvm-wasm-O3",
+      "hash": "19fbdf4f60f1d015306fa07996f567e93fd1d604442da7308960dab760475917",
+      "bytes": 250,
+      "rawIrHash": "c949cd003c92a370573c103e70f51eefea5d5c04be1325344ab014c1fed99b13",
+      "optimizedIrHash": "7d2f233dfe20c9616c0b2806e12efd1edc72d4bcb9c2d374ff2bc26df64b5e31",
+      "phasesMs": {
+        "emit": 0.330457999999453,
+        "assemble": 22.913666999999805,
+        "optimize": 30.076874999999745,
+        "reassemble": 20.980875000000196,
+        "codegen": 29.59241699999984,
+        "link": 41.97450000000026
+      }
+    },
+    {
+      "lane": "llvm-native-O0",
+      "hash": "8c946efb95ce84095017ac6fa30b25fb418ded849bb3d737d3c5cb0f975c4a19",
+      "bytes": 16856,
+      "rawIrHash": "c84bf5a38ab983f7c51ce56aa08f3edccf67612f1d45b8e3758005ebc7c6a7e7",
+      "optimizedIrHash": "c1bfc3e9056aca615f5ec21251f89ffe59c8402ffaceee956b5c0947e2686253",
+      "phasesMs": {
+        "emit": 0.3742499999998472,
+        "assemble": 21.952957999999853,
+        "optimize": 23.222666000000117,
+        "reassemble": 22.615542000000005,
+        "codegen": 28.40970900000002,
+        "link": 168.0609999999997
+      }
+    },
+    {
+      "lane": "llvm-native-O2",
+      "hash": "6391955b60ae88d967c7ac43b2677c31385e8cbbe9be415ac87dc513ca0a3888",
+      "bytes": 16824,
+      "rawIrHash": "c84bf5a38ab983f7c51ce56aa08f3edccf67612f1d45b8e3758005ebc7c6a7e7",
+      "optimizedIrHash": "0183d7f28cdc845c2217ada49fea1e11fd8bd4812f7946f456ebfe023dae7d51",
+      "phasesMs": {
+        "emit": 0.4282499999999345,
+        "assemble": 21.889874999999847,
+        "optimize": 29.07891600000039,
+        "reassemble": 27.297499999999673,
+        "codegen": 28.356832999999824,
+        "link": 154.04662499999995
+      }
+    },
+    {
+      "lane": "llvm-native-O3",
+      "hash": "6391955b60ae88d967c7ac43b2677c31385e8cbbe9be415ac87dc513ca0a3888",
+      "bytes": 16824,
+      "rawIrHash": "c84bf5a38ab983f7c51ce56aa08f3edccf67612f1d45b8e3758005ebc7c6a7e7",
+      "optimizedIrHash": "0183d7f28cdc845c2217ada49fea1e11fd8bd4812f7946f456ebfe023dae7d51",
+      "phasesMs": {
+        "emit": 0.3543330000002243,
+        "assemble": 21.569916999999805,
+        "optimize": 29.863542000000052,
+        "reassemble": 21.240333000000646,
+        "codegen": 25.631916000000274,
+        "link": 146.34358299999985
+      }
+    }
+  ],
+  "verification": {
+    "cases": 15,
+    "comparisons": 165
+  }
+}

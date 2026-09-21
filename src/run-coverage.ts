@@ -1,7 +1,46 @@
 export {};
 
+const listing = Bun.spawn(
+  [
+    "git",
+    "ls-files",
+    "--cached",
+    "--others",
+    "--exclude-standard",
+    "--",
+    "*.test.ts",
+  ],
+  {
+    cwd: process.cwd(),
+    env: process.env,
+    stdin: "ignore",
+    stdout: "pipe",
+    stderr: "inherit",
+  },
+);
+const listedFiles = (await new Response(listing.stdout).text())
+  .split(/\r?\n/u)
+  .filter(Boolean)
+  .sort();
+if ((await listing.exited) !== 0 || listedFiles.length === 0)
+  throw new Error("cannot list test files");
+const priority = ["src/effects-adversarial-benchmark.test.ts"],
+  files = [
+    ...priority.filter((file) => listedFiles.includes(file)),
+    ...listedFiles.filter((file) => !priority.includes(file)),
+  ];
+
 const child = Bun.spawn(
-  [process.execPath, "test", "--coverage", "--timeout", "30000"],
+  [
+    process.execPath,
+    "test",
+    "--coverage",
+    "--timeout",
+    "30000",
+    "--max-concurrency",
+    "1",
+    ...files,
+  ],
   {
     cwd: process.cwd(),
     env: process.env,

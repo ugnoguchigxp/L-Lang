@@ -1,0 +1,68 @@
+{
+  "format": "llang-llvm-experiment-decision",
+  "version": 1,
+  "createdOn": "2026-09-21",
+  "outcome": "maintain-current-backend",
+  "selectedOptimization": null,
+  "wasmCandidates": [
+    {
+      "optimization": "O0",
+      "comparisons": [
+        {
+          "caseId": "holdout-maximum",
+          "changePercent": -25.469
+        },
+        {
+          "caseId": "holdout-medium",
+          "changePercent": 27.472
+        },
+        {
+          "caseId": "holdout-small",
+          "changePercent": 39.527
+        }
+      ],
+      "artifactRatio": 1.042,
+      "qualifies": false
+    },
+    {
+      "optimization": "O2",
+      "comparisons": [
+        {
+          "caseId": "holdout-maximum",
+          "changePercent": 4.441
+        },
+        {
+          "caseId": "holdout-medium",
+          "changePercent": 32.496
+        },
+        {
+          "caseId": "holdout-small",
+          "changePercent": 18.438
+        }
+      ],
+      "artifactRatio": 0.962,
+      "qualifies": false
+    },
+    {
+      "optimization": "O3",
+      "comparisons": [
+        {
+          "caseId": "holdout-maximum",
+          "changePercent": -1.067
+        },
+        {
+          "caseId": "holdout-medium",
+          "changePercent": 7.488
+        },
+        {
+          "caseId": "holdout-small",
+          "changePercent": 23.325
+        }
+      ],
+      "artifactRatio": 0.962,
+      "qualifies": false
+    }
+  ],
+  "nativeOutcome": "limited-experiment-only",
+  "rationale": "No LLVM Wasm candidate passed every frozen correctness, regression, improvement, and artifact-size gate."
+}

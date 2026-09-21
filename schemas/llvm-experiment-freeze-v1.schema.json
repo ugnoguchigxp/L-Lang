@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llvm-experiment-freeze-v1.schema.json",
+  "title": "L-Lang LLVM experiment freeze v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "createdOn", "baselineRevision", "environment", "toolchain", "source", "inputs", "artifacts", "verification"],
+  "properties": {
+    "format": { "const": "llang-llvm-experiment-freeze" },
+    "version": { "const": 1 },
+    "createdOn": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "baselineRevision": { "$ref": "#/$defs/hash" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "toolchain": { "$ref": "#/$defs/toolchain" },
+    "source": { "$ref": "#/$defs/source" },
+    "inputs": {
+      "type": "object", "additionalProperties": false, "required": ["corpusHash", "benchmarkHash"],
+      "properties": { "corpusHash": { "$ref": "#/$defs/sha256" }, "benchmarkHash": { "$ref": "#/$defs/sha256" } }
+    },
+    "artifacts": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/artifact" } },
+    "verification": { "$ref": "#/$defs/verification" }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bun", "binaryen", "typescript", "os", "architecture", "cpu"],
+      "properties": {
+        "bun": { "type": "string", "minLength": 1 }, "binaryen": { "type": "string", "minLength": 1 },
+        "typescript": { "type": "string", "minLength": 1 }, "os": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 }, "cpu": { "type": "string", "minLength": 1 }
+      }
+    },
+    "toolchain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "toolVersions", "bin", "lldBin", "clang", "llvmAs", "opt", "llc", "wasmLd", "wasmTriple", "wasmDataLayout", "nativeTriple", "nativeDataLayout", "macosSdkPath", "macosSdkVersion"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 }, "bin": { "type": "string", "pattern": "^/" },
+        "toolVersions": {
+          "type": "object", "additionalProperties": false, "required": ["clang", "llvmAs", "opt", "llc", "wasmLd"],
+          "properties": {
+            "clang": { "type": "string", "minLength": 1 }, "llvmAs": { "type": "string", "minLength": 1 },
+            "opt": { "type": "string", "minLength": 1 }, "llc": { "type": "string", "minLength": 1 },
+            "wasmLd": { "type": "string", "minLength": 1 }
+          }
+        },
+        "lldBin": { "type": "string", "pattern": "^/" }, "clang": { "type": "string", "pattern": "^/" },
+        "llvmAs": { "type": "string", "pattern": "^/" }, "opt": { "type": "string", "pattern": "^/" },
+        "llc": { "type": "string", "pattern": "^/" }, "wasmLd": { "type": "string", "pattern": "^/" },
+        "wasmTriple": { "type": "string", "minLength": 1 }, "wasmDataLayout": { "type": "string", "minLength": 1 },
+        "nativeTriple": { "type": "string", "minLength": 1 }, "nativeDataLayout": { "type": "string", "minLength": 1 },
+        "macosSdkPath": { "type": "string", "pattern": "^/" }, "macosSdkVersion": { "type": "string", "minLength": 1 }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["programHash", "loweredHash", "interfaceHash", "layoutHash", "kernelPlanHash"],
+      "properties": {
+        "programHash": { "$ref": "#/$defs/sha256" }, "loweredHash": { "$ref": "#/$defs/sha256" },
+        "interfaceHash": { "$ref": "#/$defs/sha256" }, "layoutHash": { "$ref": "#/$defs/sha256" },
+        "kernelPlanHash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["lane", "hash", "bytes"],
+      "properties": {
+        "lane": { "enum": ["product-wasm", "direct-wasm", "llvm-wasm-O0", "llvm-wasm-O2", "llvm-wasm-O3", "llvm-native-O0", "llvm-native-O2", "llvm-native-O3"] }, "hash": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+        "rawIrHash": { "$ref": "#/$defs/sha256" }, "optimizedIrHash": { "$ref": "#/$defs/sha256" },
+        "phasesMs": {
+          "type": "object", "additionalProperties": false,
+          "required": ["emit", "assemble", "optimize", "reassemble", "codegen", "link"],
+          "properties": {
+            "emit": { "type": "number", "minimum": 0 }, "assemble": { "type": "number", "minimum": 0 },
+            "optimize": { "type": "number", "minimum": 0 }, "reassemble": { "type": "number", "minimum": 0 },
+            "codegen": { "type": "number", "minimum": 0 }, "link": { "type": "number", "minimum": 0 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "lane": { "type": "string", "pattern": "^llvm-" } } },
+          "then": {
+            "required": ["rawIrHash", "optimizedIrHash", "phasesMs"],
+            "properties": {
+              "rawIrHash": { "$ref": "#/$defs/sha256" },
+              "optimizedIrHash": { "$ref": "#/$defs/sha256" },
+              "phasesMs": { "type": "object" }
+            }
+          }
+        }
+      ]
+    },
+    "verification": {
+      "type": "object", "additionalProperties": false, "required": ["cases", "comparisons"],
+      "properties": { "cases": { "type": "integer", "minimum": 1 }, "comparisons": { "type": "integer", "minimum": 1 } }
+    }
+  }
+}

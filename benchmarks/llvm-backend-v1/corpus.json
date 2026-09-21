@@ -1,0 +1,31 @@
+{
+  "format": "llang-llvm-experiment-corpus",
+  "version": 1,
+  "kernel": "checked-sum-i32",
+  "cases": [
+    { "id": "empty", "partition": "correctness", "input": { "kind": "explicit", "values": [] }, "expected": { "status": 0, "value": 0 } },
+    { "id": "single-max", "partition": "correctness", "input": { "kind": "explicit", "values": [2147483647] }, "expected": { "status": 0, "value": 2147483647 } },
+    { "id": "mixed", "partition": "correctness", "input": { "kind": "explicit", "values": [1, -2, 3, 0] }, "expected": { "status": 0, "value": 2 } },
+    { "id": "minimum", "partition": "correctness", "input": { "kind": "explicit", "values": [-2147483648, 0] }, "expected": { "status": 0, "value": -2147483648 } },
+    { "id": "positive-overflow", "partition": "correctness", "input": { "kind": "explicit", "values": [2147483647, 1] }, "expected": { "status": 1, "overflowIndex": 1 } },
+    { "id": "negative-overflow", "partition": "correctness", "input": { "kind": "explicit", "values": [-2147483648, -1] }, "expected": { "status": 1, "overflowIndex": 1 } },
+    { "id": "intermediate-overflow", "partition": "correctness", "input": { "kind": "explicit", "values": [2147483647, 1, -1] }, "expected": { "status": 1, "overflowIndex": 1 } },
+    { "id": "order-sensitive-valid", "partition": "correctness", "input": { "kind": "explicit", "values": [2147483647, -1, 1] }, "expected": { "status": 0, "value": 2147483647 } },
+    { "id": "list-4095", "partition": "correctness", "input": { "kind": "repeat", "value": 1, "count": 4095 }, "expected": { "status": 0, "value": 4095 } },
+    { "id": "list-4096", "partition": "correctness", "input": { "kind": "repeat", "value": 1, "count": 4096 }, "expected": { "status": 0, "value": 4096 } },
+    { "id": "exploration-small", "partition": "exploration", "input": { "kind": "cycle", "count": 64, "values": [-3, 1, 4, -1, 5, -2] }, "expected": { "status": 0, "value": 41 } },
+    { "id": "exploration-medium", "partition": "exploration", "input": { "kind": "cycle", "count": 1024, "values": [-3, 1, 4, -1, 5, -2] }, "expected": { "status": 0, "value": 681 } },
+    { "id": "holdout-small", "partition": "holdout", "input": { "kind": "cycle", "count": 64, "values": [7, -5, 2, -4, 3] }, "expected": { "status": 0, "value": 36 } },
+    { "id": "holdout-medium", "partition": "holdout", "input": { "kind": "cycle", "count": 1024, "values": [7, -5, 2, -4, 3] }, "expected": { "status": 0, "value": 612 } },
+    { "id": "holdout-maximum", "partition": "holdout", "input": { "kind": "cycle", "count": 4096, "values": [7, -5, 2, -4, 3] }, "expected": { "status": 0, "value": 2464 } }
+  ],
+  "wasmBoundaryCases": [
+    { "id": "unaligned", "values": 65, "count": 2, "out": 65537, "expectedStatus": 0 },
+    { "id": "exact-end-output", "values": 64, "count": 2, "out": 131068, "expectedStatus": 0 },
+    { "id": "invalid-input-base", "values": 4294967295, "count": 1, "out": 65536, "expectedStatus": 2 },
+    { "id": "short-input-range", "values": 131069, "count": 1, "out": 65536, "expectedStatus": 2 },
+    { "id": "count-over-limit", "values": 64, "count": 4097, "out": 65536, "expectedStatus": 2 },
+    { "id": "complete-overlap", "values": 64, "count": 2, "out": 64, "expectedStatus": 2 },
+    { "id": "one-byte-overlap", "values": 64, "count": 2, "out": 71, "expectedStatus": 2 }
+  ]
+}

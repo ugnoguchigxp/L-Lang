@@ -110,7 +110,9 @@ fuel、call depth、arena 上限の扱いは最適化前に決める。割当や
 
 ## LLVM を利用する独立した実験経路
 
-2026-09-20 に提示された「L-Lang LLVM Optimization Backend 実験」を、将来の比較実験として取り込む。以下は未実装・未測定であり、LLVM を標準 backend にする決定ではない。既存の直接 Wasm 生成と Binaryen の経路を維持し、仮称 `llvm-experimental` を独立した候補とする。この名前は L-Lang 内の案であり、既存 CLI の選択肢ではない。
+2026-09-20 に提示された「L-Lang LLVM Optimization Backend 実験」を独立した比較実験として取り込んだ。checked List sumの最小比較は実装・測定済みで、LLVMを標準backendには採用しない判断となった。以下の一般化は未実装である。既存の直接 Wasm 生成と Binaryen の経路を維持し、仮称 `llvm-experimental` を独立した候補とする。この名前は L-Lang 内の案であり、既存 CLI の選択肢ではない。
+
+最初のchecked `sum(List<i32>)`比較、toolchain freeze、direct／LLVM Wasm／Nativeのdifferential、測定と採否は[実装計画](./LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)と[実装結果](./LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)に分離した。
 
 ### 責務と接続点
 

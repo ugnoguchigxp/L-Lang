@@ -47,3 +47,9 @@ Effects adversarial benchmarkは、freeze対象をregular fileのexact setとし
 `module-effects-v1`のgenerated Wasmは、raw `start`／`resume` callerが渡すdescriptor、capacity、typed payloadをload／storeより前にunsigned rangeとして検査する。成功responseではeventとoutput、typed payloadとoutputの重なりを拒否し、typed output／payloadをembedded request dataとresult scratchから分離する。不正なretryable callはcontinuation state、sequence、accumulator／result、terminalを消費せず、同じpending responseを再試行できる。
 
 この検査はexported memoryへのaccess controlではない。hostがWasm呼出し中または呼出し外でmodule-private bytesを直接変更する場合、typed payloadのJSON意味、external adapter、外部副作用、任意Wasmは保証対象外である。保証表とnegative vectorは[Effects Wasm Memory Safety Matrix](./docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)を参照する。
+
+## LLVM実験backendの境界
+
+LLVM実験backendは、検証済み`module-collection-v1`から完全一致するchecked `sum(List<i32>)`だけを射影する。生成Wasmはimportなし、2 page固定memoryで、count、input/output range、overlapをload/store前に検査する。このkernel artifactは製品Collection ABIではなく、製品portable verifierも受理しない。
+
+Native laneはWasm sandboxを持たない。runner所有bufferだけを別processへ渡し、timeout、signal、非zero終了、出力上限を分類するが、任意pointer、任意LLVM IR、第三者library、dynamic loader、OSの安全性は保証しない。外部toolは引数配列で起動し、stdout/stderr、時間、artifact sizeを制限する。tool pathとSDK pathは再現用freezeへ保存されるため、共有前にhost情報として確認する。実験結果と保証外は[LLVM実験backend 最小比較 実装結果](./docs/LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)を参照する。

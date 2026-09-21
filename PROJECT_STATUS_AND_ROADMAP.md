@@ -31,6 +31,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 [Effects Wasmメモリー安全性強化](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_IMPLEMENTATION_PLAN.md)を実装した。linear／typed continuation ABIのraw `start`／`resume`で、descriptor baseを包含確認前にload／storeしてtrapする境界を閉じ、失敗時にcontinuation stateを消費しないtransaction、typed payloadとmodule-private領域、whole-range copyを検証する。[Memory Safety Matrix](./docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md)と[実装結果](./docs/EFFECTS_WASM_MEMORY_SAFETY_HARDENING_RESULTS.md)に保証境界を記録する。
 
+[LLVM実験backend 最小比較](./docs/LLVM_EXPERIMENTAL_BACKEND_IMPLEMENTATION_PLAN.md)を実装した。`module-collection-v1`のchecked `sum(List<i32>)`をreference、製品Wasm、実験用直接Wasm、LLVM Wasm O0/O2/O3、LLVM Native O0/O2/O3で比較し、165件のdifferential比較と再現buildを通した。[実装結果](./docs/LLVM_EXPERIMENTAL_BACKEND_RESULTS.md)の事前規則ではLLVM Wasmが性能Gateを満たさなかったため、現行backendを維持し、LLVM経路は製品ABIやmanifestへ統合しない。
+
 追跡hashとsnapshot、CLIヘルプ・JSONエラー、format協調ロック、host v2、JSONC smoke、coverage逐次出力を実装した。[改善記録](./docs/IMPROVEMENTS_RESULTS_20260917.md)に検証結果と限界を集約する。
 
 [4通りの入出力例](./examples/source-output-matrix/README.md)と[修正・配備・切戻し例](./examples/capability-lifecycle/README.md)を追加。人の開発時間・実モデルの成功率・本番配備はこのオフライン例では測定しない。Phase 4の機能実装と同一revisionのUbuntu／macOS／Windows CIは完了した。残る評価は、SAAAでの利用に合わせて行うsoak／capability確認、実運用TLS、長期性能・memory観測であり、現時点のcorrectness Gateには含めない。

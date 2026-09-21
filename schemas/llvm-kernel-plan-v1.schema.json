@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://l-lang.dev/schemas/llvm-kernel-plan-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "operation", "sourceProgramHash", "sourceLoweredHash", "inputField", "outputField", "maximumElements", "overflow", "hash"],
+  "properties": {
+    "format": { "const": "llang-llvm-kernel-plan" },
+    "version": { "const": 1 },
+    "operation": { "const": "checked-sum-i32" },
+    "sourceProgramHash": { "$ref": "#/$defs/hash" },
+    "sourceLoweredHash": { "$ref": "#/$defs/hash" },
+    "inputField": { "const": "values" },
+    "outputField": { "const": "total" },
+    "maximumElements": { "const": 4096 },
+    "overflow": { "const": "first-checked-add" },
+    "hash": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }
+}

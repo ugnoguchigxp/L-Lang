@@ -1,0 +1,21 @@
+{
+  "format": "llang-llvm-experiment-benchmark",
+  "version": 1,
+  "seed": 20260921,
+  "warmup": 20,
+  "iterations": 100,
+  "samples": 7,
+  "partitions": ["exploration", "holdout"],
+  "optimizations": ["O0", "O2", "O3"],
+  "limits": {
+    "toolTimeoutMs": 30000,
+    "nativeTimeoutMs": 10000,
+    "outputBytes": 1048576,
+    "artifactBytes": 1048576
+  },
+  "decision": {
+    "maximumMedianRegressionPercent": 5,
+    "requiredImprovementPercent": 10,
+    "maximumArtifactRatio": 2
+  }
+}
