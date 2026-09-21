@@ -31,6 +31,8 @@ Effects adversarial benchmarkを変更した場合は、上記に加えてfresh 
 
 `module-value-v1`のWasm emitter、ABI、runtimeを変更した場合は、`src/llang-module-value.test.ts`と`src/llang-module-value-memory.test.ts`を実行し、`bun run value:memory:matrix`後に生成文書の一致を確認する。direct testはraw exportのstatusとtrapを区別し、malformed range、UTF-8、selected union、allocator、output capacityのmutationを検出する。host runtimeだけの成功でdirect ABIを合格にしない。
 
+`module-value-v1`のpure i32意味論、evaluator、TypeScript／JSONC emitter、Wasm emitterを変更した場合は`src/llang-value-differential.test.ts`を実行する。通常の`bun run test`には固定seedの24 program／192 inputが含まれる。より広い明示確認は`bun run value:differential`で64 program／512 inputを比較する。差分時はseed、case index、input、source、lane別outcomeを保持し、単一caseで再実行する。case数や正規化を変更して既存差分を隠さない。
+
 `module-effects-v1`のWasm emitter、continuation ABI、typed state machineを変更した場合は、`src/llang-effects-wasm.test.ts`、`src/llang-effects-state-machine.test.ts`、`src/llang-effects-memory.test.ts`を実行し、`bun run effects:memory:matrix`後に生成文書の一致を確認する。direct testはraw `start`／`resume`のstatusとtrap、invalid call後の同一sequence retry、event／output／payload alias、module-private領域、whole-range copy、九つのmutationを検査する。
 
 `bun run coverage`はリポジトリ全体でfunctions 90%以上・lines 90%以上、`src/semantic-transaction.ts`でfunctions 95%以上・lines 95%以上を要求する。閾値と解析ロジックの正本は[`src/run-coverage.ts`](./src/run-coverage.ts)である。

@@ -80,6 +80,7 @@
     "collection:stability:record": "bun run src/llang-collection-stability-experiment.ts record",
     "collection:memory:matrix": "bun run src/llang-collection-memory-matrix.ts benchmarks/collection-memory-v1/memory-safety-matrix.json docs/COLLECTION_MEMORY_SAFETY_MATRIX.md",
     "value:memory:matrix": "bun run src/llang-value-memory-matrix.ts benchmarks/value-memory-v1/memory-safety-matrix.json docs/VALUE_WASM_MEMORY_SAFETY_MATRIX.md",
+    "value:differential": "bun run src/llang-value-differential-cli.ts --seed 20260921 --cases 64 --failure-out artifacts/value-differential-failure.json",
     "effects:memory:matrix": "bun run src/llang-effects-memory-matrix.ts benchmarks/effects-memory-v1/memory-safety-matrix.json docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md",
     "examples:matrix": "bun run examples/source-output-matrix/run.ts",
     "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts"

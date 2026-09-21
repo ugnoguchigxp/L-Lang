@@ -18,6 +18,8 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 
 | 領域 | 文書 |
 | --- | --- |
+| 意味論・検証境界の安定化 | [Semantic Core安定化コンセプト](./SEMANTIC_CORE_STABILIZATION_CONCEPT.md)。既存profileを基に、意味論、TS／Wasm比較、信頼境界、versionの契約を整理する修正方針 |
+| L-Lang architecture | [Architecture](./LLANG_ARCHITECTURE.md)、[Semantic Core v1](./LLANG_SEMANTIC_CORE_V1.md)、[Observable Semantics](./LLANG_OBSERVABLE_SEMANTICS.md)、[Version契約](./LLANG_VERSIONING.md) |
 | 汎用言語への拡張 | [拡張方針コンセプト](./GENERAL_PURPOSE_LANGUAGE_EXPANSION_CONCEPT.md)。関数・moduleから一般プログラムへ広げる提案 |
 | JSONC | [Predicate v1仕様](./LLANG_JSONC_SPEC.md) |
 | Typed modules | [Phase 1仕様](./LLANG_MODULE_SPEC.md)：boolean module、[Phase 2仕様](./LLANG_MODULE_VALUE_SPEC.md)：値・制御・型付き結果 |
@@ -29,6 +31,8 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 
 ## 実装計画・進捗
 
+- [Semantic Core安定化・第一段階 実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE1_IMPLEMENTATION_PLAN.md)と[実施結果](./SEMANTIC_CORE_STABILIZATION_PHASE1_RESULTS.md)：architecture、profile別意味論、観測条件、version対応表を整えたP0作業
+- [Semantic Core安定化・第二段階 実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE2_IMPLEMENTATION_PLAN.md)と[実施結果](./SEMANTIC_CORE_STABILIZATION_PHASE2_RESULTS.md)：Value pure i32の決定的generated differential testing
 - [要求付きWasmパッケージの事後検査](./CAPABILITY_INSPECTION_IMPLEMENTATION_PLAN.md)：既存Capability v2から要求・成果物の対応情報と検査用TypeScriptを出す機能（実装済み）
 - [Effects Bundleの事後検査](./EFFECTS_BUNDLE_INSPECTION_IMPLEMENTATION_PLAN.md)：同梱JSONCからTypeScriptとWasmを再生成し、外部操作・effect・資源・成果物の対応を実行せずに確認する実装済みの検査機能
 - [Effects実行証跡](./EFFECTS_EXECUTION_EVIDENCE_IMPLEMENTATION_PLAN.md)：検査済みbundle、実grant、redacted transcript、結果・失敗・取消・cleanupを結び付ける実装済み機能
