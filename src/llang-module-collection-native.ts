@@ -1,3 +1,4 @@
+import { layoutCollectionType } from "./llang-collection-abi";
 import type {
   CheckedCollectionFunction,
   CheckedCollectionProgram,
@@ -8,10 +9,9 @@ import type {
   CollectionTypeUse,
 } from "./llang-module-collection-ir";
 import {
-  canonicalCollectionType,
   COLLECTION_LIMITS,
+  canonicalCollectionType,
 } from "./llang-module-collection-ir";
-import { layoutCollectionType } from "./llang-collection-abi";
 
 type Binding = { type: CollectionType; get: string; local?: string };
 type Environment = Map<string, Binding>;
@@ -1100,7 +1100,19 @@ class NativeCompiler {
     if (expr.name === "stableSort") {
       const j = this.fresh("sortJ"),
         key = this.fresh("sortKey"),
-        previous = this.fresh("sortPrevious");
+        previous = this.fresh("sortPrevious"),
+        scalarKey =
+          inputType.element.kind === "boolean" ||
+          inputType.element.kind === "i32",
+        keyAddress = `local.get ${output} i32.load local.get ${index} i32.const ${stride} i32.mul i32.add`,
+        initializeKey = scalarKey
+          ? ""
+          : `local.get ${output} i32.load offset=4 i32.const 1 i32.gt_u if
+            i32.const ${layout.size} i32.const ${layout.align} call $alloc local.set ${key}
+          end`,
+        loadKey = scalarKey
+          ? `${this.loadValue(inputType.element, keyAddress)} local.set ${key}`
+          : `${this.copyShallow(inputType.element, keyAddress, `local.get ${key}`)}`;
       context.locals.push(j, key, previous);
       return `${input} local.set ${list}
         ${this.emitExpression(expr.arguments[1]!, context)} local.set ${callback}
@@ -1111,9 +1123,10 @@ class NativeCompiler {
         block $sortCopyDone loop $sortCopyLoop local.get ${index} local.get ${list} i32.load offset=4 i32.ge_u br_if $sortCopyDone
           ${this.copyShallow(inputType.element, address, `local.get ${output} i32.load local.get ${index} i32.const ${stride} i32.mul i32.add`)}
           local.get ${index} i32.const 1 i32.add local.set ${index} br $sortCopyLoop end end
+        ${initializeKey}
         i32.const 1 local.set ${index}
         block $sortDone loop $sortOuter local.get ${index} local.get ${output} i32.load offset=4 i32.ge_u br_if $sortDone
-          ${this.loadValue(inputType.element, `local.get ${output} i32.load local.get ${index} i32.const ${stride} i32.mul i32.add`)} local.set ${key}
+          ${loadKey}
           local.get ${index} local.set ${j}
           block $insertDone loop $insert
             local.get ${j} i32.eqz br_if $insertDone

@@ -1,32 +1,38 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import binaryen from "binaryen";
-import { loadCollectionModuleProgram } from "./llang-module-collection-loader";
-import { evaluateCollectionProgram } from "./llang-module-collection-evaluator";
-import { emitCollectionModuleTypeScript } from "./llang-module-collection-source-emitter";
-import { emitCollectionModuleWasm } from "./llang-module-collection-wasm";
-import { instantiateCollectionModule } from "./llang-module-collection-runtime";
-import {
-  buildCollectionModuleProgram,
-  readCollectionModuleBuildManifest,
-} from "./llang-module-collection-build";
-import {
-  parseCollectionModuleSuite,
-  testCollectionModuleProgram,
-  verifyCollectionModuleBundle,
-} from "./llang-module-collection-suite";
 import {
   decodeCollectionFromMemory,
   encodeCollectionToMemory,
 } from "./llang-collection-abi";
-import type { CollectionType } from "./llang-module-collection-ir";
+import {
+  buildCollectionModuleProgram,
+  readCollectionModuleBuildManifest,
+} from "./llang-module-collection-build";
+import { evaluateCollectionProgram } from "./llang-module-collection-evaluator";
+import type {
+  CollectionModuleSource,
+  CollectionType,
+} from "./llang-module-collection-ir";
 import { canonicalCollectionType } from "./llang-module-collection-ir";
 import {
   instantiateLegacyCollectionModule,
   type LegacyCollectionWasmContract,
 } from "./llang-module-collection-legacy-runtime";
+import { loadCollectionModuleProgram } from "./llang-module-collection-loader";
+import { instantiateCollectionModule } from "./llang-module-collection-runtime";
+import {
+  emitCollectionModuleJsonc,
+  emitCollectionModuleTypeScript,
+} from "./llang-module-collection-source-emitter";
+import {
+  parseCollectionModuleSuite,
+  testCollectionModuleProgram,
+  verifyCollectionModuleBundle,
+} from "./llang-module-collection-suite";
+import { emitCollectionModuleWasm } from "./llang-module-collection-wasm";
 import { fingerprintFor } from "./stable-hash";
 
 const local = (name: string) => ({ kind: "local", name });
@@ -193,6 +199,221 @@ describe("module-collection-v1", () => {
       const wasm = emitCollectionModuleWasm(program);
       expect(
         instantiateCollectionModule(wasm.contract, wasm.bytes).evaluate(input),
+      ).toEqual(expected);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("JSONC emission maps nested expression and statement if branches to the public grammar", async () => {
+    const conditionalSource = {
+        ...source,
+        functions: [
+          {
+            ...source.functions[0],
+            body: {
+              statements: [
+                {
+                  kind: "let",
+                  name: "chosen",
+                  type: "i32",
+                  value: { kind: "literal", type: "i32", value: 0 },
+                },
+                {
+                  kind: "if",
+                  condition: { kind: "literal", type: "boolean", value: true },
+                  // biome-ignore lint/suspicious/noThenProperty: The public JSONC grammar names this branch "then".
+                  then: [
+                    {
+                      kind: "assign",
+                      name: "chosen",
+                      value: {
+                        kind: "if",
+                        condition: {
+                          kind: "literal",
+                          type: "boolean",
+                          value: false,
+                        },
+                        // biome-ignore lint/suspicious/noThenProperty: The public JSONC grammar names this branch "then".
+                        then: { kind: "literal", type: "i32", value: 1 },
+                        else: { kind: "literal", type: "i32", value: 2 },
+                      },
+                    },
+                  ],
+                  else: [
+                    {
+                      kind: "assign",
+                      name: "chosen",
+                      value: { kind: "literal", type: "i32", value: 3 },
+                    },
+                  ],
+                },
+              ],
+              result: {
+                kind: "record",
+                type: "Output",
+                typeArguments: [],
+                fields: [
+                  {
+                    name: "values",
+                    value: {
+                      kind: "list",
+                      elementType: "i32",
+                      elements: [{ kind: "local", name: "chosen" }],
+                    },
+                  },
+                  { name: "total", value: { kind: "local", name: "chosen" } },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      root = await mkdtemp(join(tmpdir(), "llang-collection-jsonc-if-"));
+    try {
+      await writeFile(
+        join(root, "main.llang.jsonc"),
+        JSON.stringify(conditionalSource),
+      );
+      const program = await loadCollectionModuleProgram(
+          "main.llang.jsonc",
+          root,
+          "evaluate",
+        ),
+        emitted = emitCollectionModuleJsonc(program).get("main.llang.jsonc");
+      if (!emitted) throw new Error("missing emitted Collection JSONC");
+      expect(emitted).toContain('"then"');
+      expect(emitted).toContain('"else"');
+      expect(emitted).not.toContain("whenTrue");
+      expect(emitted).not.toContain("whenFalse");
+      const roundTripRoot = join(root, "round-trip");
+      await mkdir(roundTripRoot);
+      await writeFile(join(roundTripRoot, "main.llang.jsonc"), emitted);
+      const roundTrip = await loadCollectionModuleProgram(
+        "main.llang.jsonc",
+        roundTripRoot,
+        "evaluate",
+      );
+      expect(roundTrip.programHash).toBe(program.programHash);
+      expect(roundTrip.interfaceHash).toBe(program.interfaceHash);
+      expect(
+        evaluateCollectionProgram(roundTrip, { values: [], threshold: 0 }),
+      ).toEqual({
+        values: [2],
+        total: 2,
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("native stable sort preserves distinct aggregate elements while shifting", async () => {
+    const recordSort = {
+        language: "l-lang",
+        version: 4,
+        kind: "module",
+        profile: "module-collection-v1",
+        imports: [],
+        types: [
+          {
+            name: "Item",
+            export: true,
+            kind: "record",
+            typeParameters: [],
+            fields: [
+              { name: "key", type: "i32" },
+              { name: "ordinal", type: "i32" },
+            ],
+          },
+          {
+            name: "Input",
+            export: true,
+            kind: "record",
+            typeParameters: [],
+            fields: [{ name: "items", type: { list: { ref: "Item" } } }],
+          },
+          {
+            name: "Output",
+            export: true,
+            kind: "record",
+            typeParameters: [],
+            fields: [{ name: "items", type: { list: { ref: "Item" } } }],
+          },
+        ],
+        functions: [
+          {
+            name: "evaluate",
+            export: true,
+            typeParameters: [],
+            parameters: [{ name: "input", type: { ref: "Input" } }],
+            returns: { ref: "Output" },
+            body: {
+              statements: [
+                {
+                  kind: "const",
+                  name: "sorted",
+                  type: { list: { ref: "Item" } },
+                  value: callIntrinsic("stableSort", [
+                    field(local("input"), "items"),
+                    lambda(
+                      [
+                        { name: "left", type: { ref: "Item" } },
+                        { name: "right", type: { ref: "Item" } },
+                      ],
+                      "i32",
+                      {
+                        kind: "binary",
+                        op: "-",
+                        left: field(local("left"), "key"),
+                        right: field(local("right"), "key"),
+                      },
+                    ),
+                  ]),
+                },
+              ],
+              result: {
+                kind: "record",
+                type: "Output",
+                typeArguments: [],
+                fields: [{ name: "items", value: local("sorted") }],
+              },
+            },
+          },
+        ],
+      } as CollectionModuleSource,
+      input = {
+        items: [
+          { key: 2, ordinal: 0 },
+          { key: 1, ordinal: 1 },
+          { key: 2, ordinal: 2 },
+          { key: 1, ordinal: 3 },
+        ],
+      },
+      expected = {
+        items: [
+          { key: 1, ordinal: 1 },
+          { key: 1, ordinal: 3 },
+          { key: 2, ordinal: 0 },
+          { key: 2, ordinal: 2 },
+        ],
+      },
+      root = await mkdtemp(join(tmpdir(), "llang-collection-record-sort-"));
+    try {
+      await writeFile(
+        join(root, "main.llang.jsonc"),
+        JSON.stringify(recordSort),
+      );
+      const program = await loadCollectionModuleProgram(
+          "main.llang.jsonc",
+          root,
+          "evaluate",
+        ),
+        emitted = emitCollectionModuleWasm(program);
+      expect(evaluateCollectionProgram(program, input)).toEqual(expected);
+      expect(
+        instantiateCollectionModule(emitted.contract, emitted.bytes).evaluate(
+          input,
+        ),
       ).toEqual(expected);
     } finally {
       await rm(root, { recursive: true, force: true });

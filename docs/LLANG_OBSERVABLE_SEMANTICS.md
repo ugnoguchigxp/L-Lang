@@ -85,11 +85,14 @@ typed resultだけでなく、外部operation列とtyped request、host response
 | Effects grant／ledger／cleanup | session／host tests | host注入経路 | 対象外 | execution path | 部分確認。runtime契約は確認済み、全target differentialは未確認 |
 | Value pure i32 generated programs | 独立BigInt oracle＋evaluator | generated TS | checked JSONC round-trip | direct Wasm runtime | 確認済み。固定seedの24 program／192 inputを通常test、64 program／512 inputを明示scriptで比較 |
 | Value block／match／tagged union generated programs | 独立scope／tagged value oracle＋evaluator | generated TS | checked JSONC round-trip | direct Wasm runtime | 確認済み。内部variant構築とunion inputを固定seedの24 program／192 input、明示64 program／512 inputで比較 |
-| その他のgenerated programs | 固定fixture中心 | 固定fixture中心 | 固定fixture中心 | 固定fixtureと境界corpus | 未確認。Valueの残りとCollection／Effectsは後続 |
+| Collection generated programs | 独立List／closure oracle＋evaluator | generated TS | checked JSONC round-trip | native Wasm runtime | 確認済み。5系統の固定seed 24 program／192 input、明示64 program／512 inputを比較 |
+| その他のgenerated programs | 固定fixture中心 | 固定fixture中心 | 固定fixture中心 | 固定fixtureと境界corpus | 未確認。Valueの残りとEffectsは後続 |
 
 2026-09-21に関連する83 testをBun 1.4.2で実行し、83 pass／0 failを確認した。対象コマンドと内訳は[第一段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE1_RESULTS.md)に記録する。
 
 2026-09-22にValueのblock／match／tagged union向けgenerated differentialを追加し、実測値と保証境界を[第三段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE3_RESULTS.md)に記録した。
+
+2026-09-22にCollectionのList順序、persistent update、stable sort、capture、snapshot向けgenerated differentialを追加し、実測値と保証境界を[第四段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE4_RESULTS.md)に記録した。
 
 ## 差を扱う規則
 

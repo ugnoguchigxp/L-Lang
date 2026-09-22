@@ -73,3 +73,7 @@ compiler本体の意味論不具合は検出されなかった。共通harness�
 固定seedの有限corpusについて、block binding順序、tagged unionの構築またはinput decode、payload scope、outer local参照、matchの選択caseだけの評価が、独立oracleと5実行経路で一致したことを確認する。
 
 これは`module-value-v1`全programの同値性証明ではない。string payload、record／union output、call、import、recursion、物理fuel／allocation量、invalid source、malformed ABI input、Collection、Effectsは対象外である。source schema、language version、ABI、resource limitは変更していない。
+
+## 後続段階
+
+既存のreference、generated TypeScript、JSONC round-trip、native Wasmを利用でき、Effects固有のhost／scheduler設計を必要としないCollectionの限定subsetを後続対象とした。[第四段階の実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE4_IMPLEMENTATION_PLAN.md)で範囲を定め、[第四段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE4_RESULTS.md)でList順序、persistent update、stable sort、callback capture、snapshot iterationの実装と検証を完了した。

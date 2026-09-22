@@ -7,6 +7,7 @@ import type {
   CollectionType,
 } from "./llang-module-collection-ir";
 import { canonicalCollectionType } from "./llang-module-collection-ir";
+import { collectionModuleSourceJson } from "./llang-module-collection-source-json";
 
 const safe = (value: string) => value.replace(/[^A-Za-z0-9_$]/g, "_");
 function typeText(type: CollectionType): string {
@@ -130,18 +131,15 @@ export type EntryOutput=${typeText(program.entryOutput)};
 export function evaluate(input:EntryInput):EntryOutput{_fuel=1000000;_depth=0;_arena=0;_validate(_inputSchema,input,{elements:0},"input");if(_wireSize(_inputSchema,input)>262144)throw new Error("RESOURCE_LIMIT");const result=structuredClone(_call(()=>${entry}(structuredClone(input))));_validate(_outputSchema,result,{elements:0},"output");if(_wireSize(_outputSchema,result)>262144)throw new Error("RESOURCE_LIMIT");return result as EntryOutput;}
 `;
 }
+
 export function emitCollectionModuleJsonc(
   program: CheckedCollectionProgram,
 ): Map<string, string> {
   return new Map(
     program.modules.map((module) => {
-      const source = {
-        ...module.source,
-        imports: module.source.imports.map((x) => ({
-          ...x,
-          from: x.from.replace(/\.ts$/, ".llang.jsonc"),
-        })),
-      };
+      const source = collectionModuleSourceJson(module.source, (from) =>
+        from.replace(/\.ts$/, ".llang.jsonc"),
+      );
       return [
         `${module.id}.llang.jsonc`,
         `${JSON.stringify(source, null, 2)}\n`,
