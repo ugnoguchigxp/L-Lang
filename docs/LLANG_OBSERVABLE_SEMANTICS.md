@@ -80,7 +80,7 @@ typed resultだけでなく、外部operation列とtyped request、host response
 | Valueのresult／fault | evaluator | child process | programHash再読込 | value runtime | 確認済み。value suiteと境界test |
 | Collectionのresult／fault | evaluator | dynamic import | checked program再読込 | native runtime | 確認済み。collection suiteとcallback／sort／resource test |
 | Effects frontend合流 | typed graph | generated source build test | flattened graph再読込 | emitted Wasm | 確認済み。TS／JSONC checked programとall-target build |
-| Effects result／request replay | `runTypedEffectsGraph` | 個別build test | fixture source | `TypedEffectsRuntime` portable verify | 部分確認。referenceとWasmは同じsuite形式を使うが、generated TSを含む単一のtrace比較runnerはない |
+| Effects result／request replay | checked graph reference | generated TypeScript child | flattened graph再読込 | `TypedEffectsRuntime` | 部分確認。逐次`await`は独立oracleを含む5 laneでrequest／response／terminalを比較。task／stream／取消等は未確認 |
 | Effects task／stream | host runtime test | generated graph shape | source graph | state-machine／Wasm test | 部分確認。spawn-order、one-pull、cancel等の局所契約はあるが全target共通trace表はない |
 | Effects grant／ledger／cleanup | session／host tests | host注入経路 | 対象外 | execution path | 部分確認。runtime契約は確認済み、全target differentialは未確認 |
 | Value pure i32 generated programs | 独立BigInt oracle＋evaluator | generated TS | checked JSONC round-trip | direct Wasm runtime | 確認済み。固定seedの24 program／192 inputを通常test、64 program／512 inputを明示scriptで比較 |
@@ -93,6 +93,8 @@ typed resultだけでなく、外部operation列とtyped request、host response
 2026-09-22にValueのblock／match／tagged union向けgenerated differentialを追加し、実測値と保証境界を[第三段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE3_RESULTS.md)に記録した。
 
 2026-09-22にCollectionのList順序、persistent update、stable sort、capture、snapshot向けgenerated differentialを追加し、実測値と保証境界を[第四段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE4_RESULTS.md)に記録した。
+
+2026-09-22にEffectsの逐次`await`向けgenerated trace differentialを追加し、固定grant／host script下のrequest／response、host failure、permission denial、terminal outcomeを[第五段階の結果](./SEMANTIC_CORE_STABILIZATION_PHASE5_RESULTS.md)に記録した。task、stream、取消、deadline、cleanup、resource比較は含まない。
 
 ## 差を扱う規則
 

@@ -83,6 +83,7 @@
     "value:differential": "bun run src/llang-value-differential-cli.ts --seed 20260921 --cases 64 --failure-out artifacts/value-differential-failure.json",
     "value:structured:differential": "bun run src/llang-value-structured-differential-cli.ts --seed 20260922 --cases 64 --failure-out artifacts/value-structured-differential-failure.json",
     "collection:differential": "bun run src/llang-collection-differential-cli.ts --seed 20260923 --cases 64 --failure-out artifacts/collection-differential-failure.json",
+    "effects:trace:differential": "bun run src/llang-effects-trace-differential-cli.ts --seed 20260924 --cases 64 --failure-out artifacts/effects-trace-differential-failure.json",
     "effects:memory:matrix": "bun run src/llang-effects-memory-matrix.ts benchmarks/effects-memory-v1/memory-safety-matrix.json docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md",
     "examples:matrix": "bun run examples/source-output-matrix/run.ts",
     "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts"
