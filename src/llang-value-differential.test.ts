@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ValueExpression } from "./llang-module-value-ir";
+import { fingerprintFor } from "./stable-hash";
 import {
   parseValueDifferentialOptions,
   runValueDifferentialCli,
@@ -249,16 +250,15 @@ describe("module-value-v1 generated differential", () => {
 
   test("fixed corpus agrees across oracle, reference, TS, JSONC and Wasm", async () => {
     const kinds = new Set<string>(),
-      operators = new Set<string>();
-    for (let caseIndex = 0; caseIndex < 24; caseIndex++)
-      collectGeneratedCoverage(
+      operators = new Set<string>(),
+      generatedCases = Array.from({ length: 24 }, (_, caseIndex) =>
         generateValueDifferentialCase(
           VALUE_DIFFERENTIAL_DEFAULT_SEED,
           caseIndex,
-        ).expression,
-        kinds,
-        operators,
+        ),
       );
+    for (const generated of generatedCases)
+      collectGeneratedCoverage(generated.expression, kinds, operators);
     expect([...kinds].sort()).toEqual([
       "binary",
       "field",
@@ -281,6 +281,9 @@ describe("module-value-v1 generated differential", () => {
       ">=",
       "minus",
     ]);
+    expect(fingerprintFor(generatedCases)).toBe(
+      "02475040087d4b32bd8a2bb6f031694b0a326ed1a59e1b3b570c060699b2a5ec",
+    );
     const result = await runValueDifferential({
       seed: VALUE_DIFFERENTIAL_DEFAULT_SEED,
       cases: 24,
@@ -292,6 +295,9 @@ describe("module-value-v1 generated differential", () => {
       inputs: 192,
     });
     expect(new Set(result.programHashes).size).toBeGreaterThan(16);
+    expect(fingerprintFor(result.programHashes)).toBe(
+      "580b200027acbad3fd8c5d7593fb30ec46e000ecfe1fc0733c8fd457bb7c8412",
+    );
   }, 30_000);
 
   test("a single recorded case can be replayed by seed and case index", async () => {

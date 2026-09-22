@@ -51,4 +51,6 @@ generatorはseedとcase indexから独立にcaseを生成する。programにはi
 
 ## 次の候補
 
-次の拡張は、今回のgeneratorへ機能を無差別に追加せず、既存証拠表の空白から選ぶ。候補はValueのblock／match／tagged union、Collectionのpersistent Listとcallback、Effectsのdeterministic trace runnerである。Effectsへ進む前に、[第一段階のSCG-001／003／004](./SEMANTIC_CORE_STABILIZATION_PHASE1_RESULTS.md)にあるhost環境、resource単位、並行順序を確定する。
+次の拡張は、今回のgeneratorへ機能を無差別に追加せず、既存証拠表の空白から選ぶ。第三段階にはValueのblock／match／tagged unionを選定し、[実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE3_IMPLEMENTATION_PLAN.md)で既存corpusを維持した拡張方法を定めた。
+
+残る候補はCollectionのpersistent Listとcallback、Effectsのdeterministic trace runnerである。Effectsへ進む前に、[第一段階のSCG-001／003／004](./SEMANTIC_CORE_STABILIZATION_PHASE1_RESULTS.md)にあるhost環境、resource単位、並行順序を確定する。

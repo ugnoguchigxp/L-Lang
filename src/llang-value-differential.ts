@@ -1,18 +1,21 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { evaluateValueProgram } from "./llang-module-value-evaluator";
 import type {
   ValueExpression,
   ValueModuleSource,
 } from "./llang-module-value-ir";
-import { loadValueModuleProgram } from "./llang-module-value-loader";
-import { instantiateValueModule } from "./llang-module-value-runtime";
 import {
-  emitValueModuleJsonc,
-  emitValueModuleTypeScript,
-} from "./llang-module-value-source-emitter";
-import { emitValueModuleWasm } from "./llang-module-value-wasm";
+  assertFiveValueDifferentialLanes,
+  runValueDifferentialLanes,
+  sameValueDifferentialOutcome,
+  VALUE_DIFFERENTIAL_LANES,
+  type ValueDifferentialOutcome,
+  type ValueDifferentialOutcomes,
+} from "./llang-value-differential-harness";
+
+export {
+  sameValueDifferentialOutcome,
+  type ValueDifferentialOutcome,
+  type ValueDifferentialOutcomes,
+};
 
 export const VALUE_DIFFERENTIAL_FORMAT = "llang-value-differential-v1";
 export const VALUE_DIFFERENTIAL_DEFAULT_SEED = 20_260_921;
@@ -20,21 +23,6 @@ export const VALUE_DIFFERENTIAL_DEFAULT_SEED = 20_260_921;
 export type I32DifferentialInput = Readonly<{
   left: number;
   right: number;
-}>;
-
-export type ValueDifferentialOutcome =
-  | Readonly<{ kind: "value"; value: number }>
-  | Readonly<{
-      kind: "fault";
-      code: "ARITHMETIC_OVERFLOW" | "DIVISION_BY_ZERO" | "RESOURCE_LIMIT";
-    }>;
-
-export type ValueDifferentialOutcomes = Readonly<{
-  oracle: ValueDifferentialOutcome;
-  reference: ValueDifferentialOutcome;
-  typescript: ValueDifferentialOutcome;
-  jsonc: ValueDifferentialOutcome;
-  wasm: ValueDifferentialOutcome;
 }>;
 
 export type GeneratedValueDifferentialCase = Readonly<{
@@ -89,13 +77,6 @@ const LITERALS = [
 ] as const;
 const ARITHMETIC = ["+", "-", "*", "/", "%"] as const;
 const COMPARISON = ["===", "!==", "<", "<=", ">", ">="] as const;
-const DIFFERENTIAL_LANES = [
-  "oracle",
-  "reference",
-  "typescript",
-  "jsonc",
-  "wasm",
-] as const;
 
 function mixedSeed(seed: number, caseIndex: number): number {
   let value = (seed ^ Math.imul(caseIndex + 1, 0x9e37_79b9)) >>> 0;
@@ -212,38 +193,6 @@ function sourceFor(body: ValueExpression): ValueModuleSource {
   };
 }
 
-function sourceExpression(node: ValueExpression): unknown {
-  if (node.kind === "field")
-    return { ...node, base: sourceExpression(node.base) };
-  if (node.kind === "unary")
-    return { ...node, operand: sourceExpression(node.operand) };
-  if (node.kind === "binary")
-    return {
-      ...node,
-      left: sourceExpression(node.left),
-      right: sourceExpression(node.right),
-    };
-  if (node.kind === "if")
-    return Object.fromEntries([
-      ["kind", "if"],
-      ["condition", sourceExpression(node.condition)],
-      // biome-ignore lint/suspicious/noThenProperty: The JSONC source grammar names this branch "then".
-      ["then", sourceExpression(node.whenTrue)],
-      ["else", sourceExpression(node.whenFalse)],
-    ]);
-  return node;
-}
-
-function sourceJson(source: ValueModuleSource): unknown {
-  return {
-    ...source,
-    functions: source.functions.map((fn) => ({
-      ...fn,
-      body: sourceExpression(fn.body),
-    })),
-  };
-}
-
 export function generateValueDifferentialCase(
   seed: number,
   caseIndex: number,
@@ -324,130 +273,6 @@ export function evaluateValueI32Oracle(
   return Object.is(value, -0) ? 0 : value;
 }
 
-const FAULTS = new Set([
-  "ARITHMETIC_OVERFLOW",
-  "DIVISION_BY_ZERO",
-  "RESOURCE_LIMIT",
-]);
-
-function outcome(run: () => unknown): ValueDifferentialOutcome {
-  try {
-    const value = run();
-    if (
-      typeof value !== "number" ||
-      !Number.isInteger(value) ||
-      value < I32_MIN ||
-      value > I32_MAX
-    )
-      throw new Error("value differential lane returned a non-i32 result");
-    return Object.freeze({
-      kind: "value",
-      value: Object.is(value, -0) ? 0 : value,
-    });
-  } catch (error) {
-    const code =
-      error && typeof error === "object" && "code" in error
-        ? String(error.code)
-        : undefined;
-    if (code && FAULTS.has(code))
-      return Object.freeze({
-        kind: "fault",
-        code,
-      }) as ValueDifferentialOutcome;
-    throw error;
-  }
-}
-
-function parseTypeScriptOutcomes(
-  text: string,
-  expectedLength: number,
-): readonly ValueDifferentialOutcome[] {
-  const parsed: unknown = JSON.parse(text);
-  if (!Array.isArray(parsed) || parsed.length !== expectedLength)
-    throw new Error("generated TypeScript returned an invalid outcome list");
-  return Object.freeze(
-    parsed.map((item) => {
-      if (!item || typeof item !== "object")
-        throw new Error("generated TypeScript returned an invalid outcome");
-      const record = item as Record<string, unknown>;
-      if (record.kind === "value") return outcome(() => record.value);
-      if (
-        record.kind === "fault" &&
-        typeof record.code === "string" &&
-        FAULTS.has(record.code)
-      )
-        return Object.freeze({
-          kind: "fault",
-          code: record.code,
-        }) as ValueDifferentialOutcome;
-      throw new Error("generated TypeScript returned an unknown outcome");
-    }),
-  );
-}
-
-async function runGeneratedTypeScript(
-  root: string,
-  inputs: readonly I32DifferentialInput[],
-): Promise<readonly ValueDifferentialOutcome[]> {
-  const inputsPath = join(root, "inputs.json"),
-    runnerPath = join(root, "typescript-runner.ts");
-  await writeFile(inputsPath, `${JSON.stringify(inputs)}\n`);
-  await writeFile(
-    runnerPath,
-    `import { evaluate } from "./program.generated";
-const inputs = await Bun.file(process.argv[2]!).json() as unknown[];
-const outcomes = inputs.map((input) => {
-  try {
-    return { kind: "value", value: evaluate(input) };
-  } catch (error) {
-    const code = error && typeof error === "object" && "code" in error
-      ? String(error.code)
-      : "UNKNOWN";
-    return { kind: "fault", code };
-  }
-});
-process.stdout.write(JSON.stringify(outcomes));
-`,
-  );
-  const child = Bun.spawn([process.execPath, "run", runnerPath, inputsPath], {
-    cwd: root,
-    env: {},
-    stdin: "ignore",
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  let timedOut = false;
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    child.kill();
-  }, 5_000);
-  try {
-    const [stdout, stderr, exitCode] = await Promise.all([
-      new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
-      child.exited,
-    ]);
-    if (exitCode !== 0)
-      throw new Error(
-        timedOut
-          ? "generated TypeScript execution timed out"
-          : `generated TypeScript execution failed: ${stderr.slice(0, 2_000)}`,
-      );
-    return parseTypeScriptOutcomes(stdout, inputs.length);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export function sameValueDifferentialOutcome(
-  left: ValueDifferentialOutcome,
-  right: ValueDifferentialOutcome,
-): boolean {
-  if (left.kind === "value")
-    return right.kind === "value" && left.value === right.value;
-  return right.kind === "fault" && left.code === right.code;
-}
-
 export function assertValueDifferentialOutcomes(
   generated: GeneratedValueDifferentialCase,
   inputIndex: number,
@@ -455,15 +280,10 @@ export function assertValueDifferentialOutcomes(
 ): void {
   const input = generated.inputs[inputIndex];
   if (!input) throw new Error("value differential input index is invalid");
-  const keys = Object.keys(outcomes);
-  if (
-    keys.length !== DIFFERENTIAL_LANES.length ||
-    DIFFERENTIAL_LANES.some((lane) => !Object.hasOwn(outcomes, lane))
-  )
-    throw new Error("value differential outcomes must contain all five lanes");
+  assertFiveValueDifferentialLanes(outcomes);
   const expected = outcomes.oracle;
   if (
-    DIFFERENTIAL_LANES.every((lane) =>
+    VALUE_DIFFERENTIAL_LANES.every((lane) =>
       sameValueDifferentialOutcome(expected, outcomes[lane]),
     )
   )
@@ -485,62 +305,18 @@ export function assertValueDifferentialOutcomes(
 export async function runValueDifferentialCase(
   generated: GeneratedValueDifferentialCase,
 ): Promise<Readonly<{ programHash: string; inputs: number }>> {
-  const root = await mkdtemp(join(tmpdir(), "llang-value-differential-"));
-  try {
-    const sourcePath = join(root, "main.llang.jsonc");
-    await writeFile(
-      sourcePath,
-      `${JSON.stringify(sourceJson(generated.source), null, 2)}\n`,
-    );
-    const program = await loadValueModuleProgram(
-        "main.llang.jsonc",
-        root,
-        "evaluate",
+  return runValueDifferentialLanes({
+    source: generated.source,
+    inputs: generated.inputs,
+    oracle: (input) =>
+      evaluateValueI32Oracle(
+        generated.expression,
+        input as I32DifferentialInput,
       ),
-      generatedTs = join(root, "program.generated.ts");
-    await writeFile(generatedTs, emitValueModuleTypeScript(program));
-    const typescriptOutcomes = await runGeneratedTypeScript(
-      root,
-      generated.inputs,
-    );
-    const jsonRoot = join(root, "round-trip");
-    for (const [path, text] of emitValueModuleJsonc(program)) {
-      const target = join(jsonRoot, path);
-      await mkdir(dirname(target), { recursive: true });
-      await writeFile(target, text);
-    }
-    const roundTrip = await loadValueModuleProgram(
-      "main.llang.jsonc",
-      jsonRoot,
-      "evaluate",
-    );
-    if (roundTrip.programHash !== program.programHash)
-      throw new Error("value differential JSONC round-trip hash mismatch");
-    const emitted = emitValueModuleWasm(program),
-      wasm = instantiateValueModule(emitted.contract, emitted.bytes);
-
-    for (const [inputIndex, input] of generated.inputs.entries()) {
-      const typescriptOutcome = typescriptOutcomes[inputIndex];
-      if (!typescriptOutcome)
-        throw new Error("generated TypeScript outcome is missing");
-      const outcomes = Object.freeze({
-        oracle: outcome(() =>
-          evaluateValueI32Oracle(generated.expression, input),
-        ),
-        reference: outcome(() => evaluateValueProgram(program, input)),
-        typescript: typescriptOutcome,
-        jsonc: outcome(() => evaluateValueProgram(roundTrip, input)),
-        wasm: outcome(() => wasm.evaluate(input)),
-      });
-      assertValueDifferentialOutcomes(generated, inputIndex, outcomes);
-    }
-    return Object.freeze({
-      programHash: program.programHash,
-      inputs: generated.inputs.length,
-    });
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
+    assertOutcomes: (inputIndex, outcomes) =>
+      assertValueDifferentialOutcomes(generated, inputIndex, outcomes),
+    temporaryPrefix: "llang-value-differential-",
+  });
 }
 
 export async function runValueDifferential(options: {
