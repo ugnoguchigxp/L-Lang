@@ -98,7 +98,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@openai/codex-sdk": "0.154.0",
+    "@openai/codex-sdk": "0.156.1",
     "jsonc-parser": "3.3.1"
   }
 }
