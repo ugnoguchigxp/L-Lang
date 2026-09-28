@@ -2,12 +2,15 @@ import { lstat, mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { atomicWriteFile } from "./atomic-file";
 import { resolveContainedFile } from "./contained-path";
-import { runDevelopmentCli } from "./capability-development-cli";
+import {
+  type DevelopmentObjectSettings,
+  runDevelopmentCli,
+  runDevelopmentObject,
+} from "./capability-development-cli";
 import {
   type DevelopmentRun,
   parseDevelopmentRun,
 } from "./capability-development";
-import { parseCapabilityMetadata } from "./capability-package";
 import { readCapability } from "./capability-package";
 import {
   candidatePath,
@@ -19,13 +22,26 @@ import {
   verifyOracleEvidenceCheckpoint,
 } from "./paper-oracle-evidence";
 import { parsePaperOracle } from "./paper-evaluate";
-import { contentHash, parsePromptSource, readJson } from "./prompt-source";
-import { encodeInput } from "./wasm-contract";
+import { contentHash, readJson } from "./prompt-source";
 import { instantiateWasmPredicate } from "./wasm-runtime";
+import {
+  createInputSnapshot,
+  executableInputs,
+  loadStudyInputs,
+  parseInputSnapshot,
+  parseStudyApproval,
+  publishInputSnapshot,
+  readInputSnapshot,
+  validateLoadedStudy,
+  verifyInputSnapshotRun,
+  type InputSnapshot,
+} from "./paper-study-inputs";
+import {
+  fixtureDevelopmentAgent,
+  parseDevelopmentConfig,
+} from "./capability-development";
 
 import {
-  enumerateTrials,
-  hashesMatch,
   matchTrials,
   parseStudy,
   parseStudyRun,
@@ -57,95 +73,7 @@ export async function verifyStudyApproval(run: StudyRun) {
     throw new Error("live approval changed since run began");
 }
 export async function validateStudy(path: string) {
-  const study = parseStudy(await readJson(path));
-  const root = dirname(resolve(path));
-  const diagnostics: string[] = [];
-  const reviewPending: string[] = [];
-  const hashes: Record<string, string> = {};
-  for (const task of study.tasks) {
-    try {
-      const source = parsePromptSource(
-        await readJson(resolve(root, task.source)),
-      );
-      const metadata = parseCapabilityMetadata(
-        await readJson(resolve(root, task.metadata)),
-      );
-      const oracle = parsePaperOracle(
-        await readJson(resolve(root, task.oracle)),
-      );
-      if (oracle.review !== "reviewed")
-        reviewPending.push(`${task.id}: Oracle review incomplete`);
-      if (
-        source.id !== task.id ||
-        metadata.id !== task.id ||
-        oracle.taskId !== task.id
-      )
-        diagnostics.push(`${task.id}: identity mismatch`);
-      if (source.profile !== study.profile)
-        diagnostics.push(`${task.id}: unknown profile`);
-      for (const c of oracle.cases) {
-        let valid = true;
-        try {
-          encodeInput(source.contract, c.input);
-        } catch {
-          valid = false;
-        }
-        if (valid !== (c.expected.kind === "value"))
-          diagnostics.push(
-            `${task.id}/${c.id}: expected input validity mismatch`,
-          );
-      }
-      if (task.source === task.oracle || task.metadata === task.oracle)
-        diagnostics.push(`${task.id}: Oracle mixed with model-visible input`);
-      hashes[`${task.id}:source`] = contentHash(source);
-      hashes[`${task.id}:metadata`] = contentHash(metadata);
-      hashes[`${task.id}:oracle`] = contentHash(oracle);
-      if (task.fixture)
-        hashes[`${task.id}:fixture`] = contentHash(
-          await readJson(resolve(root, task.fixture)),
-        );
-    } catch (error) {
-      diagnostics.push(
-        `${task.id}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-  if (study.frozenHashes && !hashesMatch(study.frozenHashes, hashes))
-    diagnostics.push("review invalidated by changed inputs");
-  if (
-    study.budget !== null &&
-    (!Number.isSafeInteger(study.budget) || study.budget <= 0)
-  )
-    diagnostics.push("invalid study call budget");
-  const missingConditions = [...study.unresolved, ...reviewPending];
-  if (study.state !== "frozen")
-    missingConditions.push("study state is not frozen");
-  for (const key of [
-    "model",
-    "provider",
-    "maxOutputTokens",
-    "maxTotalTokens",
-    "maxWallMs",
-    "budget",
-  ] as const)
-    if (study[key] === null) missingConditions.push(`${key} is unset`);
-  if (
-    study.review !== "reviewed" ||
-    study.tasks.some((t) => t.review !== "reviewed")
-  )
-    missingConditions.push("independent task review incomplete");
-  if (study.approval !== "granted")
-    missingConditions.push("live approval absent");
-  if (!study.frozenHashes) missingConditions.push("input hashes not frozen");
-  return {
-    version: 1,
-    studyId: study.id,
-    studyHash: contentHash(study),
-    hashes,
-    diagnostics,
-    missingConditions,
-    readyForLive: !diagnostics.length && !missingConditions.length,
-  };
+  return validateLoadedStudy(await loadStudyInputs(path));
 }
 async function saveRun(dir: string, run: StudyRun) {
   await atomicWriteFile(
@@ -184,45 +112,61 @@ async function writeOracleDiagnostic(
     throw new Error("Oracle diagnostic write failed");
   }
 }
+type StudyHooks = {
+  saveRun?: typeof saveRun;
+  initialSaveRun?: typeof saveRun;
+  instantiate?: typeof instantiateWasmPredicate;
+  publish?: typeof publishOracleEvidence;
+  publishInputs?: typeof publishInputSnapshot;
+  readInputs?: typeof readInputSnapshot;
+  afterInputsLoaded?: () => void | Promise<void>;
+  beforeTrial?: (trial: Trial) => void | Promise<void>;
+  developmentObject?: typeof runDevelopmentObject;
+};
 export async function runStudy(
   studyPath: string,
   mode: "fixture" | "live",
   outDir: string,
   approvalPath?: string,
-  hooks: {
-    saveRun?: typeof saveRun;
-    instantiate?: typeof instantiateWasmPredicate;
-    publish?: typeof publishOracleEvidence;
-  } = {},
+  hooks: StudyHooks = {},
 ) {
-  const validation = await validateStudy(studyPath);
+  if (mode === "fixture" && approvalPath)
+    throw new Error("fixture must not use live approval");
+  const loaded = await loadStudyInputs(studyPath);
+  const validation = validateLoadedStudy(loaded);
   if (validation.diagnostics.length)
     throw new Error(validation.diagnostics.join("; "));
-  const study = parseStudy(await readJson(studyPath));
-  let approvalHash: string | null = null;
+  const study = loaded.study;
+  const inputs = executableInputs(loaded);
+  let approval: Record<string, unknown> | null = null;
   if (mode === "live") {
     if (!validation.readyForLive || !approvalPath)
       throw new Error(
         "live study requires reviewed, frozen study and explicit approval",
       );
-    const approval = (await readJson(approvalPath)) as {
-      studyHash?: string;
-      scope?: string;
-      reviewer?: string;
-      record?: string;
-    };
-    if (
-      approval.studyHash !== validation.studyHash ||
-      approval.scope !== "live" ||
-      !approval.reviewer ||
-      !approval.record
-    )
-      throw new Error("approval does not match study");
-    approvalHash = contentHash(approval);
+    approval = parseStudyApproval(
+      await readJson(approvalPath),
+      validation.studyHash,
+    );
   }
+  if (mode === "fixture")
+    for (const task of inputs) {
+      if (task.fixture === null)
+        throw new Error(`fixture missing: ${task.taskId}`);
+      fixtureDevelopmentAgent(task.fixture);
+    }
+  await hooks.afterInputsLoaded?.();
   const output = resolve(outDir);
   await mkdir(dirname(output), { recursive: true });
   await mkdir(output);
+  const constructed = parseInputSnapshot(createInputSnapshot(loaded, approval));
+  await (hooks.publishInputs ?? publishInputSnapshot)(
+    resolve(output, "inputs.json"),
+    constructed,
+  );
+  const snapshot = await (hooks.readInputs ?? readInputSnapshot)(output);
+  if (contentHash(snapshot) !== contentHash(constructed))
+    throw new Error("study input snapshot readback mismatch");
   const trials: Trial[] = [];
   for (const task of study.tasks)
     for (let i = 0; i < study.repetitions; i++)
@@ -244,44 +188,40 @@ export async function runStudy(
         reason: null,
       });
   const run: StudyRun = {
-    version: 1,
+    version: 2,
+    inputSnapshotHash: contentHash(snapshot),
     studyPath: resolve(studyPath),
     studyHash: validation.studyHash,
     mode,
     trials,
     status: "running",
-    approvalHash,
+    approvalHash: snapshot.approvalHash,
     approvalPath: approvalPath ? resolve(approvalPath) : null,
   };
-  await saveRun(output, run);
-  return continueStudy(studyPath, output, run, hooks);
+  verifyInputSnapshotRun(snapshot, run);
+  await (hooks.initialSaveRun ?? saveRun)(output, run);
+  return continueStudy(studyPath, output, run, hooks, snapshot.study);
 }
 async function continueStudy(
   studyPath: string,
   dir: string,
   run: StudyRun,
-  hooks: {
-    saveRun?: typeof saveRun;
-    instantiate?: typeof instantiateWasmPredicate;
-    publish?: typeof publishOracleEvidence;
-  } = {},
+  hooks: StudyHooks = {},
+  snapshotStudy?: Study,
 ) {
   const checkpoint = hooks.saveRun ?? saveRun;
-  const study = parseStudy(await readJson(studyPath));
+  let study: Study;
+  if (run.version === 2) {
+    if (!snapshotStudy) throw new Error("verified snapshot study required");
+    study = snapshotStudy;
+  } else {
+    study = parseStudy(await readJson(studyPath));
+    const current = await validateStudy(studyPath);
+    matchTrials(run, study, current.hashes);
+    if (current.studyHash !== run.studyHash || current.diagnostics.length)
+      throw new Error("study inputs changed since run began");
+  }
   const root = dirname(resolve(studyPath));
-  const current = await validateStudy(studyPath);
-  matchTrials(run, study, current.hashes);
-  if (
-    current.studyHash !== run.studyHash ||
-    current.diagnostics.length ||
-    run.trials.some(
-      (t) =>
-        t.sourceHash !== current.hashes[`${t.taskId}:source`] ||
-        t.metadataHash !== current.hashes[`${t.taskId}:metadata`] ||
-        t.oracleHash !== current.hashes[`${t.taskId}:oracle`],
-    )
-  )
-    throw new Error("study inputs changed since run began");
   if (run.trials.some((t) => t.status === "uncertain")) {
     run.status = "uncertain";
     await checkpoint(dir, run);
@@ -289,6 +229,23 @@ async function continueStudy(
   }
   for (const trial of run.trials) {
     if (trial.status !== "pending") continue;
+    let trialInput: InputSnapshot["tasks"][number] | null = null;
+    if (run.version === 2) {
+      try {
+        await hooks.beforeTrial?.(trial);
+        const snapshot = await readInputSnapshot(dir);
+        verifyInputSnapshotRun(snapshot, run);
+        trialInput =
+          snapshot.tasks.find((t) => t.taskId === trial.taskId) ?? null;
+        if (!trialInput) throw new Error("trial input missing");
+      } catch {
+        trial.status = "uncertain";
+        trial.reason = "input snapshot verification failed before dispatch";
+        run.status = "uncertain";
+        await checkpoint(dir, run);
+        throw new Error(trial.reason);
+      }
+    }
     const usedCalls = run.trials.reduce((sum, t) => sum + t.calls, 0);
     if (study.budget !== null && usedCalls + study.maxCalls > study.budget) {
       trial.status = "stopped";
@@ -327,7 +284,35 @@ async function continueStudy(
         );
         if (study.provider === "codex-sdk") args.push("--agent", "codex-sdk");
       }
-      const response = await runDevelopmentCli(args);
+      let response: Awaited<ReturnType<typeof runDevelopmentCli>>;
+      if (run.version === 2) {
+        if (!trialInput) throw new Error("trial input missing");
+        let settings: DevelopmentObjectSettings;
+        if (run.mode === "fixture") {
+          settings = {
+            mode: "fixture",
+            fixture: structuredClone(trialInput.fixture),
+          };
+        } else {
+          const config = parseDevelopmentConfig({
+            version: 1,
+            mode: "live",
+            model: study.model,
+            ...(study.provider === "codex-sdk" ? { agent: "codex-sdk" } : {}),
+            maxCalls: study.maxCalls,
+            maxOutputTokens: study.maxOutputTokens,
+            maxTotalTokens: study.maxTotalTokens,
+            maxWallMs: study.maxWallMs,
+          });
+          settings = { mode: "live", config: structuredClone(config) };
+        }
+        response = await (hooks.developmentObject ?? runDevelopmentObject)(
+          structuredClone(trialInput.source),
+          structuredClone(trialInput.metadata),
+          output,
+          settings,
+        );
+      } else response = await runDevelopmentCli(args);
       const development = response.result as DevelopmentRun;
       if (development.status === "pass") {
         const raw = await readJson(resolve(output, "run.json"));
@@ -400,9 +385,9 @@ async function continueStudy(
             pkg.lock.irHash !== last.irHash
           )
             throw new Error("candidate linkage mismatch");
-          const oracle = parsePaperOracle(
-            await readJson(resolve(root, task.oracle)),
-          );
+          const oracle = trialInput
+            ? trialInput.oracle
+            : parsePaperOracle(await readJson(resolve(root, task.oracle)));
           if (
             oracle.taskId !== trial.taskId ||
             contentHash(oracle) !== trial.oracleHash
@@ -484,9 +469,6 @@ async function continueStudy(
 }
 export async function resumeStudy(runDir: string) {
   const run = parseStudyRun(await readJson(resolve(runDir, "run.json")));
-  const validation = await validateStudy(run.studyPath);
-  const study = parseStudy(await readJson(run.studyPath));
-  matchTrials(run, study, validation.hashes);
   if (
     run.status === "uncertain" ||
     run.trials.some((t) => t.status === "uncertain")
@@ -494,15 +476,37 @@ export async function resumeStudy(runDir: string) {
     throw new Error(
       "uncertain trial requires human decision; no automatic resend",
     );
-  await verifyTrialRecords(runDir, run, study);
-  if (validation.studyHash !== run.studyHash || validation.diagnostics.length)
-    throw new Error("study changed since run began");
+  let study: Study;
+  let snapshot: InputSnapshot | null = null;
+  if (run.version === 2) {
+    snapshot = await readInputSnapshot(runDir);
+    verifyInputSnapshotRun(snapshot, run);
+    study = snapshot.study;
+  } else {
+    const validation = await validateStudy(run.studyPath);
+    study = parseStudy(await readJson(run.studyPath));
+    matchTrials(run, study, validation.hashes);
+    if (validation.studyHash !== run.studyHash || validation.diagnostics.length)
+      throw new Error("study changed since run began");
+  }
+  await verifyTrialRecords(runDir, run, study, snapshot);
   if (run.mode === "live") {
     await verifyStudyApproval(run);
   }
-  return continueStudy(run.studyPath, resolve(runDir), run);
+  return continueStudy(
+    run.studyPath,
+    resolve(runDir),
+    run,
+    {},
+    snapshot?.study,
+  );
 }
-async function verifyTrialRecords(runDir: string, run: StudyRun, study: Study) {
+async function verifyTrialRecords(
+  runDir: string,
+  run: StudyRun,
+  study: Study,
+  snapshot: InputSnapshot | null,
+) {
   for (const trial of run.trials) {
     let sidecarExists = false;
     try {
@@ -568,10 +572,16 @@ async function verifyTrialRecords(runDir: string, run: StudyRun, study: Study) {
           { rejectSymbolicLinks: true },
         ),
       );
-      const task = study.tasks.find((t) => t.id === trial.taskId)!;
-      const oracle = parsePaperOracle(
-        await readJson(resolve(dirname(run.studyPath), task.oracle)),
-      );
+      const task = study.tasks.find((t) => t.id === trial.taskId);
+      if (!task) throw new Error(`Oracle task missing: ${trial.taskId}`);
+      const oracle = snapshot
+        ? (snapshot.tasks.find((x) => x.taskId === trial.taskId)?.oracle ??
+          (() => {
+            throw new Error("snapshot Oracle missing");
+          })())
+        : parsePaperOracle(
+            await readJson(resolve(dirname(run.studyPath), task.oracle)),
+          );
       const evidence = await verifyOracleEvidenceBody(
         runDir,
         run,
@@ -597,15 +607,14 @@ export async function saveStudyValidation(path: string, outDir: string) {
   return result;
 }
 export async function saveStudyReview(path: string, outDir: string) {
-  const study = parseStudy(await readJson(path));
-  const validation = await validateStudy(path);
-  const root = dirname(resolve(path));
+  const loaded = await loadStudyInputs(path);
+  const study = loaded.study;
+  const validation = validateLoadedStudy(loaded);
   const tasks = [];
   for (const task of study.tasks) {
-    const source = parsePromptSource(
-      await readJson(resolve(root, task.source)),
-    );
-    const oracle = parsePaperOracle(await readJson(resolve(root, task.oracle)));
+    const item = loaded.tasks.find((x) => x.taskId === task.id)?.value;
+    if (!item) throw new Error(`review input missing: ${task.id}`);
+    const { source, oracle } = item;
     tasks.push({
       id: task.id,
       origin: task.origin,

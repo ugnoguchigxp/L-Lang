@@ -1,6 +1,8 @@
 # 論文根拠充足・第四弾 実装計画
 
-作成：2026-09-28。状態：未着手。想定実装者：GPT-6 Sol（`gpt-6-sol`）、low effort。
+作成：2026-09-28。状態：実装済み。全体check・coverageは既存統合試験の失敗により未通過（[実装結果](./PAPER_EVIDENCE_RESULTS.md)参照）。想定実装者：GPT-6 Sol（`gpt-6-sol`）、low effort。
+
+レビュー反映：2026-09-28。状態遷移、入力診断の互換性、snapshotとrunの照合、承認・fixtureの検査条件を現行コードに合わせて明確化した。実装コードは変更していない。
 
 関連：[第三弾](./PAPER_EVIDENCE_PHASE3_IMPLEMENTATION_PLAN.md)、[実装結果](./PAPER_EVIDENCE_RESULTS.md)、[根拠一覧](./PAPER_EVIDENCE_PLAN.md)、[草稿](./PAPER_DRAFT.md)、[再現手順](../research/paper-v1/README.md)。第四弾で変更する仕様は本書を優先し、過去の計画・結果は履歴として残す。
 
@@ -39,6 +41,8 @@
 
 依存方向はstudy/report → study-inputs → study-validationと既存parser。study-inputsからstudy/reportをimportしない。既存`validateStudy(path)`は公開signatureと戻り値を維持し、bundleを受ける共通validationへのwrapperにする。review資料も同じbundleとvalidationから構築し、hash計算後に元ファイルを読み直さない。
 
+読込み結果と実行可能bundleは区別する。読込み結果はtaskごとの成功値または読込み・parse失敗を保持し、validateでは従来どおり課題別diagnosticsを収集する。task入力が欠損しても即座に全体throwへ変更しない。study自体の読込み・parse失敗は従来どおりthrowする。実行可能bundleへの変換はdiagnosticsが空で必要入力が揃った場合だけ許可し、欠損値を空object等で補わない。reviewも再読込みせず、従来なら失敗する入力欠損では失敗を返す。validateのdiagnostics時の終了値1、構造的失敗の終了値2を維持する。
+
 ## 3．snapshotの形式
 
 ### 3.1．固定pathとhash
@@ -60,9 +64,9 @@
 
 fieldの追加・欠落、taskの重複・欠落・未知ID・順序変更、fixture参照の有無とnullの不一致、studyHash・approvalHash・checksum不一致を拒否する。source/metadata/Oracleのtask identity、profile、Oracle caseと入力契約の対応は既存validationを再利用する。未知field等の検査を弱めない。fixture実行時は全taskにfixtureが必要で、欠けていれば送信前に拒否する。
 
-snapshotから従来と同じ`${taskId}:source|metadata|oracle|fixture`のhash集合を導出する。trialとfrozenHashesへの照合にはこの集合を使う。保存objectのhash定義は既存validationと同一にし、parserが返す値と保存値の違いでhashが変わる設計にしない。新たな正規化やfield削除は追加しない。
+snapshotから従来と同じ`${taskId}:source|metadata|oracle|fixture`のhash集合を導出する。trialとfrozenHashesへの照合にはこの集合を使う。保存objectのhash定義は既存validationと同一にし、parserが返す値と保存値の違いでhashが変わる設計にしない。source/metadataは既存parserの戻り値を保存し、保存後の再parseでもcontentHashが変わらないことを確認する。Oracle/studyは既存parserが検査した全体、fixture/承認は保存JSON全体をhashする。新たな正規化やfield削除は追加しない。
 
-snapshotには日時、絶対path、認証情報を追加しない。source/metadata/Oracle等の内容を保存するため、自動公開やGit登録は行わない。
+snapshotの管理fieldには日時、絶対path、認証情報を追加しない。元studyや承認等の保存内容に含まれるpath・記述は削除せず保持するため、snapshot全体に絶対pathが存在しないとは保証しない。source/metadata/Oracle等の内容を保存するため、自動公開やGit登録は行わない。
 
 ### 3.2．StudyRun version 2
 
@@ -75,6 +79,10 @@ snapshotには日時、絶対path、認証情報を追加しない。source/meta
 - fixture v2のapprovalPath/approvalHashはnull。live v2は元承認pathとhashを保持し、snapshot内承認とも一致させる。
 - v2でsnapshotが欠損・不正なら終了値2。元studyやv1経路へfallbackしない。
 
+snapshot検証は二段階にする。本体検査は固定schema・checksum・入力validationを行い、run照合はinputSnapshotHash、studyHash、modeに応じた承認の有無、approvalHash、予定trialと各入力hashを検査する。初回保存読戻しでは構築値と本体を照合し、run構築後からは両段階を行う。reportだけはmatchTrialsのallowMissing=trueを維持し、欠落trialをmissing行にする。resumeとrunnerは全予定trialを要求する。snapshotのtask欠落はreportでも許容しない。
+
+承認は非配列objectで、studyHashが一致し、scopeがlive、reviewer/recordが非空stringであることを検査する。追加fieldは従来互換のため保持し、hash対象に含める。fixture runはsnapshotのapproval/approvalHashもnull、live runは双方が非nullでrunと一致しなければ拒否する。report/resumeは不正なv2承認を単なる適格性理由へ格下げせず終了値2にする。v1の既存診断は維持する。
+
 型はversionで分岐し、`version: 1 | 2`とoptional fieldだけで不正な組合せを許す形にはしない。
 
 ## 4．入力の取得と保存
@@ -82,8 +90,8 @@ snapshotには日時、絶対path、認証情報を追加しない。source/meta
 1. 元studyを一度読み、parseする。この同じobjectからtask一覧を決める。
 2. 各taskのsource/metadata/Oracle/参照fixtureを読込み、bundleを作る。同じ解決済みpathは同じ読込み結果を再利用する。元study内の`../../examples/...`は現行入力なので拒否しない。
 3. 同じbundleでvalidation、hash集合、readyForLiveを計算する。validation後にstudyや入力を再読込みしてsnapshotを構成しない。
-4. liveは元承認を一度読み、既存のreadyForLive条件とstudyHash/scope/reviewer/record検査を適用する。fixtureは承認を取り込まない。
-5. 新規出力directoryを確保し、snapshotを一時ファイルにmode 0600で書込み・sync・close後、非置換公開する。第三弾のpublish方式を小さく再利用するか同等に実装する。上書きrenameへのfallbackは禁止。
+4. liveは元承認を一度読み、既存のreadyForLive条件とstudyHash/scope/reviewer/record検査を適用する。fixtureでapprovalPathを指定した場合はCLIと同様にrunStudy直接呼出しでも拒否する。
+5. fixture実行では全fixtureを`fixtureDevelopmentAgent`へ渡して形式検査する（agentを呼び出さず破棄する）。liveでは参照fixtureはJSONとして保存・hash照合するだけとし、fixture agentを作らない。この実行前検査をvalidate-studyの既存判定へ追加しない。新規出力directoryを確保し、snapshotを一時ファイルにmode 0600で書込み・sync・close後、非置換公開する。第三弾のpublish方式を小さく再利用するか同等に実装する。上書きrenameへのfallbackは禁止。EEXISTやhard-link非対応は終了値2。失敗時は自分のtempだけを削除し、公開済みinputs.jsonは削除しない。公開後cleanup失敗でもrun作成・実行へ進まない。
 6. 固定pathを安全に読み戻し、schema/checksumと構築したsnapshot全体のhashを照合する。その値をinputSnapshotHashにして最初のrun.jsonを保存する。
 7. 初期run保存成功後にのみtrialを開始する。保存失敗ならモデル・development・Oracle実行0で終了値2。残ったsnapshotや部分runを自動削除・修復・再利用しない。
 
@@ -97,7 +105,7 @@ run内のsnapshotは既存`resolveContainedFile`のsymlink拒否付きで読む�
 
 snapshotを検査した後にpath指定CLIでsource等を再読込みすると隙間が残るため、v2 runnerは検査したobjectを直接渡す。
 
-`capability-development-cli.ts`にobject実行helperを抽出する。引数はsource、metadata、outputと、fixture/liveを区別する設定とする。fixture設定は保存fixture object、live設定は検査済みDevelopmentConfig。agent作成とdevelopCapability呼出しは既存コードを共有し、providerの初期化を二重実装しない。Oracle、study全体、承認、snapshot全体をhelperへ渡さない。
+`capability-development-cli.ts`にobject実行helperを抽出する。引数はsource、metadata、outputと、fixture/liveを区別する設定とする。fixture設定は保存fixture object、live設定は検査済みDevelopmentConfig。設定はmodeで分岐する型とし、fixtureとlive configの同時指定を許さない。helperでもlive configを既存parserで検査し、TypeScriptの型だけで受理しない。agent作成とdevelopCapability呼出しは既存コードを共有し、providerの初期化を二重実装しない。Oracle、study全体、承認、snapshot全体をhelperへ渡さない。
 
 既存`runDevelopmentCli(args)`は従来どおり引数をparseしてファイルを読み、同じhelperへ委譲する。fixture/liveの混在拒否、認証の扱い、config、戻り値とexitCodeを維持する。既存development CLIのreplay/mutation-checkは変更しない。
 
@@ -105,11 +113,11 @@ fixtureは現行と同じfixtureConfigを使い、liveでは現行studyから構
 
 ### 5.2．trialの順序
 
-- 新規実行・resumeともv2ではsnapshotとrunの対応を検査し、予定trialと入力hashをmatchTrialsへ渡す。
+- 新規実行・resumeともv2ではsnapshotとrunの対応を検査し、予定trialと入力hashをmatchTrialsへ渡す。liveのrunner/resumeはsnapshotから再計算したreadyForLiveも要求し、入力固定を理由に既存の実行条件を省略しない。
 - 各pending trialの開始直前にsnapshotを読み直し、inputSnapshotHash・studyHash・approvalHashと全task対応を再検査する。その読込みから得た対象source/metadata/fixture/Oracleを一組として保持する。
-- 予算判定とdispatch前checkpointは既存仕様を維持する。送信前検査に失敗したtrialはpendingのまま、runをuncertainとしてcheckpointを試み、終了値2。development path、usage、Oracle合否を捏造しない。
-- object helperへ対象source/metadata/fixtureだけを渡す。採点時は同じtrial開始時に保持したOracleを使い、元Oracleを再読込みしない。
-- 呼出し先へ渡すobjectは必要ならstructuredCloneで切り離し、保持している検証用objectへのmutationを防ぐ。fixture agentは反復ごとに新規生成し、前trialの応答消費状態を共有しない。
+- 予算判定とdispatch前checkpointは既存仕様を維持する。trial開始直前の入力検査に失敗した場合は、当該trial.statusとrun.statusをuncertainにし、trial.reasonを固定文字列`input snapshot verification failed before dispatch`としてcheckpointを試み、終了値2。送信していないことが分かっていても自動復旧は今回追加しない。この状態なら既存matchTrialsのuncertain条件を満たす。development path、usage、Oracle合否を捏造しない。
+- object helperへ対象source/metadataと第5.1節の実行設定・outputだけを渡す。採点時は同じtrial開始時に保持したOracleを使い、元Oracleを再読込みしない。
+- 呼出し先へ渡すsource/metadata/fixture/configはstructuredCloneで切り離し、保持している検証用objectへのmutationを防ぐ。fixture agentは反復ごとに新規生成し、前trialの応答消費状態を共有しない。
 - development・candidateとtrial hashの第三弾までの照合は維持する。保存された失敗・unresolved等も既存のrecord照合を弱めない。
 - OracleEvidenceに新fieldは不要。既存studyHash/sourceHash/metadataHash/oracleHashをsnapshotへ照合することで対応させる。
 
@@ -129,7 +137,9 @@ checkpointの失敗では終了値2で停止する。rename後の例外もあり
 
 liveの元承認をresume時に照合するのは現行の再開条件を弱めないためである。snapshot内承認は当時の保存内容、元承認pathは再開時の条件として区別する。reportは保存内容の照合であり、現在の実行承認を保証しない。live resumeで元承認が欠損・変更なら送信0で拒否する。
 
-uncertain停止は構造parse後、development/Oracle実行より前に行い、第三弾の自動再送・再採点・昇格禁止を維持する。v2でも既存の完了trialの証跡を照合してからpendingだけ進める。run.status completeでpendingがない場合は再実行0。
+resume開始時のrun構造・snapshot検査に失敗した場合はファイルを書き換えず終了値2とする。第5.2節のuncertain保存は、検査済みrunを実行中に各trial（最初のtrialを含む）の開始前検査が失敗した場合に限る。
+
+uncertain停止はrun構造parseの直後、snapshotやdevelopmentの照合より前に行い、第三弾の自動再送・再採点・昇格禁止を維持する。v2でも既存の完了trialの証跡を照合してからpendingだけ進める。run.status completeでpendingがない場合は再実行0。
 
 reportはv2でsnapshotの保存承認を既存の承認検査と照合し、保存snapshot由来のvalidation結果を使う。第三弾のcase別照合、missing trial、生成件数、実行例外、旧自己申告の意味は変えない。summaryのversion変更・新しい集計列は今回は不要。READMEとMarkdown説明へ「v2は保存snapshotを照合、v1は元入力参照」と追記する。
 
@@ -149,7 +159,7 @@ run directory一式を別pathへコピーしたv2 reportが作れることを確
 | P4-06 | frozenHashesと取得bundle不一致 | 初回development開始前に拒否 |
 | P4-07 | snapshot保存・公開・読戻し・初期run保存失敗 | development/モデル/Oracle実行0、既存path上書き0 |
 | P4-08 | 検証直後に元入力を変更するtest hook | object helperは検証済み入力を使う。元pathの再読込みなし |
-| P4-09 | trial間にsnapshot変更 | 次trialは送信0、pending維持、run uncertain、終了値2 |
+| P4-09 | trial間にsnapshot変更 | 次trialは送信0、trial/run uncertainと固定reason、終了値2 |
 | P4-10 | 元studyと関連入力を削除してv2 report | 表を生成でき、Oracle検証済み件数が同じ |
 | P4-11 | v2 run directory一式を移動してreport | 元pathを読まず同じ判定。Wasm compile/instantiate/model呼出し0 |
 | P4-12 | 元入力なしでfixture v2のpendingをresume | 完了trialは再実行0、pendingだけ保存入力で実行 |
@@ -165,6 +175,12 @@ run directory一式を別pathへコピーしたv2 reportが作れることを確
 | P4-22 | 実行helperが引数objectを変更するdouble | 保持Oracleと照合用入力に影響しない |
 | P4-23 | validate/reviewの読込み中に元studyを書換え | 一つのbundle由来の内容・hashで出力し、別読込みの値が混在しない |
 | P4-24 | 新fixture report・旧run report | evidenceEligible false、pending理由維持。旧自己申告を検証済みに昇格しない |
+| P4-25 | task入力欠損・parse失敗のvalidate-study | 課題別diagnosticsを保存し終了値1。study自体の不正は2 |
+| P4-26 | 送信前入力検査失敗の保存runを再parse/match | uncertain状態として整合し、resumeは自動再送しない |
+| P4-27 | snapshotのstudyHash・承認とrunの対応不一致 | 本体checksumが正しくてもrun照合で拒否 |
+| P4-28 | report対象v2のtrialを1件欠落 | snapshot正常ならmissing行。runner/resumeでは拒否 |
+| P4-29 | fixture形式不正／fixtureへの承認指定 | 新規runはdevelopment開始前に拒否。validate既存挙動を維持 |
+| P4-30 | snapshot公開済みでtemp cleanup失敗 | 完成snapshotを消さず停止。run作成・development実行0 |
 
 partial runはfixtureとtest用checkpoint hookで作る。保存済みの研究原本を書き換えて試験しない。live成功経路はprovider doubleを用い、実モデルの呼出しはしない。公開helperの依存注入は必要な狭い境界だけにする。
 
@@ -204,7 +220,7 @@ git diff --check
 
 完了条件：
 
-- [ ] P4-01〜24に対応する検証とfixture CLI一巡が完了した。
+- [ ] P4-01〜30に対応する検証とfixture CLI一巡が完了した。
 - [ ] 検査したobjectを実行し、v2で元source/metadata/Oracle等へ戻っていない。
 - [ ] v2 snapshot欠損で旧経路へfallbackしない。
 - [ ] v1互換、第三弾のcase照合・中断・再送防止を維持した。
@@ -222,7 +238,7 @@ GPT-6 Sol / low effort向けに、第2節の順序で進めてください。
 対象は実行入力snapshot、新規StudyRun v2、検証済みobjectからの実行、snapshotによるresume/reportです。
 旧v1を移行せず維持し、v2のsnapshot欠損では元入力へfallbackしないでください。
 第三弾のcase証跡・中断時の再送防止を維持してください。
-P4-01〜24、fixture CLI一巡、品質Gateを実施してください。
+P4-01〜30、fixture CLI一巡、品質Gateを実施してください。
 evidenceEligible=falseとstudy-evidence-verifier-pendingを維持してください。
 新規live呼出し、研究review・承認の確定、compiler変更は行わないでください。
 結果をdocs/PAPER_EVIDENCE_RESULTS.mdへ追記し、同時resume排他には進まず終了してください。

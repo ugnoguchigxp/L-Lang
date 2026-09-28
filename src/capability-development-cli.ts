@@ -1,5 +1,6 @@
 import {
   developCapability,
+  type DevelopmentConfig,
   fixtureConfig,
   fixtureDevelopmentAgent,
   parseDevelopmentConfig,
@@ -72,8 +73,6 @@ export async function runDevelopmentCli(args: string[]) {
   const source = await readJson(path),
     metadata = await readJson(required("--metadata")),
     output = required("--out-dir");
-  let agent: DevelopmentAgent,
-    config = fixtureConfig;
   if (options["--fixtures"]) {
     if (
       Object.keys(options).some(
@@ -81,23 +80,52 @@ export async function runDevelopmentCli(args: string[]) {
       )
     )
       invalid("fixture and live settings cannot be combined");
-    agent = fixtureDevelopmentAgent(await readJson(options["--fixtures"]));
-  } else {
-    const codex = options["--agent"] === "codex-sdk";
-    if (options["--agent"] && !codex) invalid("unknown development agent");
-    config = parseDevelopmentConfig({
-      version: 1,
-      mode: "live",
-      model: codex
-        ? (options["--model"] ?? "gpt-5.6-terra")
-        : required("--model"),
-      ...(codex ? { agent: "codex-sdk" } : {}),
-      maxCalls: Number(options["--max-calls"] ?? 3),
-      maxOutputTokens: Number(required("--max-output-tokens")),
-      maxTotalTokens: Number(required("--max-total-tokens")),
-      maxWallMs: Number(required("--max-wall-ms")),
+    return runDevelopmentObject(source, metadata, output, {
+      mode: "fixture",
+      fixture: await readJson(options["--fixtures"]),
     });
-    if (codex) {
+  }
+  const codex = options["--agent"] === "codex-sdk";
+  if (options["--agent"] && !codex) invalid("unknown development agent");
+  const config = parseDevelopmentConfig({
+    version: 1,
+    mode: "live",
+    model: codex
+      ? (options["--model"] ?? "gpt-5.6-terra")
+      : required("--model"),
+    ...(codex ? { agent: "codex-sdk" } : {}),
+    maxCalls: Number(options["--max-calls"] ?? 3),
+    maxOutputTokens: Number(required("--max-output-tokens")),
+    maxTotalTokens: Number(required("--max-total-tokens")),
+    maxWallMs: Number(required("--max-wall-ms")),
+  });
+  return runDevelopmentObject(source, metadata, output, {
+    mode: "live",
+    config,
+  });
+}
+
+export type DevelopmentObjectSettings =
+  | { mode: "fixture"; fixture: unknown }
+  | { mode: "live"; config: DevelopmentConfig };
+
+export async function runDevelopmentObject(
+  source: unknown,
+  metadata: unknown,
+  output: string,
+  settings: DevelopmentObjectSettings,
+  liveAgent?: DevelopmentAgent,
+) {
+  let agent: DevelopmentAgent;
+  let config: DevelopmentConfig;
+  if (settings.mode === "fixture") {
+    config = fixtureConfig;
+    agent = fixtureDevelopmentAgent(settings.fixture);
+  } else {
+    config = parseDevelopmentConfig(settings.config);
+    if (config.mode !== "live") invalid("live development config required");
+    if (liveAgent) agent = liveAgent;
+    else if (config.agent === "codex-sdk") {
       const { makeCodexDevelopmentAgent } = await import(
         "./codex-development-agent"
       );

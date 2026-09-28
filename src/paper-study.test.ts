@@ -62,7 +62,7 @@ test("fixture trials resume without duplicate calls and report is deterministic"
     if (!first) throw new Error("missing first trial");
     first.status = "uncertain";
     await writeFile(resolve(runDir, "run.json"), JSON.stringify(run));
-    await expect(resumeStudy(runDir)).rejects.toThrow("invalid oracle status");
+    await expect(resumeStudy(runDir)).rejects.toThrow("uncertain trial");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -222,17 +222,9 @@ test("bad fixture response is recorded as error, and pre-dispatch failure stays 
       JSON.stringify({ version: 1, responses: "invalid" }),
     );
     await writeFile(path, JSON.stringify(study));
-    const uncertain = await runStudy(
-      path,
-      "fixture",
-      resolve(root, "uncertain-run"),
-    );
-    expect(uncertain.status).toBe("uncertain");
-    expect(uncertain.trials[0]?.status).toBe("uncertain");
-    expect(uncertain.trials[1]?.status).toBe("pending");
-    await expect(resumeStudy(resolve(root, "uncertain-run"))).rejects.toThrow(
-      "uncertain trial",
-    );
+    await expect(
+      runStudy(path, "fixture", resolve(root, "uncertain-run")),
+    ).rejects.toThrow("invalid development fixtures");
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -300,6 +292,8 @@ test("P2-06/11/12/13/18/20 report never promotes mode-only or incomplete evidenc
     );
     expect(baseline.recordIntegrity).toBe("verified");
     const live = structuredClone(original);
+    live.version = 1;
+    delete (live as { inputSnapshotHash?: string }).inputSnapshotHash;
     live.mode = "live";
     live.approvalHash = null;
     live.approvalPath = null;
@@ -349,6 +343,8 @@ test("P2-09/10/17 report rejects changed records and shows absent development", 
     const { path } = await copyStudy(root);
     const runDir = resolve(root, "run");
     const run = await runStudy(path, "fixture", runDir);
+    run.version = 1;
+    delete (run as { inputSnapshotHash?: string }).inputSnapshotHash;
     const first = run.trials[0];
     if (!first) throw new Error("missing trial");
     first.calls++;
@@ -539,6 +535,8 @@ test("P2-13 reviewed frozen study still lacks Oracle evidence", async () => {
     expect(validation.readyForLive).toBe(true);
     const runDir = resolve(root, "fixture");
     const run = await runStudy(path, "fixture", runDir);
+    run.version = 1;
+    delete (run as { inputSnapshotHash?: string }).inputSnapshotHash;
     run.mode = "live";
     const approval = {
       studyHash: validation.studyHash,

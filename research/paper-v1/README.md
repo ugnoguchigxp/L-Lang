@@ -28,3 +28,7 @@ studyの`budget`は全trialで予約できるモデル呼出し数の上限で�
 [再検証index](./audit-index.json)は2026-09-27のオフライン監査33ファイルの相対path・サイズ・SHA-256を列挙し、元live Wasmは[元記録index](./bundle-index.json)へ参照する。監査summaryの4 Wasmは両indexのhash・サイズと照合済みである。両方の生bundleはローカルにのみ保存している。
 
 [著者による隔離snapshotの実行記録](./clean-reproduction.json)には、作業状態から一時Git snapshotを作り、そのクリーンcloneへ固定依存を導入し、保存証跡コピーから再生・Oracle・fixture表を実行した結果を残す。元live実行時の環境を復元した記録ではない。
+
+## 第四弾以降のstudy run
+
+新規study runは`run.json` version 2と`inputs.json`を同じrun directoryに保存する。後者には検査済みstudy、各taskのsource・metadata・Oracle・参照fixture、liveの場合は承認内容を保存し、runの`inputSnapshotHash`と照合する。v2のreportは保存snapshotを正本とするため、元studyや入力を移動した後でもrun directory一式から作れる。fixture v2のresumeも保存入力で続行する。live v2のresumeには元承認pathの現時点での照合も必要である。旧version 1 runのreport/resumeは従来どおり元入力pathを参照し、snapshotを後付けしない。保存snapshotはGit管理外であり、自動公開しない。

@@ -50,8 +50,7 @@ export type Trial = {
   tokens: number;
   reason: string | null;
 };
-export type StudyRun = {
-  version: 1;
+type StudyRunBase = {
   studyPath: string;
   studyHash: string;
   mode: "fixture" | "live";
@@ -60,6 +59,9 @@ export type StudyRun = {
   approvalHash: string | null;
   approvalPath: string | null;
 };
+export type StudyRun =
+  | (StudyRunBase & { version: 1 })
+  | (StudyRunBase & { version: 2; inputSnapshotHash: string });
 const record = (x: unknown): x is Record<string, unknown> =>
   x !== null && typeof x === "object" && !Array.isArray(x);
 const keys = (
@@ -133,6 +135,7 @@ const runKeys = [
   "approvalHash",
   "approvalPath",
 ];
+const runV2Keys = [...runKeys, "inputSnapshotHash"];
 
 export function parseStudy(value: unknown): Study {
   if (
@@ -241,8 +244,11 @@ export function hashesMatch(
 export function parseStudyRun(value: unknown): StudyRun {
   if (
     !record(value) ||
-    !keys(value, runKeys, runKeys) ||
-    value.version !== 1 ||
+    !(value.version === 1
+      ? keys(value, runKeys, runKeys)
+      : value.version === 2 &&
+        keys(value, runV2Keys, runV2Keys) &&
+        digest(value.inputSnapshotHash)) ||
     !str(value.studyPath) ||
     !digest(value.studyHash) ||
     !["fixture", "live"].includes(String(value.mode)) ||

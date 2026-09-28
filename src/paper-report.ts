@@ -11,6 +11,10 @@ import {
   verifyOracleEvidenceCheckpoint,
 } from "./paper-oracle-evidence";
 import { parsePaperOracle } from "./paper-evaluate";
+import {
+  readInputSnapshot,
+  verifyInputSnapshotRun,
+} from "./paper-study-inputs";
 import { validateStudy } from "./paper-study";
 import {
   enumerateTrials,
@@ -59,11 +63,18 @@ async function rejectSymbolicLinkAncestors(root: string, segments: string[]) {
 }
 export async function buildPaperReport(runDir: string) {
   const run = parseStudyRun(await readJson(resolve(runDir, "run.json")));
-  const validation = await validateStudy(run.studyPath);
+  const snapshot = run.version === 2 ? await readInputSnapshot(runDir) : null;
+  const verified =
+    run.version === 2 && snapshot
+      ? verifyInputSnapshotRun(snapshot, run, true)
+      : null;
+  const validation =
+    verified?.validation ?? (await validateStudy(run.studyPath));
   if (validation.studyHash !== run.studyHash || validation.diagnostics.length)
     throw new Error("study input changed since run");
-  const study = parseStudy(await readJson(run.studyPath));
-  const planned = matchTrials(run, study, validation.hashes, true);
+  const study = snapshot?.study ?? parseStudy(await readJson(run.studyPath));
+  const planned =
+    verified?.planned ?? matchTrials(run, study, validation.hashes, true);
   const reasons = new Set<string>(["study-evidence-verifier-pending"]);
   if (run.mode === "fixture") reasons.add("fixture-only");
   if (!validation.readyForLive) reasons.add("study-not-ready");
@@ -84,7 +95,7 @@ export async function buildPaperReport(runDir: string) {
     )
   )
     reasons.add("run-status-inconsistent");
-  if (run.mode === "live") {
+  if (run.mode === "live" && run.version === 1) {
     if (!run.approvalPath || !run.approvalHash)
       reasons.add("approval-unavailable");
     else {
@@ -142,9 +153,14 @@ export async function buildPaperReport(runDir: string) {
         throw new Error(`Oracle sidecar state mismatch: ${entry.id}`);
       const task = study.tasks.find((x) => x.id === entry.taskId);
       if (!task) throw new Error(`Oracle task missing: ${entry.taskId}`);
-      oracle = parsePaperOracle(
-        await readJson(resolve(dirname(run.studyPath), task.oracle)),
-      );
+      oracle = snapshot
+        ? (snapshot.tasks.find((x) => x.taskId === entry.taskId)?.oracle ??
+          (() => {
+            throw new Error("snapshot Oracle missing");
+          })())
+        : parsePaperOracle(
+            await readJson(resolve(dirname(run.studyPath), task.oracle)),
+          );
       if (
         sidecar.studyHash !== run.studyHash ||
         sidecar.trialId !== t.id ||

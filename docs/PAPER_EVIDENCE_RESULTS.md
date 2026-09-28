@@ -89,3 +89,19 @@ P3-01〜30の条件は[`paper-oracle-evidence.test.ts`](../src/paper-oracle-evid
 case採点で`INVALID_INPUT`を任意の例外の`code`属性だけで認定していたため、Wasm runtimeの`WasmError`に限って通常の入力拒否とするよう修正した。sidecarに関連するdevelopmentが欠損していても、sidecarとrun checkpointの矛盾は先に拒否する。共通の証跡検証関数は、受け取ったdevelopment値が保存JSONの厳密なparse結果と一致し、source/metadata hashがtrialに対応することを自ら確認するようにした。sidecarの一時ファイルはmode `0600`で作成し、書込み・sync・closeの失敗時にも自分の一時ファイルの削除を試みる。reportがWasmをcompile・instantiateしないことも回帰試験で直接確認した。
 
 レビュー追加後の対象テストは41 pass、0 fail。全体`bun run check`は875 pass、0 fail。`ci:docs`、`ci:protected`、`ci:smoke`、`git diff --check`も成功した。対象の実装ファイルと新規テストはlint警告0件。研究入力、旧run、既存のlive記録は変更していない。
+
+## 第四弾：study入力snapshot（2026-09-28）
+
+新規study runをversion 2とし、`<run-dir>/inputs.json`へ検査済みのstudy、task別source・metadata・Oracle・参照fixture、live承認を保存する。schema、checksum、`run.json`の`inputSnapshotHash`、予定trialの入力hashを照合する。fixture実行では開始前に全fixtureを形式検査し、各pending trialの直前にsnapshotを再検査して、保持したobjectをdevelopmentとOracle採点へ渡す。検査失敗は固定理由とともにuncertainへ保存し、自動再送しない。v2のreportとfixture再開は元入力を移動した後も保存snapshotで動作する。live再開は元承認pathも再照合する。v1のreport・resumeは元path参照のままである。
+
+CLIでは`artifacts/paper-v4/validation-new/`に診断0・`readyForLive: false`、`review-new/`に4課題のreview資料、`fixture-new/`にversion 2 runとsnapshotを保存した。新規fixtureは生成pass 3・unresolved 1、照合済みOracle pass 3・not-run 1。`report-new/`はsummary version 2、`recordIntegrity: verified`、`evidenceEligible: false`、`study-evidence-verifier-pending`を確認した。既存v1 runの`artifacts/paper-v3/fixture-new/`から`artifacts/paper-v4/report-old/`へのreportも成功した。新規live実行は行っていない。
+
+対象8ファイルのテストは公開後cleanup失敗試験を含め58 pass、0 fail。`ci:docs`、`ci:protected`、`ci:smoke`、`git diff --check`は通過した。全体`bun run check`は既存effects再開試験の`EFFECTS_BENCHMARK_UNCERTAIN_REQUIRES_REVIEW`で1件失敗し、同試験は単独でも再現した。`bun run coverage`は879 pass、3 failで、effects再開試験に加えてsemantic closureとsemantic verify CLI統合試験が時間制限等で失敗した。これら2つの全体Gateは未通過であり、coverage閾値の成功は主張しない。追加したstudy対象テストの失敗はない。
+
+残条件は独立review、モデル・予算・反復条件の確定、live承認と実測、同時resume排他、第三者による証拠の再現・配布である。保存snapshotは同時刻取得や書込み権限を持つ別processへの完全な不変性を保証しない。
+
+## 第四弾のコードレビュー追補（2026-09-28）
+
+初期run保存直後にsnapshotが変わると、trial直前のuncertain checkpointを経ずに停止する窓を修正した。開始時とresume開始時に検査したstudyをrunnerへ渡し、各pending trialの直前にsnapshotを再読込みして検査する。初回trialでも失敗時には`input snapshot verification failed before dispatch`を保存し、development呼出しは0件とする回帰試験を追加した。live runのtrialにfixture hashを混入させた場合もsnapshot/run照合で拒否する。承認の保存値でreportを作り、変更後の元承認ではresumeを拒否するlive provider double試験を加えた。新設テストの型を明確にし、対象ファイルのlint警告をなくした。
+
+レビュー後の対象8ファイルは60 pass、0 fail。typecheckと対象ファイルのlintは通過した。全体check・coverageの既存統合試験失敗は上記のとおり未解消であり、通過とは記載しない。
