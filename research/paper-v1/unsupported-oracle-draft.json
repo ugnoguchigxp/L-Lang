@@ -1,0 +1,1 @@
+{"version":1,"taskId":"unsupported","origin":"requirements-and-contract","review":"unreviewed","cases":[{"id":"matching","input":{"email":"a@example.com"},"expected":{"kind":"value","value":true}},{"id":"other","input":{"email":"a@other.com"},"expected":{"kind":"value","value":false}}]}

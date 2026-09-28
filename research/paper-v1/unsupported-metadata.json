@@ -1,0 +1,1 @@
+{"id":"unsupported","release":"draft","purpose":"表現不能要求を明示する","useWhen":"suffix判定の可否を評価する場合","doNotUseWhen":"実行可能なPredicateが必要な場合"}

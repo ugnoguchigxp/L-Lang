@@ -1,0 +1,1 @@
+{"id":"boundary","release":"draft","purpose":"列挙型の上限カテゴリを選ぶ","useWhen":"固定したlevel契約を使う場合","doNotUseWhen":"数値しきい値が必要な場合"}

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "date": "2026-09-27",
+  "executor": "author-local-isolated-snapshot",
+  "baseCommit": "4b5073d4d8f3810719cd5b9f0d13aaeeb499f972",
+  "snapshotCommit": "ae940f08a3f58630586f3da5f58e2561ce1e5c1e",
+  "bun": "1.4.2",
+  "dependencies": "bun install --frozen-lockfile succeeded",
+  "targetedTests": { "passed": 13, "failed": 0 },
+  "checkoutStatus": "clean before evidence copy; evidence copied to ignored artifacts directory",
+  "input": "bundle-index.json with local raw evidence copy",
+  "reproduction": { "status": "pass", "apiCalls": 0, "byteEqual": true, "wasmHash": "a7cceacc4f1a3f2a4738bbdc72986df166f972bd316e6bc0b029816c4ecf28dd" },
+  "oracle": { "status": "pass", "cases": 8, "review": "unreviewed" },
+  "accessTable": { "tasks": 1, "oraclePass": 8, "oracleCases": 8, "byteEqual": true },
+  "fixtureReport": { "tasks": 4, "plannedTrials": 4, "pass": 3, "unresolved": 1, "researchEvidence": false },
+  "thirdPartyReproduction": false
+}

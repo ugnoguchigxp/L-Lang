@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "id": "predicate-paper-v1",
+  "state": "draft",
+  "review": "unreviewed",
+  "approval": "not-granted",
+  "profile": "predicate-i32-v1",
+  "repetitions": 1,
+  "model": null,
+  "provider": null,
+  "maxCalls": 3,
+  "maxOutputTokens": null,
+  "maxTotalTokens": null,
+  "maxWallMs": null,
+  "budget": null,
+  "tasks": [
+    { "id": "logic", "source": "../../examples/capability-development/logic/source.json", "metadata": "../../examples/capability-development/logic/metadata.json", "oracle": "logic-oracle-draft.json", "fixture": "../../examples/capability-development/logic/responses.fixture.json", "features": ["and", "or", "not"], "origin": "existing-example-adapted", "review": "unreviewed" },
+    { "id": "contact", "source": "../../examples/capability-development/contact/source.json", "metadata": "../../examples/capability-development/contact/metadata.json", "oracle": "contact-oracle-draft.json", "fixture": "../../examples/capability-development/contact/responses.fixture.json", "features": ["enum", "presence"], "origin": "existing-example-adapted", "review": "unreviewed" },
+    { "id": "boundary", "source": "boundary-source.json", "metadata": "boundary-metadata.json", "oracle": "boundary-oracle-draft.json", "fixture": "boundary-responses.fixture.json", "features": ["enum", "boundary"], "origin": "new-draft", "review": "unreviewed" },
+    { "id": "unsupported", "source": "unsupported-source.json", "metadata": "unsupported-metadata.json", "oracle": "unsupported-oracle-draft.json", "fixture": "unsupported-responses.fixture.json", "features": ["unresolved"], "origin": "new-draft", "review": "unreviewed" }
+  ],
+  "unresolved": ["Review the categorical boundary and unsupported suffix task semantics", "Fix model, provider, repetitions and resource limits before live evaluation", "Independent author and reviewer have not reviewed the task or Oracle", "Check overlap with existing examples"]
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "taskId": "access",
+  "origin": "requirements-and-contract",
+  "review": "unreviewed",
+  "cases": [
+    { "id": "enabled-clear", "input": { "enabled": true, "suspended": false }, "expected": { "kind": "value", "value": true } },
+    { "id": "disabled-clear", "input": { "enabled": false, "suspended": false }, "expected": { "kind": "value", "value": false } },
+    { "id": "enabled-suspended", "input": { "enabled": true, "suspended": true }, "expected": { "kind": "value", "value": false } },
+    { "id": "disabled-suspended", "input": { "enabled": false, "suspended": true }, "expected": { "kind": "value", "value": false } },
+    { "id": "wrong-enabled-type", "input": { "enabled": "true", "suspended": false }, "expected": { "kind": "error", "code": "INVALID_INPUT" } },
+    { "id": "wrong-suspended-type", "input": { "enabled": true, "suspended": "false" }, "expected": { "kind": "error", "code": "INVALID_INPUT" } },
+    { "id": "missing-enabled", "input": { "suspended": false }, "expected": { "kind": "error", "code": "INVALID_INPUT" } },
+    { "id": "missing-suspended", "input": { "enabled": true }, "expected": { "kind": "error", "code": "INVALID_INPUT" } }
+  ]
+}
