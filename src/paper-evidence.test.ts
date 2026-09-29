@@ -1,5 +1,13 @@
 import { afterEach, expect, test } from "bun:test";
-import { cp, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import {
@@ -40,6 +48,23 @@ test("inventory verifies linked evidence after relocation and refuses reuse", as
   expect(result.environment.original.commit).toBe("unknown");
   expect(result.environment.observed.bunLockSha256).toMatch(/^[a-f0-9]{64}$/);
   expect(result.environment.observed.backend).toBe("binaryen@132.0.0");
+});
+
+test("inventory rejects an output nested in input through a parent symlink", async () => {
+  const root = await sandbox();
+  const source = resolve(root, "source");
+  await createPaperTestRun(source);
+  await symlink(source, resolve(root, "alias"), "dir");
+  await expect(
+    saveInventory(source, resolve(root, "alias", "nested"), "fixture"),
+  ).rejects.toThrow("output must be outside input root");
+  await expect(
+    saveInventory(source, resolve(root, "alias", "new", "nested"), "fixture"),
+  ).rejects.toThrow("output must be outside input root");
+  expect(
+    await Bun.file(resolve(source, "nested", "inventory.json")).exists(),
+  ).toBe(false);
+  expect(await Bun.file(resolve(source, "new")).exists()).toBe(false);
 });
 
 test("missing, byte change and related hash mismatch are detected", async () => {

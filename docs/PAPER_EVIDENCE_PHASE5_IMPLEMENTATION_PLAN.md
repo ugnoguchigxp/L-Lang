@@ -1,6 +1,8 @@
 # 論文根拠充足・第五弾 実装計画
 
-作成：2026-09-28。状態：未着手。想定実装者：GPT-6 Sol（`gpt-6-sol`）、low effort。
+作成：2026-09-28。状態：実装済み（結果は[実装結果](./PAPER_EVIDENCE_RESULTS.md)を参照）。想定実装者：GPT-6 Sol（`gpt-6-sol`）、low effort。
+
+レビュー反映：2026-09-28。取得・解放の失敗境界、CLI例外、resume試験の同期、既知Gate失敗のbaselineを明確化した。実装コードは未変更。
 
 関連：[第四弾](./PAPER_EVIDENCE_PHASE4_IMPLEMENTATION_PLAN.md)、[実装結果](./PAPER_EVIDENCE_RESULTS.md)、[再現手順](../research/paper-v1/README.md)、[根拠一覧](./PAPER_EVIDENCE_PLAN.md)。第五弾の変更仕様は本書を優先し、過去の計画・結果は履歴として保持する。
 
@@ -32,7 +34,7 @@ StudyRun v1/v2、InputSnapshot v1、OracleEvidence v1、summary v2のschemaを�
 | 新規 `src/paper-study-lock.ts` とtest | 正規化run root、非置換取得、所有者確認付き解放、安定したエラーcode |
 | `src/paper-study.ts` | runStudy/resumeStudyの排他区間を作る。continueStudyは非公開のまま |
 | `src/paper-study.test.ts` | 新規実行対resume、v1/v2、例外・uncertain時の解放 |
-| `src/paper-cli.test.ts` | lock競合・解放失敗がCLI終了値2になること |
+| `src/paper-cli.ts`（エラー表示のみ必要時）、`src/paper-cli.test.ts` | lock競合・解放失敗がCLI終了値2になること |
 | 新規 `src/paper-study-concurrency.test.ts` | 独立process間の競合と強制終了試験 |
 | 結果文書、再現README | lockの範囲、残留時の停止、検証結果と残条件 |
 
@@ -40,7 +42,7 @@ StudyRun v1/v2、InputSnapshot v1、OracleEvidence v1、summary v2のschemaを�
 
 ## 3．lockの固定仕様
 
-固定pathは`<canonical-run-dir>/.paper-study.lock`。canonical-run-dirは既存directoryのrealpathで求め、その同じrootを取得後のrun読書きにも使う。run rootへのsymlink aliasは同じlockへ収束させる。directoryを実行中に移動する操作は対象外。
+固定pathは`<canonical-run-dir>/.paper-study.lock`。canonical-run-dirは既存directoryのrealpathで求め、その同じrootを取得後のrun読書きにも使う。run rootへのsymlink aliasは同じlockへ収束させる。directoryを実行中に移動する操作は対象外。realpath後にdirectoryであることも確認する。helperはrun rootを新規作成しない。rootの解決・型検査の失敗はPAPER_STUDY_LOCK_IOとしてactionを呼ばず終了する。
 
 取得は`open(lockPath, "wx", 0o600)`。成功したprocessだけが所有者になる。EEXISTなら内容やPIDにかかわらず`PAPER_STUDY_LOCKED`をthrowし、待機しない。既存lockが空、不正JSON、directory、symlinkの場合も触らず停止する。EEXIST以外の取得エラーは`PAPER_STUDY_LOCK_IO`とする。
 
@@ -53,15 +55,17 @@ lock内容はJSONで次のfieldだけを持つ。
 | ownerToken | 取得ごとにcrypto.randomUUIDで作るtoken |
 | pid | process.pid。診断専用 |
 
+owner recordの読戻し検査は固定field・version・format・UUID形式token・正整数pidを確認する。取得前に既存owner recordをparseして有効性や生存を判断しない。
+
 これは一時的な運用情報であり、研究証拠のhash・snapshot・集計には入れない。PIDやtokenをモデルへ渡さない。作成したFileHandleのstatを取り、dev/inoとtokenを解放時の識別に使う。内容を書込み・syncし、取得処理を完了してからactionを開始する。FileHandleは解放まで保持する。
 
-書込み・sync等が失敗したらactionは呼ばない。自分が作成したentryとdev/inoが一致する場合だけunlinkを試み、handleをcloseする。内容が未完成でも自分の作成物はidentityで判定する。identityを確認できない場合は削除せず、残留lockと取得失敗を報告する。
+書込み・sync等が失敗したらactionは呼ばない。自分が作成したentryとdev/inoが一致する場合だけunlinkを試み、handleをcloseする。内容が未完成でも自分の作成物はidentityで判定する。identityを確認できない場合は削除せず、残留の可能性と取得失敗を報告する。open成功後から取得完了までの失敗codeはPAPER_STUDY_LOCK_IOに統一し、cleanup/close失敗はそのcause等に併記する。stat自体が失敗してidentityが得られない場合もhandleのcloseを必ず試みる。取得に失敗してhandleを得ていない側はcleanupを実行しない。
 
 ### 解放と例外
 
 `withStudyRunLock<T>(runDir, action: (canonicalDir: string) => Promise<T>): Promise<T>`を基本形とする。actionのPromiseが解決・rejectするまでlockを保持し、finally相当の処理で解放する。内部の呼出しは必ずawaitし、backgroundへ処理を残さない。
 
-正常な解放ではlstatでregular fileかつ作成時dev/inoと一致することを確認し、内容のownerTokenも照合する。違うtoken、別inode、欠損、symlink、読めない内容ならunlinkしない。自分のhandleはcloseを試み、`PAPER_STUDY_LOCK_RELEASE_FAILED`を返す。一致する場合だけunlinkし、closeする。unlink/close双方の失敗を取り落とさない。
+正常な解放ではlstatでregular fileかつ作成時dev/inoと一致することを確認し、固定schemaとownerTokenも照合する。保持handleから読む場合は書込み後のfile offsetに依存せず先頭から読む。違うtoken、別inode、欠損、symlink、読めない内容ならunlinkしない。自分のhandleはcloseを試み、`PAPER_STUDY_LOCK_RELEASE_FAILED`をthrowする。一致する場合だけunlinkし、closeする。unlink/close双方の失敗を取り落とさない。unlink失敗でもcloseを試みる。unlink成功後のclose失敗ではlockは既に消えており、別processが取得可能なので再作成・再削除しない。解放失敗が必ず残留lockを意味するとは表示しない。
 
 所有者照合とunlinkの間の悪意ある差し替えまでは防がない。通常の協調processは保持中lockを変更・削除しないため、この条件下で排他を保証する。
 
@@ -70,13 +74,15 @@ lock内容はJSONで次のfieldだけを持つ。
 - action成功・解放失敗：解放失敗をthrowし、CLI終了値2。runがcompleteでも成功終了にしない。
 - action失敗・解放失敗：元errorをcause等に保持した解放失敗をthrowし、両方の失敗が分かる診断を出す。元の失敗を消さない。
 
+エラーはErrorのcodeで機械判定できるようにし、messageにも安定codeを含める。複合失敗のmessageはactionも失敗した事実を示し、元errorはcause等で保持する。任意の元message全文をstderrへ連結する必要はない。runPaperCliは現行どおりrejectし、import.meta.main側がprocess.exitCode=2へ変換する。関数が必ず{exitCode: 2}を返す設計には変えない。
+
 lock helperはrun.jsonの状態を変更しない。解放失敗を理由にcompleteをuncertainへ書き戻さない。研究結果の状態と、このCLI呼出しの終了値を分ける。例外messageへ無条件に入力全文や認証情報を含めない。
 
 ## 4．runnerへの接続
 
 ### 新規runStudy
 
-元studyの読込み・validation等は出力directory作成前の現行順序を保つ。新規outputのmkdir成功後、**inputs.json公開と初期run.json保存より前**にlockを取得する。取得後はsnapshot保存、初期run保存、全trial、Oracle採点・証跡保存、最終checkpointまで一つのactionでawaitする。
+元studyの読込み・validation等は出力directory作成前の現行順序を保つ。新規outputのmkdir成功後、**inputs.json公開と初期run.json保存より前**にlockを取得する。取得後はsnapshot保存、初期run保存、全trial、Oracle採点・証跡保存、最終checkpointまで一つのactionでawaitする。wrapperを既存のtrial用catchの外側に置き、lock取得・解放の例外をtrialのuncertainへ変換するcatchに流さない。
 
 同じoutDirへの二つのrunStudyは既存の非再帰mkdirが片方を拒否する。拒否側は既存runやlockを削除しない。mkdirから取得までの間にresumeが先にlockを取った場合、resumeはrun.json未作成で失敗し自分のlockを解放する。新規run側が競合で失敗する場合も自動retryしない。残った未完成directoryを自動再利用しない。
 
@@ -102,7 +108,7 @@ runStudyからcontinueStudy、resumeStudyからcontinueStudyでは追加取得�
 
 | ID | ケース | 期待結果 |
 | --- | --- | --- |
-| P5-01 | 単独の取得・action・解放 | action中だけlockがあり、結果を保持して終了 |
+| P5-01 | 単独の取得・action・解放 | action中はlockがあり、正常解放後はなく、結果を保持して終了 |
 | P5-02 | 同一processから二つの取得 | barrierで先行を保持し、後行はLOCKED、action 0 |
 | P5-03 | 独立した二つのBun process | 同じrootで一方だけactionに入る |
 | P5-04 | realpathとsymlink alias | 同じlockとして競合する |
@@ -121,11 +127,17 @@ runStudyからcontinueStudy、resumeStudyからcontinueStudyでは追加取得�
 | P5-17 | 同じ出力先へのrunStudy二つ | 片方は既存mkdir規則で拒否、先行記録不変 |
 | P5-18 | lock存在中のreport | lockに触れず非実行照合。研究適格性を昇格しない |
 | P5-19 | 初期snapshot/run保存失敗 | lockは通常解放、部分成果は既存方針どおり保持 |
-| P5-20 | CLIの競合・解放失敗 | exitCode 2。研究run.statusとCLI終了値を混同しない |
+| P5-20 | CLIの競合・解放失敗 | 関数はreject、entry pointの終了値は2。安定codeを表示 |
+| P5-21 | root欠損・通常ファイル、取得後stat失敗 | action 0、IO error。取得済みhandleはcloseを試みる |
+| P5-22 | unlink成功後にclose失敗 | 解放失敗だがlockを再作成せず、後行の取得物に触れない |
+| P5-23 | mkdir直後・lock取得前にresumeが先行 | run未作成でresume失敗・解放。run側は取得結果に従い自動retryなし |
+| P5-24 | lock取得直後、action開始前の強制終了 | 未完成owner recordでも残留entryを奪取せず停止 |
 
-並行試験は時間待ちで順序を推測せず、子processのready通知とrelease指示（pipe/IPC等）で同期する。timeoutはhang検出だけに使い、全子processをfinallyで停止・回収する。P5-03はhelper単体、P5-12は独立した二つのprocessでrunner接続まで検査し、Promise.allだけでprocess間排他を確認したことにしない。
+並行試験は時間待ちで順序を推測せず、子processのready通知とrelease指示（pipe/IPC等）で同期する。timeoutはhang検出だけに使い、全子processをfinallyで停止・回収する。P5-03はhelper単体、P5-12は独立した二つのprocessでrunner接続まで検査し、Promise.allだけでprocess間排他を確認したことにしない。P5-24では取得用filesystem境界でopen成功後・owner書込み前にready通知するtest doubleを使用し、親が子を停止する。製品用の待機処理は追加しない。子processはprocess.execPathを使い、stdioを消費し、終了statusと通知の両方を確認する。test用一時directoryの削除は子process終了をawaitした後に行う。
 
-P5-12のpartial runはtest用fixtureと既存hookで作る。原本runの状態を改変しない。liveはprovider/実行境界のdoubleだけで検証する。必要なhookは狭い境界に限定し、製品CLIにlock回避optionを追加しない。
+P5-12のpartial runはtest用fixtureをrunStudyへ渡し、initialSaveRun hookで初期runを実際に保存した直後にtest専用例外をthrowして作る。これはtrial送信前のrunning/pending状態であり、dispatch後のuncertainをpendingへ戻す方法は使わない。
+
+resumeStudyには省略可能なhooks引数を追加し、既存StudyHooksのbeforeTrialとdevelopmentObject等をcontinueStudyへ渡す。既存の一引数呼出しはそのまま動く。先行子processはlock内のbeforeTrialでready通知してreleaseを待ち、後行子processがLOCKEDで終了したことを親が確認してから先行を進める。hookはtest専用の関数呼出しで使用し、CLI引数や環境変数のlock回避機能にしない。解放失敗注入はlockのfilesystem境界で行い、runner全体をmockして排他を確認した扱いにしない。原本runの状態を改変しない。liveはprovider/実行境界のdoubleだけで検証する。必要なhookは狭い境界に限定し、製品CLIにlock回避optionを追加しない。
 
 ## 6．検証コマンドとGate
 
@@ -156,17 +168,17 @@ bun run ci:smoke
 git diff --check
 ```
 
-第四弾の全体Gate未通過を消さない。開始時または最初の全体Gateでeffects再開・semantic closure・semantic verifyの既知失敗が残るか確認し、実際の失敗test名とログを残す。失敗したものは必要に応じ一度単独実行して切り分ける。今回の回帰なら修正し再検証する。変更前からの別領域の失敗ならこの回で無関係な実装修正へ広げず、対象検証結果と未通過Gateを別々に報告する。再実行で通るまで繰り返して失敗履歴を隠さない。
+第四弾の全体Gate未通過を消さない。コード変更前に、結果文書のログとtest名を調べ、effects再開・semantic closure・semantic verifyの該当試験を単独で一度確認する。単独では通っても全体Gateの既知失敗が解消したとはみなさない。変更後の全体Gateでも既知失敗が残るか確認し、実際の失敗test名とログを残す。失敗したものは必要に応じ一度単独実行して切り分ける。今回の回帰なら修正し再検証する。変更前からの別領域の失敗ならこの回で無関係な実装修正へ広げず、対象検証結果と未通過Gateを別々に報告する。再実行で通るまで繰り返して失敗履歴を隠さない。
 
 ## 7．完了条件と次の作業
 
-- [ ] P5-01〜20を対応するtestで確認した。
-- [ ] run読込み・snapshot保存から最終checkpointまで、対象writerが同じlockに従う。
-- [ ] 独立process間の競合で二重dispatchを防ぎ、uncertain再送禁止を維持した。
-- [ ] 正常終了・例外・解放失敗・強制終了を区別できる。
-- [ ] 旧run/schema、研究入力、承認、既存live記録を変更していない。
-- [ ] 結果文書へHEAD、未commit差分、baseline、試験結果、fixture出力先、未通過Gateを記録した。
-- [ ] 新規live API呼出し0、研究適格性は未確定のまま。
+- [x] P5-01〜24を対応するtestで確認した。
+- [x] run読込み・snapshot保存から最終checkpointまで、対象writerが同じlockに従う。
+- [x] 独立process間の競合で二重dispatchを防ぎ、uncertain再送禁止を維持した。
+- [x] 正常終了・例外・解放失敗・強制終了を区別できる。
+- [x] 旧run/schema、研究入力、承認、既存live記録を変更していない。
+- [x] 結果文書へHEAD、未commit差分、baseline、試験結果、fixture出力先、未通過Gateを記録した。
+- [x] 新規live API呼出し0、研究適格性は未確定のまま。
 
 全体Gateが未通過なら「第五弾の対象検証完了、全体Gate未通過」と分けて報告する。論文提出に必要な検証がすべて完了したとは記載しない。
 
@@ -180,7 +192,7 @@ GPT-6 Sol / low effort向けに第2節の順で進めてください。
 対象は同じstudy runへのrun-study/resume-studyのprocess間排他です。
 run読込みやsnapshot公開より前に取得し、全処理のawait完了まで保持してください。
 競合時は待機・再送・stale奪取をせず停止し、uncertainの既存規則を維持してください。
-P5-01〜20、fixture CLI一巡、品質Gateを実施してください。
+P5-01〜24、fixture CLI一巡、品質Gateを実施してください。
 第四弾の全体Gate未通過を引き継ぎ、今回の回帰と別領域の失敗を分けて記録してください。
 新規live呼出し、研究review・承認の確定、compiler変更、unlock CLIは追加しないでください。
 evidenceEligible=falseとstudy-evidence-verifier-pendingを維持してください。

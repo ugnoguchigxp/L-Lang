@@ -32,3 +32,29 @@ studyの`budget`は全trialで予約できるモデル呼出し数の上限で�
 ## 第四弾以降のstudy run
 
 新規study runは`run.json` version 2と`inputs.json`を同じrun directoryに保存する。後者には検査済みstudy、各taskのsource・metadata・Oracle・参照fixture、liveの場合は承認内容を保存し、runの`inputSnapshotHash`と照合する。v2のreportは保存snapshotを正本とするため、元studyや入力を移動した後でもrun directory一式から作れる。fixture v2のresumeも保存入力で続行する。live v2のresumeには元承認pathの現時点での照合も必要である。旧version 1 runのreport/resumeは従来どおり元入力pathを参照し、snapshotを後付けしない。保存snapshotはGit管理外であり、自動公開しない。
+
+## 第五弾以降のstudy実行lock
+
+`run-study`と`resume-study`は、同じrun directoryを更新している間、正規化したrun rootの`.paper-study.lock`を保持する。競合時は`PAPER_STUDY_LOCKED`で終了値2となり、待機や自動再送はしない。正常終了・通常の例外ではlockを解放する。processが強制終了した場合や解放に失敗した場合はlockが残り得る。残留時は自動再開できないため、実行processと保存checkpointを確認する必要がある。lockを消しても`uncertain` trialの送信有無は解決しない。reportはlockを取得しないため、実行停止後に作るのを基本手順とする。
+
+## 第六弾：完了study runのローカルbundle
+
+StudyRun v2が`complete`で、保存snapshotとOracle証跡の対応が検証できる場合、元runの全regular fileをbyte単位でローカルbundleへコピーできる。出力先の親directoryは事前に作成し、bundle出力先は未作成の名前を指定する。作成中は元runのlockを保持する。
+
+```sh
+mkdir -p artifacts/paper-v6
+bun run src/paper-cli.ts run-study --study research/paper-v1/study-draft.json --mode fixture --out-dir artifacts/paper-v6/fixture-new
+bun run src/paper-cli.ts bundle-study --run-dir artifacts/paper-v6/fixture-new --out-dir artifacts/paper-v6/bundle-new
+bun run src/paper-cli.ts verify-study-bundle --bundle-dir artifacts/paper-v6/bundle-new
+bun run src/paper-cli.ts report --run-dir artifacts/paper-v6/bundle-new/evidence --out-dir artifacts/paper-v6/report-new
+```
+
+`bundle.json`にはファイルごとの相対path、byte数、SHA-256を保存する。bundleを移動しても`verify-study-bundle`は保存記録のみで照合し、APIやWasmを実行しない。`report`の出力先はbundleの外に置く。bundle内へファイルを追加すると、次回の検証でファイル集合の不一致として拒否される。強制終了後の残留lock、途中失敗で残る部分出力は自動解除・再利用しない。
+
+このbundleは機密除去や配布条件の確認をしていないローカルコピーである。元JSONの絶対pathや生応答を含み得るため、公開前の内容・権利・機密確認は未了。検証結果はbyte保存と既存記録間の対応を示すもので、第三者再現、自然言語要求への正しさ、研究適格性を保証しない。fixtureの値を実モデル結果へ昇格させない。
+
+## 第七弾：課題・Oracleのレビュー記録
+
+`review-study`は既存の資料に加え、全判断と担当者を未記入にした`review-record.template.json`を作る。実際の担当者が確認後に別名の記録へ記入し、`verify-study-review --study <study.json> --record <review-record.json>`で対象hashと形式を照合する。未記入templateの検査は`pending`・終了値1が正常な結果である。差戻しも終了値1、形式不正または入力変更は終了値2となる。記入手順は[レビュー手順](./REVIEW_GUIDE.md)を参照する。
+
+現時点のtemplateには担当者、日時、独立性、判断を記入していない。検査器は本人確認や判断の正しさを証明せず、runnerのlive条件も変更しない。独立レビュー、評価条件、承認、新規live実測は人による次の作業として残る。

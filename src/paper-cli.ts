@@ -8,6 +8,8 @@ import {
   saveStudyValidation,
 } from "./paper-study";
 import { savePaperReport } from "./paper-report";
+import { createStudyBundle, verifyStudyBundle } from "./paper-study-bundle";
+import { verifyStudyReview } from "./paper-study-review";
 
 function options(args: string[], required: string[]) {
   const found: Record<string, string> = {};
@@ -44,6 +46,9 @@ export async function runPaperCli(args: string[]) {
           "run-study",
           "resume-study",
           "report",
+          "bundle-study",
+          "verify-study-bundle",
+          "verify-study-review",
         ],
       },
     };
@@ -128,8 +133,29 @@ export async function runPaperCli(args: string[]) {
     );
     return { exitCode: 0, result };
   }
+  if (command === "bundle-study") {
+    const o = options(rest, ["--run-dir", "--out-dir"]);
+    const result = await createStudyBundle(
+      o["--run-dir"] as string,
+      o["--out-dir"] as string,
+    );
+    return { exitCode: 0, result };
+  }
+  if (command === "verify-study-bundle") {
+    const o = options(rest, ["--bundle-dir"]);
+    const result = await verifyStudyBundle(o["--bundle-dir"] as string);
+    return { exitCode: 0, result };
+  }
+  if (command === "verify-study-review") {
+    const o = options(rest, ["--study", "--record"]);
+    const result = await verifyStudyReview(
+      o["--study"] as string,
+      o["--record"] as string,
+    );
+    return { exitCode: result.status === "accepted" ? 0 : 1, result };
+  }
   throw new Error(
-    "usage: paper-cli <inventory|reproduce|evaluate|validate-study|review-study|run-study|resume-study|report> [required options]",
+    "usage: paper-cli <inventory|reproduce|evaluate|validate-study|review-study|run-study|resume-study|report|bundle-study|verify-study-bundle|verify-study-review> [required options]",
   );
 }
 if (import.meta.main) {

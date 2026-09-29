@@ -5,9 +5,10 @@ import {
   mkdir,
   readFile,
   readdir,
+  realpath,
   writeFile,
 } from "node:fs/promises";
-import { dirname, relative, resolve, sep } from "node:path";
+import { basename, dirname, relative, resolve, sep } from "node:path";
 import { parseDevelopmentRun } from "./capability-development";
 import { readCapability } from "./capability-package";
 import { parseCapabilityReport } from "./capability-report";
@@ -32,6 +33,14 @@ export type EvidenceInventory = {
 
 const sha = (data: Uint8Array) =>
   createHash("sha256").update(data).digest("hex");
+async function canonicalFuturePath(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    return resolve(await canonicalFuturePath(dirname(path)), basename(path));
+  }
+}
 function safeRelative(path: string) {
   if (
     !path ||
@@ -233,6 +242,16 @@ export async function saveInventory(
     throw new Error("output must be outside input root");
   if (!(await lstat(inputRoot)).isDirectory())
     throw new Error("input must be a directory");
+  const canonicalInput = await realpath(inputRoot);
+  const canonicalOutput = resolve(
+    await canonicalFuturePath(dirname(outputRoot)),
+    basename(outputRoot),
+  );
+  if (
+    canonicalOutput === canonicalInput ||
+    canonicalOutput.startsWith(`${canonicalInput}${sep}`)
+  )
+    throw new Error("output must be outside input root");
   const inventory = await inspectEvidence(inputRoot, origin);
   await mkdir(dirname(outputRoot), { recursive: true });
   await mkdir(outputRoot, { recursive: false });

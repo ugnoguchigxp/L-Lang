@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import {
   cp,
   link,
+  lstat,
   mkdir,
   mkdtemp,
   readFile,
@@ -358,6 +359,9 @@ test("P4-18/19 live report uses saved approval while resume checks the original"
     const dir = resolve(root, "run");
     const run = await runStudy(path, "live", dir, approvalPath, {
       developmentObject: async (source, metadata, output, settings) => {
+        expect((await lstat(resolve(dir, ".paper-study.lock"))).isFile()).toBe(
+          true,
+        );
         expect(settings.mode).toBe("live");
         expect(Object.keys(settings).sort()).toEqual(["config", "mode"]);
         const { runDevelopmentObject } = await import(

@@ -23,7 +23,9 @@ import {
 } from "./paper-oracle-evidence";
 import { parsePaperOracle } from "./paper-evaluate";
 import { contentHash, readJson } from "./prompt-source";
+import { createStudyReviewTemplate } from "./paper-study-review";
 import { instantiateWasmPredicate } from "./wasm-runtime";
+import { withStudyRunLock, type StudyLockIO } from "./paper-study-lock";
 import {
   createInputSnapshot,
   executableInputs,
@@ -113,6 +115,7 @@ async function writeOracleDiagnostic(
   }
 }
 type StudyHooks = {
+  lockIO?: StudyLockIO;
   saveRun?: typeof saveRun;
   initialSaveRun?: typeof saveRun;
   instantiate?: typeof instantiateWasmPredicate;
@@ -120,6 +123,7 @@ type StudyHooks = {
   publishInputs?: typeof publishInputSnapshot;
   readInputs?: typeof readInputSnapshot;
   afterInputsLoaded?: () => void | Promise<void>;
+  afterOutputCreated?: () => void | Promise<void>;
   beforeTrial?: (trial: Trial) => void | Promise<void>;
   developmentObject?: typeof runDevelopmentObject;
 };
@@ -156,51 +160,60 @@ export async function runStudy(
       fixtureDevelopmentAgent(task.fixture);
     }
   await hooks.afterInputsLoaded?.();
-  const output = resolve(outDir);
-  await mkdir(dirname(output), { recursive: true });
-  await mkdir(output);
-  const constructed = parseInputSnapshot(createInputSnapshot(loaded, approval));
-  await (hooks.publishInputs ?? publishInputSnapshot)(
-    resolve(output, "inputs.json"),
-    constructed,
+  const requestedOutput = resolve(outDir);
+  await mkdir(dirname(requestedOutput), { recursive: true });
+  await mkdir(requestedOutput);
+  await hooks.afterOutputCreated?.();
+  return withStudyRunLock(
+    requestedOutput,
+    async (output) => {
+      const constructed = parseInputSnapshot(
+        createInputSnapshot(loaded, approval),
+      );
+      await (hooks.publishInputs ?? publishInputSnapshot)(
+        resolve(output, "inputs.json"),
+        constructed,
+      );
+      const snapshot = await (hooks.readInputs ?? readInputSnapshot)(output);
+      if (contentHash(snapshot) !== contentHash(constructed))
+        throw new Error("study input snapshot readback mismatch");
+      const trials: Trial[] = [];
+      for (const task of study.tasks)
+        for (let i = 0; i < study.repetitions; i++)
+          trials.push({
+            id: `${task.id}-${i + 1}`,
+            taskId: task.id,
+            status: "pending",
+            oracleStatus: "not-run",
+            sourceHash: validation.hashes[`${task.id}:source`] as string,
+            metadataHash: validation.hashes[`${task.id}:metadata`] as string,
+            oracleHash: validation.hashes[`${task.id}:oracle`] as string,
+            fixtureHash:
+              mode === "fixture"
+                ? (validation.hashes[`${task.id}:fixture`] ?? null)
+                : null,
+            development: null,
+            calls: 0,
+            tokens: 0,
+            reason: null,
+          });
+      const run: StudyRun = {
+        version: 2,
+        inputSnapshotHash: contentHash(snapshot),
+        studyPath: resolve(studyPath),
+        studyHash: validation.studyHash,
+        mode,
+        trials,
+        status: "running",
+        approvalHash: snapshot.approvalHash,
+        approvalPath: approvalPath ? resolve(approvalPath) : null,
+      };
+      verifyInputSnapshotRun(snapshot, run);
+      await (hooks.initialSaveRun ?? saveRun)(output, run);
+      return continueStudy(studyPath, output, run, hooks, snapshot.study);
+    },
+    hooks.lockIO,
   );
-  const snapshot = await (hooks.readInputs ?? readInputSnapshot)(output);
-  if (contentHash(snapshot) !== contentHash(constructed))
-    throw new Error("study input snapshot readback mismatch");
-  const trials: Trial[] = [];
-  for (const task of study.tasks)
-    for (let i = 0; i < study.repetitions; i++)
-      trials.push({
-        id: `${task.id}-${i + 1}`,
-        taskId: task.id,
-        status: "pending",
-        oracleStatus: "not-run",
-        sourceHash: validation.hashes[`${task.id}:source`] as string,
-        metadataHash: validation.hashes[`${task.id}:metadata`] as string,
-        oracleHash: validation.hashes[`${task.id}:oracle`] as string,
-        fixtureHash:
-          mode === "fixture"
-            ? (validation.hashes[`${task.id}:fixture`] ?? null)
-            : null,
-        development: null,
-        calls: 0,
-        tokens: 0,
-        reason: null,
-      });
-  const run: StudyRun = {
-    version: 2,
-    inputSnapshotHash: contentHash(snapshot),
-    studyPath: resolve(studyPath),
-    studyHash: validation.studyHash,
-    mode,
-    trials,
-    status: "running",
-    approvalHash: snapshot.approvalHash,
-    approvalPath: approvalPath ? resolve(approvalPath) : null,
-  };
-  verifyInputSnapshotRun(snapshot, run);
-  await (hooks.initialSaveRun ?? saveRun)(output, run);
-  return continueStudy(studyPath, output, run, hooks, snapshot.study);
 }
 async function continueStudy(
   studyPath: string,
@@ -467,38 +480,47 @@ async function continueStudy(
   await checkpoint(dir, run);
   return run;
 }
-export async function resumeStudy(runDir: string) {
-  const run = parseStudyRun(await readJson(resolve(runDir, "run.json")));
-  if (
-    run.status === "uncertain" ||
-    run.trials.some((t) => t.status === "uncertain")
-  )
-    throw new Error(
-      "uncertain trial requires human decision; no automatic resend",
-    );
-  let study: Study;
-  let snapshot: InputSnapshot | null = null;
-  if (run.version === 2) {
-    snapshot = await readInputSnapshot(runDir);
-    verifyInputSnapshotRun(snapshot, run);
-    study = snapshot.study;
-  } else {
-    const validation = await validateStudy(run.studyPath);
-    study = parseStudy(await readJson(run.studyPath));
-    matchTrials(run, study, validation.hashes);
-    if (validation.studyHash !== run.studyHash || validation.diagnostics.length)
-      throw new Error("study changed since run began");
-  }
-  await verifyTrialRecords(runDir, run, study, snapshot);
-  if (run.mode === "live") {
-    await verifyStudyApproval(run);
-  }
-  return continueStudy(
-    run.studyPath,
-    resolve(runDir),
-    run,
-    {},
-    snapshot?.study,
+export async function resumeStudy(runDir: string, hooks: StudyHooks = {}) {
+  return withStudyRunLock(
+    runDir,
+    async (runDir) => {
+      const run = parseStudyRun(await readJson(resolve(runDir, "run.json")));
+      if (
+        run.status === "uncertain" ||
+        run.trials.some((t) => t.status === "uncertain")
+      )
+        throw new Error(
+          "uncertain trial requires human decision; no automatic resend",
+        );
+      let study: Study;
+      let snapshot: InputSnapshot | null = null;
+      if (run.version === 2) {
+        snapshot = await readInputSnapshot(runDir);
+        verifyInputSnapshotRun(snapshot, run);
+        study = snapshot.study;
+      } else {
+        const validation = await validateStudy(run.studyPath);
+        study = parseStudy(await readJson(run.studyPath));
+        matchTrials(run, study, validation.hashes);
+        if (
+          validation.studyHash !== run.studyHash ||
+          validation.diagnostics.length
+        )
+          throw new Error("study changed since run began");
+      }
+      await verifyTrialRecords(runDir, run, study, snapshot);
+      if (run.mode === "live") {
+        await verifyStudyApproval(run);
+      }
+      return continueStudy(
+        run.studyPath,
+        resolve(runDir),
+        run,
+        hooks,
+        snapshot?.study,
+      );
+    },
+    hooks.lockIO,
   );
 }
 async function verifyTrialRecords(
@@ -710,6 +732,11 @@ export async function saveStudyReview(path: string, outDir: string) {
       "Review: requirements and expected values [ ]; expressibility [ ]; unresolved expectations [ ]; input boundaries [ ]; overlap with existing tasks [ ].",
       "",
     ]),
+    "## Review record",
+    "",
+    "Copy review-record.template.json to review-record.json, fill in actual reviewer declarations and decisions, then run verify-study-review --study <study.json> --record <review-record.json>.",
+    "Creating this template does not establish independent review or live approval.",
+    "",
   ].join("\n");
   const output = resolve(outDir);
   await mkdir(dirname(output), { recursive: true });
@@ -720,5 +747,10 @@ export async function saveStudyReview(path: string, outDir: string) {
     { flag: "wx" },
   );
   await writeFile(resolve(output, "review.md"), `${md}\n`, { flag: "wx" });
+  await writeFile(
+    resolve(output, "review-record.template.json"),
+    `${JSON.stringify(createStudyReviewTemplate(loaded), null, 2)}\n`,
+    { flag: "wx" },
+  );
   return result;
 }
