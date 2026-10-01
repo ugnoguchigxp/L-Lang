@@ -2,7 +2,10 @@ node_modules/
 .DS_Store
 .env
 artifacts/
+examples/reversi/.reversi-build-*/
 .semantic/
 **/.*.candidate.ts
 **/.*.candidate.test.ts
 **/.*.promote.tmp
+
+**/.property-expected-*.ts

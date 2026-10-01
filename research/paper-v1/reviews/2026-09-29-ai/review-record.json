@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "format": "llang-paper-study-review",
+  "studyId": "predicate-paper-v1",
+  "studyHash": "e960ee29d9975d7fa8a0d1dc0a32ba9e096d4f854bcd44328e116df113aa3bee",
+  "inputHashes": {
+    "logic:source": "cb3828fe99ef19ae80a6feb4d233c95ccbb5d17e7719c9fd02645ffca560bc5d",
+    "logic:metadata": "26f821f2a2102f5912a8061243e881bb3bc4d32673e336dde2e64b569d0da7c2",
+    "logic:oracle": "ef90eee0220a52b486ff8d2d4dc37d3f68cf4377c9fd8ea20b891083b0311951",
+    "logic:fixture": "a15a90b1aafaa38f2606d8bd16d9454c20079161402c77757dd945cfc86df9c3",
+    "contact:source": "388c65ab7760c4e7604f3402ff88a792f8c6febdd905412316078dc96242cc99",
+    "contact:metadata": "4605afbc465fc6e3a50c6fab3e6830e143222d0309de7c29ce955e5df1aefe8f",
+    "contact:oracle": "a1860a8e8725110bdeecfc09de6661daba615ec1f48bb8f0641f9a99e0c46da1",
+    "contact:fixture": "e558673d77ce6d1969b4c3580c8cdce3672f08268a2805b05cbbe5f9ef1d0542",
+    "boundary:source": "5d5cb9f324aa06e3f607c731161de4b546568242e1a70e3329fc54087977b9f1",
+    "boundary:metadata": "5b889cf2a491945da145eb561bf959bc94d59606d8a5dc2484e5ae158151da38",
+    "boundary:oracle": "481c64cec7495a675f600464c83a96e37382c7a970cd451b4755e09947441cc1",
+    "boundary:fixture": "c3ff8291a30dbcd0aa3aad51537c944cd8913533c5688f95248b7392c37f87b9",
+    "unsupported:source": "5082c5aedee8e27277e770510a15479f33363e97f04f37f32b6b7e278ec96681",
+    "unsupported:metadata": "9d3660bb8439e2b62f943f8172db554b46f71e3a5a3ead3ab42226570315feac",
+    "unsupported:oracle": "fbe18d06da8b28355ae44a466e1641fd7e2bfa5a30193cdec295ded8cfd80450",
+    "unsupported:fixture": "7f152faf007091b675e57068de0d7a4b567fbfbe5f88838ae256760f3187c2b5"
+  },
+  "tasks": [
+    {
+      "taskId": "logic",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": "codex-current-thread-ai",
+      "independent": false,
+      "reviewedAt": "2026-09-29T13:58:44.449Z",
+      "recordReference": "research/paper-v1/reviews/2026-09-29-ai/REVIEW.md",
+      "checks": {
+        "requirements": "pass",
+        "expressibility": "pass",
+        "unresolved": "pass",
+        "inputBoundaries": "fail",
+        "taskOverlap": "pass"
+      },
+      "findings": [
+        {
+          "check": "inputBoundaries",
+          "note": "有効boolean入力8通りのうち4通りのみ。残り4通りと各必須fieldの欠損・null・型不正を追加する。"
+        }
+      ]
+    },
+    {
+      "taskId": "contact",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": "codex-current-thread-ai",
+      "independent": false,
+      "reviewedAt": "2026-09-29T13:58:44.449Z",
+      "recordReference": "research/paper-v1/reviews/2026-09-29-ai/REVIEW.md",
+      "checks": {
+        "requirements": "pass",
+        "expressibility": "pass",
+        "unresolved": "pass",
+        "inputBoundaries": "fail",
+        "taskOverlap": "pass"
+      },
+      "findings": [
+        {
+          "check": "inputBoundaries",
+          "note": "空文字列+premium=true、null+premium=falseがOracleにない。email状態×tierを網羅し、不正型・不正enum・必須tier欠損を追加する。"
+        },
+        {
+          "check": "inputBoundaries",
+          "note": "JSON Oracleでは明示undefinedを表せない。欠損と明示undefinedの区別はhost契約の別試験として記録する。"
+        }
+      ]
+    },
+    {
+      "taskId": "boundary",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": "codex-current-thread-ai",
+      "independent": false,
+      "reviewedAt": "2026-09-29T13:58:44.449Z",
+      "recordReference": "research/paper-v1/reviews/2026-09-29-ai/REVIEW.md",
+      "checks": {
+        "requirements": "pass",
+        "expressibility": "pass",
+        "unresolved": "fail",
+        "inputBoundaries": "fail",
+        "taskOverlap": "pass"
+      },
+      "findings": [
+        {
+          "check": "inputBoundaries",
+          "note": "有効enum3値は網羅。欠損・null・非文字列・未知fieldの拒否を追加する。"
+        },
+        {
+          "check": "inputBoundaries",
+          "note": "highというカテゴリ一致課題であり、数値の境界比較の実証とは呼べない。契約外入力はunresolvedではなくINVALID_INPUTであることを文面で区別する。"
+        },
+        {
+          "check": "unresolved",
+          "note": "highというカテゴリ一致課題であり、数値の境界比較の実証とは呼べない。契約外入力はunresolvedではなくINVALID_INPUTであることを文面で区別する。"
+        }
+      ]
+    },
+    {
+      "taskId": "unsupported",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": "codex-current-thread-ai",
+      "independent": false,
+      "reviewedAt": "2026-09-29T13:58:44.449Z",
+      "recordReference": "research/paper-v1/reviews/2026-09-29-ai/REVIEW.md",
+      "checks": {
+        "requirements": "pass",
+        "expressibility": "pass",
+        "unresolved": "fail",
+        "inputBoundaries": "fail",
+        "taskOverlap": "fail"
+      },
+      "findings": [
+        {
+          "check": "inputBoundaries",
+          "note": "要求上の2期待値は正しいがsource例と同一であり独立な評価入力がない。別local-part、空文字列、suffix後の追記等を追加する。"
+        },
+        {
+          "check": "inputBoundaries",
+          "note": "要求は現行文字列ABIでは表現不能。生成結果unresolvedを期待する課題別の判断を明示する。Oracleのbool結果だけで未解決検出の成功を判定しない。"
+        },
+        {
+          "check": "unresolved",
+          "note": "要求は現行文字列ABIでは表現不能。生成結果unresolvedを期待する課題別の判断を明示する。Oracleのbool結果だけで未解決検出の成功を判定しない。"
+        },
+        {
+          "check": "taskOverlap",
+          "note": "要求上の2期待値は正しいがsource例と同一であり独立な評価入力がない。別local-part、空文字列、suffix後の追記等を追加する。"
+        }
+      ]
+    }
+  ]
+}

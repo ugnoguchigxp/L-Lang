@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "kind": "predicate",
+  "id": "contact",
+  "intent": "以下の条件をすべて満たす対象を受け入れる。",
+  "requirements": [
+    {
+      "id": "email",
+      "level": "must",
+      "text": "emailが存在すること。nullとundefinedは存在しない。空文字列は存在する。"
+    },
+    {
+      "id": "tier",
+      "level": "must",
+      "text": "tierがpremiumであること。"
+    }
+  ],
+  "unresolvedWhen": [
+    "要求が矛盾する、または入力契約と現行Predicate IRで表現できない場合。"
+  ],
+  "profile": "predicate-i32-v1",
+  "contract": {
+    "version": 1,
+    "fields": [
+      {
+        "name": "email",
+        "kind": "string",
+        "values": [],
+        "nullable": true,
+        "undefinable": true,
+        "optional": true
+      },
+      {
+        "name": "tier",
+        "kind": "enum",
+        "values": [
+          "basic",
+          "premium"
+        ],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "id": "premium-contact",
+      "input": {
+        "email": "x",
+        "tier": "premium"
+      },
+      "expected": true,
+      "undefinedFields": []
+    },
+    {
+      "id": "no-contact",
+      "input": {
+        "email": null,
+        "tier": "premium"
+      },
+      "expected": false,
+      "undefinedFields": []
+    }
+  ]
+}

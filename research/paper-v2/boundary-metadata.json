@@ -1,0 +1,7 @@
+{
+  "id": "boundary",
+  "release": "draft",
+  "purpose": "列挙型のhighカテゴリだけを選ぶ（大小比較ではない）",
+  "useWhen": "固定したlevel契約を使う場合",
+  "doNotUseWhen": "数値しきい値が必要な場合"
+}

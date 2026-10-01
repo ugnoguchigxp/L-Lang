@@ -1,0 +1,20 @@
+{
+  "name": "reversi",
+  "profile": "module-collection-v1",
+  "canonicalSource": "reversi.semantic.llang.jsonc",
+  "purpose": "自然言語の要件を型付きJSON IRに固定し、検証後Wasmだけへ変換する単独リバーシ",
+  "requirements": [
+    "8×8。空き0、黒1、白2。黒が人間、白がコンピューター。黒から開始する。",
+    "隣接する相手の石が同じ方向の自分の石で閉じられた場合だけ反転する。8方向を独立に判定し、盤端を跨がない。",
+    "無効手は盤面と履歴を変更しない。人間は黒の合法手だけを置ける。",
+    "白は角を優先し、空き角の隣接マスを避ける。評価が同じなら最小の位置番号を選ぶ。",
+    "合法手がない側はパスし、両者に合法手がなければ空きが残っていても終局する。",
+    "履歴は人間の手の直前にだけ保存する。Undoはその後のAIの手とパスも取り消す。",
+    "初期化・対局状態・履歴・Undo・自動進行の判断・合法手表示・石数・勝敗・状態文はWasmで決定する。",
+    "実行時のJavaScriptはDOM描画、入力の転送、汎用ABIの符号化・復号、Wasm呼び出し、世代管理とタイマーだけを担当する。",
+    "サーバーは静的成果物の配信だけ。対局APIや実行時のコンパイル、LLM呼び出しは持たない。"
+  ],
+  "commands": {"reset": -4, "undo": -3, "ai": -2, "passOrInspect": -1, "idle": -99, "humanMove": "0..63"},
+  "stateOwner": "saved JSON IR compiled to native Wasm; host transports returned state without changing it",
+  "buildTargets": ["wasm"]
+}

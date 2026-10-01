@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "kind": "synthetic-control",
+  "cases": [
+    {
+      "id": "permissions-mixed",
+      "source": "permissions.ts",
+      "plan": "permissions.plan.json",
+      "property": "permissions.property.json",
+      "hidden": "permissions.hidden.json",
+      "candidates": "permissions-mixed.candidates.json"
+    },
+    {
+      "id": "permissions-correct-first",
+      "source": "permissions.ts",
+      "plan": "permissions.plan.json",
+      "property": "permissions.property.json",
+      "hidden": "permissions.hidden.json",
+      "candidates": "permissions-correct-first.candidates.json"
+    },
+    {
+      "id": "permissions-all-ineligible",
+      "source": "permissions.ts",
+      "plan": "permissions.plan.json",
+      "property": "permissions.property.json",
+      "hidden": "permissions.hidden.json",
+      "candidates": "permissions-all-ineligible.candidates.json"
+    },
+    {
+      "id": "permissions-partial-failure",
+      "source": "permissions.ts",
+      "plan": "permissions.plan.json",
+      "property": "permissions.property.json",
+      "hidden": "permissions.hidden.json",
+      "candidates": "permissions-partial-failure.candidates.json"
+    },
+    {
+      "id": "routing-mixed",
+      "source": "routing.ts",
+      "plan": "routing.plan.json",
+      "property": "routing.property.json",
+      "hidden": "routing.hidden.json",
+      "candidates": "routing-mixed.candidates.json"
+    },
+    {
+      "id": "routing-correct-first",
+      "source": "routing.ts",
+      "plan": "routing.plan.json",
+      "property": "routing.property.json",
+      "hidden": "routing.hidden.json",
+      "candidates": "routing-correct-first.candidates.json"
+    },
+    {
+      "id": "routing-all-ineligible",
+      "source": "routing.ts",
+      "plan": "routing.plan.json",
+      "property": "routing.property.json",
+      "hidden": "routing.hidden.json",
+      "candidates": "routing-all-ineligible.candidates.json"
+    },
+    {
+      "id": "routing-partial-failure",
+      "source": "routing.ts",
+      "plan": "routing.plan.json",
+      "property": "routing.property.json",
+      "hidden": "routing.hidden.json",
+      "candidates": "routing-partial-failure.candidates.json"
+    },
+    {
+      "id": "review-mixed",
+      "source": "review.ts",
+      "plan": "review.plan.json",
+      "property": "review.property.json",
+      "hidden": "review.hidden.json",
+      "candidates": "review-mixed.candidates.json"
+    },
+    {
+      "id": "review-correct-first",
+      "source": "review.ts",
+      "plan": "review.plan.json",
+      "property": "review.property.json",
+      "hidden": "review.hidden.json",
+      "candidates": "review-correct-first.candidates.json"
+    },
+    {
+      "id": "review-all-ineligible",
+      "source": "review.ts",
+      "plan": "review.plan.json",
+      "property": "review.property.json",
+      "hidden": "review.hidden.json",
+      "candidates": "review-all-ineligible.candidates.json"
+    },
+    {
+      "id": "review-partial-failure",
+      "source": "review.ts",
+      "plan": "review.plan.json",
+      "property": "review.property.json",
+      "hidden": "review.hidden.json",
+      "candidates": "review-partial-failure.candidates.json"
+    }
+  ],
+  "config": {
+    "version": 1,
+    "candidates": 3,
+    "maxOutputTokensPerCall": 1024,
+    "maxTotalTokens": 20000,
+    "timeoutMs": 30000,
+    "maxCostUsd": 1,
+    "inputUsdPerMillionTokens": 1,
+    "outputUsdPerMillionTokens": 2
+  }
+}

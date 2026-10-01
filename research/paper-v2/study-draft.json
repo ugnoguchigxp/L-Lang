@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "id": "predicate-paper-v2",
+  "state": "draft",
+  "review": "unreviewed",
+  "approval": "not-granted",
+  "profile": "predicate-i32-v1",
+  "repetitions": 1,
+  "model": null,
+  "provider": null,
+  "maxCalls": 3,
+  "maxOutputTokens": null,
+  "maxTotalTokens": null,
+  "maxWallMs": null,
+  "budget": null,
+  "tasks": [
+    {
+      "id": "logic",
+      "source": "logic-source.json",
+      "metadata": "logic-metadata.json",
+      "oracle": "logic-oracle-draft.json",
+      "fixture": "logic-fixture.json",
+      "features": [
+        "and",
+        "or",
+        "not"
+      ],
+      "origin": "existing-example-adapted; revised-after-ai-review-2026-09-29",
+      "review": "unreviewed"
+    },
+    {
+      "id": "contact",
+      "source": "contact-source.json",
+      "metadata": "contact-metadata.json",
+      "oracle": "contact-oracle-draft.json",
+      "fixture": "contact-fixture.json",
+      "features": [
+        "enum",
+        "presence"
+      ],
+      "origin": "existing-example-adapted; revised-after-ai-review-2026-09-29",
+      "review": "unreviewed"
+    },
+    {
+      "id": "boundary",
+      "source": "boundary-source.json",
+      "metadata": "boundary-metadata.json",
+      "oracle": "boundary-oracle-draft.json",
+      "fixture": "boundary-fixture.json",
+      "features": [
+        "enum",
+        "category-selection"
+      ],
+      "origin": "new-draft; revised-after-ai-review-2026-09-29",
+      "review": "unreviewed"
+    },
+    {
+      "id": "unsupported",
+      "source": "unsupported-source.json",
+      "metadata": "unsupported-metadata.json",
+      "oracle": "unsupported-oracle-draft.json",
+      "fixture": "unsupported-fixture.json",
+      "features": [
+        "unresolved"
+      ],
+      "origin": "new-draft; revised-after-ai-review-2026-09-29",
+      "review": "unreviewed"
+    }
+  ],
+  "unresolved": [
+    "Human review of revised tasks and Oracle expectations remains pending",
+    "Confirm actual source and Oracle authors and reviewer independence",
+    "Fix model, provider, repetitions and resource limits before live evaluation",
+    "Review expected unresolved outcome for unsupported task separately from semantic Oracle",
+    "Freeze final input hashes and obtain explicit live approval"
+  ]
+}

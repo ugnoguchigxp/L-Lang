@@ -1,0 +1,312 @@
+{
+  "reviewType": "AI-assisted; not independent human review",
+  "studyHash": "e960ee29d9975d7fa8a0d1dc0a32ba9e096d4f854bcd44328e116df113aa3bee",
+  "inputHashes": {
+    "logic:source": "cb3828fe99ef19ae80a6feb4d233c95ccbb5d17e7719c9fd02645ffca560bc5d",
+    "logic:metadata": "26f821f2a2102f5912a8061243e881bb3bc4d32673e336dde2e64b569d0da7c2",
+    "logic:oracle": "ef90eee0220a52b486ff8d2d4dc37d3f68cf4377c9fd8ea20b891083b0311951",
+    "logic:fixture": "a15a90b1aafaa38f2606d8bd16d9454c20079161402c77757dd945cfc86df9c3",
+    "contact:source": "388c65ab7760c4e7604f3402ff88a792f8c6febdd905412316078dc96242cc99",
+    "contact:metadata": "4605afbc465fc6e3a50c6fab3e6830e143222d0309de7c29ce955e5df1aefe8f",
+    "contact:oracle": "a1860a8e8725110bdeecfc09de6661daba615ec1f48bb8f0641f9a99e0c46da1",
+    "contact:fixture": "e558673d77ce6d1969b4c3580c8cdce3672f08268a2805b05cbbe5f9ef1d0542",
+    "boundary:source": "5d5cb9f324aa06e3f607c731161de4b546568242e1a70e3329fc54087977b9f1",
+    "boundary:metadata": "5b889cf2a491945da145eb561bf959bc94d59606d8a5dc2484e5ae158151da38",
+    "boundary:oracle": "481c64cec7495a675f600464c83a96e37382c7a970cd451b4755e09947441cc1",
+    "boundary:fixture": "c3ff8291a30dbcd0aa3aad51537c944cd8913533c5688f95248b7392c37f87b9",
+    "unsupported:source": "5082c5aedee8e27277e770510a15479f33363e97f04f37f32b6b7e278ec96681",
+    "unsupported:metadata": "9d3660bb8439e2b62f943f8172db554b46f71e3a5a3ead3ab42226570315feac",
+    "unsupported:oracle": "fbe18d06da8b28355ae44a466e1641fd7e2bfa5a30193cdec295ded8cfd80450",
+    "unsupported:fixture": "7f152faf007091b675e57068de0d7a4b567fbfbe5f88838ae256760f3187c2b5"
+  },
+  "results": [
+    {
+      "taskId": "logic",
+      "cases": [
+        {
+          "id": "or-left",
+          "expected": {
+            "kind": "value",
+            "value": true
+          },
+          "actual": {
+            "kind": "value",
+            "value": true
+          },
+          "match": true
+        },
+        {
+          "id": "or-right-not",
+          "expected": {
+            "kind": "value",
+            "value": true
+          },
+          "actual": {
+            "kind": "value",
+            "value": true
+          },
+          "match": true
+        },
+        {
+          "id": "reject",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        },
+        {
+          "id": "disabled",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        }
+      ]
+    },
+    {
+      "taskId": "contact",
+      "cases": [
+        {
+          "id": "premium-with-email",
+          "expected": {
+            "kind": "value",
+            "value": true
+          },
+          "actual": {
+            "kind": "value",
+            "value": true
+          },
+          "match": true
+        },
+        {
+          "id": "basic-with-email",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        },
+        {
+          "id": "premium-without-email",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        }
+      ]
+    },
+    {
+      "taskId": "boundary",
+      "cases": [
+        {
+          "id": "high",
+          "expected": {
+            "kind": "value",
+            "value": true
+          },
+          "actual": {
+            "kind": "value",
+            "value": true
+          },
+          "match": true
+        },
+        {
+          "id": "medium",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        },
+        {
+          "id": "low",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        },
+        {
+          "id": "outside-enum",
+          "expected": {
+            "kind": "error",
+            "code": "INVALID_INPUT"
+          },
+          "actual": {
+            "kind": "error",
+            "code": "INVALID_INPUT"
+          },
+          "match": true
+        }
+      ]
+    },
+    {
+      "taskId": "unsupported",
+      "cases": [
+        {
+          "id": "matching",
+          "expected": {
+            "kind": "value",
+            "value": true
+          },
+          "actual": {
+            "kind": "value",
+            "value": true
+          },
+          "match": true
+        },
+        {
+          "id": "other",
+          "expected": {
+            "kind": "value",
+            "value": false
+          },
+          "actual": {
+            "kind": "value",
+            "value": false
+          },
+          "match": true
+        }
+      ]
+    }
+  ],
+  "truthTable": [
+    {
+      "input": {
+        "a": false,
+        "b": false,
+        "c": false
+      },
+      "expected": false,
+      "inOracle": false
+    },
+    {
+      "input": {
+        "a": false,
+        "b": false,
+        "c": true
+      },
+      "expected": false,
+      "inOracle": false
+    },
+    {
+      "input": {
+        "a": false,
+        "b": true,
+        "c": false
+      },
+      "expected": false,
+      "inOracle": true
+    },
+    {
+      "input": {
+        "a": false,
+        "b": true,
+        "c": true
+      },
+      "expected": false,
+      "inOracle": false
+    },
+    {
+      "input": {
+        "a": true,
+        "b": false,
+        "c": false
+      },
+      "expected": true,
+      "inOracle": true
+    },
+    {
+      "input": {
+        "a": true,
+        "b": false,
+        "c": true
+      },
+      "expected": false,
+      "inOracle": true
+    },
+    {
+      "input": {
+        "a": true,
+        "b": true,
+        "c": false
+      },
+      "expected": true,
+      "inOracle": false
+    },
+    {
+      "input": {
+        "a": true,
+        "b": true,
+        "c": true
+      },
+      "expected": true,
+      "inOracle": true
+    }
+  ],
+  "contactBoundaries": [
+    {
+      "input": {
+        "email": "",
+        "tier": "premium"
+      },
+      "expected": true,
+      "encoded": [
+        2,
+        1
+      ]
+    },
+    {
+      "input": {
+        "email": null,
+        "tier": "premium"
+      },
+      "expected": false,
+      "encoded": [
+        1,
+        1
+      ]
+    }
+  ],
+  "unsupportedEncoding": [
+    {
+      "email": "a@example.com",
+      "encoded": [
+        2
+      ]
+    },
+    {
+      "email": "a@other.com",
+      "encoded": [
+        2
+      ]
+    }
+  ]
+}

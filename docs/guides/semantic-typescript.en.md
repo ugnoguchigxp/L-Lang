@@ -635,3 +635,7 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for details.
 L-Lang is available under the [MIT License](../../LICENSE). You may use, copy, modify, distribute, sublicense, and sell copies as long as the license notice and disclaimer are preserved.
 
 `private: true` in `package.json` prevents accidental npm publication. It does not restrict source use under the MIT License.
+
+## Semantic TDD extensions v1
+
+See the [extension example](../../examples/semantic-tdd-extensions/README.md) for opt-in `tdd-build --best-of-n <config.json>` and `bun run semantic:property`. The single-candidate path remains supported. The bounded first version has offline fixture validation; independent live evaluation and default adoption remain pending.

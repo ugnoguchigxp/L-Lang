@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "kind": "predicate",
+  "id": "logic",
+  "intent": "aがtrueかつ、bがtrueまたはcがfalseなら許可する。",
+  "requirements": [
+    {
+      "id": "rule",
+      "level": "must",
+      "text": "a && (b || !c) が成立すること。"
+    }
+  ],
+  "unresolvedWhen": [
+    "表現できない場合。"
+  ],
+  "profile": "predicate-i32-v1",
+  "contract": {
+    "version": 1,
+    "fields": [
+      {
+        "name": "a",
+        "kind": "boolean",
+        "values": [],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      },
+      {
+        "name": "b",
+        "kind": "boolean",
+        "values": [],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      },
+      {
+        "name": "c",
+        "kind": "boolean",
+        "values": [],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "id": "yes",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": true
+      },
+      "expected": true,
+      "undefinedFields": []
+    },
+    {
+      "id": "no",
+      "input": {
+        "a": false,
+        "b": true,
+        "c": false
+      },
+      "expected": false,
+      "undefinedFields": []
+    }
+  ]
+}

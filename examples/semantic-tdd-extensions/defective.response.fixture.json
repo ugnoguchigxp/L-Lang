@@ -1,0 +1,24 @@
+{
+  "id": "resp_fixture_active_customer",
+  "model": "gpt-5.4-mini",
+  "status": "completed",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"outcome\": \"resolved\", \"body\": {\"kind\": \"equals\", \"property\": [\"status\"], \"value\": \"active\"}, \"diagnostics\": []}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 200,
+    "output_tokens": 80,
+    "total_tokens": 280
+  }
+}

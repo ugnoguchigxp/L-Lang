@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "status": "frozen",
+  "purpose": "New synthetic controls frozen before evaluation. Initial freeze failed config validation before any scenario ran; original retained in artifacts/semantic-tdd-extensions/evaluation-initial-freeze-invalid-config. Not an independent live model quality study.",
+  "files": {
+    "benchmark.json": "e8f28308fd8751e0e8d04263c9ddba43ee135313d5a0f0bff198f2857819fdf9",
+    "permissions-all-ineligible.candidates.json": "5efb9a423dbeb32a7af95ca5e31b0ab4432e5b80dceff5af5482f4aa6822c346",
+    "permissions-correct-first.candidates.json": "eb5d57cf2b31a65e7c765303e3fdedcb43c0c3b52bc3fd7c81c097e9e8b4fc37",
+    "permissions-mixed.candidates.json": "ab5c0b4274788a1053071ddbd330a640494d7d876cc18ae33014dc9a67102a00",
+    "permissions-partial-failure.candidates.json": "cf43c65891058193f53fa833afd843cd67f5e958e420f5f16258878f12cd109b",
+    "permissions.hidden.json": "c300b0eccdea875b016488d16d393e4269269ce0a038485036a362099c1d697a",
+    "permissions.plan.json": "1384ed8438985a48c6337218b0a3d5098348919ff7f91c6ac7f66f787ccf53fc",
+    "permissions.property.json": "34e756f09a82e28dc9982ef01ce984a3ff37fddb14513414c5af90ed011b00d4",
+    "permissions.ts": "6ba5daaf7a5d10b626b85d875c31849c4045b0e7f7e607d5a381c77cfbeb77e8",
+    "review-all-ineligible.candidates.json": "5efb9a423dbeb32a7af95ca5e31b0ab4432e5b80dceff5af5482f4aa6822c346",
+    "review-correct-first.candidates.json": "4df9b741a680e875cf223692d655e6ec29e37327ed61b49a6cc1bd77bc5d0453",
+    "review-mixed.candidates.json": "134ebbfd78e2b3018cc05b4d4b1ff2fc176c67d980203b8a5220f843c0ab6b30",
+    "review-partial-failure.candidates.json": "4073397feb53c7c71d5cbffcf8fe74f61e954dfccf2d0d2dd34ed3bf41366493",
+    "review.hidden.json": "4d780cfe08cf900003287b1e1cba68996988d01f1eb44d3ca5a6df4463f73ec6",
+    "review.plan.json": "7c5b158c1ff41fa90a1ce16d9b9e4984324bfdf0fc3a019d473ac8e86f96bdfd",
+    "review.property.json": "47dc29f9a2b432dfc9861f827b16994359924828bfd4f83c084d31ac3772306e",
+    "review.ts": "00c4aab080ec588b56de58cd6ccae9173ab69208d4eba3edff854fef81b16c73",
+    "routing-all-ineligible.candidates.json": "5efb9a423dbeb32a7af95ca5e31b0ab4432e5b80dceff5af5482f4aa6822c346",
+    "routing-correct-first.candidates.json": "976402bae55552de963733471abe3ab7a28db8359b7f077ddd6064d8908fb03e",
+    "routing-mixed.candidates.json": "f02ce9ad3f5e21913841943580d44773cffbd91ac6320e9b5fd5ab258f8385e7",
+    "routing-partial-failure.candidates.json": "2a912c88e585ac4a1cd634ec2c31f8194b80979841a76da5da45ad4f444d5d3b",
+    "routing.hidden.json": "50f3eb7c9d6b11d8adbb0eea8e660689c8a61c059eef154f88d54ae1d0d973c2",
+    "routing.plan.json": "b71df92ebaa75ff89d0963ed87e53ca424c69bb9c3bfe3b54bcfbe46841b6c43",
+    "routing.property.json": "b007b49b1dc274fcb8162bb88cd9a5a73e33bf1f60c844a4ceaf6786198cf3b1",
+    "routing.ts": "aba25a6db601fcc2bdd271b322daf16b8136b966e5275f70a1c08c7eab66f2d1"
+  }
+}

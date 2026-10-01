@@ -1,0 +1,73 @@
+[
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "all",
+      "conditions": [
+        {
+          "kind": "equals",
+          "property": [
+            "approved"
+          ],
+          "value": true
+        },
+        {
+          "kind": "equals",
+          "property": [
+            "verified"
+          ],
+          "value": true
+        },
+        {
+          "kind": "equals",
+          "property": [
+            "blocked"
+          ],
+          "value": false
+        }
+      ]
+    },
+    "diagnostics": []
+  },
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "equals",
+      "property": [
+        "approved"
+      ],
+      "value": true
+    },
+    "diagnostics": []
+  },
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "all",
+      "conditions": [
+        {
+          "kind": "equals",
+          "property": [
+            "approved"
+          ],
+          "value": true
+        },
+        {
+          "kind": "equals",
+          "property": [
+            "verified"
+          ],
+          "value": true
+        },
+        {
+          "kind": "equals",
+          "property": [
+            "blocked"
+          ],
+          "value": false
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+]

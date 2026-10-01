@@ -1,0 +1,194 @@
+[
+  {
+    "input": {
+      "approved": false,
+      "verified": false,
+      "blocked": false,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": false,
+      "blocked": false,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": false,
+      "blocked": true,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": false,
+      "blocked": true,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": true,
+      "blocked": false,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": true,
+      "blocked": false,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": true,
+      "blocked": true,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": false,
+      "verified": true,
+      "blocked": true,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": false,
+      "blocked": false,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": false,
+      "blocked": false,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": false,
+      "blocked": true,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": false,
+      "blocked": true,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": true,
+      "blocked": false,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": true
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": true,
+      "blocked": false,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": true
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": true,
+      "blocked": true,
+      "noise": [
+        "novel-held-out"
+      ]
+    },
+    "expected": false
+  },
+  {
+    "input": {
+      "approved": true,
+      "verified": true,
+      "blocked": true,
+      "noise": [
+        "",
+        "synthetic-17",
+        "synthetic-29"
+      ]
+    },
+    "expected": false
+  }
+]

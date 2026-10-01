@@ -1,0 +1,35 @@
+[
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "equals",
+      "property": [
+        "approved"
+      ],
+      "value": true
+    },
+    "diagnostics": []
+  },
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "equals",
+      "property": [
+        "approved"
+      ],
+      "value": true
+    },
+    "diagnostics": []
+  },
+  {
+    "outcome": "resolved",
+    "body": {
+      "kind": "equals",
+      "property": [
+        "approved"
+      ],
+      "value": true
+    },
+    "diagnostics": []
+  }
+]

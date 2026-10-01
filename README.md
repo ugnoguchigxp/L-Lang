@@ -92,3 +92,7 @@ Phase 4はローカルfile、許可済みHTTP、fixture/replay、loopback統合�
 ## License
 
 [MIT License](./LICENSE)。`package.json`の`private: true`はnpmへの誤公開を防ぐ設定です。
+
+論文レビュー向け：[Paper v1の範囲と文書案内](./docs/PAPER_V1_SCOPE.md)（過去計画・現在の実装・論文の証拠・Future Work）。
+
+Semantic TDD：[Best-of-Nとbounded property検査の限定初版](./examples/semantic-tdd-extensions/README.md)を明示指定で利用できます。独立評価・既定採用は未了です。

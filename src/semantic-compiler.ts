@@ -59,6 +59,8 @@ export type SemanticResolution = {
 
 export type SemanticCompileOptions = {
   sourcePath: string;
+  forceResolve?: boolean;
+  resolutionApiCalls?: () => number;
   workspaceRoot?: string;
   mode: "build" | "replay";
   provider?: string;
@@ -171,6 +173,8 @@ export async function compileSemanticSource(
         })
       : lock.entries[fingerprint];
 
+  if (options.forceResolve && options.mode !== "replay") entry = undefined;
+
   if (options.mode === "replay" && entry === undefined) {
     throw new Error(
       "replay failed: no lock entry matches the current source, type, tests, and prompt",
@@ -223,6 +227,14 @@ export async function compileSemanticSource(
         ? {}
         : { projectContext: builtContext.context }),
     });
+    if (
+      options.countsAsApiCall !== false &&
+      options.resolutionApiCalls !== undefined
+    ) {
+      apiCalls = options.resolutionApiCalls();
+      if (!Number.isSafeInteger(apiCalls) || apiCalls < 1)
+        throw new Error("invalid resolution API call count");
+    }
   }
 
   const pipeline = await createSemanticPipelineRun({

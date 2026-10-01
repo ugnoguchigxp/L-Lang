@@ -22,5 +22,6 @@
 | LLVM checked sum比較 | [llvm-sum-i32](./llvm-sum-i32/README.md) | TS/JSONCから同一kernel planを抽出し、direct/LLVM Wasm/Nativeを比較 |
 | 用途別ソート実験 | [wasm-json-sort](./wasm-json-sort/README.md) | 実験用JSONCからTS/Wasmを生成・比較。標準Predicate profileとは別 |
 | 用途別UIデモ | [saaa-world-clock](./saaa-world-clock/README.md) | 専用ABIとtimezone adapter。一般Predicate言語の拡張ではない |
+| 単独ブラウザゲーム | [reversi](./reversi/README.md) | JSON Semantic IR → ブラウザ内Wasmでルール・AI・対局状態・Undoを実行 |
 
 コマンドは各READMEに特記がなければリポジトリのルートで実行します。JSONC出力を作る`llang develop`・`llang migrate`の位置付けは経路ガイドを参照してください。

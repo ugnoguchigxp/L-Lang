@@ -1,3 +1,6 @@
+import { dirname } from "node:path";
+import { parseBestOfNConfig } from "./semantic-tdd-best-of-n";
+import { buildOpenAIRequest } from "./openai";
 import { basename, resolve } from "node:path";
 import {
   callOpenAI,
@@ -72,11 +75,12 @@ async function main(): Promise<void> {
         "  bun run semantic check <semantic-source.ts> [--fixture <response.json>] [--samples 3 --quorum 2]",
         "  bun run semantic explain <semantic-source.ts> [--json]",
         "  bun run semantic closure <manifest.json> [--json]",
-        "  bun run semantic verify <manifest.json> [--json]",
+        "  bun run semantic verify <manifest.json> [--json] [--property-report <report.json>]",
         "  bun run semantic diff <candidate-id>",
         "  bun run semantic approve <candidate-id> --reviewer <id>",
         "  bun run semantic tdd-plan <semantic-source.ts> [--test-fixture <result.json>]",
         "  bun run semantic tdd-build <semantic-source.ts> [--test-fixture <result.json>] [--fixture <response.json>]",
+        "  bun run semantic tdd-build <semantic-source.ts> --best-of-n <config.json> [--candidate-fixtures <list.json>]",
         "  bun run semantic tdd-replay <semantic-source.ts>",
         "  bun run semantic tdd-test <semantic-source.ts> [--json]",
       ].join("\n"),
@@ -101,6 +105,9 @@ async function main(): Promise<void> {
   if (command === "verify") {
     const report = await verifySemanticArtifact({
       manifestPath: resolve(target),
+      ...(parsedArguments.propertyReportPath === undefined
+        ? {}
+        : { propertyReportPath: resolve(parsedArguments.propertyReportPath) }),
     });
     console.log(
       parsedArguments.json
@@ -506,7 +513,91 @@ async function main(): Promise<void> {
       );
       return;
     }
+    let bestOfN: ReturnType<typeof parseBestOfNConfig> | undefined;
+    let resolveBestOfN: Parameters<
+      typeof compileSemanticTddSource
+    >[0]["resolveBestOfN"];
+    if (parsedArguments.bestOfNPath !== undefined) {
+      bestOfN = parseBestOfNConfig(
+        await readBoundedJsonFile(
+          resolve(parsedArguments.bestOfNPath),
+          "Best-of-N config",
+        ),
+      );
+      if (parsedArguments.candidateFixturesPath !== undefined) {
+        const manifestPath = resolve(parsedArguments.candidateFixturesPath);
+        const fixtures = await readBoundedJsonFile(
+          manifestPath,
+          "candidate fixture list",
+        );
+        if (
+          !Array.isArray(fixtures) ||
+          fixtures.length !== bestOfN.candidates ||
+          !fixtures.every((p) => typeof p === "string")
+        )
+          throw new Error("candidate fixture list must match configured count");
+        const payloads = await Promise.all(
+          fixtures.map((p) =>
+            readBoundedJsonFile(
+              resolve(dirname(manifestPath), p),
+              "candidate fixture",
+            ),
+          ),
+        );
+        let index = 0;
+        countsAsApiCall = false;
+        provider = "fixture:best-of-n";
+        model = "fixture-model";
+        resolveBestOfN = async () => {
+          const payload = payloads[index++];
+          const response = parseOpenAIResponse(payload);
+          return {
+            elaboration: candidateOutput(response.outputText),
+            response,
+            rawOutput: payload,
+          };
+        };
+      } else if (fixturePath !== undefined) {
+        if (resolver === undefined) throw new Error("missing fixture resolver");
+        const fixtureResolver = resolver;
+        resolveBestOfN = async (request) => fixtureResolver(request);
+      } else {
+        const connection = resolveOpenAIConnection({
+          apiKey: process.env.OPENAI_API_KEY ?? "",
+          baseUrl: process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
+        });
+        resolveBestOfN = async (request, limits) => {
+          if (!connection.apiKey)
+            throw new Error("OPENAI_API_KEY is required for Best-of-N");
+          const response = await callResponsesApi(
+            buildOpenAIRequest({
+              model: model ?? DEFAULT_OPENAI_MODEL,
+              specification: request.specification,
+              typeScriptSource: request.typeScriptSource,
+              target: {
+                functionName: request.functionName,
+                parameterName: request.parameterName,
+                typeName: request.typeName,
+              },
+              ...(request.projectContext === undefined
+                ? {}
+                : { projectContext: request.projectContext }),
+              maxOutputTokens: limits.maxOutputTokens,
+            }),
+            connection,
+            limits.signal,
+          );
+          return {
+            elaboration: candidateOutput(response.outputText),
+            response,
+            rawOutput: candidateOutput(response.outputText),
+          };
+        };
+      }
+    }
     const result = await compileSemanticTddSource({
+      ...(bestOfN === undefined ? {} : { bestOfN }),
+      ...(resolveBestOfN === undefined ? {} : { resolveBestOfN }),
       sourcePath: resolvedTarget,
       mode: command === "tdd-build" ? "build" : "replay",
       ...(provider === undefined ? {} : { provider }),
@@ -633,3 +724,11 @@ main().catch((error) => {
   );
   process.exitCode = 1;
 });
+
+function candidateOutput(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "kind": "predicate",
+  "id": "unsupported",
+  "intent": "email文字列がリテラル@example.comで終わる場合だけ許可する。メール形式の妥当性や大文字小文字の正規化は要求しない。",
+  "requirements": [
+    {
+      "id": "suffix",
+      "level": "must",
+      "text": "emailの末尾が@example.comであること。"
+    }
+  ],
+  "unresolvedWhen": [
+    "現行predicate-i32-v1ではstringの内容をWasmへ渡さずsuffixを表現できないため、この要求にはunresolvedを返す。"
+  ],
+  "profile": "predicate-i32-v1",
+  "contract": {
+    "version": 1,
+    "fields": [
+      {
+        "name": "email",
+        "kind": "string",
+        "values": [],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "id": "matching",
+      "input": {
+        "email": "a@example.com"
+      },
+      "undefinedFields": [],
+      "expected": true
+    },
+    {
+      "id": "other",
+      "input": {
+        "email": "a@other.com"
+      },
+      "undefinedFields": [],
+      "expected": false
+    }
+  ]
+}

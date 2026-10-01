@@ -52,6 +52,9 @@
     "hybrid:demo:test": "bun test examples/hybrid-wasm-scenarios/scenarios.test.ts",
     "world-clock:demo": "bun run examples/saaa-world-clock/server.ts",
     "world-clock:test": "bun test examples/saaa-world-clock/world-clock.test.ts",
+    "reversi:demo": "bun run examples/reversi/server.ts",
+    "reversi:build": "bun run examples/reversi/build.ts",
+    "reversi:test": "bun test examples/reversi",
     "prompt": "bun run src/prompt-cli.ts",
     "llang": "bun run src/llang-cli.ts",
     "prompt:evaluate": "bun run src/prompt-evaluation.ts",
@@ -86,7 +89,10 @@
     "effects:trace:differential": "bun run src/llang-effects-trace-differential-cli.ts --seed 20260924 --cases 64 --failure-out artifacts/effects-trace-differential-failure.json",
     "effects:memory:matrix": "bun run src/llang-effects-memory-matrix.ts benchmarks/effects-memory-v1/memory-safety-matrix.json docs/EFFECTS_WASM_MEMORY_SAFETY_MATRIX.md",
     "examples:matrix": "bun run examples/source-output-matrix/run.ts",
-    "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts"
+    "examples:lifecycle": "bun run examples/capability-lifecycle/run.ts",
+    "semantic:property": "bun run src/semantic-property-cli.ts",
+    "semantic:extensions:demo": "bun run src/semantic-tdd-extension-demo.ts",
+    "semantic:extensions:evaluate": "bun run src/semantic-tdd-extension-evaluation.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",

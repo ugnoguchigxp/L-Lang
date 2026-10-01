@@ -1,3 +1,16 @@
+import { assertTextByteLength, SEMANTIC_LIMITS } from "./semantic-limits";
+import { randomUUID } from "node:crypto";
+import {
+  bestOfNRequest,
+  collectBestOfNCandidates,
+  evaluateBestOfN,
+  parseBestOfNConfig,
+  verifyBestOfNSelection,
+  type BestOfNConfig,
+  type BestOfNRequest,
+  type BestOfNResolution,
+  type SemanticTddBestOfNReport,
+} from "./semantic-tdd-best-of-n";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, resolve } from "node:path";
 
@@ -50,6 +63,11 @@ import { scanSemanticSource, type SemanticSource } from "./semantic-source";
 
 export type SemanticTddCompileOptions = {
   sourcePath: string;
+  bestOfN?: BestOfNConfig;
+  resolveBestOfN?: (
+    request: BestOfNRequest,
+    limits: { maxOutputTokens: number; signal: AbortSignal },
+  ) => Promise<BestOfNResolution>;
   workspaceRoot?: string;
   mode: "build" | "replay";
   provider?: string;
@@ -92,6 +110,15 @@ export type SemanticTddCompileResult = {
 export async function compileSemanticTddSource(
   options: SemanticTddCompileOptions,
 ): Promise<SemanticTddCompileResult> {
+  if (options.bestOfN !== undefined) parseBestOfNConfig(options.bestOfN);
+  if (options.bestOfN !== undefined && options.mode === "replay")
+    throw new Error("replay uses the stored Best-of-N configuration");
+  if (
+    options.bestOfN !== undefined &&
+    options.countsAsApiCall !== false &&
+    options.resolveBestOfN === undefined
+  )
+    throw new Error("live Best-of-N requires a bounded resolver");
   const workspaceRoot = resolve(options.workspaceRoot ?? process.cwd());
   const lockPath = resolve(
     options.lockPath ?? resolve(workspaceRoot, "semantic.lock"),
@@ -189,7 +216,27 @@ export async function compileSemanticTddSource(
           red: CompiledRedCertificate;
         }
       | undefined;
-    if (currentImplementation !== undefined) {
+    let bestOfNReport: SemanticTddBestOfNReport | undefined;
+    if (
+      currentImplementation !== undefined &&
+      options.bestOfN === undefined &&
+      testEntry.selectionReport?.version === 2
+    ) {
+      const currentContext = await buildProjectContext({
+        source,
+        workspaceRoot,
+        lock: await readSemanticLock(lockPath),
+      });
+      verifyBestOfNSelection(
+        testEntry.selectionReport,
+        source,
+        validated,
+        currentImplementation.resolvedIr,
+        currentContext.context,
+      );
+      bestOfNReport = testEntry.selectionReport;
+    }
+    if (currentImplementation !== undefined && options.bestOfN === undefined) {
       validation = validateImplementation(
         source,
         validated,
@@ -199,8 +246,10 @@ export async function compileSemanticTddSource(
 
     const implementation = await compileSemanticSource({
       sourcePath: source.absolutePath,
+      ...(options.bestOfN === undefined ? {} : { forceResolve: true }),
       workspaceRoot,
       mode: options.mode,
+      resolutionApiCalls: () => bestOfNReport?.apiCalls ?? 1,
       ...(options.provider === undefined ? {} : { provider: options.provider }),
       ...(options.model === undefined ? {} : { model: options.model }),
       ...(options.countsAsApiCall === undefined
@@ -262,15 +311,88 @@ export async function compileSemanticTddSource(
           await rm(tddTestPath, { force: true });
         }
       },
-      ...(options.resolveImplementation === undefined
+      ...(options.resolveImplementation === undefined &&
+      options.resolveBestOfN === undefined
         ? {}
         : {
             resolve: async (input): Promise<SemanticResolution> => {
               const resolveImplementation = options.resolveImplementation;
-              if (resolveImplementation === undefined) {
+              if (
+                options.bestOfN === undefined &&
+                resolveImplementation === undefined
+              )
                 throw new Error("semantic TDD resolver is unavailable");
+              let resolution: SemanticResolution;
+              if (options.bestOfN !== undefined) {
+                const request = bestOfNRequest(input, validated);
+                const collected = await collectBestOfNCandidates({
+                  config: options.bestOfN,
+                  request,
+                  fixture: options.countsAsApiCall === false,
+                  resolve:
+                    options.resolveBestOfN ??
+                    (async (request) => {
+                      if (resolveImplementation === undefined)
+                        throw new Error("missing candidate resolver");
+                      return resolveImplementation(request);
+                    }),
+                });
+                const evaluated = evaluateBestOfN({
+                  source,
+                  validated,
+                  config: options.bestOfN,
+                  request,
+                  fixture: options.countsAsApiCall === false,
+                  ...collected,
+                });
+                bestOfNReport = evaluated.report;
+                const selectionDirectory = resolve(
+                  options.auditRoot ??
+                    resolve(workspaceRoot, ".semantic", "tdd-selection"),
+                  `selection-${randomUUID()}`,
+                );
+                await mkdir(selectionDirectory, { recursive: true });
+                await writeFile(
+                  resolve(selectionDirectory, "selection.json"),
+                  `${JSON.stringify(bestOfNReport, null, 2)}\n`,
+                  "utf8",
+                );
+                const prospectiveLock = {
+                  ...testLock,
+                  entries: {
+                    ...testLock.entries,
+                    [testEntry.fingerprint]: {
+                      ...testEntry,
+                      selectionReport: bestOfNReport,
+                      postImplementationRed:
+                        evaluated.selected?.elaboration.outcome === "resolved"
+                          ? createRedCertificate({
+                              plan: validated.plan,
+                              testPlanHash: validated.testPlanHash,
+                              typeSchema: source.concept.typeSchema,
+                              hardClauseCoverage: validated.hardClauseCoverage,
+                              implementation:
+                                evaluated.selected.elaboration.body,
+                            }).certificate
+                          : testEntry.postImplementationRed,
+                    },
+                  },
+                };
+                assertTextByteLength(
+                  JSON.stringify(prospectiveLock, null, 2),
+                  SEMANTIC_LIMITS.lockBytes,
+                  "Best-of-N test lock",
+                );
+                if (evaluated.selected === null)
+                  throw new Error(
+                    `Best-of-N unresolved; no artifact promoted; audit: ${selectionDirectory}`,
+                  );
+                resolution = evaluated.selected;
+              } else {
+                if (resolveImplementation === undefined)
+                  throw new Error("missing implementation resolver");
+                resolution = await resolveImplementation(input);
               }
-              const resolution = await resolveImplementation(input);
               if (resolution.elaboration.outcome === "resolved") {
                 validation = validateImplementation(
                   source,
@@ -302,18 +424,32 @@ export async function compileSemanticTddSource(
       );
     }
 
-    const selectionReport = createSingleCandidateSelectionReport({
-      contractHash: compiledContract.contractHash,
-      testPlanHash: validated.testPlanHash,
-      redCertificateHash: validation.red.redCertificateHash,
-      candidateId: latestImplementation.fingerprint,
-      expression: latestImplementation.resolvedIr,
-      hardPassed: validation.result.hardPassed,
-      mutationScore: validation.red.certificate.mutationScore,
-      mutationPassed: !validation.red.certificate.mutants.some(
-        (mutant) => mutant.classification === "survived",
-      ),
-    });
+    const selectionReport =
+      bestOfNReport ??
+      createSingleCandidateSelectionReport({
+        contractHash: compiledContract.contractHash,
+        testPlanHash: validated.testPlanHash,
+        redCertificateHash: validation.red.redCertificateHash,
+        candidateId: latestImplementation.fingerprint,
+        expression: latestImplementation.resolvedIr,
+        hardPassed: validation.result.hardPassed,
+        mutationScore: validation.red.certificate.mutationScore,
+        mutationPassed: !validation.red.certificate.mutants.some(
+          (mutant) => mutant.classification === "survived",
+        ),
+      });
+    if (bestOfNReport !== undefined) {
+      verifyBestOfNSelection(
+        bestOfNReport,
+        source,
+        validated,
+        latestImplementation.resolvedIr,
+      );
+      implementation.apiCalls =
+        options.mode === "replay" || implementation.cacheHit
+          ? 0
+          : bestOfNReport.apiCalls;
+    }
     const updatedEntry: SemanticTestLockEntry = {
       ...testEntry,
       postImplementationRed: validation.red.certificate,

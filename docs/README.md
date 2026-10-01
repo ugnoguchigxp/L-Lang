@@ -4,6 +4,10 @@
 
 TypeScriptとJSONC、各出力経路を目的から選べるように案内します。利用ガイドは`guides/`へまとめ、既存の仕様・設計・結果は参照パスを維持しています。
 
+## 論文レビュー向けの入口
+
+[Paper v1の範囲と文書案内](./PAPER_V1_SCOPE.md)から、過去計画、現在の実装、論文の主張・証拠、Future Workを確認できます。
+
 ## 利用ガイド
 
 - [JSONC CLIリファレンス](./LLANG_CLI_REFERENCE.md)
@@ -30,6 +34,9 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 | Capability | [エージェント能力構想](./AGENT_CAPABILITY_IMPLEMENTATION_CONCEPT.md) |
 
 ## 実装計画・進捗
+
+- [Semantic TDD拡張・限定初版の実装計画](./SEMANTIC_TDD_EXTENSIONS_V1_IMPLEMENTATION_PLAN.md)：明示指定のBest-of-Nとbounded property検査。[実行例](../examples/semantic-tdd-extensions/README.md)。独立評価・既定採用は未了
+- [Semantic TDD Phase 6〜7の残実装・完了計画](./SEMANTIC_TDD_EXTENSIONS_COMPLETION_PLAN.md)：bounded array、時間制限、property report照合、凍結した合成比較とlive評価runner。[結果](./SEMANTIC_TDD_EXTENSIONS_COMPLETION_RESULTS.md)
 
 - [Semantic Core安定化・第一段階 実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE1_IMPLEMENTATION_PLAN.md)と[実施結果](./SEMANTIC_CORE_STABILIZATION_PHASE1_RESULTS.md)：architecture、profile別意味論、観測条件、version対応表を整えたP0作業
 - [Semantic Core安定化・第二段階 実装計画](./SEMANTIC_CORE_STABILIZATION_PHASE2_IMPLEMENTATION_PLAN.md)と[実施結果](./SEMANTIC_CORE_STABILIZATION_PHASE2_RESULTS.md)：Value pure i32の決定的generated differential testing
@@ -104,3 +111,6 @@ TypeScriptとJSONC、各出力経路を目的から選べるように案内し�
 - [研究評価の実行条件](../RESEARCH_EVALUATION_PREREQUISITES.md)：live評価の前提。
 
 `guides/`は現行の操作、`records/`は過去の状態記録。既存の設計・計画・結果のパスは参照を保ち、この一覧と台帳で分類する。凍結済みbenchmark・Pilot証跡の内容は文書整理でも変更しない。
+
+- [Semantic TDD Codex SDK Luna実評価](./SEMANTIC_TDD_CODEX_LIVE_EVALUATION_RESULTS.md)：観測済み合成課題での実行結果と保証境界。
+- [Semantic TDD Sol 6.1／Luna比較](./SEMANTIC_TDD_CODEX_MODEL_COMPARISON_RESULTS.md)：同一CLI・reasoning lowでの観測結果。

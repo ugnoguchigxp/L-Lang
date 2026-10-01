@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "taskId": "logic",
+  "origin": "requirements-and-contract; AI-revised-2026-09-29; human-review-pending",
+  "review": "unreviewed",
+  "cases": [
+    {
+      "id": "truth-000",
+      "input": {
+        "a": false,
+        "b": false,
+        "c": false
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "truth-001",
+      "input": {
+        "a": false,
+        "b": false,
+        "c": true
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "truth-010",
+      "input": {
+        "a": false,
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "truth-011",
+      "input": {
+        "a": false,
+        "b": true,
+        "c": true
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "truth-100",
+      "input": {
+        "a": true,
+        "b": false,
+        "c": false
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "truth-101",
+      "input": {
+        "a": true,
+        "b": false,
+        "c": true
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "truth-110",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "truth-111",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": true
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "missing-a",
+      "input": {
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null-a",
+      "input": {
+        "a": null,
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "string-a",
+      "input": {
+        "a": "true",
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number-a",
+      "input": {
+        "a": 1,
+        "b": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "missing-b",
+      "input": {
+        "a": true,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null-b",
+      "input": {
+        "a": true,
+        "b": null,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "string-b",
+      "input": {
+        "a": true,
+        "b": "true",
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number-b",
+      "input": {
+        "a": true,
+        "b": 1,
+        "c": false
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "missing-c",
+      "input": {
+        "a": true,
+        "b": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null-c",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": null
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "string-c",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": "true"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number-c",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": 1
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "unknown-field",
+      "input": {
+        "a": true,
+        "b": true,
+        "c": false,
+        "extra": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "candidates": 3,
+  "maxOutputTokensPerCall": 1024,
+  "maxTotalTokens": 20000,
+  "timeoutMs": 30000,
+  "maxCostUsd": 1,
+  "inputUsdPerMillionTokens": 1,
+  "outputUsdPerMillionTokens": 5
+}

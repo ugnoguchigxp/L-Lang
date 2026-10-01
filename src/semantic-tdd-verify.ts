@@ -1,3 +1,4 @@
+import { verifyBestOfNSelection } from "./semantic-tdd-best-of-n";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -155,7 +156,15 @@ export async function verifySemanticTddSource(input: {
     mutationScore: currentRed.certificate.mutationScore,
     mutationPassed: survivors.length === 0,
   });
-  if (
+  if (testEntry.selectionReport?.version === 2) {
+    verifyBestOfNSelection(
+      testEntry.selectionReport,
+      source,
+      validated,
+      implementation.resolvedIr,
+      builtContext.context,
+    );
+  } else if (
     testEntry.selectionReport === null ||
     stableJson(testEntry.selectionReport) !== stableJson(expectedSelection)
   ) {

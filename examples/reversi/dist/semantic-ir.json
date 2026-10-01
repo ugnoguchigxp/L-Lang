@@ -1,0 +1,5707 @@
+{
+  "language": "l-lang",
+  "version": 4,
+  "kind": "module",
+  "profile": "module-collection-v1",
+  "description": "リバーシのルール・AI・対局状態・履歴・Undo・表示モデルを定義する保存済みSemantic IR。JSONを正本としWasmのみへビルドする。",
+  "imports": [],
+  "types": [
+    {
+      "name": "RuleInput",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "action",
+          "type": "i32"
+        }
+      ]
+    },
+    {
+      "name": "RuleOutput",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "legal",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "over",
+          "type": "boolean"
+        },
+        {
+          "name": "winner",
+          "type": "i32"
+        },
+        {
+          "name": "black",
+          "type": "i32"
+        },
+        {
+          "name": "white",
+          "type": "i32"
+        },
+        {
+          "name": "actual",
+          "type": "i32"
+        },
+        {
+          "name": "applied",
+          "type": "boolean"
+        },
+        {
+          "name": "pass",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "Snapshot",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "last",
+          "type": "i32"
+        },
+        {
+          "name": "passed",
+          "type": "i32"
+        }
+      ]
+    },
+    {
+      "name": "State",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "last",
+          "type": "i32"
+        },
+        {
+          "name": "passed",
+          "type": "i32"
+        },
+        {
+          "name": "history",
+          "type": {
+            "list": {
+              "ref": "Snapshot"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Input",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "state",
+          "type": {
+            "ref": "State"
+          }
+        },
+        {
+          "name": "action",
+          "type": "i32"
+        }
+      ]
+    },
+    {
+      "name": "Cell",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "stone",
+          "type": "i32"
+        },
+        {
+          "name": "enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "last",
+          "type": "boolean"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Output",
+      "export": true,
+      "typeParameters": [],
+      "kind": "record",
+      "fields": [
+        {
+          "name": "state",
+          "type": {
+            "ref": "State"
+          }
+        },
+        {
+          "name": "cells",
+          "type": {
+            "list": {
+              "ref": "Cell"
+            }
+          }
+        },
+        {
+          "name": "black",
+          "type": "i32"
+        },
+        {
+          "name": "white",
+          "type": "i32"
+        },
+        {
+          "name": "over",
+          "type": "boolean"
+        },
+        {
+          "name": "winner",
+          "type": "i32"
+        },
+        {
+          "name": "canUndo",
+          "type": "boolean"
+        },
+        {
+          "name": "pendingAction",
+          "type": "i32"
+        },
+        {
+          "name": "status",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "inside",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "r",
+          "type": "i32"
+        },
+        {
+          "name": "c",
+          "type": "i32"
+        }
+      ],
+      "returns": "boolean",
+      "body": {
+        "statements": [
+          {
+            "kind": "return",
+            "value": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": ">=",
+                    "left": {
+                      "kind": "param",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "<",
+                    "left": {
+                      "kind": "param",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 8
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "param",
+                    "name": "c"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "<",
+                "left": {
+                  "kind": "param",
+                  "name": "c"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 8
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "legalAt",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "pos",
+          "type": "i32"
+        }
+      ],
+      "returns": "boolean",
+      "body": {
+        "statements": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "binary",
+                "op": "<",
+                "left": {
+                  "kind": "param",
+                  "name": "pos"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": ">=",
+                "left": {
+                  "kind": "param",
+                  "name": "pos"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 64
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "literal",
+                  "type": "boolean",
+                  "value": false
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "!==",
+              "left": {
+                "kind": "intrinsic",
+                "name": "at",
+                "typeArguments": [],
+                "arguments": [
+                  {
+                    "kind": "param",
+                    "name": "board"
+                  },
+                  {
+                    "kind": "param",
+                    "name": "pos"
+                  }
+                ]
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 0
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "literal",
+                  "type": "boolean",
+                  "value": false
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "const",
+            "name": "drs",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": [
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "dcs",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": [
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                }
+              ]
+            }
+          },
+          {
+            "kind": "let",
+            "name": "d",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "r",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "col",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "seen",
+            "type": "boolean",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": false
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "d"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 8
+              }
+            },
+            "body": [
+              {
+                "kind": "const",
+                "name": "dr",
+                "type": "i32",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "drs"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "d"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "const",
+                "name": "dc",
+                "type": "i32",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "dcs"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "d"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "r",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "binary",
+                    "op": "/",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 8
+                    }
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "dr"
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "col",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "binary",
+                    "op": "%",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 8
+                    }
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "dc"
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "seen",
+                "value": {
+                  "kind": "literal",
+                  "type": "boolean",
+                  "value": false
+                }
+              },
+              {
+                "kind": "while",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "call",
+                    "callee": "inside",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "r"
+                      },
+                      {
+                        "kind": "local",
+                        "name": "col"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "binary",
+                            "op": "*",
+                            "left": {
+                              "kind": "local",
+                              "name": "r"
+                            },
+                            "right": {
+                              "kind": "literal",
+                              "type": "i32",
+                              "value": 8
+                            }
+                          },
+                          "right": {
+                            "kind": "local",
+                            "name": "col"
+                          }
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 3
+                      },
+                      "right": {
+                        "kind": "param",
+                        "name": "player"
+                      }
+                    }
+                  }
+                },
+                "body": [
+                  {
+                    "kind": "assign",
+                    "name": "seen",
+                    "value": {
+                      "kind": "literal",
+                      "type": "boolean",
+                      "value": true
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "r",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "r"
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "dr"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "col",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "col"
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "dc"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
+                      "kind": "local",
+                      "name": "seen"
+                    },
+                    "right": {
+                      "kind": "call",
+                      "callee": "inside",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "r"
+                        },
+                        {
+                          "kind": "local",
+                          "name": "col"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "binary",
+                            "op": "*",
+                            "left": {
+                              "kind": "local",
+                              "name": "r"
+                            },
+                            "right": {
+                              "kind": "literal",
+                              "type": "i32",
+                              "value": 8
+                            }
+                          },
+                          "right": {
+                            "kind": "local",
+                            "name": "col"
+                          }
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "param",
+                      "name": "player"
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "literal",
+                      "type": "boolean",
+                      "value": true
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "d",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "d"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "legalMoves",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        }
+      ],
+      "returns": {
+        "list": "i32"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "let",
+            "name": "moves",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": []
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "body": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "call",
+                  "callee": "legalAt",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "param",
+                      "name": "player"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "i"
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "moves",
+                    "value": {
+                      "kind": "intrinsic",
+                      "name": "append",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "moves"
+                        },
+                        {
+                          "kind": "local",
+                          "name": "i"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "moves"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "play",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        },
+        {
+          "name": "pos",
+          "type": "i32"
+        }
+      ],
+      "returns": {
+        "list": "i32"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "const",
+            "name": "drs",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": [
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "dcs",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": [
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -1
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                },
+                {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 1
+                }
+              ]
+            }
+          },
+          {
+            "kind": "let",
+            "name": "out",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "intrinsic",
+              "name": "set",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "param",
+                  "name": "board"
+                },
+                {
+                  "kind": "param",
+                  "name": "pos"
+                },
+                {
+                  "kind": "param",
+                  "name": "player"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "let",
+            "name": "d",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "r",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "col",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "n",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "k",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "d"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 8
+              }
+            },
+            "body": [
+              {
+                "kind": "const",
+                "name": "dr",
+                "type": "i32",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "drs"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "d"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "const",
+                "name": "dc",
+                "type": "i32",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "dcs"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "d"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "r",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "binary",
+                    "op": "/",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 8
+                    }
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "dr"
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "col",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "binary",
+                    "op": "%",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 8
+                    }
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "dc"
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "n",
+                "value": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              },
+              {
+                "kind": "while",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "call",
+                    "callee": "inside",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "r"
+                      },
+                      {
+                        "kind": "local",
+                        "name": "col"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "binary",
+                            "op": "*",
+                            "left": {
+                              "kind": "local",
+                              "name": "r"
+                            },
+                            "right": {
+                              "kind": "literal",
+                              "type": "i32",
+                              "value": 8
+                            }
+                          },
+                          "right": {
+                            "kind": "local",
+                            "name": "col"
+                          }
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 3
+                      },
+                      "right": {
+                        "kind": "param",
+                        "name": "player"
+                      }
+                    }
+                  }
+                },
+                "body": [
+                  {
+                    "kind": "assign",
+                    "name": "n",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "n"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 1
+                      }
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "r",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "r"
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "dr"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "col",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "col"
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "dc"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
+                      "kind": "binary",
+                      "op": ">",
+                      "left": {
+                        "kind": "local",
+                        "name": "n"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 0
+                      }
+                    },
+                    "right": {
+                      "kind": "call",
+                      "callee": "inside",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "r"
+                        },
+                        {
+                          "kind": "local",
+                          "name": "col"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "binary",
+                            "op": "*",
+                            "left": {
+                              "kind": "local",
+                              "name": "r"
+                            },
+                            "right": {
+                              "kind": "literal",
+                              "type": "i32",
+                              "value": 8
+                            }
+                          },
+                          "right": {
+                            "kind": "local",
+                            "name": "col"
+                          }
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "param",
+                      "name": "player"
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "k",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  },
+                  {
+                    "kind": "while",
+                    "condition": {
+                      "kind": "binary",
+                      "op": "<=",
+                      "left": {
+                        "kind": "local",
+                        "name": "k"
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "n"
+                      }
+                    },
+                    "body": [
+                      {
+                        "kind": "assign",
+                        "name": "out",
+                        "value": {
+                          "kind": "intrinsic",
+                          "name": "set",
+                          "typeArguments": [],
+                          "arguments": [
+                            {
+                              "kind": "local",
+                              "name": "out"
+                            },
+                            {
+                              "kind": "binary",
+                              "op": "+",
+                              "left": {
+                                "kind": "binary",
+                                "op": "*",
+                                "left": {
+                                  "kind": "binary",
+                                  "op": "+",
+                                  "left": {
+                                    "kind": "binary",
+                                    "op": "/",
+                                    "left": {
+                                      "kind": "param",
+                                      "name": "pos"
+                                    },
+                                    "right": {
+                                      "kind": "literal",
+                                      "type": "i32",
+                                      "value": 8
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "binary",
+                                    "op": "*",
+                                    "left": {
+                                      "kind": "local",
+                                      "name": "dr"
+                                    },
+                                    "right": {
+                                      "kind": "local",
+                                      "name": "k"
+                                    }
+                                  }
+                                },
+                                "right": {
+                                  "kind": "literal",
+                                  "type": "i32",
+                                  "value": 8
+                                }
+                              },
+                              "right": {
+                                "kind": "binary",
+                                "op": "+",
+                                "left": {
+                                  "kind": "binary",
+                                  "op": "%",
+                                  "left": {
+                                    "kind": "param",
+                                    "name": "pos"
+                                  },
+                                  "right": {
+                                    "kind": "literal",
+                                    "type": "i32",
+                                    "value": 8
+                                  }
+                                },
+                                "right": {
+                                  "kind": "binary",
+                                  "op": "*",
+                                  "left": {
+                                    "kind": "local",
+                                    "name": "dc"
+                                  },
+                                  "right": {
+                                    "kind": "local",
+                                    "name": "k"
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "kind": "param",
+                              "name": "player"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "assign",
+                        "name": "k",
+                        "value": {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "local",
+                            "name": "k"
+                          },
+                          "right": {
+                            "kind": "literal",
+                            "type": "i32",
+                            "value": 1
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "d",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "d"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "out"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "score",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "pos",
+          "type": "i32"
+        }
+      ],
+      "returns": "i32",
+      "body": {
+        "statements": [
+          {
+            "kind": "const",
+            "name": "r",
+            "type": "i32",
+            "value": {
+              "kind": "binary",
+              "op": "/",
+              "left": {
+                "kind": "param",
+                "name": "pos"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 8
+              }
+            }
+          },
+          {
+            "kind": "const",
+            "name": "col",
+            "type": "i32",
+            "value": {
+              "kind": "binary",
+              "op": "%",
+              "left": {
+                "kind": "param",
+                "name": "pos"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 8
+              }
+            }
+          },
+          {
+            "kind": "let",
+            "name": "score",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "binary",
+                "op": "||",
+                "left": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "param",
+                      "name": "pos"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 7
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "param",
+                    "name": "pos"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 56
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "param",
+                  "name": "pos"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 63
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 10000
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "binary",
+                "op": "||",
+                "left": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 7
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "local",
+                    "name": "col"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "local",
+                  "name": "col"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 7
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "score",
+                "value": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 20
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": "<=",
+                  "left": {
+                    "kind": "local",
+                    "name": "r"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "<=",
+                  "left": {
+                    "kind": "local",
+                    "name": "col"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "score",
+                "value": {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "local",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 400
+                  }
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "col"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "score",
+                    "value": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "local",
+                        "name": "score"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 400
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": "<=",
+                  "left": {
+                    "kind": "local",
+                    "name": "r"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "local",
+                    "name": "col"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 6
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 7
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "score",
+                "value": {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "local",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 400
+                  }
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "col"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 6
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "score",
+                    "value": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "local",
+                        "name": "score"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 400
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "local",
+                    "name": "r"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 6
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "<=",
+                  "left": {
+                    "kind": "local",
+                    "name": "col"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 56
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "score",
+                "value": {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "local",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 400
+                  }
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 6
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "col"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "score",
+                    "value": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "local",
+                        "name": "score"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 400
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "local",
+                    "name": "r"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 6
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "local",
+                    "name": "col"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 6
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 63
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "score",
+                "value": {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "local",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 400
+                  }
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "r"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 6
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "col"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 6
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "score",
+                    "value": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "local",
+                        "name": "score"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 400
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "score"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "chooseAI",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        },
+        {
+          "name": "player",
+          "type": "i32"
+        }
+      ],
+      "returns": "i32",
+      "body": {
+        "statements": [
+          {
+            "kind": "const",
+            "name": "moves",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "legalMoves",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "param",
+                  "name": "board"
+                },
+                {
+                  "kind": "param",
+                  "name": "player"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "let",
+            "name": "best",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": -1
+            }
+          },
+          {
+            "kind": "let",
+            "name": "bestScore",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": -100000
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "intrinsic",
+                "name": "length",
+                "typeArguments": [],
+                "arguments": [
+                  {
+                    "kind": "local",
+                    "name": "moves"
+                  }
+                ]
+              }
+            },
+            "body": [
+              {
+                "kind": "const",
+                "name": "pos",
+                "type": "i32",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "moves"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "i"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "const",
+                "name": "score",
+                "type": "i32",
+                "value": {
+                  "kind": "call",
+                  "callee": "score",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "param",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "pos"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": ">",
+                  "left": {
+                    "kind": "local",
+                    "name": "score"
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "bestScore"
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "best",
+                    "value": {
+                      "kind": "local",
+                      "name": "pos"
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "bestScore",
+                    "value": {
+                      "kind": "local",
+                      "name": "score"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "local",
+              "name": "best"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "rules",
+      "export": true,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "input",
+          "type": {
+            "ref": "RuleInput"
+          }
+        }
+      ],
+      "returns": {
+        "ref": "RuleOutput"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "let",
+            "name": "board",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "param",
+                "name": "input"
+              },
+              "name": "board"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "player",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "param",
+                "name": "input"
+              },
+              "name": "player"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "move",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "param",
+                "name": "input"
+              },
+              "name": "action"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "actual",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": -1
+            }
+          },
+          {
+            "kind": "let",
+            "name": "applied",
+            "type": "boolean",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": false
+            }
+          },
+          {
+            "kind": "let",
+            "name": "pass",
+            "type": "boolean",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": false
+            }
+          },
+          {
+            "kind": "const",
+            "name": "current",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "legalMoves",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "board"
+                },
+                {
+                  "kind": "local",
+                  "name": "player"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "other",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "legalMoves",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "board"
+                },
+                {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 3
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "player"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "finished",
+            "type": "boolean",
+            "value": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "length",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "current"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "length",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "other"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "unary",
+                "op": "not",
+                "operand": {
+                  "kind": "local",
+                  "name": "finished"
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "local",
+                  "name": "move"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -2
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "move",
+                "value": {
+                  "kind": "call",
+                  "callee": "chooseAI",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "player"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "unary",
+                  "op": "not",
+                  "operand": {
+                    "kind": "local",
+                    "name": "finished"
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": ">=",
+                  "left": {
+                    "kind": "local",
+                    "name": "move"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                }
+              },
+              "right": {
+                "kind": "call",
+                "callee": "legalAt",
+                "typeArguments": [],
+                "arguments": [
+                  {
+                    "kind": "local",
+                    "name": "board"
+                  },
+                  {
+                    "kind": "local",
+                    "name": "player"
+                  },
+                  {
+                    "kind": "local",
+                    "name": "move"
+                  }
+                ]
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "board",
+                "value": {
+                  "kind": "call",
+                  "callee": "play",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "player"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "move"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "player",
+                "value": {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 3
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "player"
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "actual",
+                "value": {
+                  "kind": "local",
+                  "name": "move"
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "applied",
+                "value": {
+                  "kind": "literal",
+                  "type": "boolean",
+                  "value": true
+                }
+              }
+            ],
+            "else": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
+                      "kind": "unary",
+                      "op": "not",
+                      "operand": {
+                        "kind": "local",
+                        "name": "finished"
+                      }
+                    },
+                    "right": {
+                      "kind": "binary",
+                      "op": "===",
+                      "left": {
+                        "kind": "local",
+                        "name": "move"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": -1
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "length",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "current"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "player",
+                    "value": {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 3
+                      },
+                      "right": {
+                        "kind": "local",
+                        "name": "player"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "pass",
+                    "value": {
+                      "kind": "literal",
+                      "type": "boolean",
+                      "value": true
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ]
+          },
+          {
+            "kind": "const",
+            "name": "legal",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "legalMoves",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "board"
+                },
+                {
+                  "kind": "local",
+                  "name": "player"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "opponent",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "legalMoves",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "board"
+                },
+                {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 3
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "player"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "const",
+            "name": "over",
+            "type": "boolean",
+            "value": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "length",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "legal"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "intrinsic",
+                  "name": "length",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "opponent"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            }
+          },
+          {
+            "kind": "let",
+            "name": "black",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "white",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "body": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "intrinsic",
+                    "name": "at",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "board"
+                      },
+                      {
+                        "kind": "local",
+                        "name": "i"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "black",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "black"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 1
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "intrinsic",
+                    "name": "at",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "board"
+                      },
+                      {
+                        "kind": "local",
+                        "name": "i"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 2
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "white",
+                    "value": {
+                      "kind": "binary",
+                      "op": "+",
+                      "left": {
+                        "kind": "local",
+                        "name": "white"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 1
+                      }
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "let",
+            "name": "winner",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "local",
+              "name": "over"
+            },
+            "then": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": ">",
+                  "left": {
+                    "kind": "local",
+                    "name": "black"
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "white"
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "winner",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": ">",
+                  "left": {
+                    "kind": "local",
+                    "name": "white"
+                  },
+                  "right": {
+                    "kind": "local",
+                    "name": "black"
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "winner",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 2
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "record",
+              "type": "RuleOutput",
+              "typeArguments": [],
+              "fields": [
+                {
+                  "name": "board",
+                  "value": {
+                    "kind": "local",
+                    "name": "board"
+                  }
+                },
+                {
+                  "name": "player",
+                  "value": {
+                    "kind": "local",
+                    "name": "player"
+                  }
+                },
+                {
+                  "name": "legal",
+                  "value": {
+                    "kind": "local",
+                    "name": "legal"
+                  }
+                },
+                {
+                  "name": "over",
+                  "value": {
+                    "kind": "local",
+                    "name": "over"
+                  }
+                },
+                {
+                  "name": "winner",
+                  "value": {
+                    "kind": "local",
+                    "name": "winner"
+                  }
+                },
+                {
+                  "name": "black",
+                  "value": {
+                    "kind": "local",
+                    "name": "black"
+                  }
+                },
+                {
+                  "name": "white",
+                  "value": {
+                    "kind": "local",
+                    "name": "white"
+                  }
+                },
+                {
+                  "name": "actual",
+                  "value": {
+                    "kind": "local",
+                    "name": "actual"
+                  }
+                },
+                {
+                  "name": "applied",
+                  "value": {
+                    "kind": "local",
+                    "name": "applied"
+                  }
+                },
+                {
+                  "name": "pass",
+                  "value": {
+                    "kind": "local",
+                    "name": "pass"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "initialState",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [],
+      "returns": {
+        "ref": "State"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "let",
+            "name": "board",
+            "type": {
+              "list": "i32"
+            },
+            "value": {
+              "kind": "list",
+              "elementType": "i32",
+              "elements": []
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "stone",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "body": [
+              {
+                "kind": "assign",
+                "name": "stone",
+                "value": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "i"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 27
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "i"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 36
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "stone",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 2
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "i"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 28
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "i"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 35
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "stone",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 1
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "board",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "append",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "board"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "stone"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "record",
+              "type": "State",
+              "typeArguments": [],
+              "fields": [
+                {
+                  "name": "board",
+                  "value": {
+                    "kind": "local",
+                    "name": "board"
+                  }
+                },
+                {
+                  "name": "player",
+                  "value": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                {
+                  "name": "last",
+                  "value": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": -1
+                  }
+                },
+                {
+                  "name": "passed",
+                  "value": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                },
+                {
+                  "name": "history",
+                  "value": {
+                    "kind": "list",
+                    "elementType": {
+                      "ref": "Snapshot"
+                    },
+                    "elements": []
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "validBoard",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "board",
+          "type": {
+            "list": "i32"
+          }
+        }
+      ],
+      "returns": "boolean",
+      "body": {
+        "statements": [
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "!==",
+              "left": {
+                "kind": "intrinsic",
+                "name": "length",
+                "typeArguments": [],
+                "arguments": [
+                  {
+                    "kind": "param",
+                    "name": "board"
+                  }
+                ]
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "literal",
+                  "type": "boolean",
+                  "value": false
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "body": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "binary",
+                    "op": "<",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "local",
+                          "name": "i"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": ">",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "param",
+                          "name": "board"
+                        },
+                        {
+                          "kind": "local",
+                          "name": "i"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 2
+                    }
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "literal",
+                      "type": "boolean",
+                      "value": false
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "snapshot",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "state",
+          "type": {
+            "ref": "State"
+          }
+        }
+      ],
+      "returns": {
+        "ref": "Snapshot"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "return",
+            "value": {
+              "kind": "record",
+              "type": "Snapshot",
+              "typeArguments": [],
+              "fields": [
+                {
+                  "name": "board",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "param",
+                      "name": "state"
+                    },
+                    "name": "board"
+                  }
+                },
+                {
+                  "name": "player",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "param",
+                      "name": "state"
+                    },
+                    "name": "player"
+                  }
+                },
+                {
+                  "name": "last",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "param",
+                      "name": "state"
+                    },
+                    "name": "last"
+                  }
+                },
+                {
+                  "name": "passed",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "param",
+                      "name": "state"
+                    },
+                    "name": "passed"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "view",
+      "export": false,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "state",
+          "type": {
+            "ref": "State"
+          }
+        }
+      ],
+      "returns": {
+        "ref": "Output"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "const",
+            "name": "result",
+            "type": {
+              "ref": "RuleOutput"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "rules",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "record",
+                  "type": "RuleInput",
+                  "typeArguments": [],
+                  "fields": [
+                    {
+                      "name": "board",
+                      "value": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "param",
+                          "name": "state"
+                        },
+                        "name": "board"
+                      }
+                    },
+                    {
+                      "name": "player",
+                      "value": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "param",
+                          "name": "state"
+                        },
+                        "name": "player"
+                      }
+                    },
+                    {
+                      "name": "action",
+                      "value": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": -99
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "let",
+            "name": "pending",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": -99
+            }
+          },
+          {
+            "kind": "let",
+            "name": "status",
+            "type": "string",
+            "value": {
+              "kind": "literal",
+              "type": "string",
+              "value": "あなたの番です"
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "result"
+              },
+              "name": "over"
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "status",
+                "value": {
+                  "kind": "literal",
+                  "type": "string",
+                  "value": "引き分けです"
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "winner"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "status",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "黒（あなた）の勝ちです"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "winner"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 2
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "status",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "白（コンピューター）の勝ちです"
+                    }
+                  }
+                ],
+                "else": []
+              }
+            ],
+            "else": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "intrinsic",
+                    "name": "length",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "field",
+                        "base": {
+                          "kind": "local",
+                          "name": "result"
+                        },
+                        "name": "legal"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "pending",
+                    "value": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": -1
+                    }
+                  },
+                  {
+                    "kind": "assign",
+                    "name": "status",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "置ける場所がないためパスします"
+                    }
+                  }
+                ],
+                "else": [
+                  {
+                    "kind": "if",
+                    "condition": {
+                      "kind": "binary",
+                      "op": "===",
+                      "left": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "param",
+                          "name": "state"
+                        },
+                        "name": "player"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 2
+                      }
+                    },
+                    "then": [
+                      {
+                        "kind": "assign",
+                        "name": "pending",
+                        "value": {
+                          "kind": "literal",
+                          "type": "i32",
+                          "value": -2
+                        }
+                      },
+                      {
+                        "kind": "assign",
+                        "name": "status",
+                        "value": {
+                          "kind": "literal",
+                          "type": "string",
+                          "value": "コンピューターの番です"
+                        }
+                      }
+                    ],
+                    "else": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "===",
+              "left": {
+                "kind": "field",
+                "base": {
+                  "kind": "param",
+                  "name": "state"
+                },
+                "name": "passed"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 1
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "status",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "concat",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "黒は置けないためパスしました。"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "status"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "===",
+              "left": {
+                "kind": "field",
+                "base": {
+                  "kind": "param",
+                  "name": "state"
+                },
+                "name": "passed"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 2
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "status",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "concat",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "白は置けないためパスしました。"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "status"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "let",
+            "name": "cells",
+            "type": {
+              "list": {
+                "ref": "Cell"
+              }
+            },
+            "value": {
+              "kind": "list",
+              "elementType": {
+                "ref": "Cell"
+              },
+              "elements": []
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "stone",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "canPlay",
+            "type": "boolean",
+            "value": {
+              "kind": "literal",
+              "type": "boolean",
+              "value": false
+            }
+          },
+          {
+            "kind": "let",
+            "name": "label",
+            "type": "string",
+            "value": {
+              "kind": "literal",
+              "type": "string",
+              "value": "空き"
+            }
+          },
+          {
+            "kind": "while",
+            "condition": {
+              "kind": "binary",
+              "op": "<",
+              "left": {
+                "kind": "local",
+                "name": "i"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": 64
+              }
+            },
+            "body": [
+              {
+                "kind": "assign",
+                "name": "stone",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "at",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "field",
+                      "base": {
+                        "kind": "param",
+                        "name": "state"
+                      },
+                      "name": "board"
+                    },
+                    {
+                      "kind": "local",
+                      "name": "i"
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "canPlay",
+                "value": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
+                      "kind": "unary",
+                      "op": "not",
+                      "operand": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "local",
+                          "name": "result"
+                        },
+                        "name": "over"
+                      }
+                    },
+                    "right": {
+                      "kind": "binary",
+                      "op": "===",
+                      "left": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "param",
+                          "name": "state"
+                        },
+                        "name": "player"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 1
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "call",
+                    "callee": "legalAt",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "field",
+                        "base": {
+                          "kind": "param",
+                          "name": "state"
+                        },
+                        "name": "board"
+                      },
+                      {
+                        "kind": "literal",
+                        "type": "i32",
+                        "value": 1
+                      },
+                      {
+                        "kind": "local",
+                        "name": "i"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "label",
+                "value": {
+                  "kind": "literal",
+                  "type": "string",
+                  "value": "空き"
+                }
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "local",
+                    "name": "stone"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "label",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "黒"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "local",
+                    "name": "stone"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 2
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "label",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "白"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "local",
+                  "name": "canPlay"
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "label",
+                    "value": {
+                      "kind": "literal",
+                      "type": "string",
+                      "value": "置けます"
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "assign",
+                "name": "cells",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "append",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "cells"
+                    },
+                    {
+                      "kind": "record",
+                      "type": "Cell",
+                      "typeArguments": [],
+                      "fields": [
+                        {
+                          "name": "stone",
+                          "value": {
+                            "kind": "local",
+                            "name": "stone"
+                          }
+                        },
+                        {
+                          "name": "enabled",
+                          "value": {
+                            "kind": "local",
+                            "name": "canPlay"
+                          }
+                        },
+                        {
+                          "name": "last",
+                          "value": {
+                            "kind": "binary",
+                            "op": "===",
+                            "left": {
+                              "kind": "local",
+                              "name": "i"
+                            },
+                            "right": {
+                              "kind": "field",
+                              "base": {
+                                "kind": "param",
+                                "name": "state"
+                              },
+                              "name": "last"
+                            }
+                          }
+                        },
+                        {
+                          "name": "label",
+                          "value": {
+                            "kind": "local",
+                            "name": "label"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "i",
+                "value": {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "local",
+                    "name": "i"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "record",
+              "type": "Output",
+              "typeArguments": [],
+              "fields": [
+                {
+                  "name": "state",
+                  "value": {
+                    "kind": "param",
+                    "name": "state"
+                  }
+                },
+                {
+                  "name": "cells",
+                  "value": {
+                    "kind": "local",
+                    "name": "cells"
+                  }
+                },
+                {
+                  "name": "black",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "black"
+                  }
+                },
+                {
+                  "name": "white",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "white"
+                  }
+                },
+                {
+                  "name": "over",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "over"
+                  }
+                },
+                {
+                  "name": "winner",
+                  "value": {
+                    "kind": "field",
+                    "base": {
+                      "kind": "local",
+                      "name": "result"
+                    },
+                    "name": "winner"
+                  }
+                },
+                {
+                  "name": "canUndo",
+                  "value": {
+                    "kind": "binary",
+                    "op": ">",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "length",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "field",
+                          "base": {
+                            "kind": "param",
+                            "name": "state"
+                          },
+                          "name": "history"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  }
+                },
+                {
+                  "name": "pendingAction",
+                  "value": {
+                    "kind": "local",
+                    "name": "pending"
+                  }
+                },
+                {
+                  "name": "status",
+                  "value": {
+                    "kind": "local",
+                    "name": "status"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "evaluate",
+      "export": true,
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "input",
+          "type": {
+            "ref": "Input"
+          }
+        }
+      ],
+      "returns": {
+        "ref": "Output"
+      },
+      "body": {
+        "statements": [
+          {
+            "kind": "let",
+            "name": "state",
+            "type": {
+              "ref": "State"
+            },
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "param",
+                "name": "input"
+              },
+              "name": "state"
+            }
+          },
+          {
+            "kind": "const",
+            "name": "action",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "param",
+                "name": "input"
+              },
+              "name": "action"
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "binary",
+                "op": "===",
+                "left": {
+                  "kind": "local",
+                  "name": "action"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": -4
+                }
+              },
+              "right": {
+                "kind": "unary",
+                "op": "not",
+                "operand": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "&&",
+                    "left": {
+                      "kind": "call",
+                      "callee": "validBoard",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "field",
+                          "base": {
+                            "kind": "local",
+                            "name": "state"
+                          },
+                          "name": "board"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "binary",
+                      "op": "||",
+                      "left": {
+                        "kind": "binary",
+                        "op": "===",
+                        "left": {
+                          "kind": "field",
+                          "base": {
+                            "kind": "local",
+                            "name": "state"
+                          },
+                          "name": "player"
+                        },
+                        "right": {
+                          "kind": "literal",
+                          "type": "i32",
+                          "value": 1
+                        }
+                      },
+                      "right": {
+                        "kind": "binary",
+                        "op": "===",
+                        "left": {
+                          "kind": "field",
+                          "base": {
+                            "kind": "local",
+                            "name": "state"
+                          },
+                          "name": "player"
+                        },
+                        "right": {
+                          "kind": "literal",
+                          "type": "i32",
+                          "value": 2
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "<=",
+                    "left": {
+                      "kind": "intrinsic",
+                      "name": "length",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "field",
+                          "base": {
+                            "kind": "local",
+                            "name": "state"
+                          },
+                          "name": "history"
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 60
+                    }
+                  }
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "call",
+                  "callee": "view",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "call",
+                      "callee": "initialState",
+                      "typeArguments": [],
+                      "arguments": []
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "let",
+            "name": "history",
+            "type": {
+              "list": {
+                "ref": "Snapshot"
+              }
+            },
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "state"
+              },
+              "name": "history"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "last",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "state"
+              },
+              "name": "last"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "passed",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "state"
+              },
+              "name": "passed"
+            }
+          },
+          {
+            "kind": "const",
+            "name": "oldPlayer",
+            "type": "i32",
+            "value": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "state"
+              },
+              "name": "player"
+            }
+          },
+          {
+            "kind": "let",
+            "name": "saved",
+            "type": {
+              "list": {
+                "ref": "Snapshot"
+              }
+            },
+            "value": {
+              "kind": "list",
+              "elementType": {
+                "ref": "Snapshot"
+              },
+              "elements": []
+            }
+          },
+          {
+            "kind": "let",
+            "name": "i",
+            "type": "i32",
+            "value": {
+              "kind": "literal",
+              "type": "i32",
+              "value": 0
+            }
+          },
+          {
+            "kind": "let",
+            "name": "previous",
+            "type": {
+              "ref": "Snapshot"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "snapshot",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "local",
+                  "name": "state"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "===",
+              "left": {
+                "kind": "local",
+                "name": "action"
+              },
+              "right": {
+                "kind": "literal",
+                "type": "i32",
+                "value": -3
+              }
+            },
+            "then": [
+              {
+                "kind": "if",
+                "condition": {
+                  "kind": "binary",
+                  "op": ">",
+                  "left": {
+                    "kind": "intrinsic",
+                    "name": "length",
+                    "typeArguments": [],
+                    "arguments": [
+                      {
+                        "kind": "local",
+                        "name": "history"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 0
+                  }
+                },
+                "then": [
+                  {
+                    "kind": "assign",
+                    "name": "previous",
+                    "value": {
+                      "kind": "intrinsic",
+                      "name": "at",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "history"
+                        },
+                        {
+                          "kind": "binary",
+                          "op": "-",
+                          "left": {
+                            "kind": "intrinsic",
+                            "name": "length",
+                            "typeArguments": [],
+                            "arguments": [
+                              {
+                                "kind": "local",
+                                "name": "history"
+                              }
+                            ]
+                          },
+                          "right": {
+                            "kind": "literal",
+                            "type": "i32",
+                            "value": 1
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "while",
+                    "condition": {
+                      "kind": "binary",
+                      "op": "<",
+                      "left": {
+                        "kind": "local",
+                        "name": "i"
+                      },
+                      "right": {
+                        "kind": "binary",
+                        "op": "-",
+                        "left": {
+                          "kind": "intrinsic",
+                          "name": "length",
+                          "typeArguments": [],
+                          "arguments": [
+                            {
+                              "kind": "local",
+                              "name": "history"
+                            }
+                          ]
+                        },
+                        "right": {
+                          "kind": "literal",
+                          "type": "i32",
+                          "value": 1
+                        }
+                      }
+                    },
+                    "body": [
+                      {
+                        "kind": "assign",
+                        "name": "saved",
+                        "value": {
+                          "kind": "intrinsic",
+                          "name": "append",
+                          "typeArguments": [],
+                          "arguments": [
+                            {
+                              "kind": "local",
+                              "name": "saved"
+                            },
+                            {
+                              "kind": "intrinsic",
+                              "name": "at",
+                              "typeArguments": [],
+                              "arguments": [
+                                {
+                                  "kind": "local",
+                                  "name": "history"
+                                },
+                                {
+                                  "kind": "local",
+                                  "name": "i"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "kind": "assign",
+                        "name": "i",
+                        "value": {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "local",
+                            "name": "i"
+                          },
+                          "right": {
+                            "kind": "literal",
+                            "type": "i32",
+                            "value": 1
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "return",
+                    "value": {
+                      "kind": "call",
+                      "callee": "view",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "record",
+                          "type": "State",
+                          "typeArguments": [],
+                          "fields": [
+                            {
+                              "name": "board",
+                              "value": {
+                                "kind": "field",
+                                "base": {
+                                  "kind": "local",
+                                  "name": "previous"
+                                },
+                                "name": "board"
+                              }
+                            },
+                            {
+                              "name": "player",
+                              "value": {
+                                "kind": "field",
+                                "base": {
+                                  "kind": "local",
+                                  "name": "previous"
+                                },
+                                "name": "player"
+                              }
+                            },
+                            {
+                              "name": "last",
+                              "value": {
+                                "kind": "field",
+                                "base": {
+                                  "kind": "local",
+                                  "name": "previous"
+                                },
+                                "name": "last"
+                              }
+                            },
+                            {
+                              "name": "passed",
+                              "value": {
+                                "kind": "field",
+                                "base": {
+                                  "kind": "local",
+                                  "name": "previous"
+                                },
+                                "name": "passed"
+                              }
+                            },
+                            {
+                              "name": "history",
+                              "value": {
+                                "kind": "local",
+                                "name": "saved"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "else": []
+              },
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "call",
+                  "callee": "view",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "state"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "const",
+            "name": "allowed",
+            "type": "boolean",
+            "value": {
+              "kind": "binary",
+              "op": "||",
+              "left": {
+                "kind": "binary",
+                "op": "||",
+                "left": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "local",
+                    "name": "action"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": -1
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "action"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": -2
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "===",
+                    "left": {
+                      "kind": "local",
+                      "name": "oldPlayer"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 2
+                    }
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "binary",
+                  "op": "&&",
+                  "left": {
+                    "kind": "binary",
+                    "op": ">=",
+                    "left": {
+                      "kind": "local",
+                      "name": "action"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 0
+                    }
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "op": "<",
+                    "left": {
+                      "kind": "local",
+                      "name": "action"
+                    },
+                    "right": {
+                      "kind": "literal",
+                      "type": "i32",
+                      "value": 64
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "===",
+                  "left": {
+                    "kind": "local",
+                    "name": "oldPlayer"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "type": "i32",
+                    "value": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "unary",
+              "op": "not",
+              "operand": {
+                "kind": "local",
+                "name": "allowed"
+              }
+            },
+            "then": [
+              {
+                "kind": "return",
+                "value": {
+                  "kind": "call",
+                  "callee": "view",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "state"
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "const",
+            "name": "result",
+            "type": {
+              "ref": "RuleOutput"
+            },
+            "value": {
+              "kind": "call",
+              "callee": "rules",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "record",
+                  "type": "RuleInput",
+                  "typeArguments": [],
+                  "fields": [
+                    {
+                      "name": "board",
+                      "value": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "local",
+                          "name": "state"
+                        },
+                        "name": "board"
+                      }
+                    },
+                    {
+                      "name": "player",
+                      "value": {
+                        "kind": "local",
+                        "name": "oldPlayer"
+                      }
+                    },
+                    {
+                      "name": "action",
+                      "value": {
+                        "kind": "local",
+                        "name": "action"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "field",
+                "base": {
+                  "kind": "local",
+                  "name": "result"
+                },
+                "name": "applied"
+              },
+              "right": {
+                "kind": "binary",
+                "op": ">=",
+                "left": {
+                  "kind": "local",
+                  "name": "action"
+                },
+                "right": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "history",
+                "value": {
+                  "kind": "intrinsic",
+                  "name": "append",
+                  "typeArguments": [],
+                  "arguments": [
+                    {
+                      "kind": "local",
+                      "name": "history"
+                    },
+                    {
+                      "kind": "call",
+                      "callee": "snapshot",
+                      "typeArguments": [],
+                      "arguments": [
+                        {
+                          "kind": "local",
+                          "name": "state"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "assign",
+                "name": "passed",
+                "value": {
+                  "kind": "literal",
+                  "type": "i32",
+                  "value": 0
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "result"
+              },
+              "name": "applied"
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "last",
+                "value": {
+                  "kind": "field",
+                  "base": {
+                    "kind": "local",
+                    "name": "result"
+                  },
+                  "name": "actual"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "if",
+            "condition": {
+              "kind": "field",
+              "base": {
+                "kind": "local",
+                "name": "result"
+              },
+              "name": "pass"
+            },
+            "then": [
+              {
+                "kind": "assign",
+                "name": "passed",
+                "value": {
+                  "kind": "local",
+                  "name": "oldPlayer"
+                }
+              }
+            ],
+            "else": []
+          },
+          {
+            "kind": "return",
+            "value": {
+              "kind": "call",
+              "callee": "view",
+              "typeArguments": [],
+              "arguments": [
+                {
+                  "kind": "record",
+                  "type": "State",
+                  "typeArguments": [],
+                  "fields": [
+                    {
+                      "name": "board",
+                      "value": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "local",
+                          "name": "result"
+                        },
+                        "name": "board"
+                      }
+                    },
+                    {
+                      "name": "player",
+                      "value": {
+                        "kind": "field",
+                        "base": {
+                          "kind": "local",
+                          "name": "result"
+                        },
+                        "name": "player"
+                      }
+                    },
+                    {
+                      "name": "last",
+                      "value": {
+                        "kind": "local",
+                        "name": "last"
+                      }
+                    },
+                    {
+                      "name": "passed",
+                      "value": {
+                        "kind": "local",
+                        "name": "passed"
+                      }
+                    },
+                    {
+                      "name": "history",
+                      "value": {
+                        "kind": "local",
+                        "name": "history"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

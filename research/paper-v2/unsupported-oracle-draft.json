@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "taskId": "unsupported",
+  "origin": "requirements-and-contract; AI-revised-2026-09-29; human-review-pending",
+  "review": "unreviewed",
+  "cases": [
+    {
+      "id": "matching",
+      "input": {
+        "email": "a@example.com"
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "other",
+      "input": {
+        "email": "a@other.com"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "different-local",
+      "input": {
+        "email": "other@example.com"
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "empty",
+      "input": {
+        "email": ""
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "trailing-text",
+      "input": {
+        "email": "a@example.com.extra"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "subdomain",
+      "input": {
+        "email": "a@sub.example.com"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "empty-local",
+      "input": {
+        "email": "@example.com"
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "uppercase-domain",
+      "input": {
+        "email": "a@EXAMPLE.COM"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "missing",
+      "input": {},
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null",
+      "input": {
+        "email": null
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number",
+      "input": {
+        "email": 1
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "unknown-field",
+      "input": {
+        "email": "a@example.com",
+        "extra": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    }
+  ]
+}

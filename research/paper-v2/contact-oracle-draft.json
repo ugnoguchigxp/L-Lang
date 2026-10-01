@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "taskId": "contact",
+  "origin": "requirements-and-contract; AI-revised-2026-09-29; human-review-pending",
+  "review": "unreviewed",
+  "cases": [
+    {
+      "id": "basic-missing",
+      "input": {
+        "tier": "basic"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "basic-null",
+      "input": {
+        "tier": "basic",
+        "email": null
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "basic-empty",
+      "input": {
+        "tier": "basic",
+        "email": ""
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "basic-text",
+      "input": {
+        "tier": "basic",
+        "email": "x"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "premium-missing",
+      "input": {
+        "tier": "premium"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "premium-null",
+      "input": {
+        "tier": "premium",
+        "email": null
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "premium-empty",
+      "input": {
+        "tier": "premium",
+        "email": ""
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "premium-text",
+      "input": {
+        "tier": "premium",
+        "email": "x"
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "email-number",
+      "input": {
+        "email": 1,
+        "tier": "premium"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "email-boolean",
+      "input": {
+        "email": true,
+        "tier": "premium"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "missing-tier",
+      "input": {
+        "email": "x"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null-tier",
+      "input": {
+        "email": "x",
+        "tier": null
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number-tier",
+      "input": {
+        "email": "x",
+        "tier": 1
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "unknown-tier",
+      "input": {
+        "email": "x",
+        "tier": "vip"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "unknown-field",
+      "input": {
+        "email": "x",
+        "tier": "premium",
+        "extra": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    }
+  ]
+}

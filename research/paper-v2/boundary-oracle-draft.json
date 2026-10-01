@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "taskId": "boundary",
+  "origin": "requirements-and-contract; AI-revised-2026-09-29; human-review-pending",
+  "review": "unreviewed",
+  "cases": [
+    {
+      "id": "high",
+      "input": {
+        "level": "high"
+      },
+      "expected": {
+        "kind": "value",
+        "value": true
+      }
+    },
+    {
+      "id": "medium",
+      "input": {
+        "level": "medium"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "low",
+      "input": {
+        "level": "low"
+      },
+      "expected": {
+        "kind": "value",
+        "value": false
+      }
+    },
+    {
+      "id": "outside-enum",
+      "input": {
+        "level": "critical"
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "missing",
+      "input": {},
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "null",
+      "input": {
+        "level": null
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "number",
+      "input": {
+        "level": 1
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "boolean",
+      "input": {
+        "level": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    },
+    {
+      "id": "unknown-field",
+      "input": {
+        "level": "high",
+        "extra": true
+      },
+      "expected": {
+        "kind": "error",
+        "code": "INVALID_INPUT"
+      }
+    }
+  ]
+}

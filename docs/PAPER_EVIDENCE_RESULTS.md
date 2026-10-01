@@ -155,3 +155,15 @@ P7-01〜18と既存runner・report・bundle回帰を含む対象7ファイルは
 inventory、再現、Oracle評価、study入力とrun、Oracle sidecar、report、process間lock、bundle、独立review記録の作成・検証経路を再点検した。第1弾の`saveInventory`で、出力先の親が入力root内を指すsymbolic linkの場合に、字面上のpath比較を通過する欠陥を修正した。親pathの未作成部分を含めて実際の解決先を求め、入力root内なら出力ディレクトリを作る前に拒否する。既存の親と未作成の親の両方を回帰試験に追加した。研究入力・Oracle・既存runは変更していない。
 
 修正後の`paper-evidence.test.ts`は3 pass、0 fail。`format:check`、`lint`、`typecheck`は通過し、`coverage`は全13 shardを0 failで完了した。`check`も単独実行で全13 shardを0 failで完了したが、結果表示用のシェルラッパーがzshの読取り専用変数`status`へ代入したため、ラッパーの終了値は1だった。試験ログに失敗はない。並行実行した初回の`check`では、共有作業領域を監査する別の統合試験がcoverageと干渉して失敗したため、単独で再実行した。残る人手のreview・live承認・第三者再現は上記の研究条件のままであり、今回のコードレビューによって充足したとは扱わない。
+
+## 課題・OracleのAIレビュー（2026-09-29）
+
+[レビュー報告](../research/paper-v1/reviews/2026-09-29-ai/REVIEW.md)、対象hash付きの監査結果とreview-recordを保存した。現行4課題のOracle 13 caseは要求から直接記述した参照式と一致したが、logicの真理値表は4/8、contactの空文字列・null等、boundaryの契約拒否ケース、unsupportedの未解決期待の扱いに不足を認めた。研究入力は変更せず、報告内に修正案を示した。verify-study-reviewの結果はchanges-requested、終了値1である。
+
+同じ会話で計画・文書作成に関与したCodexのAIレビューであり、独立した人間のレビューではない。reviewerはcodex-current-thread-ai、independent=false、未確認のauthorはnullとした。生成candidate・fixture結果を期待値の根拠にせず、モデル呼出し・Wasm実行は行っていない。実際の独立review、入力修正版の確定、freeze・承認は未了である。
+
+## AIレビュー指摘の反映：評価入力v2（2026-09-29）
+
+[修正版study](../research/paper-v2/study-draft.json)と[人間向けレビュー手順](../research/paper-v2/README.md)、[全case確認表](../research/paper-v2/REVIEW_WORKSHEET.md)を追加した。v1と既存run/bundleは保持。Oracleはlogic 21、contact 15、boundary 9、unsupported 12の計57件に拡充し、要求からの参照式と独立したJSON契約検査で全期待値の一致を確認した。誤式2種への反例も確認した。boundaryはカテゴリ一致、unsupportedはliteral suffixと期待生成状態unresolvedを明記した。
+
+初回fixtureではboundaryの旧suite sourceRevisionが拒否され、記録を保持した。v2の合成fixtureだけsourceRevisionを更新後、artifacts/paper-v2-revision/fixture-finalは生成pass 3/unresolved 1、Oracle pass 3/not-run 1。採点されたOracleは45件で、unsupportedの12件は未実行。report-finalとreview-finalを生成し、未記入の人間用templateを研究directoryへ保存した。全てdraft/unreviewedで、live呼出しは0。明示undefinedと欠損のhost encoding一致はJSON Oracleとは別に確認した。文書チェックは成功。製品コード変更はなく、全体test/coverageは今回再実行していない。

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "seed": 20261001,
+  "cases": 64,
+  "maxGeneratedNodes": 1024,
+  "maxShrinkSteps": 128,
+  "domains": [
+    {
+      "path": [
+        "deletedAt"
+      ],
+      "values": [
+        "",
+        "synthetic-deletion"
+      ]
+    },
+    {
+      "path": [
+        "email"
+      ],
+      "values": [
+        "",
+        "synthetic@example.invalid"
+      ]
+    }
+  ],
+  "expected": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "equals",
+        "property": [
+          "status"
+        ],
+        "value": "active"
+      },
+      {
+        "kind": "equals",
+        "property": [
+          "deletedAt"
+        ],
+        "value": null
+      },
+      {
+        "kind": "present",
+        "property": [
+          "email"
+        ]
+      }
+    ]
+  }
+}

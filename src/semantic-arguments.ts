@@ -19,6 +19,9 @@ export type SemanticCommand = (typeof semanticCommands)[number];
 export type SemanticArguments = {
   command: SemanticCommand;
   target: string;
+  bestOfNPath?: string;
+  propertyReportPath?: string;
+  candidateFixturesPath?: string;
   fixturePath?: string;
   testFixturePath?: string;
   reviewer?: string;
@@ -29,6 +32,9 @@ export type SemanticArguments = {
 };
 
 type OptionName =
+  | "--property-report"
+  | "--best-of-n"
+  | "--candidate-fixtures"
   | "--fixture"
   | "--test-fixture"
   | "--reviewer"
@@ -40,6 +46,9 @@ type OptionName =
 type OptionKind = "flag" | "value";
 
 const optionKinds: Record<OptionName, OptionKind> = {
+  "--property-report": "value",
+  "--best-of-n": "value",
+  "--candidate-fixtures": "value",
   "--fixture": "value",
   "--test-fixture": "value",
   "--reviewer": "value",
@@ -58,8 +67,13 @@ const allowedOptions: Record<SemanticCommand, readonly OptionName[]> = {
   approve: ["--reviewer"],
   explain: ["--json"],
   closure: ["--json"],
-  verify: ["--json"],
-  "tdd-build": ["--fixture", "--test-fixture"],
+  verify: ["--json", "--property-report"],
+  "tdd-build": [
+    "--fixture",
+    "--test-fixture",
+    "--best-of-n",
+    "--candidate-fixtures",
+  ],
   "tdd-plan": ["--test-fixture"],
   "tdd-replay": [],
   "tdd-test": ["--json"],
@@ -110,7 +124,16 @@ export function parseSemanticArguments(
     index += 1;
   }
 
+  const propertyReportPath = optionValue(values, "--property-report");
+  const bestOfNPath = optionValue(values, "--best-of-n");
+  const candidateFixturesPath = optionValue(values, "--candidate-fixtures");
   const fixturePath = optionValue(values, "--fixture");
+  if (candidateFixturesPath !== undefined && bestOfNPath === undefined)
+    throw new Error("--candidate-fixtures requires --best-of-n");
+  if (candidateFixturesPath !== undefined && fixturePath !== undefined)
+    throw new Error(
+      "--candidate-fixtures and --fixture are mutually exclusive",
+    );
   const testFixturePath = optionValue(values, "--test-fixture");
   const reviewer = optionValue(values, "--reviewer");
   const samples = integerOption(values, "--samples");
@@ -143,6 +166,8 @@ export function parseSemanticArguments(
   }
 
   return {
+    ...(bestOfNPath === undefined ? {} : { bestOfNPath }),
+    ...(candidateFixturesPath === undefined ? {} : { candidateFixturesPath }),
     command: rawCommand,
     target,
     ...(fixturePath === undefined ? {} : { fixturePath }),
@@ -150,6 +175,7 @@ export function parseSemanticArguments(
     ...(reviewer === undefined ? {} : { reviewer }),
     review: values.has("--review"),
     json: values.has("--json"),
+    ...(propertyReportPath === undefined ? {} : { propertyReportPath }),
     ...(samples === undefined ? {} : { samples }),
     ...(quorum === undefined ? {} : { quorum }),
   };

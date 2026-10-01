@@ -1,5 +1,7 @@
 # 課題とOracleのレビュー手順
 
+2026-09-29の指摘を反映した新しい評価入力は[paper-v2の手順](../paper-v2/README.md)と[確認表](../paper-v2/REVIEW_WORKSHEET.md)を参照する。以下はv1の手順として保持する。
+
 `review-study`は[study draft](./study-draft.json)、各source、Oracleを読み、`review.json`、`review.md`、未記入の`review-record.template.json`を未使用の出力先に保存する。生成APIは呼ばず、入力も変更しない。資料の作成はreviewや承認を意味しない。
 
 ```sh

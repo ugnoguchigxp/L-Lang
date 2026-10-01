@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "stage": "tests",
+      "reply": {
+        "result": {
+          "outcome": "generated",
+          "suiteJson": "{\"version\":1,\"sourceRevision\":\"cb3828fe99ef19ae80a6feb4d233c95ccbb5d17e7719c9fd02645ffca560bc5d\",\"cases\":[{\"id\":\"positive\",\"requirementIds\":[\"rule\"],\"input\":{\"a\":true,\"b\":false,\"c\":false},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":true}},{\"id\":\"negative\",\"requirementIds\":[\"rule\"],\"input\":{\"a\":true,\"b\":false,\"c\":true},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}}]}",
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "implementation",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "all",
+            "conditions": [
+              {
+                "kind": "equals",
+                "property": [
+                  "a"
+                ],
+                "value": true
+              },
+              {
+                "kind": "any",
+                "conditions": [
+                  {
+                    "kind": "equals",
+                    "property": [
+                      "b"
+                    ],
+                    "value": true
+                  },
+                  {
+                    "kind": "equals",
+                    "property": [
+                      "c"
+                    ],
+                    "value": true
+                  }
+                ]
+              }
+            ]
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "repair",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "all",
+            "conditions": [
+              {
+                "kind": "equals",
+                "property": [
+                  "a"
+                ],
+                "value": true
+              },
+              {
+                "kind": "any",
+                "conditions": [
+                  {
+                    "kind": "equals",
+                    "property": [
+                      "b"
+                    ],
+                    "value": true
+                  },
+                  {
+                    "kind": "not",
+                    "condition": {
+                      "kind": "equals",
+                      "property": [
+                        "c"
+                      ],
+                      "value": true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    }
+  ]
+}

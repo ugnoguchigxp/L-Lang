@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "kind": "predicate",
+  "id": "boundary",
+  "intent": "levelがhighである場合だけ許可する。数値やカテゴリの大小比較は要求しない。",
+  "requirements": [
+    {
+      "id": "high",
+      "level": "must",
+      "text": "levelがhighであること。"
+    }
+  ],
+  "unresolvedWhen": [
+    "要求自体に数値比較や契約にないカテゴリの処理が追加され、現行profileで表現できない場合。実行時の契約外入力はINVALID_INPUTとして拒否する。"
+  ],
+  "profile": "predicate-i32-v1",
+  "contract": {
+    "version": 1,
+    "fields": [
+      {
+        "name": "level",
+        "kind": "enum",
+        "values": [
+          "high",
+          "low",
+          "medium"
+        ],
+        "nullable": false,
+        "undefinable": false,
+        "optional": false
+      }
+    ]
+  },
+  "examples": [
+    {
+      "id": "high",
+      "input": {
+        "level": "high"
+      },
+      "undefinedFields": [],
+      "expected": true
+    },
+    {
+      "id": "low",
+      "input": {
+        "level": "low"
+      },
+      "undefinedFields": [],
+      "expected": false
+    }
+  ]
+}

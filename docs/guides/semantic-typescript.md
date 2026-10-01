@@ -631,3 +631,7 @@ git diff --check
 L-Langは[MIT License](../../LICENSE)で公開されています。ライセンス表示と免責条項を維持する限り、利用、複製、変更、配布、サブライセンス、販売を含めて自由に使用できます。
 
 `package.json`の`private: true`はnpmへの誤公開を防ぐための設定であり、MIT Licenseによるソースコード利用を制限するものではありません。
+
+## Semantic TDD extensions v1
+
+[限定初版の例](../../examples/semantic-tdd-extensions/README.md)にBest-of-Nとbounded property検査の実行方法・保存形式・保証境界を示します。`tdd-build --best-of-n <config.json>`で候補選択を明示指定し、property検査は`bun run semantic:property`から実行します。旧単一候補経路を維持し、独立評価と既定採用は未了です。

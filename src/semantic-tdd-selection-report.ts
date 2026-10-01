@@ -1,3 +1,7 @@
+import {
+  parseBestOfNReport,
+  type SemanticTddBestOfNReport,
+} from "./semantic-tdd-best-of-n";
 import type { PredicateExpression } from "./ir";
 import { sha256, stableJson } from "./semantic-fingerprint";
 
@@ -11,7 +15,11 @@ export type SemanticTddCandidateEvaluation = {
   irDepth: number;
 };
 
-export type SemanticTddSelectionReport = {
+export type SemanticTddSelectionReport =
+  | SemanticTddSelectionReportV1
+  | SemanticTddBestOfNReport;
+
+export type SemanticTddSelectionReportV1 = {
   version: 1;
   contractHash: string;
   testPlanHash: string;
@@ -30,7 +38,7 @@ export function createSingleCandidateSelectionReport(input: {
   hardPassed: boolean;
   mutationScore: number;
   mutationPassed: boolean;
-}): SemanticTddSelectionReport {
+}): SemanticTddSelectionReportV1 {
   const metrics = expressionMetrics(input.expression);
   const candidate: SemanticTddCandidateEvaluation = {
     id: input.candidateId,
@@ -57,6 +65,7 @@ export function parseSemanticTddSelectionReport(
   input: unknown,
 ): SemanticTddSelectionReport {
   const value = recordValue(input, "selectionReport");
+  if (value.version === 2) return parseBestOfNReport(value);
   exactKeys(
     value,
     [

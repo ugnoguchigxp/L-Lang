@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "format": "llang-paper-study-review-verification",
+  "studyId": "predicate-paper-v1",
+  "studyHash": "e960ee29d9975d7fa8a0d1dc0a32ba9e096d4f854bcd44328e116df113aa3bee",
+  "recordHash": "036025aaa154cb0ac263db289540c505bac1c0876de6c5483a5d677bf2bdab11",
+  "status": "changes-requested",
+  "tasks": [
+    {
+      "taskId": "logic",
+      "status": "changes-requested",
+      "reasons": [
+        "authors-missing",
+        "checks-failed",
+        "independence-declined"
+      ]
+    },
+    {
+      "taskId": "contact",
+      "status": "changes-requested",
+      "reasons": [
+        "authors-missing",
+        "checks-failed",
+        "independence-declined"
+      ]
+    },
+    {
+      "taskId": "boundary",
+      "status": "changes-requested",
+      "reasons": [
+        "authors-missing",
+        "checks-failed",
+        "independence-declined"
+      ]
+    },
+    {
+      "taskId": "unsupported",
+      "status": "changes-requested",
+      "reasons": [
+        "authors-missing",
+        "checks-failed",
+        "independence-declined"
+      ]
+    }
+  ],
+  "evidenceEligible": false
+}

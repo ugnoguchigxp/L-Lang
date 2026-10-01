@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "seed": 20261002,
+  "cases": 128,
+  "maxGeneratedNodes": 4096,
+  "maxShrinkSteps": 256,
+  "maxArrayLength": 4,
+  "timeoutMs": 10000,
+  "domains": [
+    {
+      "path": [
+        "noise",
+        "*"
+      ],
+      "values": [
+        "",
+        "public-synthetic"
+      ]
+    }
+  ],
+  "expected": {
+    "kind": "all",
+    "conditions": [
+      {
+        "kind": "any",
+        "conditions": [
+          {
+            "kind": "equals",
+            "property": [
+              "approved"
+            ],
+            "value": true
+          },
+          {
+            "kind": "equals",
+            "property": [
+              "verified"
+            ],
+            "value": true
+          }
+        ]
+      },
+      {
+        "kind": "equals",
+        "property": [
+          "blocked"
+        ],
+        "value": false
+      }
+    ]
+  }
+}

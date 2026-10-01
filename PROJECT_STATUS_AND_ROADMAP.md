@@ -21,6 +21,8 @@ TypeScriptとJSONCは併存する入力・実装形式で、通常のTypeScript�
 
 通常のPredicateはboolean、closed enum、nullish状態などの限定範囲。TypeScript DSLと各Wasm profileの受理範囲は同一ではない。世界時計の専用ABIを汎用Predicate言語の機能とはしない。
 
+[Semantic TDD拡張の限定初版](./examples/semantic-tdd-extensions/README.md)を追加した。明示指定のBest-of-Nと有限domainのproperty検査、全候補・反例のAPIなしreplayを提供する。config v2のbounded array・時間制限、property reportの現在地照合、凍結した新規合成比較とlive評価runnerも追加した。[残実装の結果](./docs/SEMANTIC_TDD_EXTENSIONS_COMPLETION_RESULTS.md)を参照。[Codex SDK Lunaの合成課題実評価](./docs/SEMANTIC_TDD_CODEX_LIVE_EVALUATION_RESULTS.md)は完了し、単発とBest-of-Nはともに12 / 12成功した。独立blind評価、品質改善の実証、既定採用は未了であり、[Paper v1の範囲](./docs/PAPER_V1_SCOPE.md)には含めない。
+
 ## 残っている実装・検証
 
 [仕様実装整合計画](./docs/DOCUMENTATION_AND_IMPLEMENTATION_ALIGNMENT_PLAN.md)に優先順位と完了条件を集約している。

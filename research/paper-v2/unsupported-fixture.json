@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "stage": "tests",
+      "reply": {
+        "result": {
+          "outcome": "unresolved",
+          "suiteJson": null,
+          "diagnostics": [
+            "suffix operation is outside predicate-i32-v1"
+          ]
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    }
+  ]
+}

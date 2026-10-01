@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "contractHash": "3c649dc38c52d87b179196bf863c777aebd498d962ed2d3a054184711b90610f",
+  "obligations": [
+    {
+      "id": "visible-0",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": false,
+        "verified": false,
+        "blocked": false,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-1",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": false,
+        "verified": false,
+        "blocked": true,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-2",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": false,
+        "verified": true,
+        "blocked": false,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-3",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": false,
+        "verified": true,
+        "blocked": true,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-4",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": true,
+        "verified": false,
+        "blocked": false,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-5",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": true,
+        "verified": false,
+        "blocked": true,
+        "noise": []
+      },
+      "expected": false
+    },
+    {
+      "id": "visible-6",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": true,
+        "verified": true,
+        "blocked": false,
+        "noise": []
+      },
+      "expected": true
+    },
+    {
+      "id": "visible-7",
+      "kind": "example",
+      "sourceClauses": [
+        "requirements[0]"
+      ],
+      "strength": "hard",
+      "rationale": "Frozen visible truth assignment.",
+      "input": {
+        "approved": true,
+        "verified": true,
+        "blocked": true,
+        "noise": []
+      },
+      "expected": false
+    }
+  ]
+}

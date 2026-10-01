@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "format": "llang-paper-study-review",
+  "studyId": "predicate-paper-v2",
+  "studyHash": "8282b8f946672e702a2958643c176d3675d2ecc5cd6663c9d09828183248eb6e",
+  "inputHashes": {
+    "logic:source": "cb3828fe99ef19ae80a6feb4d233c95ccbb5d17e7719c9fd02645ffca560bc5d",
+    "logic:metadata": "26f821f2a2102f5912a8061243e881bb3bc4d32673e336dde2e64b569d0da7c2",
+    "logic:oracle": "a8d8f7ad95b79b99ff2eae822d144b6a8fb4d6fb0d14ebfd2cd7c539b2684613",
+    "logic:fixture": "a15a90b1aafaa38f2606d8bd16d9454c20079161402c77757dd945cfc86df9c3",
+    "contact:source": "388c65ab7760c4e7604f3402ff88a792f8c6febdd905412316078dc96242cc99",
+    "contact:metadata": "4605afbc465fc6e3a50c6fab3e6830e143222d0309de7c29ce955e5df1aefe8f",
+    "contact:oracle": "c5c4035c64c2447b891f07fd4f92d0ce4b48d0bf333fff8c5e4ce9b5caf30e13",
+    "contact:fixture": "e558673d77ce6d1969b4c3580c8cdce3672f08268a2805b05cbbe5f9ef1d0542",
+    "boundary:source": "69b6727ddb7bd4d81627e19e14b9f6779abceecebfd3f635a1f48b0341d1d630",
+    "boundary:metadata": "326d04035b310e8b4b407bc7de9fb8a7002d247f82480249b1a71901595faf26",
+    "boundary:oracle": "6e40575e4f8bbee76cdd883311c9866508f7045b74b0d2ad45ecd9e33880021d",
+    "boundary:fixture": "81937b2a696c3b7567888daa93c78f8038756979ea5dada0764bbe378a5cbc7e",
+    "unsupported:source": "260cff59cc667bf210433a27b3bf7d4b5003e8f417a805e67323f69826a113d0",
+    "unsupported:metadata": "9d3660bb8439e2b62f943f8172db554b46f71e3a5a3ead3ab42226570315feac",
+    "unsupported:oracle": "5eab6aa5874c5c747cc35cb0d4c085a3a91462163ee927ca7bf1648193751c1f",
+    "unsupported:fixture": "7f152faf007091b675e57068de0d7a4b567fbfbe5f88838ae256760f3187c2b5"
+  },
+  "tasks": [
+    {
+      "taskId": "logic",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": null,
+      "independent": null,
+      "reviewedAt": null,
+      "recordReference": null,
+      "checks": {
+        "requirements": "pending",
+        "expressibility": "pending",
+        "unresolved": "pending",
+        "inputBoundaries": "pending",
+        "taskOverlap": "pending"
+      },
+      "findings": []
+    },
+    {
+      "taskId": "contact",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": null,
+      "independent": null,
+      "reviewedAt": null,
+      "recordReference": null,
+      "checks": {
+        "requirements": "pending",
+        "expressibility": "pending",
+        "unresolved": "pending",
+        "inputBoundaries": "pending",
+        "taskOverlap": "pending"
+      },
+      "findings": []
+    },
+    {
+      "taskId": "boundary",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": null,
+      "independent": null,
+      "reviewedAt": null,
+      "recordReference": null,
+      "checks": {
+        "requirements": "pending",
+        "expressibility": "pending",
+        "unresolved": "pending",
+        "inputBoundaries": "pending",
+        "taskOverlap": "pending"
+      },
+      "findings": []
+    },
+    {
+      "taskId": "unsupported",
+      "sourceAuthors": null,
+      "oracleAuthors": null,
+      "reviewer": null,
+      "independent": null,
+      "reviewedAt": null,
+      "recordReference": null,
+      "checks": {
+        "requirements": "pending",
+        "expressibility": "pending",
+        "unresolved": "pending",
+        "inputBoundaries": "pending",
+        "taskOverlap": "pending"
+      },
+      "findings": []
+    }
+  ]
+}

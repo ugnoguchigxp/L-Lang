@@ -53,6 +53,50 @@ describe("semantic CLI arguments", () => {
     ).toMatchObject({ command: "tdd-test", json: true });
   });
 
+  test("accepts opt-in candidate selection only for build with a valid option combination", () => {
+    expect(
+      parseSemanticArguments([
+        "tdd-build",
+        "semantic.ts",
+        "--best-of-n",
+        "config.json",
+        "--candidate-fixtures",
+        "fixtures.json",
+      ]),
+    ).toMatchObject({
+      bestOfNPath: "config.json",
+      candidateFixturesPath: "fixtures.json",
+    });
+    expect(() =>
+      parseSemanticArguments([
+        "tdd-build",
+        "semantic.ts",
+        "--candidate-fixtures",
+        "fixtures.json",
+      ]),
+    ).toThrow("requires --best-of-n");
+    expect(() =>
+      parseSemanticArguments([
+        "tdd-build",
+        "semantic.ts",
+        "--best-of-n",
+        "config.json",
+        "--candidate-fixtures",
+        "fixtures.json",
+        "--fixture",
+        "single.json",
+      ]),
+    ).toThrow("mutually exclusive");
+    expect(() =>
+      parseSemanticArguments([
+        "tdd-replay",
+        "semantic.ts",
+        "--best-of-n",
+        "config.json",
+      ]),
+    ).toThrow("does not accept");
+  });
+
   test("enforces the complete command and option matrix", () => {
     const allowed: Record<SemanticCommand, readonly string[]> = {
       build: ["--fixture", "--review"],
@@ -64,7 +108,12 @@ describe("semantic CLI arguments", () => {
       explain: ["--json"],
       closure: ["--json"],
       verify: ["--json"],
-      "tdd-build": ["--fixture", "--test-fixture"],
+      "tdd-build": [
+        "--fixture",
+        "--test-fixture",
+        "--best-of-n",
+        "--candidate-fixtures",
+      ],
       "tdd-plan": ["--test-fixture"],
       "tdd-replay": [],
       "tdd-test": ["--json"],
@@ -228,3 +277,32 @@ async function runCli(
     stderr: await new Response(child.stderr).text(),
   };
 }
+
+test("verify alone accepts a single explicit property report", () => {
+  expect(
+    parseSemanticArguments([
+      "verify",
+      "closure.json",
+      "--property-report",
+      "property.json",
+    ]).propertyReportPath,
+  ).toBe("property.json");
+  expect(() =>
+    parseSemanticArguments([
+      "build",
+      "source.ts",
+      "--property-report",
+      "property.json",
+    ]),
+  ).toThrow();
+  expect(() =>
+    parseSemanticArguments([
+      "verify",
+      "closure.json",
+      "--property-report",
+      "a",
+      "--property-report",
+      "b",
+    ]),
+  ).toThrow("duplicate");
+});

@@ -1,3 +1,12 @@
+import { readBoundedJsonFile } from "./semantic-limits";
+import { replayPropertyTest } from "./semantic-property-test";
+import { stableJson } from "./semantic-fingerprint";
+import { compileSemanticContract } from "./semantic-contract";
+import {
+  readSemanticTestLock,
+  findSemanticTestEntry,
+} from "./semantic-test-lock";
+import { verifySemanticTddSource } from "./semantic-tdd-verify";
 import { basename, extname, resolve } from "node:path";
 
 import { generatePredicate } from "./generator";
@@ -68,6 +77,8 @@ export async function verifySemanticArtifact(options: {
   manifestPath: string;
   workspaceRoot?: string;
   lockPath?: string;
+  testLockPath?: string;
+  propertyReportPath?: string;
   commandRunner?: SemanticTestCommandRunner;
 }): Promise<SemanticVerifyReport> {
   const startedAt = Date.now();
@@ -93,6 +104,20 @@ export async function verifySemanticArtifact(options: {
 
   const deterministicStartedAt = Date.now();
   const deterministicNodes: SemanticVerifyNodeCheck[] = [];
+  let propertyMatched = false;
+  const propertyReport =
+    options.propertyReportPath === undefined
+      ? null
+      : replayPropertyTest(
+          await readBoundedJsonFile(
+            resolveWorkspacePath(
+              workspaceRoot,
+              options.propertyReportPath,
+              "property report",
+            ),
+            "property report",
+          ),
+        );
   for (const node of closure.nodes) {
     if (
       node.semanticStatus !== "current" ||
@@ -124,6 +149,65 @@ export async function verifySemanticArtifact(options: {
               sourcePath,
               explanation.resolution?.value ?? null,
             );
+      if (explanation.kind === "predicate") {
+        if (
+          propertyReport !== null &&
+          stableJson(propertyReport.expression) ===
+            stableJson(explanation.resolution?.ir)
+        ) {
+          const source = await scanSemanticSource(sourcePath);
+          if (
+            stableJson(propertyReport.schema) ===
+            stableJson(source.concept.typeSchema)
+          ) {
+            const contract = compileSemanticContract(source);
+            const testLock = await readSemanticTestLock(
+              options.testLockPath ??
+                resolve(workspaceRoot, "semantic-test.lock"),
+            );
+            const entry = findSemanticTestEntry(testLock, {
+              source: node.source,
+              conceptId: source.concept.id,
+              contractHash: contract.contractHash,
+            });
+            if (
+              entry !== undefined &&
+              stableJson(entry.plan) === stableJson(propertyReport.plan)
+            ) {
+              if (propertyReport.status !== "passed")
+                throw new Error("property report contains a counterexample");
+              propertyMatched = true;
+            }
+          }
+        }
+        const testLockPath =
+          options.testLockPath ?? resolve(workspaceRoot, "semantic-test.lock");
+        const testLock = await readSemanticTestLock(testLockPath);
+        if (
+          Object.values(testLock.entries).some(
+            (entry) =>
+              entry.source === node.source &&
+              entry.selectionReport?.version === 2,
+          )
+        ) {
+          const source = await scanSemanticSource(sourcePath);
+          const contract = compileSemanticContract(source);
+          const testEntry = findSemanticTestEntry(testLock, {
+            source: node.source,
+            conceptId: source.concept.id,
+            contractHash: contract.contractHash,
+          });
+          if (testEntry?.selectionReport?.version === 2)
+            await verifySemanticTddSource({
+              sourcePath,
+              workspaceRoot,
+              testLockPath,
+              ...(options.lockPath === undefined
+                ? {}
+                : { lockPath: options.lockPath }),
+            });
+        }
+      }
       const actualHash = sha256(generated);
       deterministicNodes.push(
         actualHash === node.generated.expectedHash
@@ -142,6 +226,13 @@ export async function verifySemanticArtifact(options: {
       });
     }
   }
+  if (propertyReport !== null && !propertyMatched)
+    deterministicNodes.push({
+      id: "property-report",
+      status: "failed",
+      diagnostic:
+        "property report does not match a current implementation, schema and frozen Test Plan",
+    });
   const deterministicGeneration = aggregateNodeChecks(
     deterministicNodes,
     Date.now() - deterministicStartedAt,

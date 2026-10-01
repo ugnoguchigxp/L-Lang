@@ -1,0 +1,312 @@
+{
+  "format": "llang-module-build",
+  "version": 4,
+  "profile": "module-collection-v1",
+  "abi": "llang-collection-native-v1",
+  "entry": "reversi.semantic#evaluate",
+  "sourceSetHash": "b99e242ee84fc46300cfb116fb8645cc5f146b40522cae81b467ed823d2afcb8",
+  "programHash": "aa1efb789811bd881b465b88991930212b6e40e3c5fdefbed7c38ab051562a98",
+  "loweredHash": "100043db9439a8b2f96a560dfe15bd9db9d3069ec54d4d2692aa50d5dd234402",
+  "interfaceHash": "3e6f74478ca34b540109c8a44fd914701463b2f39e3462f60e6b4d7e88a6953b",
+  "layoutHash": "37e20bddb1f268cab02c5796d7ac2c4fe4ad1ab6db5d3fe496c1867f7e7e110f",
+  "resources": {
+    "memoryPages": 128,
+    "stringBytes": 16384,
+    "wireBytes": 262144,
+    "listElements": 4096,
+    "totalListElements": 16384,
+    "arenaBytes": 4194304,
+    "fuel": 1000000,
+    "callDepth": 64
+  },
+  "sources": [
+    {
+      "path": "reversi.semantic.llang.jsonc",
+      "hash": "6accf2011391427767f37b9b7c7749795a12b9ffbf2a1b78f1bda66949e8326b"
+    }
+  ],
+  "dependencies": [],
+  "targets": [
+    "wasm"
+  ],
+  "artifacts": [
+    {
+      "path": "wasm/program.wasm",
+      "hash": "6a15d68492e1bf3088da1f0fb5659bcfd23d2ac8a5458655676ee9ac97ca2bae",
+      "bytes": 13712
+    }
+  ],
+  "wasm": {
+    "path": "wasm/program.wasm",
+    "export": "evaluate",
+    "contract": {
+      "abi": "llang-collection-native-v1",
+      "memory": {
+        "initial": 128,
+        "maximum": 128
+      },
+      "inputType": {
+        "kind": "record",
+        "symbol": "reversi.semantic#Input",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "action",
+            "type": {
+              "kind": "i32"
+            }
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "record",
+              "symbol": "reversi.semantic#State",
+              "arguments": [],
+              "fields": [
+                {
+                  "name": "board",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "history",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "record",
+                      "symbol": "reversi.semantic#Snapshot",
+                      "arguments": [],
+                      "fields": [
+                        {
+                          "name": "board",
+                          "type": {
+                            "kind": "list",
+                            "element": {
+                              "kind": "i32"
+                            }
+                          }
+                        },
+                        {
+                          "name": "last",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        },
+                        {
+                          "name": "passed",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        },
+                        {
+                          "name": "player",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "last",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "passed",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "player",
+                  "type": {
+                    "kind": "i32"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "outputType": {
+        "kind": "record",
+        "symbol": "reversi.semantic#Output",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "black",
+            "type": {
+              "kind": "i32"
+            }
+          },
+          {
+            "name": "canUndo",
+            "type": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "cells",
+            "type": {
+              "kind": "list",
+              "element": {
+                "kind": "record",
+                "symbol": "reversi.semantic#Cell",
+                "arguments": [],
+                "fields": [
+                  {
+                    "name": "enabled",
+                    "type": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "label",
+                    "type": {
+                      "kind": "string"
+                    }
+                  },
+                  {
+                    "name": "last",
+                    "type": {
+                      "kind": "boolean"
+                    }
+                  },
+                  {
+                    "name": "stone",
+                    "type": {
+                      "kind": "i32"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "over",
+            "type": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "pendingAction",
+            "type": {
+              "kind": "i32"
+            }
+          },
+          {
+            "name": "state",
+            "type": {
+              "kind": "record",
+              "symbol": "reversi.semantic#State",
+              "arguments": [],
+              "fields": [
+                {
+                  "name": "board",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "history",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "record",
+                      "symbol": "reversi.semantic#Snapshot",
+                      "arguments": [],
+                      "fields": [
+                        {
+                          "name": "board",
+                          "type": {
+                            "kind": "list",
+                            "element": {
+                              "kind": "i32"
+                            }
+                          }
+                        },
+                        {
+                          "name": "last",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        },
+                        {
+                          "name": "passed",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        },
+                        {
+                          "name": "player",
+                          "type": {
+                            "kind": "i32"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "last",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "passed",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "player",
+                  "type": {
+                    "kind": "i32"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "kind": "string"
+            }
+          },
+          {
+            "name": "white",
+            "type": {
+              "kind": "i32"
+            }
+          },
+          {
+            "name": "winner",
+            "type": {
+              "kind": "i32"
+            }
+          }
+        ]
+      },
+      "layoutHash": "37e20bddb1f268cab02c5796d7ac2c4fe4ad1ab6db5d3fe496c1867f7e7e110f",
+      "programHash": "aa1efb789811bd881b465b88991930212b6e40e3c5fdefbed7c38ab051562a98",
+      "loweredHash": "100043db9439a8b2f96a560dfe15bd9db9d3069ec54d4d2692aa50d5dd234402"
+    },
+    "wasmHash": "6a15d68492e1bf3088da1f0fb5659bcfd23d2ac8a5458655676ee9ac97ca2bae"
+  },
+  "toolchain": {
+    "compiler": "0.1.0-dev.1",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3"
+  }
+}

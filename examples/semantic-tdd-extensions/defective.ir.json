@@ -1,0 +1,7 @@
+{
+  "kind": "equals",
+  "property": [
+    "status"
+  ],
+  "value": "active"
+}

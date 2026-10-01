@@ -4,6 +4,8 @@
 
 草稿 v0.2／2026-09-27。関連文書：[根拠充足の作業一覧](./PAPER_EVIDENCE_PLAN.md)、[方式と実装対応](./PAPER_METHOD.md)、[関連研究](./PAPER_RELATED_WORK.md)。
 
+> 範囲の案内：[Paper v1の範囲と文書案内](./PAPER_V1_SCOPE.md)。Semantic TDDのBest-of-NとBounded Property Testは限定初版実装済み・独立評価未了であり、本稿の実装・評価対象および完了条件には含めない。
+
 > 執筆用注記：本稿は実装と保存済み記録、および2026-09-27のオフライン再検証に基づく。実モデルを新たに呼び出した評価ではない。追加課題のfixture結果を研究結果として扱わない。
 
 ## 概要

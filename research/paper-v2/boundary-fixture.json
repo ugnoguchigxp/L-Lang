@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "responses": [
+    {
+      "stage": "tests",
+      "reply": {
+        "result": {
+          "outcome": "generated",
+          "suiteJson": "{\"version\":1,\"sourceRevision\":\"69b6727ddb7bd4d81627e19e14b9f6779abceecebfd3f635a1f48b0341d1d630\",\"cases\":[{\"id\":\"high\",\"requirementIds\":[\"high\"],\"input\":{\"level\":\"high\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":true}},{\"id\":\"low\",\"requirementIds\":[\"high\"],\"input\":{\"level\":\"low\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"value\",\"value\":false}},{\"id\":\"outside\",\"requirementIds\":[\"high\"],\"input\":{\"level\":\"critical\"},\"undefinedFields\":[],\"expected\":{\"kind\":\"error\",\"code\":\"INVALID_INPUT\"}}]}",
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    },
+    {
+      "stage": "implementation",
+      "reply": {
+        "result": {
+          "outcome": "resolved",
+          "body": {
+            "kind": "equals",
+            "property": [
+              "level"
+            ],
+            "value": "high"
+          },
+          "diagnostics": []
+        },
+        "provider": "fixture",
+        "model": "fixture",
+        "responseId": "fixture",
+        "usage": null
+      }
+    }
+  ]
+}

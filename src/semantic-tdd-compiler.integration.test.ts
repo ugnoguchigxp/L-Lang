@@ -1,3 +1,8 @@
+import { scanSemanticSource } from "./semantic-source";
+import { runPropertyTest } from "./semantic-property-test";
+import { sha256, stableJson } from "./semantic-fingerprint";
+import type { SemanticTddBestOfNReport } from "./semantic-tdd-best-of-n";
+import { verifySemanticArtifact } from "./semantic-verify";
 import { describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { relative, resolve } from "node:path";
@@ -136,6 +141,329 @@ describe("Semantic TDD compiler transaction", () => {
       await rm(testRoot, { recursive: true, force: true });
     }
   }, 120_000);
+
+  test("opt-in Best-of-N persists/replays all candidates, rejects tampering, and leaves artifacts unchanged on all-failed selection", async () => {
+    const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+    await mkdir(parent, { recursive: true });
+    const testRoot = await mkdtemp(resolve(parent, "semantic-tdd-best-of-n-"));
+    const sourcePath = resolve(testRoot, "semantic.ts");
+    const lockPath = resolve(testRoot, "semantic.lock");
+    const testLockPath = resolve(testRoot, "semantic-test.lock");
+    const common = {
+      sourcePath,
+      workspaceRoot,
+      lockPath,
+      testLockPath,
+      auditRoot: resolve(testRoot, "audit"),
+      commandRunner: createRunner(),
+    };
+    const config = {
+      version: 1 as const,
+      candidates: 3,
+      maxOutputTokensPerCall: 200,
+      maxTotalTokens: 10000,
+      timeoutMs: 1000,
+      maxCostUsd: 1,
+      inputUsdPerMillionTokens: 1,
+      outputUsdPerMillionTokens: 2,
+    };
+    try {
+      await writeFile(sourcePath, renderSource(testRoot));
+      const requests: unknown[] = [];
+      const built = await compileSemanticTddSource({
+        ...common,
+        mode: "build",
+        bestOfN: config,
+        countsAsApiCall: false,
+        testCountsAsApiCall: false,
+        resolveTestPlan: async (input) => ({
+          synthesis: {
+            outcome: "resolved",
+            plan: testPlan(input.contractHash),
+            diagnostics: [],
+          },
+          response: null,
+          rawOutput: {},
+        }),
+        resolveBestOfN: async (request) => {
+          requests.push(structuredClone(request));
+          expect(request.specification).toContain("Frozen Semantic Test Plan");
+          if (requests.length === 1)
+            return {
+              elaboration: {
+                outcome: "resolved",
+                body: { kind: "equals", property: ["status"], value: "active" },
+                diagnostics: [],
+              },
+              response: null,
+              rawOutput: {},
+            };
+          return resolvedCustomer();
+        },
+      });
+      expect(requests).toHaveLength(3);
+      expect(requests[0]).toEqual(requests[2]);
+      expect(built.selectionReport.version).toBe(2);
+      expect(built.selectionReport.selectedCandidate).toBe("candidate-2");
+      expect((await verifySemanticTddSource(common)).status).toBe("passed");
+      const lockBefore = await readFile(lockPath, "utf8");
+      const artifactPath = resolve(testRoot, "is-tdd-customer.generated.ts");
+      const artifactBefore = await readFile(artifactPath, "utf8");
+      const frozenBefore = await readFile(testLockPath, "utf8");
+      const manifestPath = resolve(testRoot, "closure.json");
+      await writeFile(
+        manifestPath,
+        JSON.stringify({
+          version: 1,
+          nodes: [
+            {
+              id: "tdd",
+              source: relative(workspaceRoot, sourcePath),
+              dependsOn: [],
+            },
+          ],
+        }),
+      );
+      const verifyProject = (propertyReportPath?: string) =>
+        verifySemanticArtifact({
+          manifestPath,
+          workspaceRoot,
+          lockPath,
+          testLockPath,
+          ...(propertyReportPath === undefined ? {} : { propertyReportPath }),
+          commandRunner: async () => ({ exitCode: 0, stdout: "", stderr: "" }),
+        });
+      expect(
+        (await verifyProject()).checks.deterministicGeneration.status,
+      ).toBe("passed");
+
+      const propertyPath = resolve(testRoot, "property.json");
+      const currentSource = await scanSemanticSource(sourcePath);
+      const currentEntry = Object.values(
+        (await readSemanticTestLock(testLockPath)).entries,
+      )[0];
+      if (currentEntry === undefined) throw new Error("missing frozen plan");
+      const implementation = resolvedCustomer().elaboration.body;
+      if (implementation === null) throw new Error("missing implementation");
+      const property = runPropertyTest({
+        schema: currentSource.concept.typeSchema,
+        expression: implementation,
+        plan: currentEntry.plan,
+        config: {
+          version: 2,
+          seed: 42,
+          cases: 64,
+          maxGeneratedNodes: 1024,
+          maxShrinkSteps: 128,
+          maxArrayLength: 4,
+          timeoutMs: 10000,
+          domains: [
+            { path: ["deletedAt"], values: ["", "synthetic"] },
+            { path: ["email"], values: ["", "synthetic"] },
+          ],
+          expected: implementation,
+        },
+      });
+      await writeFile(propertyPath, JSON.stringify(property));
+      expect(
+        (await verifyProject(propertyPath)).checks.deterministicGeneration
+          .status,
+      ).toBe("passed");
+      expect(await readFile(lockPath, "utf8")).toBe(lockBefore);
+      expect(await readFile(testLockPath, "utf8")).toBe(frozenBefore);
+      expect(await readFile(artifactPath, "utf8")).toBe(artifactBefore);
+      const wrongPlan = runPropertyTest({
+        schema: property.schema,
+        expression: property.expression,
+        config: property.config,
+        plan: { ...property.plan, contractHash: "b".repeat(64) },
+      });
+      await writeFile(propertyPath, JSON.stringify(wrongPlan));
+      expect(
+        (await verifyProject(propertyPath)).checks.deterministicGeneration
+          .status,
+      ).toBe("failed");
+      await writeFile(
+        propertyPath,
+        JSON.stringify({ ...property, sequenceHash: "0".repeat(64) }),
+      );
+      await expect(verifyProject(propertyPath)).rejects.toThrow(
+        "replay mismatch",
+      );
+
+      const tampered = JSON.parse(frozenBefore);
+      for (const entry of Object.values(
+        tampered.entries as Record<
+          string,
+          { selectionReport: { selectedCandidate: string } }
+        >,
+      ))
+        entry.selectionReport.selectedCandidate = "candidate-3";
+      await writeFile(testLockPath, JSON.stringify(tampered));
+      expect(
+        (await verifyProject()).checks.deterministicGeneration.status,
+      ).toBe("failed");
+      await expect(verifySemanticTddSource(common)).rejects.toThrow(
+        "replay mismatch",
+      );
+      await expect(
+        compileSemanticTddSource({ ...common, mode: "replay" }),
+      ).rejects.toThrow("replay mismatch");
+      const contextTampered = JSON.parse(frozenBefore) as {
+        entries: Record<string, { selectionReport: SemanticTddBestOfNReport }>;
+      };
+      for (const entry of Object.values(contextTampered.entries)) {
+        const context = entry.selectionReport.request.projectContext;
+        if (context === undefined) throw new Error("missing Project Context");
+        context.target.typeDeclaration += "\n";
+        entry.selectionReport.requestHash = sha256(
+          stableJson(entry.selectionReport.request),
+        );
+      }
+      await writeFile(testLockPath, JSON.stringify(contextTampered));
+      await expect(verifySemanticTddSource(common)).rejects.toThrow(
+        "Project Context snapshot mismatch",
+      );
+      await expect(
+        compileSemanticTddSource({ ...common, mode: "replay" }),
+      ).rejects.toThrow("Project Context snapshot mismatch");
+      await writeFile(testLockPath, frozenBefore);
+      const replay = await compileSemanticTddSource({
+        ...common,
+        mode: "replay",
+        resolveBestOfN: async () => {
+          throw new Error("must not call API");
+        },
+      });
+      expect(replay.implementation.apiCalls).toBe(0);
+      expect(replay.selectionReport).toEqual(built.selectionReport);
+      await expect(
+        compileSemanticTddSource({
+          ...common,
+          mode: "build",
+          bestOfN: config,
+          countsAsApiCall: false,
+          resolveBestOfN: async () => ({
+            elaboration: {
+              outcome: "unresolved",
+              body: null,
+              diagnostics: ["fixture unresolved"],
+            },
+            response: null,
+            rawOutput: {},
+          }),
+        }),
+      ).rejects.toThrow("Best-of-N unresolved");
+      expect(await readFile(lockPath, "utf8")).toBe(lockBefore);
+      expect(await readFile(artifactPath, "utf8")).toBe(artifactBefore);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  }, 60000);
+
+  test("a property report matches its node when another node has identical schema and IR", async () => {
+    const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
+    await mkdir(parent, { recursive: true });
+    const testRoot = await mkdtemp(resolve(parent, "property-two-nodes-"));
+    const lockPath = resolve(testRoot, "semantic.lock");
+    const testLockPath = resolve(testRoot, "semantic-test.lock");
+    try {
+      const paths: string[] = [];
+      for (const name of ["first", "second"]) {
+        const root = resolve(testRoot, name);
+        await mkdir(root);
+        const sourcePath = resolve(root, "semantic.ts");
+        paths.push(sourcePath);
+        await writeFile(sourcePath, renderSource(root));
+        await compileSemanticTddSource({
+          sourcePath,
+          workspaceRoot,
+          lockPath,
+          testLockPath,
+          auditRoot: resolve(root, "audit"),
+          mode: "build",
+          commandRunner: createRunner(),
+          countsAsApiCall: false,
+          testCountsAsApiCall: false,
+          resolveImplementation: async () => resolvedCustomer(),
+          resolveTestPlan: async (input) => {
+            const plan = testPlan(input.contractHash);
+            for (const row of plan.obligations)
+              row.rationale += ` ${name}-node plan.`;
+            return {
+              synthesis: { outcome: "resolved", plan, diagnostics: [] },
+              response: null,
+              rawOutput: {},
+            };
+          },
+        });
+      }
+      const first = paths[0];
+      if (first === undefined) throw new Error("missing source");
+      const source = await scanSemanticSource(first);
+      const entry = Object.values(
+        (await readSemanticTestLock(testLockPath)).entries,
+      ).find((e) => e.source === relative(workspaceRoot, first));
+      const expression = resolvedCustomer().elaboration.body;
+      if (entry === undefined || expression === null)
+        throw new Error("missing current state");
+      const property = runPropertyTest({
+        schema: source.concept.typeSchema,
+        expression,
+        plan: entry.plan,
+        config: {
+          version: 2,
+          seed: 42,
+          cases: 64,
+          maxGeneratedNodes: 1024,
+          maxShrinkSteps: 128,
+          maxArrayLength: 4,
+          timeoutMs: 10000,
+          domains: [
+            { path: ["deletedAt"], values: ["", "synthetic"] },
+            { path: ["email"], values: ["", "synthetic"] },
+          ],
+          expected: expression,
+        },
+      });
+      const propertyReportPath = resolve(testRoot, "property.json");
+      await writeFile(propertyReportPath, JSON.stringify(property));
+      const manifestPath = resolve(testRoot, "closure.json");
+      await writeFile(
+        manifestPath,
+        JSON.stringify({
+          version: 1,
+          nodes: paths.map((source, i) => ({
+            id: `node-${i}`,
+            source: relative(workspaceRoot, source),
+            dependsOn: [],
+          })),
+        }),
+      );
+      const before = await Promise.all([
+        readFile(lockPath, "utf8"),
+        readFile(testLockPath, "utf8"),
+      ]);
+      const report = await verifySemanticArtifact({
+        manifestPath,
+        workspaceRoot,
+        lockPath,
+        testLockPath,
+        propertyReportPath,
+        commandRunner: async () => ({ exitCode: 0, stdout: "", stderr: "" }),
+      });
+      expect(report.status).toBe("passed");
+      expect(report.checks.deterministicGeneration.passed).toBe(2);
+      expect(
+        await Promise.all([
+          readFile(lockPath, "utf8"),
+          readFile(testLockPath, "utf8"),
+        ]),
+      ).toEqual(before);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  }, 60000);
 
   test("fails closed when a workspace lock requires recovery", async () => {
     const parent = resolve(workspaceRoot, ".semantic", "test-workspaces");
