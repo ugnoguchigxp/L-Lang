@@ -1,0 +1,11 @@
+Fixcase23rotation-rejected: inspectedASTboardrow0isALL7includingindex4; thisOVERLAPSactiveT'scell4,so valid(s)resetsratherthancheckingrotation. BOTHStatefixturesinthatcase(initialsANDinlinedplaystate)musthaveboard[4]=0; keepotherrow0cells7,row2all7. Preferplay(s,4)insteadduplicatingfixture. Verifyall26case78checksafterfix.
+
+ThenADDONLY6meaningfulscoring/compactioncases26..31, noothercasesinthisturn. Existing0..25preserved. UseStatebase=reset(seed),kind1rotation1x3y16,verticalIatcolumn5rows16..19,emptyotherboardexceptfixturesbelow. Callplayaction0(gravblockedlocks) notproductionlockdirectonly, noTS/JSexpected. EachcaseoutputtypedOutputlocal, boardcountsloophelperalreadyavailable.
+26 single-line: bottomrow19all2exceptcol5zero. EXPECTlines1score100level1,boardoccupied3,bagIndex2,newspawny0, remainingIcellscolumn5rows17/18/19.
+27 double-line: rows18/19full2exceptcol5. EXPECTlines2score300boardoccupied2,Iat185/195.
+28 triple-line: rows17/18/19full2exceptcol5. EXPECTlines3score500occupied1,Iat195.
+29 tetris-four-lines: rows16..19full2exceptcol5. EXPECTlines4score800occupied0.
+30 compaction: doublelinefixture PLUS markeratrow15col0(index150)=7. EXPECTcleared2,markeratrow17col0(index170)=7,old150zero,remainingI185/195,occupied3.
+31 level-change: singlelinefixture,priorlines9level1score0. EXPECTlines10level2score100(newlevelMUSTNOTusedforreward),tickMs740.
+
+Allboardfixturesmustexactly200elements,activepositionscurrentlyempty; lines/levelconsistent; statebagseedfromresetkept. Addappidsorderedcorrectlyanddispatchcallsactualcasefunctions. 32cases96nativechecksmustpassbeforefinish. AvoidplaceholderassertionsanddoNOTchangegameIR merelytofitwrongfixture. AuthoringscriptdirectJSONonly,keephelpfulhelpersuntilfinalcleanupbutappJSONcanonical. Finishfully,reportverifiednumbers.

@@ -24,6 +24,40 @@ typed `for-of`, unlabelled `break`/`continue`, return, and exhaustive tagged
 union matches are supported. Module import cycles and recursive data types are
 still rejected; direct and mutual function recursion are allowed.
 
+### TypeScript surface syntax
+
+The frontend also accepts non-inheriting `interface` records, `T[]`,
+`Array<T>`, `ReadonlyArray<T>`, `readonly T[]`, array `length` and indexed
+reads, and typed `map`, `filter`, and `reduce` callbacks. `reduce` requires an
+initial value and preserves receiver, callback, initial-value evaluation order.
+These constructs normalize to the existing checked List IR;
+they do not introduce JavaScript array mutation or general package resolution.
+Record shorthand properties and TypeScript non-null assertions are accepted.
+An assertion does not remove the runtime wire or index checks.
+
+Scalar `for-of` element types can be inferred from the bounded source snapshot,
+including relative TypeScript imports. `for` accepts a single typed initializer
+and local-variable updates. The frontend keeps each loop binding distinct and
+executes the update on `continue` for that loop, including nested loops.
+Statement-position `++`, `--`, and arithmetic compound assignments normalize
+to checked local assignments; updates used as expression values are rejected.
+
+Tagged-union `switch` cases must be exhaustive and end in return, continue, or
+a final top-level break. That break exits the switch, including inside a loop.
+Fallthrough, default cases, and conditional switch breaks are rejected.
+Imported or generated core intrinsic names cannot be shadowed; `Array` and
+`ReadonlyArray` cannot be redefined when used as array types.
+
+Numeric annotations still mean checked i32, not JavaScript binary64. Array
+index errors still fault rather than return `undefined`. Array methods accept
+the existing one-argument map/filter or two-argument fold callback contracts;
+JavaScript index/array callback parameters and mutation are not supplied.
+Functions, locals, and callbacks require explicit annotations. Optional
+fields, async/generator functions and lambdas, generic constraints/defaults,
+optional chaining and property/element assignment are rejected. An interface
+cannot extend another interface. See the runnable
+[typed TypeScript example](../examples/typescript-wasm-core/README.md).
+
 ## Lists and callbacks
 
 List literals evaluate left-to-right. `length`, `at`, `set`, `append`, `map`,

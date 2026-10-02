@@ -1,0 +1,17 @@
+ParentranALL32case/seeds. Onlyfailures:23rotation-rejected,24stacked-collision,31level-change(RESOURCE_LIMIT). DoNOTchangegame.
+Rootcauses inspected:
+- case23firstlocal`s`boardcorrect(row0index4zero,row2filled), butthirdstmtplayinputcontainsANOTHERINLINEStatewithEMPTYboard! ReplaceInput.state inproductionplaycallwith{kind:"local",name:"s"}; donotduplicatefixture. Samebugcase24: actualplayemptyboardinsteadlocalfixturewithindex24=7. Useplay(Input{state:s,action:...}).
+- case31repeatedlyevaluatesproductionplayinsideassertionfields, exhaustingnativefuel/arena. BindOutput`o`ONCEandread all resultfieldsfromlocalo. Allfixturelevels9/1mustbeusedinthatsinglecall. Do notraisecompilerresourcesormaskerrors. Auditothercasesforunuseds/o+duplicatecalls; usecachedlocals.
+Fixthese3firstandrunactualALL32cases96checks.
+
+ThenADDONLY8finalcases32..39, preserve0..31:
+32 paused-resume: s=reset(seed);o=play(s,6) pausedtrue tick0; foractions[0,1,2,3,4,5,8,-99,999] play(o.state,action) mustretainboard/x/y/rotation/score/bagIndex/paused. Play6resumesfalse tick800. UseeqListboard notselfcompare.
+33 spawn-blocked: O x3y18,boardtoprows0&1ALL7,bottomempty. ActiveOat184/185/194/195valid; gravity0locks4andnextspawnblocked=>overtrue,tick0,boardoccupied24(bottom4+top20),score0.
+34 ended-noop-reset: constructvalidovertrueState,score123 (boardzeroallowedover). For0/1/2/3/4/5/6/8 playkeepsscore123,overtrue,boardunchanged; action7 resetsboard200zero,score0,lines0,overfalsepausedfalse.
+35 unknown-inspect: reset; actions-99and999 retainboard/counters/x/y/rot/kind/seed/bagindex andtimer800.
+36 bag-rollover: s=reset(seed) withbagIndex7;nextState(s) ->unique7bag,index1,kind==bag0,seedadvancesexpected6rngsteps,both3x0resetpos; countersunchanged. Nonrollover index1nextState=>index2 seedUNCHANGEDkindoldbag1. Useknownseedmathnotreadproductionoutputasexpectation.
+37 counter-limit: validO x3y0empty score2000000000,soft3 mustovertrueandscoresamewithoutoverflow; harddrop5 sameterminate. Forlinecap useIclearfixture lines1000000 level100001; blockedgravityclear1 mustoversafelylines<=1000000. Ensureinputsvalidotherwiseitjustresetsandcasepasseswrongly.
+38 invalid-reset: stateboardList[] OR 200boardwithvalue9 mustresultcleanreset200zero counters0/y0 nofault; alsoinvalidbag[1..7duplicate] orlevelnot1+lines/10 resets. Action7initialplaceholderworks.
+39 long-script: s=reset(seed), loopplay5untiloveror max20; eachafterlockedoccupied==before+4-10*linesdelta; cells0..7/countersdomain. ASSERTended. FullmultipleplayWITHINoneIRcasecouldexhaust1Mfuel/4MiB; ifso splitlongscriptexecutionintoefficientphasesusingproductionhardDrop helper(returnStatewithoutview), itstillnativegameIRandteststaterules; actualplaypathhasseparatetests. EachIRcasefreshbudgetfixedDONOTraiselimit. CallhardDrop(s) (exported) toavoidviewallocations butclear200liststillcopies; ifscriptstill>resources shortenorusefixedscript6locksassertconservation/non-endedthenseparatehighstackfinalone-lockendedfixture; nofalsecoverage. Reportscopeprecisely.
+
+TestsSemanticIRimportactualexportedhardDrop/helpertypesasneeded. Functioncount<=64, source<1MiB. Alllocalsfunctiontopincludingloopoutputs. Namesidsmatchcaseindices40entriesexact. Unknowncasefalseidunknown. Runfull40cases120checksbeforefinish; nogamemodifications/noplaceholders. Finishboundedgroup,reportactualfailedcasesifany.

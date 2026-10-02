@@ -1,0 +1,16 @@
+14basicnativeIRcasespass42checks. Preserveall14andhelpers; ADDonly12realactioncasesindices14..25below, appidsanddispatchsynchronized. GameIRunchanged. Buildactualfixtures, useStatefromreset(seed)withboard200zeros/kindforced/rotation/x/y overrides; metadata(noactivekindconstraint)allowsO/T/Ifixtures. CreateinternaltestfixturehelperreturnStateifuseful. Countoccupiedlockedboardwithloophelper, noTSlogic. Allcase localsfunctiontop. Noplaceholders/unrelatedassertions.
+
+14 idleft-wall: O kind2rot0x=-1y0fitscolumns0,1. playleft1=>x=-1 unchanged andboardunchanged.
+15 right-wall: O x7=>right2 x7 (cells8,9).
+16 gravity: O x3y0 play0=>y1score0,boardstillzero.
+17 soft-drop: O play3=>y1score1.
+18 soft-floor: O y18 play3=>locked4cellskind2(score0), newspawn y0bagIndex2,line0.
+19 hard-drop: O y0 play5=>locked4at184/185/194/195,score36,newspawny0,bagIndex2.
+20 cw-t: Tkind3rot0x3y0 play4=>rot1x3; activevalue10 atindices4,14,15,24, nootheractives4total.
+21 ccw-t: sameTplay8=>rotation3,thenplay4=>rotation0x3; nooccupiedboard.
+22 i-wall-kick: verticalIkind1rot1x=-2y0 fitsleftcol0; play4targetr2horizontalrequireskick+2=>x0rotation2 (earlierkicksfail).
+23 rotation-rejected: Tkind3rot0x3y0; boardrow0filledexceptcol4,boardrow2allfilled,allotherrows0. Currentactivepositionsrow0col4,row1col3/4/5areempty. CWneedstwo/three-highpiecebottomrow2 occupiedforanykick. play4 mustpreservex3rot0andy0 andboard.
+24 stacked-collision: O x3y0,lockedcellatrow2col4(index24)=7. play0 downblocked=>locksOcurrentat4,5,14,15,original24kept; occupied5,score0,newspawnmayoverdependingnextpiecefine.
+25 ghost-view: O x3y0 empty, inspect-99: ghostvalue16 at184,185,194,195; activevalue9 at4,5,14,15;exact4each. Compareconcretecells, notsameproductionshapehelper.
+
+DoNOTuseproductionoutputsasexpectedfixtures. Donotskipcasesduetocomplexityorsupplyinspectscorechecks. Onlybounded12newcases. Full26casesmustpass3seeds78nativechecks; caseexpectedidsmustmatch. Existing14unchanged. Ifactualgamefailureappearsreportconcreteinputexpectedactual; parent auditprovedthesescenariossoexpecttestsfixturesmayneedfix. Finishgroupfullyandreportverifiedcounts.

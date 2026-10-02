@@ -1,0 +1,21 @@
+Nativeauditfailedone-lineclear. InspectedyourevaluateAST: it ONLY handles1,2,3,5; gravity0 and rotations4/8 areabsent,andhard5computesgy/pointsbutcallslock(s)withoutapplyingthem. Thusyourfinalreportomittedimportantmissingbehavior. FixthiswithSMALLhelpersandflatdispatchinJSON. Do notmakeahugenestedifchainorpatchbyhardcodedASTindices.
+
+Implementhelper step(s:State,soft:boolean)->State:
+ iffits(board,kind,rotation,x,y+1): ifsoftandscore>=2e9 returnclone(s,over=true); returnclone(s,y=s.y+1,score=s.score+(soft?1:0)). Else returnlock(s).
+Implementhelper hardDrop(s:State)->State: gy=ghostY(...),points=2*(gy-s.y); ifscore>2e9-points returnclone(s,over=true); else returnlock(clone(s,y=gy,score=s.score+points)).
+Implementhelper rotate(s:State,clockwise:boolean)->State: r=(s.rotation+(clockwise?1:3))%4; kicksList[0,-1,1,-2,2],i=0,k=0 DECLAREDATTOP. whilei<5: k=at(kicks,i); iffits(board,kind,r,x+k,y) returnclone(s,x=s.x+k,rotation=r); i++; return s. Earlyreturn avoidsfoundvariables/branchscopemess.
+
+ReplaceevaluatewithFLAT EARLYRETURNS:
+ a=input.action,s=input.state
+ ifa7 returnview(reset12345)
+ if!valid(s) returnview(reset12345)
+ ifa6&&!over returnview(clone(s,paused=!paused))
+ ifpaused||over returnview(s)
+ ifa1or2: nx=x+(a1?-1:1); iffitsreturnview(clone(s,x=nx)) elsereturnview(s)
+ ifa0 returnview(step(s,false))
+ ifa3 returnview(step(s,true))
+ ifa5 returnview(hardDrop(s))
+ ifa4 returnview(rotate(s,true))
+ ifa8 returnview(rotate(s,false))
+ finalreturnview(s).
+Threehelpersmaybeexportedfortests. Everyvariableusedinloopsdeclaredatfunctiontop. Allcoregamehelpersalreadyexist; keepthemunmodified. BuildandrealnativecheckverticalI x3y16 gapscolumn5onbottom1..4rows, action0=>lines1/2/3/4 score100/300/500/800; Oemptyharddrop=>y18lock4score36; CW/CCWcyclechangesTcellsandkickIagainstwall; pausedactionsnochange. Nocodeelsewhere. FinishALLfourfunctions; donotstopwithanotherpartial. Parentwillrunindependentchecks.

@@ -1,0 +1,599 @@
+{
+  "format": "luna-app-token-usage",
+  "version": 1,
+  "date": "2026-10-02",
+  "model": "gpt-5.6-luna",
+  "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+  "scope": "All 17 Luna SDK generation/revision turns for Tetris. Parent template work, orchestration, review, and verification are not measured.",
+  "parentAgentUsage": null,
+  "accounting": "SDK snapshots matched CLI total_token_usage cumulative snapshots; phase deltas are differences. Cached input is included in input; reasoning output is included in output.",
+  "sdkVersion": "0.154.0",
+  "calls": 17,
+  "sdkElapsedMs": 2369718,
+  "totalUsage": {
+    "input_tokens": 22252754,
+    "cached_input_tokens": 21839872,
+    "output_tokens": 95519,
+    "reasoning_output_tokens": 18477,
+    "total_tokens": 22348273,
+    "uncached_input_tokens": 412882
+  },
+  "phases": [
+    {
+      "phase": "generate",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "low",
+      "completed": true,
+      "elapsedMs": 279043,
+      "sdkUsage": {
+        "input_tokens": 1067772,
+        "cached_input_tokens": 961536,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 11589,
+        "reasoning_output_tokens": 1077
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 1067772,
+        "cached_input_tokens": 961536,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 11589,
+        "reasoning_output_tokens": 1077,
+        "total_tokens": 1079361
+      },
+      "deltaUsage": {
+        "input_tokens": 1067772,
+        "cached_input_tokens": 961536,
+        "output_tokens": 11589,
+        "reasoning_output_tokens": 1077,
+        "total_tokens": 1079361,
+        "uncached_input_tokens": 106236
+      },
+      "eventsSha256": "8182c2b4bc0ed33f3885f2247a6f21de59bb5c41dae6d8f77e7d6b8ac60b9cf7"
+    },
+    {
+      "phase": "core",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "low",
+      "completed": true,
+      "elapsedMs": 106319,
+      "sdkUsage": {
+        "input_tokens": 1689825,
+        "cached_input_tokens": 1559552,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 15777,
+        "reasoning_output_tokens": 2067
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 1689825,
+        "cached_input_tokens": 1559552,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 15777,
+        "reasoning_output_tokens": 2067,
+        "total_tokens": 1705602
+      },
+      "deltaUsage": {
+        "input_tokens": 622053,
+        "cached_input_tokens": 598016,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4188,
+        "reasoning_output_tokens": 990,
+        "total_tokens": 626241,
+        "uncached_input_tokens": 24037
+      },
+      "eventsSha256": "5915a4d57e49fc8fbda5ab8cd119ffeda38b303acd123e565b940f2fa43ae793"
+    },
+    {
+      "phase": "geometry",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 71271,
+      "sdkUsage": {
+        "input_tokens": 1971673,
+        "cached_input_tokens": 1779712,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 18797,
+        "reasoning_output_tokens": 2774
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 1971673,
+        "cached_input_tokens": 1779712,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 18797,
+        "reasoning_output_tokens": 2774,
+        "total_tokens": 1990470
+      },
+      "deltaUsage": {
+        "input_tokens": 281848,
+        "cached_input_tokens": 220160,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3020,
+        "reasoning_output_tokens": 707,
+        "total_tokens": 284868,
+        "uncached_input_tokens": 61688
+      },
+      "eventsSha256": "99f8c015e24993461fee7d7d0f4651a2a1934e86360d57204348ffb160519a21"
+    },
+    {
+      "phase": "queue-lock",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 173749,
+      "sdkUsage": {
+        "input_tokens": 3256994,
+        "cached_input_tokens": 3043328,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 25548,
+        "reasoning_output_tokens": 3917
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 3256994,
+        "cached_input_tokens": 3043328,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 25548,
+        "reasoning_output_tokens": 3917,
+        "total_tokens": 3282542
+      },
+      "deltaUsage": {
+        "input_tokens": 1285321,
+        "cached_input_tokens": 1263616,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6751,
+        "reasoning_output_tokens": 1143,
+        "total_tokens": 1292072,
+        "uncached_input_tokens": 21705
+      },
+      "eventsSha256": "41db2e1c206a367edb5df7d985d088f3963c5682766cc8937582aca709e58249"
+    },
+    {
+      "phase": "finish-lock",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 115700,
+      "sdkUsage": {
+        "input_tokens": 4096827,
+        "cached_input_tokens": 3867904,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 30246,
+        "reasoning_output_tokens": 4731
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 4096827,
+        "cached_input_tokens": 3867904,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 30246,
+        "reasoning_output_tokens": 4731,
+        "total_tokens": 4127073
+      },
+      "deltaUsage": {
+        "input_tokens": 839833,
+        "cached_input_tokens": 824576,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4698,
+        "reasoning_output_tokens": 814,
+        "total_tokens": 844531,
+        "uncached_input_tokens": 15257
+      },
+      "eventsSha256": "9287d681165dfb9378e1fc18884b09e4aca77ae914c44250eb2cb11d34203e11"
+    },
+    {
+      "phase": "view",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 184170,
+      "sdkUsage": {
+        "input_tokens": 5839427,
+        "cached_input_tokens": 5586176,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 37918,
+        "reasoning_output_tokens": 5887
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 5839427,
+        "cached_input_tokens": 5586176,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 37918,
+        "reasoning_output_tokens": 5887,
+        "total_tokens": 5877345
+      },
+      "deltaUsage": {
+        "input_tokens": 1742600,
+        "cached_input_tokens": 1718272,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7672,
+        "reasoning_output_tokens": 1156,
+        "total_tokens": 1750272,
+        "uncached_input_tokens": 24328
+      },
+      "eventsSha256": "d8b2bec9ce2641536356f8d9fdc363021237821175f37abb6c733380762bec2b"
+    },
+    {
+      "phase": "transitions",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 242892,
+      "sdkUsage": {
+        "input_tokens": 8528607,
+        "cached_input_tokens": 8241920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 47732,
+        "reasoning_output_tokens": 8069
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 8528607,
+        "cached_input_tokens": 8241920,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 47732,
+        "reasoning_output_tokens": 8069,
+        "total_tokens": 8576339
+      },
+      "deltaUsage": {
+        "input_tokens": 2689180,
+        "cached_input_tokens": 2655744,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9814,
+        "reasoning_output_tokens": 2182,
+        "total_tokens": 2698994,
+        "uncached_input_tokens": 33436
+      },
+      "eventsSha256": "97b7b77b54ee027ac58150a5d282b06823122f4f9750118f9817ea7f20be8957"
+    },
+    {
+      "phase": "finish-transitions",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 75082,
+      "sdkUsage": {
+        "input_tokens": 8983329,
+        "cached_input_tokens": 8688384,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 50656,
+        "reasoning_output_tokens": 8255
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 8983329,
+        "cached_input_tokens": 8688384,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 50656,
+        "reasoning_output_tokens": 8255,
+        "total_tokens": 9033985
+      },
+      "deltaUsage": {
+        "input_tokens": 454722,
+        "cached_input_tokens": 446464,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2924,
+        "reasoning_output_tokens": 186,
+        "total_tokens": 457646,
+        "uncached_input_tokens": 8258
+      },
+      "eventsSha256": "a9020b08dbefca2c062185ef9a15746a87525e6fcc94a62a6db3bd96735cd31f"
+    },
+    {
+      "phase": "tests",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 129269,
+      "sdkUsage": {
+        "input_tokens": 9976475,
+        "cached_input_tokens": 9663232,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 56353,
+        "reasoning_output_tokens": 10088
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 9976475,
+        "cached_input_tokens": 9663232,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 56353,
+        "reasoning_output_tokens": 10088,
+        "total_tokens": 10032828
+      },
+      "deltaUsage": {
+        "input_tokens": 993146,
+        "cached_input_tokens": 974848,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5697,
+        "reasoning_output_tokens": 1833,
+        "total_tokens": 998843,
+        "uncached_input_tokens": 18298
+      },
+      "eventsSha256": "fb3bbc3c73c4f5daf4e8b327acc923dc92467acf3ad3fb01f7d824b661bfbb50"
+    },
+    {
+      "phase": "tests-basics",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 120239,
+      "sdkUsage": {
+        "input_tokens": 11304336,
+        "cached_input_tokens": 10978560,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 61205,
+        "reasoning_output_tokens": 10920
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 11304336,
+        "cached_input_tokens": 10978560,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 61205,
+        "reasoning_output_tokens": 10920,
+        "total_tokens": 11365541
+      },
+      "deltaUsage": {
+        "input_tokens": 1327861,
+        "cached_input_tokens": 1315328,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4852,
+        "reasoning_output_tokens": 832,
+        "total_tokens": 1332713,
+        "uncached_input_tokens": 12533
+      },
+      "eventsSha256": "241ae8319c97f08e51a3b0ff46fb4c5aa412bafac9a10e66821f77c7b058cc1f"
+    },
+    {
+      "phase": "tests-actions",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 161305,
+      "sdkUsage": {
+        "input_tokens": 12987245,
+        "cached_input_tokens": 12645632,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 67941,
+        "reasoning_output_tokens": 13109
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 12987245,
+        "cached_input_tokens": 12645632,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 67941,
+        "reasoning_output_tokens": 13109,
+        "total_tokens": 13055186
+      },
+      "deltaUsage": {
+        "input_tokens": 1682909,
+        "cached_input_tokens": 1667072,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6736,
+        "reasoning_output_tokens": 2189,
+        "total_tokens": 1689645,
+        "uncached_input_tokens": 15837
+      },
+      "eventsSha256": "300bb42174c6e00643270464734f2994c6d4a539690385aa2e9899c666dc8b41"
+    },
+    {
+      "phase": "tests-lines",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 81295,
+      "sdkUsage": {
+        "input_tokens": 13863730,
+        "cached_input_tokens": 13513472,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 71514,
+        "reasoning_output_tokens": 14277
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 13863730,
+        "cached_input_tokens": 13513472,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 71514,
+        "reasoning_output_tokens": 14277,
+        "total_tokens": 13935244
+      },
+      "deltaUsage": {
+        "input_tokens": 876485,
+        "cached_input_tokens": 867840,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3573,
+        "reasoning_output_tokens": 1168,
+        "total_tokens": 880058,
+        "uncached_input_tokens": 8645
+      },
+      "eventsSha256": "4a8c9839c7a185e516fb38bbe02b0197d74e6ca61815e221321e6eb027343b89"
+    },
+    {
+      "phase": "tests-end",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 147749,
+      "sdkUsage": {
+        "input_tokens": 16157525,
+        "cached_input_tokens": 15789056,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 77126,
+        "reasoning_output_tokens": 15502
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 16157525,
+        "cached_input_tokens": 15789056,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 77126,
+        "reasoning_output_tokens": 15502,
+        "total_tokens": 16234651
+      },
+      "deltaUsage": {
+        "input_tokens": 2293795,
+        "cached_input_tokens": 2275584,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5612,
+        "reasoning_output_tokens": 1225,
+        "total_tokens": 2299407,
+        "uncached_input_tokens": 18211
+      },
+      "eventsSha256": "392201d6aa476b9e9c0869a1073f540187c21d1da37b1da2cb8c724dd02f4996"
+    },
+    {
+      "phase": "tests-sequence",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 112567,
+      "sdkUsage": {
+        "input_tokens": 17597875,
+        "cached_input_tokens": 17218304,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 81772,
+        "reasoning_output_tokens": 17223
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 17597875,
+        "cached_input_tokens": 17218304,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 81772,
+        "reasoning_output_tokens": 17223,
+        "total_tokens": 17679647
+      },
+      "deltaUsage": {
+        "input_tokens": 1440350,
+        "cached_input_tokens": 1429248,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4646,
+        "reasoning_output_tokens": 1721,
+        "total_tokens": 1444996,
+        "uncached_input_tokens": 11102
+      },
+      "eventsSha256": "d7aa816a2de8dea11a64ea9ec1671a59c194757fd02cc0550dc0886b60b0edd1"
+    },
+    {
+      "phase": "tests-final-fix",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 69754,
+      "sdkUsage": {
+        "input_tokens": 18753823,
+        "cached_input_tokens": 18367488,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 84192,
+        "reasoning_output_tokens": 17613
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 18753823,
+        "cached_input_tokens": 18367488,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 84192,
+        "reasoning_output_tokens": 17613,
+        "total_tokens": 18838015
+      },
+      "deltaUsage": {
+        "input_tokens": 1155948,
+        "cached_input_tokens": 1149184,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2420,
+        "reasoning_output_tokens": 390,
+        "total_tokens": 1158368,
+        "uncached_input_tokens": 6764
+      },
+      "eventsSha256": "9739bbdecaf70a8b7c96cacd4987c2251eca6fc7d79917baf8e1c0ce181b6251"
+    },
+    {
+      "phase": "polish",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 206763,
+      "sdkUsage": {
+        "input_tokens": 21354071,
+        "cached_input_tokens": 20948224,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 91264,
+        "reasoning_output_tokens": 18181
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 21354071,
+        "cached_input_tokens": 20948224,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 91264,
+        "reasoning_output_tokens": 18181,
+        "total_tokens": 21445335
+      },
+      "deltaUsage": {
+        "input_tokens": 2600248,
+        "cached_input_tokens": 2580736,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7072,
+        "reasoning_output_tokens": 568,
+        "total_tokens": 2607320,
+        "uncached_input_tokens": 19512
+      },
+      "eventsSha256": "8053c5fede02b5f76c21b72d1da3efc99ac00e034549ad7623e6d9d134fd5416"
+    },
+    {
+      "phase": "responsive",
+      "threadId": "01a0f818-d53e-7433-8fc6-fe28fa4061ce",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "reasoning": "medium",
+      "completed": true,
+      "elapsedMs": 92551,
+      "sdkUsage": {
+        "input_tokens": 22252754,
+        "cached_input_tokens": 21839872,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 95519,
+        "reasoning_output_tokens": 18477
+      },
+      "rawCumulativeUsage": {
+        "input_tokens": 22252754,
+        "cached_input_tokens": 21839872,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 95519,
+        "reasoning_output_tokens": 18477,
+        "total_tokens": 22348273
+      },
+      "deltaUsage": {
+        "input_tokens": 898683,
+        "cached_input_tokens": 891648,
+        "output_tokens": 4255,
+        "reasoning_output_tokens": 296,
+        "total_tokens": 902938,
+        "uncached_input_tokens": 7035
+      },
+      "eventsSha256": "7b7274bfea4f6827fca7d9d3b0015efe74d7b4612808d5dc4b7242bb694b20f2"
+    }
+  ]
+}

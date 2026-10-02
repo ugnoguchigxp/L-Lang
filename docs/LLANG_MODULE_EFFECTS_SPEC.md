@@ -10,6 +10,26 @@ restricted TypeScript counterpart is a literal `defineEffects` declaration;
 both lower to the same checked typed effect graph. The original single-source
 linear i32 form remains accepted as a compatibility form.
 
+The TypeScript frontend additionally accepts one `const` `defineEffects`
+metadata declaration containing `module` and `operations`, followed by a named
+exported async function. Its import is `import { defineEffects, invoke } from
+"llang:effects"`. The parameterless entry explicitly returns `Promise<T>`;
+`await invoke<T>(operationId, version, request)` lowers to a checked typed
+await node. Response bindings must be typed `const`, and the function must
+return the final awaited response directly or through its final binding.
+Primitive, list and finite record annotations are checked against registered
+operation types. TypeScript `number` can describe the explicitly registered
+i32 or finite f64 response; the registry fixes which one crosses the wire.
+
+Requests are static literals or literal consts declared before the first await.
+Every literal const is checked against its annotation, including unused consts.
+Response-dependent requests, branches, loops, arbitrary Promise calls,
+exceptions and direct platform API calls are rejected by this frontend.
+The source is parsed without evaluation. This syntax reuses the existing
+typed graph, continuation ABI, grants, build format and replay verifier;
+declaring an operation does not authorize it. See the
+[async TypeScript example](../examples/typescript-wasm-core/README.md).
+
 ## Values
 
 `bytes` is an immutable octet sequence with strict bounds, canonical base64

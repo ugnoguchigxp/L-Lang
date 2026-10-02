@@ -1,0 +1,288 @@
+{
+  "format": "llang-module-build",
+  "version": 4,
+  "profile": "module-collection-v1",
+  "abi": "llang-collection-native-v1",
+  "entry": "tests.semantic#checkTransition",
+  "sourceSetHash": "58eb4147dda22284da5a0c62333fcdd9b5d35bfb714e5d55b7c9a541394c56dd",
+  "programHash": "830c3b602214c93f1737ca9fa79f8af80a9775376d31d229bf16d354d7cf4c36",
+  "loweredHash": "474f05a2a9b0130ab9e80f520229cd54c746056d947167ab7f1c913fc0d4504d",
+  "interfaceHash": "a6db9f4a369030f80342ec81cb13b58131c5f09f372aaaae0ff5cee8e6e8a1e8",
+  "layoutHash": "a42f035bb1af45bbb0106bae9fae04fc7e51472d49ae576426554cde2ade4f8a",
+  "resources": {
+    "memoryPages": 128,
+    "stringBytes": 16384,
+    "wireBytes": 262144,
+    "listElements": 4096,
+    "totalListElements": 16384,
+    "arenaBytes": 4194304,
+    "fuel": 1000000,
+    "callDepth": 64
+  },
+  "sources": [
+    {
+      "path": "game.semantic.llang.jsonc",
+      "hash": "70e466764b770871d87d476ee5661d90ebe68fc2da9b30988d2819acbe04c0c8"
+    },
+    {
+      "path": "tests.semantic.llang.jsonc",
+      "hash": "c842b0f245df9da669dd075cb9f86780d586c13bb1150112bd701293f9ee0610"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "tests.semantic",
+      "to": "game.semantic"
+    }
+  ],
+  "targets": [
+    "wasm"
+  ],
+  "artifacts": [
+    {
+      "path": "wasm/program.wasm",
+      "hash": "1645aa20d3a2e7a8616122e0e39a0ca8345f350afc817e91c7f785281aecb040",
+      "bytes": 124726
+    }
+  ],
+  "wasm": {
+    "path": "wasm/program.wasm",
+    "export": "evaluate",
+    "contract": {
+      "abi": "llang-collection-native-v1",
+      "memory": {
+        "initial": 128,
+        "maximum": 128
+      },
+      "inputType": {
+        "kind": "record",
+        "symbol": "tests.semantic#TransitionInput",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "after",
+            "type": {
+              "kind": "record",
+              "symbol": "game.semantic#State",
+              "arguments": [],
+              "fields": [
+                {
+                  "name": "bag",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "bagIndex",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "board",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "kind",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "level",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "lines",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "over",
+                  "type": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "paused",
+                  "type": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "rotation",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "score",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "seed",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "x",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "y",
+                  "type": {
+                    "kind": "i32"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "before",
+            "type": {
+              "kind": "record",
+              "symbol": "game.semantic#State",
+              "arguments": [],
+              "fields": [
+                {
+                  "name": "bag",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "bagIndex",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "board",
+                  "type": {
+                    "kind": "list",
+                    "element": {
+                      "kind": "i32"
+                    }
+                  }
+                },
+                {
+                  "name": "kind",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "level",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "lines",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "over",
+                  "type": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "paused",
+                  "type": {
+                    "kind": "boolean"
+                  }
+                },
+                {
+                  "name": "rotation",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "score",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "seed",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "x",
+                  "type": {
+                    "kind": "i32"
+                  }
+                },
+                {
+                  "name": "y",
+                  "type": {
+                    "kind": "i32"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "outputType": {
+        "kind": "record",
+        "symbol": "tests.semantic#TransitionResult",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "complete",
+            "type": {
+              "kind": "boolean"
+            }
+          },
+          {
+            "name": "id",
+            "type": {
+              "kind": "string"
+            }
+          },
+          {
+            "name": "passed",
+            "type": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "layoutHash": "a42f035bb1af45bbb0106bae9fae04fc7e51472d49ae576426554cde2ade4f8a",
+      "programHash": "830c3b602214c93f1737ca9fa79f8af80a9775376d31d229bf16d354d7cf4c36",
+      "loweredHash": "474f05a2a9b0130ab9e80f520229cd54c746056d947167ab7f1c913fc0d4504d"
+    },
+    "wasmHash": "1645aa20d3a2e7a8616122e0e39a0ca8345f350afc817e91c7f785281aecb040"
+  },
+  "toolchain": {
+    "compiler": "0.1.0-dev.1",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3"
+  }
+}

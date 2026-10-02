@@ -15,6 +15,7 @@
 | JSONC | [jsonc-enabled-user](./jsonc-enabled-user/README.md) | lint、Wasm、独立suite、Capability v2 |
 | Semantic TypeScriptからWasm | [wasm-active-customer](./wasm-active-customer/README.md) | lockからWasmを生成し実行 |
 | 既存TypeScriptの取り込み | [hybrid-order](./hybrid-order/README.md)、[段階別デモ](./hybrid-wasm-scenarios/README.md) | 型・PredicateからWasm |
+| 型付きTypeScriptの計算・反復・逐次await | [typescript-wasm-core](./typescript-wasm-core/README.md) | 配列・構造化値・相対import・登録済み操作 → TypeScript/JSONC/Wasm |
 | Prompt Source JSON | [prompt-active-customer](./prompt-active-customer/README.md) | 意味解決LockとWasm |
 | Prompt Sourceの部品検証 | [capability-access](./capability-access/README.md) | パッケージ作成・検証 |
 | Prompt Sourceのテスト・実装製造 | [capability-development](./capability-development/README.md) | 独立テスト、最大1回修正、replay |
@@ -23,5 +24,6 @@
 | 用途別ソート実験 | [wasm-json-sort](./wasm-json-sort/README.md) | 実験用JSONCからTS/Wasmを生成・比較。標準Predicate profileとは別 |
 | 用途別UIデモ | [saaa-world-clock](./saaa-world-clock/README.md) | 専用ABIとtimezone adapter。一般Predicate言語の拡張ではない |
 | 単独ブラウザゲーム | [reversi](./reversi/README.md) | JSON Semantic IR → ブラウザ内Wasmでルール・AI・対局状態・Undoを実行 |
+| 単独ブラウザゲーム | [tetris](./tetris/README.md) | Lunaによるプロンプト → ゲーム／テストSemanticIR → Wasm。共通ブラウザ部品は[テンプレート](./templates/wasm-grid-app/README.md)を使用 |
 
 コマンドは各READMEに特記がなければリポジトリのルートで実行します。JSONC出力を作る`llang develop`・`llang migrate`の位置付けは経路ガイドを参照してください。

@@ -15,6 +15,8 @@ TypeScriptとJSONCは併存する形式です。どちらかを廃止対象と�
 | JSONC変換 | Prompt Source v1と有効なResolution Lock | `llang migrate` | `.llang.jsonc`、request、suite | 不要 |
 | Wasm backend | lock済みSemantic TypeScript | `wasm build` | Wasm、manifest | 不要 |
 | Hybrid | 既存TypeScriptの型と対応するPredicate | `hybrid` | Wasmと検証用artifact | 不要 |
+| 型付きTypeScript Module | 型付き計算・配列・構造化値・関数・反復 | `llang module`＋`module-collection-v1` | TypeScript、JSONC、native Wasm、manifest | 不要 |
+| TypeScript逐次async | 登録済み操作の契約と逐次`await invoke` | `llang module`＋`module-effects-v1` | TypeScript、JSONC、継続状態を持つWasm、manifest | 不要 |
 | Prompt Source | 要求・契約を持つPrompt Source JSON | `prompt resolve` → `build` | 解決Lock、Wasm、manifest | live resolve時のみ |
 
 JSONCを出力する`develop`はエージェントによる実装生成、`migrate`は解決済みIRからの決定的な形式変換です。JSONC→Wasmのコンパイルとは工程が異なります。生成されたJSONCは、その後のlint/build/testへの入力にもなります。
@@ -35,6 +37,8 @@ JSONCを出力する`develop`はエージェントによる実装生成、`migra
 ## 選び方と検証
 
 既存TypeScriptプロジェクトのConceptと型へ適応させたい場合は[Semantic TypeScript](./semantic-typescript.md)、判定式を明示して編集したい場合は[JSONCの例](../../examples/jsonc-enabled-user/README.md)、既存Predicateを取り込みたい場合は[Hybridの例](../../examples/hybrid-order/README.md)から始めます。
+
+型付きTypeScriptの計算・反復や登録済み操作への逐次asyncは、[npm依存のないTypeScript例](../../examples/typescript-wasm-core/README.md)から始めます。計算側は検査付きi32と永続的なList、async側は静的な要求と最後の応答の返却に限定します。`hybrid build-ts`のPredicate制限を広げる経路ではありません。
 
 JSONCの`develop`は`--suite`で渡した既存suiteを固定して使います。初回実装と最大1回の修正を行い、同コマンドがテストを自動生成するわけではありません。[テスト製造・修正の例](../../examples/capability-development/README.md)はPrompt Source側の経路なので、引数・成果物をJSONC v2と混同しないでください。
 

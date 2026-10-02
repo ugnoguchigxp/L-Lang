@@ -1,0 +1,106 @@
+{
+  "format": "llang-module-build",
+  "version": 4,
+  "profile": "module-collection-v1",
+  "abi": "llang-collection-native-v1",
+  "entry": "tests.semantic#evaluate",
+  "sourceSetHash": "58eb4147dda22284da5a0c62333fcdd9b5d35bfb714e5d55b7c9a541394c56dd",
+  "programHash": "7e39ea8dd2333b695712f99c5f098707ba1328f05825bc2d4fe468eee01c894d",
+  "loweredHash": "82409f6be3de7ea44b77bc5b12a9b4149f63f90065ed2728830d54b4aca6ef68",
+  "interfaceHash": "01266cbd6bcaadf496c9bef1ff55b81e11e7761a7f86df7de5a456c5b8722d23",
+  "layoutHash": "af6e85ccd21d5fa135706fabb342c1102558821f85565dee9cdb26834ab54246",
+  "resources": {
+    "memoryPages": 128,
+    "stringBytes": 16384,
+    "wireBytes": 262144,
+    "listElements": 4096,
+    "totalListElements": 16384,
+    "arenaBytes": 4194304,
+    "fuel": 1000000,
+    "callDepth": 64
+  },
+  "sources": [
+    {
+      "path": "game.semantic.llang.jsonc",
+      "hash": "70e466764b770871d87d476ee5661d90ebe68fc2da9b30988d2819acbe04c0c8"
+    },
+    {
+      "path": "tests.semantic.llang.jsonc",
+      "hash": "c842b0f245df9da669dd075cb9f86780d586c13bb1150112bd701293f9ee0610"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "tests.semantic",
+      "to": "game.semantic"
+    }
+  ],
+  "targets": [
+    "wasm"
+  ],
+  "artifacts": [
+    {
+      "path": "wasm/program.wasm",
+      "hash": "9ce3290a15827e6bdb5d7373a7395a1e1c41a3f3fe1b8ae73d4d3bfc760fef88",
+      "bytes": 124360
+    }
+  ],
+  "wasm": {
+    "path": "wasm/program.wasm",
+    "export": "evaluate",
+    "contract": {
+      "abi": "llang-collection-native-v1",
+      "memory": {
+        "initial": 128,
+        "maximum": 128
+      },
+      "inputType": {
+        "kind": "record",
+        "symbol": "tests.semantic#Case",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "case",
+            "type": {
+              "kind": "i32"
+            }
+          },
+          {
+            "name": "seed",
+            "type": {
+              "kind": "i32"
+            }
+          }
+        ]
+      },
+      "outputType": {
+        "kind": "record",
+        "symbol": "tests.semantic#Result",
+        "arguments": [],
+        "fields": [
+          {
+            "name": "id",
+            "type": {
+              "kind": "string"
+            }
+          },
+          {
+            "name": "passed",
+            "type": {
+              "kind": "boolean"
+            }
+          }
+        ]
+      },
+      "layoutHash": "af6e85ccd21d5fa135706fabb342c1102558821f85565dee9cdb26834ab54246",
+      "programHash": "7e39ea8dd2333b695712f99c5f098707ba1328f05825bc2d4fe468eee01c894d",
+      "loweredHash": "82409f6be3de7ea44b77bc5b12a9b4149f63f90065ed2728830d54b4aca6ef68"
+    },
+    "wasmHash": "9ce3290a15827e6bdb5d7373a7395a1e1c41a3f3fe1b8ae73d4d3bfc760fef88"
+  },
+  "toolchain": {
+    "compiler": "0.1.0-dev.1",
+    "binaryen": "132.0.0",
+    "typescript": "5.9.3"
+  }
+}

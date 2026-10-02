@@ -1,6 +1,7 @@
 import { lstat, readFile, realpath } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import ts from "typescript";
+import { normalizeCollectionTypeScript } from "./typescript-collection-normalizer";
 import { decodeUtf8, parseLlangJsonc } from "./llang-jsonc";
 import { digest } from "./wasm-contract";
 import {
@@ -553,9 +554,21 @@ function tsExpression(
       whenFalse: tsExpression(node.whenFalse, file, expected),
     };
   if (ts.isArrowFunction(node)) {
+    if (node.modifiers?.length || node.typeParameters?.length)
+      throw new ModuleError(
+        "LLC008",
+        "async and generic lambdas are unsupported",
+        file,
+      );
     const returns = tsType(node.type, file),
       ps = node.parameters.map((p) => {
-        if (!ts.isIdentifier(p.name) || !p.type)
+        if (
+          !ts.isIdentifier(p.name) ||
+          !p.type ||
+          p.questionToken ||
+          p.dotDotDotToken ||
+          p.initializer
+        )
           throw new ModuleError(
             "LLC008",
             "lambda parameters require types",
@@ -615,6 +628,16 @@ function tsExpression(
     const fields: { name: string; value: CollectionExpression }[] = [];
     let tag: string | undefined;
     for (const p of node.properties) {
+      if (
+        ts.isShorthandPropertyAssignment(p) &&
+        !p.objectAssignmentInitializer
+      ) {
+        fields.push({
+          name: p.name.text,
+          value: { kind: "local", name: p.name.text },
+        });
+        continue;
+      }
       if (
         !ts.isPropertyAssignment(p) ||
         (!ts.isIdentifier(p.name) && !ts.isStringLiteral(p.name))
@@ -790,7 +813,9 @@ function tsBody(
 export function parseCollectionModuleTypeScript(
   text: string,
   file = "<module.ts>",
+  sources?: ReadonlyMap<string, string>,
 ): CollectionModuleSource {
+  text = normalizeCollectionTypeScript(text, file, sources);
   const source = ts.createSourceFile(
       file,
       text,
@@ -829,6 +854,8 @@ export function parseCollectionModuleTypeScript(
     if (ts.isImportDeclaration(s)) {
       if (
         !ts.isStringLiteral(s.moduleSpecifier) ||
+        s.importClause?.name ||
+        s.attributes ||
         !s.importClause?.namedBindings ||
         !ts.isNamedImports(s.importClause.namedBindings)
       )
@@ -842,6 +869,8 @@ export function parseCollectionModuleTypeScript(
           const imported = element.propertyName?.text ?? element.name.text;
           if (
             element.propertyName ||
+            (imported !== "List" &&
+              (s.importClause.isTypeOnly || element.isTypeOnly)) ||
             !allowedCoreImports.has(imported) ||
             coreImports.has(imported)
           )
@@ -866,6 +895,16 @@ export function parseCollectionModuleTypeScript(
       continue;
     }
     if (ts.isTypeAliasDeclaration(s)) {
+      if (
+        s.typeParameters?.some(
+          (parameter) => parameter.constraint || parameter.default,
+        )
+      )
+        throw new ModuleError(
+          "LLC008",
+          "generic constraints and defaults are unsupported",
+          file,
+        );
       const common = {
         name: s.name.text,
         export: exported(s),
@@ -878,6 +917,7 @@ export function parseCollectionModuleTypeScript(
           fields: s.type.members.map((m) => {
             if (
               !ts.isPropertySignature(m) ||
+              m.questionToken ||
               !m.type ||
               !m.name ||
               (!ts.isIdentifier(m.name) && !ts.isStringLiteral(m.name))
@@ -900,6 +940,7 @@ export function parseCollectionModuleTypeScript(
             for (const m of p.members) {
               if (
                 !ts.isPropertySignature(m) ||
+                m.questionToken ||
                 !m.type ||
                 !m.name ||
                 (!ts.isIdentifier(m.name) && !ts.isStringLiteral(m.name))
@@ -930,6 +971,30 @@ export function parseCollectionModuleTypeScript(
     if (ts.isFunctionDeclaration(s)) {
       if (!s.name || !s.body || !s.type)
         throw new ModuleError("LLC008", "invalid function", file);
+      if (
+        s.asteriskToken ||
+        s.modifiers?.some(
+          (modifier) =>
+            modifier.kind === ts.SyntaxKind.AsyncKeyword ||
+            modifier.kind === ts.SyntaxKind.DeclareKeyword ||
+            modifier.kind === ts.SyntaxKind.DefaultKeyword,
+        )
+      )
+        throw new ModuleError(
+          "LLC008",
+          "async, generator, ambient and default functions require another profile",
+          file,
+        );
+      if (
+        s.typeParameters?.some(
+          (parameter) => parameter.constraint || parameter.default,
+        )
+      )
+        throw new ModuleError(
+          "LLC008",
+          "generic constraints and defaults are unsupported",
+          file,
+        );
       const returns = tsType(s.type, file);
       functions.push({
         name: s.name.text,
@@ -1048,7 +1113,13 @@ export async function loadCollectionModuleProgram(
   if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink())
     throw new ModuleError("LLC002", "root must be regular directory", root);
   const pending = [initial],
-    snapshots = new Map<string, CollectionModuleSnapshot>();
+    snapshots = new Map<
+      string,
+      Omit<CollectionModuleSnapshot, "source"> & {
+        imports: string[];
+        source?: CollectionModuleSource;
+      }
+    >();
   let total = 0;
   while (pending.length) {
     const absolute = pending.pop();
@@ -1067,9 +1138,24 @@ export async function loadCollectionModuleProgram(
       throw new ModuleError("LLC007", "source size exceeds limit");
     const text = decodeUtf8(bytes, absolute),
       source = absolute.endsWith(".ts")
-        ? parseCollectionModuleTypeScript(text, absolute)
-        : parseCollectionModuleJsonc(text, absolute);
-    const snapshot: CollectionModuleSnapshot = {
+        ? undefined
+        : parseCollectionModuleJsonc(text, absolute),
+      imports = source
+        ? source.imports.map((item) => item.from)
+        : ts
+            .createSourceFile(absolute, text, ts.ScriptTarget.ESNext, true)
+            .statements.filter(ts.isImportDeclaration)
+            .map((item) => {
+              if (!ts.isStringLiteral(item.moduleSpecifier))
+                throw new ModuleError(
+                  "LLC008",
+                  "import path must be a string",
+                  absolute,
+                );
+              return item.moduleSpecifier.text;
+            })
+            .filter((from) => from !== "llang:core");
+    const snapshot = {
       id,
       absolutePath: absolute,
       realPath: actual,
@@ -1079,17 +1165,37 @@ export async function loadCollectionModuleProgram(
       sourceHash: digest(bytes),
       bytes,
       text,
-      source,
+      imports,
+      ...(source ? { source } : {}),
     };
     snapshots.set(id, snapshot);
     if (snapshots.size > MODULE_LIMITS.modules)
       throw new ModuleError("LLC007", "module count exceeds limit");
-    for (const item of source.imports) {
-      validateSpecifier(item.from);
-      pending.push(resolve(dirname(absolute), item.from));
+    for (const from of imports) {
+      validateSpecifier(from);
+      pending.push(resolve(dirname(absolute), from));
     }
   }
-  const modules = [...snapshots.values()],
+  const sourceTexts = new Map(
+      [...snapshots.values()]
+        .filter((snapshot) => snapshot.absolutePath.endsWith(".ts"))
+        .map((snapshot) => [snapshot.absolutePath, snapshot.text]),
+    ),
+    modules: CollectionModuleSnapshot[] = [...snapshots.values()].map(
+      (snapshot) => {
+        const { imports: _imports, source, ...raw } = snapshot;
+        return {
+          ...raw,
+          source:
+            source ??
+            parseCollectionModuleTypeScript(
+              raw.text,
+              raw.absolutePath,
+              sourceTexts,
+            ),
+        };
+      },
+    ),
     graph = new Map(
       modules.map((m) => [
         m.id,

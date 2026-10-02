@@ -1,0 +1,40 @@
+ParentindependentauditPASSED177checks: all7shapes4rotationsghostwalls,1..4lineclears/rewards,drop/pause/end/conservation. Gamecoreworks. NOWreplaceentireSTUBtests.semantic.llang.jsoncwithMEANINGFULtestSemanticIR. Nochanges togameIR unlessaconcretetestdemonstratesbug. TestsareJSONcollectionmodulescompiledtoactualnativeWasm, NOTJavaScript/TS assertions. Currentseed>=1 flag isunacceptable; deleteit.
+
+Testsourceimports ./game.semantic.llang.jsonc exported typesState,Output,Shuffle,ClearResult asneeded andfunctionsreset/shape/fits/ghostY/clearLines/nextState/lock/evaluate (aliasevaluateasplay). Localtestentryevaluate(input:{case:i32,seed:i32})->{id:string,passed:boolean}, case0..N-1dispatch namesmatchingapp.json.tests.cases. EachcaseactuallycallsproductionIR andcomparesrequirement-derivedexpectedvalues, neverliteraltrueorselfcomparison. Useonefunctionpercaseorparametrizedsmallhelperssoallvariabledeclarationsatfunctiontop. Unknowncase passedfalse id="unknown". HelperscancreateStatefixturesfromreset(seed) viafullrecordoverrides. Min24cases; implementthese32cases (moreifneeded):
+1 reset-empty/counts/200cells
+2 reset-seeded-7baguniquevalid1..7
+3 reset-reproducible-sameseed expectedbagandseed equality
+4 shapes-all7-rotation0 compareexactknownoffsets [4,5,6,7],[1,2,5,6],[1,4,5,6],[1,2,4,5],[0,1,5,6],[0,4,5,6],[2,4,5,6]
+5 I-four-rotations exactgivenarrays
+6 O-invariant-fourrotations
+7 left-wall fixtureO x=-1 hascellscol0,1 soleftblocked; play1xunchanged
+8 right-wall fixtureO x7 cells8,9 sorightblocked
+9 stacked-block-collision fixtureO x3 y0 blockatrow2col4 meansdownblocked
+10 bottom-collision O y18 cannotdown; shapeshelperfitsfalseat19
+11 CW-T expectedshape [1,5,6,9] ifrot0T[1,4,5,6] rotationformula (2-y,x); evaluatechangesrot1
+12 CCW-Trot0=>rot3,andxunchangedonemptyboard
+13 wall-kick verticalIrot1 x=-2 thenCW r2horizontalneedsx0; kicks0,-1,1,-2,2 choose+2 =>x0rot2
+14 rotation-rejected: makeobstaclesaroundactiveTwithoutoverlappingexistingactive; noalternatekickfit thenunchanged. Derivefixturecarefully independently.
+15 gravity O y0->1score0
+16 soft-drop O y0->1score1
+17 soft-at-floor O y18=>locks4 noextrascore
+18 hard-drop Oemptydistance18=>score36locked4
+19 ghost Oemptyat0=>y18; viewghost4cells at184,185,194,195 withvalue16,active4value9
+20 preview-nextpiece4positivecells, match nextkind andexactrotation0shape (deriveexpectedknownshape mapping ratherthancallsamehelperonly)
+21 single-line fixtureverticalI x3y16 bottomrowfilledexceptcol5, action0=>lines1score100remaining3
+22 double-line samebottom2=>lines2score300remaining2
+23 triple-line =>lines3score500remaining1
+24 tetris-four-lines =>lines4score800remaining0
+25 line-compaction markeratrow15col0 shiftsbycleared2torow17col0, preserveothercells
+26 level-change withlines9level1clear1=>lines10level2score100, tickMs740
+27 paused: toggletrue,tick0 and0/1/3/4/5/8donotchangepos/board/score
+28 resume restoresfalse/tick>0
+29 spawn-blocked: lockOatbottomandfilltop2rows -> nextState.overtrue; preservefilledboard; viewtick0
+30 ended-noop for0/1/2/3/4/5/6/8, reset7clearsboard/score/over
+31 unknown-action andinspect no-op
+32 long-script repeatedharddrops untilover(with<=100); eachlock occupiedafter==before+4-10*linesDelta, values0..7, nofault;assertended
+AlsoREQUIREDbagrollover(index7) nextState producesnewunique7bag,index1,kindat0 andpreservesseedonlyadvancesonrollover; counter-score-limit safeover/nooverflow; invalidboardresets safely. Addas33..35oradditionalcases.
+
+Testsseedinput1/17/2026; doNOTreplaceallcheckswithseedcondition. Forboardfixturesvalidgameviewinputsusebagfromreset(seed), appropriatekind,x,y,rotation,lines/level; activefitsneedsvalid. Useclearfixtures markersnotfullrowsaccidentally causingextra. Avoidhundredsat-snapshotcallsinonecasehigharena; eachcasefreshmemory butlongscriptviewmanytimesmaybe>4MiB; limitreachableharddrops~10untilgameover naturally, usecompactoracleloops, actualartifactshouldfit. Ifresourcefaultinlongscript usehelperlock/nextStatebutstillmeasureactualplaysequenceandfinishwithinbudget. Sharedtestrunner checksidandpassed. Nativebuildcommandsavailable.
+
+Alsofixstyle.css selectors tomatchSHARED template: #board,.game-shell,.game-layout,.sidebar,#controls,#preview,#status,header,h1. ExistingCSS .app/.layout/.board/.controls don'tmatch. Addpalette forlocked1..7,active8..14 andghost15..21 samehuesghostoutline/opacity,empty0dark; includeall7kindcolors. Polishedmidnightcyan/goldresponsiveUI. AddonscreenCCWaction8 andpausebuttonlabel"停止／再開". NoperappHTMLJSbuild.ts. AuthoringPythontoolsremoveatend. Runactualsharedbuildandtestsuntilallpass. No falseclaimsorstubremaining. Finalreportcasecount/checkcount/nativeWasmtestpath.

@@ -1,0 +1,11 @@
+{
+  "format": "semantic-grid-provenance",
+  "version": 1,
+  "sourceHashes": {
+    "prompt.md": "e00994aa4624bb60361edbc0047c12edef26804d4e8d22757c3d9a725c843832",
+    "app.json": "72c0dfdaae1cbf656fe0f34b4af5d5d217d0e69030e385547bf81010e38d40d5",
+    "style.css": "ea4747ae081641613cfbfe2efb3a49ce29438ff88383bd8e40845e066836773c",
+    "game.semantic.llang.jsonc": "70e466764b770871d87d476ee5661d90ebe68fc2da9b30988d2819acbe04c0c8",
+    "tests.semantic.llang.jsonc": "c842b0f245df9da669dd075cb9f86780d586c13bb1150112bd701293f9ee0610"
+  }
+}

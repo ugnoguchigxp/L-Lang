@@ -322,7 +322,12 @@ export async function buildEffectsModuleProgram(options: {
       { rejectSymbolicLinks: true },
     ),
     sourceText = await readFile(sourcePath, "utf8");
-  if (/(?:"nodes"|\bnodes)\s*:/.test(sourceText)) {
+  const asyncEntry =
+    sourcePath.endsWith(".ts") &&
+    ts
+      .createSourceFile(sourcePath, sourceText, ts.ScriptTarget.ESNext, true)
+      .statements.some(ts.isFunctionDeclaration);
+  if (asyncEntry || /(?:"nodes"|\bnodes)\s*:/.test(sourceText)) {
     const graph = await loadEffectsModuleGraph(
       options.entry,
       options.root,

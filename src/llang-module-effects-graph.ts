@@ -24,6 +24,7 @@ import { decodeUtf8, LLANG_SOURCE_BYTES, parseLlangJsonc } from "./llang-jsonc";
 import { ModuleError } from "./llang-module-ir";
 import { fingerprintFor } from "./stable-hash";
 import { digest } from "./wasm-contract";
+import { lowerAsyncEffects } from "./typescript-async-effects";
 
 export type EffectsGraphImport = Readonly<{ source: string; module: string }>;
 export type EffectsGraphSource = Readonly<{
@@ -263,6 +264,30 @@ export function parseEffectsGraphTypeScript(
     statements = root.statements,
     first = statements[0],
     second = statements[1];
+  const diagnostic = (
+    root as ts.SourceFile & {
+      parseDiagnostics: readonly ts.Diagnostic[];
+    }
+  ).parseDiagnostics[0];
+  if (diagnostic)
+    throw new ModuleError(
+      "LLE001",
+      ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"),
+      file,
+    );
+  if (statements.some(ts.isFunctionDeclaration)) {
+    const lowered = lowerAsyncEffects(root, literal);
+    return graphSource(
+      {
+        language: "l-lang",
+        version: 5,
+        kind: "module",
+        profile: "module-effects-v1",
+        ...lowered.definition,
+      },
+      lowered.entry,
+    );
+  }
   if (
     statements.length !== 2 ||
     !first ||

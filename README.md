@@ -27,6 +27,7 @@ L-Langは、LLMが要求から実行可能なバイナリを生成し、人間�
 | エージェントからJSONC実装を作る | 固定要求・suite → JSONCを含む候補パッケージ | [入力と出力の対応](./docs/guides/language-routes.md) |
 | 解決済みのPrompt SourceをJSONCへ変換する | Prompt Source v1＋Lock → JSONC・要求・suite | [入力と出力の対応](./docs/guides/language-routes.md) |
 | 既存TypeScriptの型と限定Predicateを取り込む | TypeScript → Wasm | [Hybridの段階別デモ](./examples/hybrid-wasm-scenarios/README.md) |
+| 型付きTypeScriptの計算・配列・関数・反復を変換する | TypeScript → TypeScript／JSONC／Wasm | [npm依存のないTypeScript例](./examples/typescript-wasm-core/README.md) |
 | Prompt Sourceから意味解決を行う | Prompt Source JSON → 解決Lock → Wasm | [Prompt Sourceの例](./examples/prompt-active-customer/README.md) |
 | 型付きIO・非同期処理をローカルで実行する | TypeScript／JSONC → TypeScript／JSONC／Wasm | [Effects仕様](./docs/LLANG_MODULE_EFFECTS_SPEC.md)・[Module IO例](./examples/module-io-pipeline/README.md) |
 

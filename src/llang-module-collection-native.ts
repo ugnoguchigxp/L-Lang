@@ -185,7 +185,7 @@ class NativeCompiler {
       i32.const ${align(outputLayout.size, 4)}
       i32.add global.set $heap
       local.get $outputEnd global.set $heapEnd
-      local.get $input call ${entry} local.set $result
+      ${this.loadValue(this.program.entryInput, "local.get $input")} call ${entry} local.set $result
       ${this.instrumented ? "i32.const 1 global.set $metricPromotion" : ""}
       ${materialize}
       ${this.instrumented ? "i32.const 0 global.set $metricPromotion" : ""}
@@ -266,7 +266,7 @@ class NativeCompiler {
       i32.const ${align(outputLayout.size, 4)} global.set $metricArenaPeak
       local.get $output i32.const ${align(outputLayout.size, 4)} i32.add global.set $heap
       local.get $output local.get $capacity i32.add global.set $heapEnd
-      local.get $input call ${entry} local.set $result
+      ${this.loadValue(this.program.entryInput, "local.get $input")} call ${entry} local.set $result
       i32.const 1 global.set $metricPromotion
       ${materialize}
       i32.const 0 global.set $metricPromotion
@@ -678,16 +678,13 @@ class NativeCompiler {
     if (statement.kind === "break") return "br $break";
     if (statement.kind === "continue") return "br $continue";
     if (statement.kind === "if") {
-      const before = new Map(env);
+      const yesEnv = new Map(env),
+        noEnv = new Map(env);
       const yes = statement.whenTrue
-        .map((item) =>
-          this.emitStatement(item, { ...context, env: new Map(before) }),
-        )
+        .map((item) => this.emitStatement(item, { ...context, env: yesEnv }))
         .join("\n");
       const no = statement.whenFalse
-        .map((item) =>
-          this.emitStatement(item, { ...context, env: new Map(before) }),
-        )
+        .map((item) => this.emitStatement(item, { ...context, env: noEnv }))
         .join("\n");
       return `${this.emitExpression(statement.condition, context)} if ${yes} else ${no} end`;
     }
@@ -730,13 +727,27 @@ class NativeCompiler {
         listType.element,
         `local.get ${list} i32.load local.get ${index} i32.const ${stride} i32.mul i32.add`,
       );
+      const continues = (item: CollectionStatement): boolean => {
+        if (item.kind === "continue") return true;
+        if (item.kind === "if")
+          return (
+            item.whenTrue.some(continues) || item.whenFalse.some(continues)
+          );
+        if (item.kind === "match")
+          return item.cases.some((branch) => branch.body.some(continues));
+        // A nested loop owns its own continue target.
+        return false;
+      };
+      const advanceBeforeBody = statement.body.some(continues),
+        advance = `local.get ${index} i32.const 1 i32.add local.set ${index}`;
       return `${this.emitExpression(statement.value, context)} local.set ${list}
         i32.const 0 local.set ${index}
         block $break loop $continue call $charge
           local.get ${index} local.get ${list} i32.load offset=4 i32.ge_u br_if $break
           ${load} local.set ${item}
+          ${advanceBeforeBody ? advance : ""}
           ${body}
-          local.get ${index} i32.const 1 i32.add local.set ${index} br $continue
+          ${advanceBeforeBody ? "" : advance} br $continue
         end end`;
     }
     if (statement.kind === "match") {
@@ -750,9 +761,10 @@ class NativeCompiler {
         const tag = type.variants.findIndex(
           (variant) => variant.tag === item.tag,
         );
+        const branchEnv = new Map(env);
         const body = item.body
           .map((child) =>
-            this.emitStatement(child, { ...context, env: new Map(env) }),
+            this.emitStatement(child, { ...context, env: branchEnv }),
           )
           .join("\n");
         chain = `local.get ${value} i32.load i32.const ${tag} i32.eq if ${body} else ${chain} end`;
